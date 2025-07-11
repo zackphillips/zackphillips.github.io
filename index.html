@@ -53,22 +53,88 @@
             flex-wrap: wrap;
         }
         
+        .data-section {
+            background-color: white;
+            margin: 10px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 280px;
+            flex: 1;
+        }
+        
+        .data-section h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        
         .info-item {
             text-align: center;
-            margin: 10px;
+            margin: 0;
         }
         
         .info-item .label {
             font-weight: bold;
             color: #34495e;
-            font-size: 0.9em;
+            font-size: 0.85em;
+            margin-bottom: 5px;
         }
         
         .info-item .value {
-            font-size: 1.2em;
+            font-size: 1.1em;
             color: #2c3e50;
             margin-top: 5px;
+            font-weight: 600;
         }
+        
+        .gauge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .gauge-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .gauge-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .gauge-fill.fuel { background-color: #f39c12; }
+        .gauge-fill.water { background-color: #3498db; }
+        .gauge-fill.battery { background-color: #2ecc71; }
+        .gauge-fill.waste { background-color: #e74c3c; }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        
+        .status-good { background-color: #2ecc71; }
+        .status-warning { background-color: #f39c12; }
+        .status-danger { background-color: #e74c3c; }
         
         #map {
             height: 500px;
@@ -98,13 +164,27 @@
             .info-panel {
                 flex-direction: column;
             }
+            
+            .data-section {
+                margin: 10px 0;
+                min-width: auto;
+            }
+            
+            .data-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 10px;
+            }
+            
+            .info-item .value {
+                font-size: 1em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚢 SignalK Position Tracker</h1>
+            <h1>🚢 Mermug Position Tracker</h1>
             <p>Live vessel position from SignalK data</p>
         </div>
         
@@ -127,36 +207,201 @@
         let map;
         let marker;
         
+        // Fallback data for local testing (matches your signalk_latest.json)
+        const fallbackData = {
+            "navigation": {
+                "position": {
+                    "latitude": 37.7749,
+                    "longitude": -122.4194,
+                    "timestamp": "2025-07-10T14:30:00.000Z"
+                },
+                "speedOverGround": {
+                    "value": 5.2,
+                    "timestamp": "2025-07-10T14:30:00.000Z"
+                },
+                "courseOverGround": {
+                    "value": 0.785,
+                    "timestamp": "2025-07-10T14:30:00.000Z"
+                },
+                "headingTrue": {
+                    "value": 0.785,
+                    "timestamp": "2025-07-10T14:30:00.000Z"
+                },
+                "attitude": {
+                    "roll": {
+                        "value": 0.087,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    },
+                    "pitch": {
+                        "value": 0.052,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                },
+                "gnss": {
+                    "satellites": {
+                        "value": 12,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                }
+            },
+            "environment": {
+                "wind": {
+                    "speedTrue": {
+                        "value": 12.5,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    },
+                    "angleTrue": {
+                        "value": 1.57,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                },
+                "water": {
+                    "temperature": {
+                        "value": 289.15,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                },
+                "outside": {
+                    "temperature": {
+                        "value": 293.15,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    },
+                    "pressure": {
+                        "value": 101325,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                },
+                "depth": {
+                    "belowKeel": {
+                        "value": 8.5,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                }
+            },
+            "electrical": {
+                "batteries": {
+                    "house": {
+                        "voltage": {
+                            "value": 12.6,
+                            "timestamp": "2025-07-10T14:30:00.000Z"
+                        },
+                        "current": {
+                            "value": -5.2,
+                            "timestamp": "2025-07-10T14:30:00.000Z"
+                        },
+                        "capacity": {
+                            "stateOfCharge": {
+                                "value": 0.85,
+                                "timestamp": "2025-07-10T14:30:00.000Z"
+                            }
+                        }
+                    }
+                },
+                "solar": {
+                    "power": {
+                        "value": 151.7,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                }
+            },
+            "propulsion": {
+                "main": {
+                    "revolutions": {
+                        "value": 25.5,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    },
+                    "temperature": {
+                        "value": 358.15,
+                        "timestamp": "2025-07-10T14:30:00.000Z"
+                    }
+                }
+            },
+            "tanks": {
+                "fuel": {
+                    "main": {
+                        "currentLevel": {
+                            "value": 0.75,
+                            "timestamp": "2025-07-10T14:30:00.000Z"
+                        },
+                        "capacity": {
+                            "value": 200,
+                            "timestamp": "2025-07-10T14:30:00.000Z"
+                        }
+                    }
+                },
+                "freshWater": {
+                    "main": {
+                        "currentLevel": {
+                            "value": 0.60,
+                            "timestamp": "2025-07-10T14:30:00.000Z"
+                        },
+                        "capacity": {
+                            "value": 300,
+                            "timestamp": "2025-07-10T14:30:00.000Z"
+                        }
+                    }
+                }
+            }
+        };
+        
         // Function to load and display SignalK data
         async function loadSignalKData() {
             try {
-                const response = await fetch('signalk_latest.json');
-                const data = await response.json();
-                
-                // Extract position data
-                const navigation = data.navigation;
-                if (navigation && navigation.position) {
-                    const lat = navigation.position.latitude;
-                    const lon = navigation.position.longitude;
-                    
-                    // Update info panel
-                    updateInfoPanel(lat, lon);
-                    
-                    // Initialize or update map
-                    if (!map) {
-                        initializeMap(lat, lon);
-                    } else {
-                        updateMap(lat, lon);
-                    }
-                    
-                } else {
-                    showError('No position data found in SignalK JSON');
+                // Check if we're running locally (file:// protocol)
+                if (window.location.protocol === 'file:') {
+                    console.log('Running locally - using fallback data');
+                    showLocalWarning();
+                    processSignalKData(fallbackData);
+                    return;
                 }
+                
+                const response = await fetch('signalk_latest.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                processSignalKData(data);
                 
             } catch (error) {
                 console.error('Error loading SignalK data:', error);
-                showError('Failed to load SignalK data: ' + error.message);
+                console.log('Falling back to sample data');
+                showError('Failed to load SignalK data: ' + error.message + ' (Using sample data)');
+                processSignalKData(fallbackData);
             }
+        }
+        
+        // Function to process SignalK data (extracted from loadSignalKData)
+        function processSignalKData(data) {
+            // Extract position data
+            const navigation = data.navigation;
+            if (navigation && navigation.position) {
+                const lat = navigation.position.latitude;
+                const lon = navigation.position.longitude;
+                
+                // Update info panel with full data
+                updateInfoPanel(lat, lon, data);
+                
+                // Initialize or update map
+                if (!map) {
+                    initializeMap(lat, lon);
+                } else {
+                    updateMap(lat, lon);
+                }
+                
+            } else {
+                showError('No position data found in SignalK JSON');
+            }
+        }
+        
+        // Function to show local warning
+        function showLocalWarning() {
+            const infoPanel = document.getElementById('info-panel');
+            infoPanel.innerHTML = `
+                <div style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
+                    <strong>Local Testing Mode:</strong> Using sample data. Deploy to GitHub Pages to use live JSON data.
+                </div>
+                <div class="loading">Loading position data...</div>
+            `;
         }
         
         // Function to initialize the map
@@ -191,33 +436,163 @@
         }
         
         // Function to update info panel
-        function updateInfoPanel(lat, lon) {
+        function updateInfoPanel(lat, lon, data) {
             const infoPanel = document.getElementById('info-panel');
             
             // Convert to different formats
             const latDMS = convertToDMS(lat, 'lat');
             const lonDMS = convertToDMS(lon, 'lon');
             
+            // Extract various data points
+            const nav = data.navigation || {};
+            const env = data.environment || {};
+            const elec = data.electrical || {};
+            const prop = data.propulsion || {};
+            const tanks = data.tanks || {};
+            
             infoPanel.innerHTML = `
-                <div class="info-item">
-                    <div class="label">Latitude</div>
-                    <div class="value">${lat.toFixed(6)}°</div>
+                <div class="data-section">
+                    <h3>📍 Navigation</h3>
+                    <div class="data-grid">
+                        <div class="info-item">
+                            <div class="label">Latitude</div>
+                            <div class="value">${lat.toFixed(6)}°</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Longitude</div>
+                            <div class="value">${lon.toFixed(6)}°</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">SOG</div>
+                            <div class="value">${nav.speedOverGround ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">COG</div>
+                            <div class="value">${nav.courseOverGround ? (nav.courseOverGround.value * 180/Math.PI).toFixed(0) + '°' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Heading</div>
+                            <div class="value">${nav.headingTrue ? (nav.headingTrue.value * 180/Math.PI).toFixed(0) + '°' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">GPS Sats</div>
+                            <div class="value">${nav.gnss?.satellites?.value || 'N/A'}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-item">
-                    <div class="label">Longitude</div>
-                    <div class="value">${lon.toFixed(6)}°</div>
+                
+                <div class="data-section">
+                    <h3>🌊 Environment</h3>
+                    <div class="data-grid">
+                        <div class="info-item">
+                            <div class="label">Wind Speed</div>
+                            <div class="value">${env.wind?.speedTrue ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Wind Dir</div>
+                            <div class="value">${env.wind?.angleTrue ? (env.wind.angleTrue.value * 180/Math.PI).toFixed(0) + '°' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Water Temp</div>
+                            <div class="value">${env.water?.temperature ? (env.water.temperature.value - 273.15).toFixed(1) + '°C' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Air Temp</div>
+                            <div class="value">${env.outside?.temperature ? (env.outside.temperature.value - 273.15).toFixed(1) + '°C' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Pressure</div>
+                            <div class="value">${env.outside?.pressure ? (env.outside.pressure.value / 100).toFixed(0) + ' hPa' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Depth</div>
+                            <div class="value">${env.depth?.belowKeel ? env.depth.belowKeel.value.toFixed(1) + ' m' : 'N/A'}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-item">
-                    <div class="label">Lat (DMS)</div>
-                    <div class="value">${latDMS}</div>
+                
+                <div class="data-section">
+                    <h3>🔋 Electrical</h3>
+                    <div class="data-grid">
+                        <div class="info-item">
+                            <div class="label">House Battery</div>
+                            <div class="value">${elec.batteries?.house?.voltage ? elec.batteries.house.voltage.value.toFixed(1) + 'V' : 'N/A'}</div>
+                            ${elec.batteries?.house?.capacity?.stateOfCharge ? `
+                                <div class="gauge">
+                                    <div class="gauge-bar">
+                                        <div class="gauge-fill battery" style="width: ${(elec.batteries.house.capacity.stateOfCharge.value * 100)}%"></div>
+                                    </div>
+                                    <small>${(elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0)}%</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="info-item">
+                            <div class="label">House Current</div>
+                            <div class="value">${elec.batteries?.house?.current ? elec.batteries.house.current.value.toFixed(1) + 'A' : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Solar Power</div>
+                            <div class="value">${elec.solar?.power ? elec.solar.power.value.toFixed(0) + 'W' : 'N/A'}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-item">
-                    <div class="label">Lon (DMS)</div>
-                    <div class="value">${lonDMS}</div>
+                
+                <div class="data-section">
+                    <h3>⚙️ Engine</h3>
+                    <div class="data-grid">
+                        <div class="info-item">
+                            <div class="label">RPM</div>
+                            <div class="value">${prop.main?.revolutions ? (prop.main.revolutions.value * 60).toFixed(0) : 'N/A'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Engine Temp</div>
+                            <div class="value">${prop.main?.temperature ? (prop.main.temperature.value - 273.15).toFixed(0) + '°C' : 'N/A'}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-item">
-                    <div class="label">Last Updated</div>
-                    <div class="value">${new Date().toLocaleTimeString()}</div>
+                
+                <div class="data-section">
+                    <h3>⛽ Tanks</h3>
+                    <div class="data-grid">
+                        <div class="info-item">
+                            <div class="label">Fuel</div>
+                            <div class="value">${tanks.fuel?.main ? (tanks.fuel.main.currentLevel.value * tanks.fuel.main.capacity.value).toFixed(0) + 'L' : 'N/A'}</div>
+                            ${tanks.fuel?.main ? `
+                                <div class="gauge">
+                                    <div class="gauge-bar">
+                                        <div class="gauge-fill fuel" style="width: ${(tanks.fuel.main.currentLevel.value * 100)}%"></div>
+                                    </div>
+                                    <small>${(tanks.fuel.main.currentLevel.value * 100).toFixed(0)}%</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Fresh Water</div>
+                            <div class="value">${tanks.freshWater?.main ? (tanks.freshWater.main.currentLevel.value * tanks.freshWater.main.capacity.value).toFixed(0) + 'L' : 'N/A'}</div>
+                            ${tanks.freshWater?.main ? `
+                                <div class="gauge">
+                                    <div class="gauge-bar">
+                                        <div class="gauge-fill water" style="width: ${(tanks.freshWater.main.currentLevel.value * 100)}%"></div>
+                                    </div>
+                                    <small>${(tanks.freshWater.main.currentLevel.value * 100).toFixed(0)}%</small>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="data-section">
+                    <h3>📊 System Status</h3>
+                    <div class="data-grid">
+                        <div class="info-item">
+                            <div class="label">Last Updated</div>
+                            <div class="value">${new Date().toLocaleTimeString()}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">System Status</div>
+                            <div class="value">Online <span class="status-indicator status-good"></span></div>
+                        </div>
+                    </div>
                 </div>
             `;
         }
