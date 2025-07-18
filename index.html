@@ -457,6 +457,29 @@
     }
 
     async function loadData() {
+
+      function findLatestTimestamp(obj) {
+        let latest = null;
+
+        function search(o) {
+          if (o && typeof o === "object") {
+            for (const key in o) {
+              if (key === "timestamp" && typeof o[key] === "string") {
+                const t = new Date(o[key]);
+                if (!isNaN(t.getTime()) && (!latest || t > latest)) {
+                  latest = t;
+                }
+              } else if (typeof o[key] === "object") {
+                search(o[key]);
+              }
+            }
+          }
+        }
+
+        search(obj);
+        return latest;
+      }
+
       try {
         const res = await fetch('signalk_latest.json');
         const lastModified = res.headers.get('last-modified');
@@ -467,20 +490,24 @@
 
         // Update banner with last modified time
         const banner = document.getElementById('updateBanner');
-        if (lastModified) {
-          const modifiedDate = new Date(lastModified);
+
+        // Try specific field first, fall back to recursive scan
+        let timestampStr = data.navigation?.position?.timestamp;
+        let modifiedDate = timestampStr ? new Date(timestampStr) : findLatestTimestamp(data);
+
+        if (modifiedDate && !isNaN(modifiedDate.getTime())) {
           const now = new Date();
           const diffHours = (now - modifiedDate) / (1000 * 60 * 60);
-          banner.textContent = `SignalK data last updated: ${modifiedDate.toLocaleString()}`;
-          if (diffHours > 1) {
-            banner.style.background = '#fff3cd';
-            banner.style.color = '#856404';
+          banner.textContent = `Data Last Updated: ${modifiedDate.toLocaleString()}`;
+          if (diffHours > 3) {
+            banner.style.background = "#f8d7da";
+            banner.style.color = "#721c24";
           } else {
             banner.style.background = '#dff0d8';
             banner.style.color = '#2c3e50';
           }
         } else {
-          banner.textContent = "Last update time not available";
+          banner.textContent = "Timestamp not found in JSON data";
           banner.style.background = "#f8d7da";
           banner.style.color = "#721c24";
         }
