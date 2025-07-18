@@ -267,6 +267,9 @@
   </style>
 </head>
 <body>
+  <div id="updateBanner" style="text-align:center; padding:10px; font-weight:bold; background:#dff0d8; color:#2c3e50;">
+  Loading data update time...
+</div>
   <div class="container">
     <div class="info-logo-row">
       <img src="mermug.png" alt="Mermug Logo" class="logo-side" />
@@ -290,10 +293,6 @@
       <div id="map"></div>
     </div>
 
-    <div class="map-container">
-      <canvas id="tideChart" style="width:100%; height:250px;"></canvas>
-    </div>
-
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -315,7 +314,7 @@
       const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
-
+    let tideChartInstance = null;
     async function drawTideGraph(lat, lon) {
       const nearest = stations.reduce((a, b) =>
         haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
@@ -381,7 +380,11 @@
         canvas.height = 250;
         const ctx = canvas.getContext('2d');
 
-        new Chart(ctx, {
+        if (tideChartInstance) {
+          tideChartInstance.destroy();
+        }
+
+        tideChartInstance = new Chart(ctx, {
           type: 'line',
           data: {
             labels,
@@ -456,10 +459,31 @@
     async function loadData() {
       try {
         const res = await fetch('signalk_latest.json');
+        const lastModified = res.headers.get('last-modified');
         const data = await res.json();
         const nav = data.navigation || {};
         const elec = data.electrical || {};
         const env = data.environment || {};
+
+        // Update banner with last modified time
+        const banner = document.getElementById('updateBanner');
+        if (lastModified) {
+          const modifiedDate = new Date(lastModified);
+          const now = new Date();
+          const diffHours = (now - modifiedDate) / (1000 * 60 * 60);
+          banner.textContent = `SignalK data last updated: ${modifiedDate.toLocaleString()}`;
+          if (diffHours > 1) {
+            banner.style.background = '#fff3cd';
+            banner.style.color = '#856404';
+          } else {
+            banner.style.background = '#dff0d8';
+            banner.style.color = '#2c3e50';
+          }
+        } else {
+          banner.textContent = "Last update time not available";
+          banner.style.background = "#f8d7da";
+          banner.style.color = "#721c24";
+        }
 
         const lat = nav.position?.value?.latitude;
         const lon = nav.position?.value?.longitude;
@@ -493,6 +517,10 @@
         `;
       } catch (err) {
         console.error("Failed to load data:", err);
+        const banner = document.getElementById('updateBanner');
+        banner.textContent = "Error loading update time";
+        banner.style.background = "#f8d7da";
+        banner.style.color = "#721c24";
       }
     }
 
