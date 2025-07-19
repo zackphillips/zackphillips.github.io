@@ -264,6 +264,20 @@
         gap: 10px;
       }
     }
+    .footer {
+      text-align: center;
+      padding: 10px;
+      font-size: 0.8em;
+      font-style: italic;
+      color: #7f8c8d;
+    }
+    .footer a {
+      color: #7f8c8d;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
@@ -533,9 +547,12 @@
         document.getElementById('data-grid').innerHTML = `
           <div class="info-item"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
           <div class="info-item"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
+          <div class="info-item"><div class="label">HDG</div><div class="value">${nav.headingMagnetic?.value ? (nav.headingMagnetic.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">GPS Sats</div><div class="value">${nav.gnss?.satellites?.value ?? 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? (env.water.temperature.value - 273.15).toFixed(1) + '°C' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
@@ -552,7 +569,9 @@
     }
 
     document.addEventListener("DOMContentLoaded", loadData);
-    setInterval(loadData, 30000);
   </script>
+  <div class="footer">
+    Created by <a href="https://zackphillips.com" target="_blank">Zack Phillips</a>
+  </div>
 </body>
 </html>
