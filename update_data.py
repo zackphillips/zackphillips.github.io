@@ -25,7 +25,7 @@ def main():
     git_reset()
     blob = fetch_blob()
     OUTPUT_FILE.write_text(json.dumps(blob, indent=2))
-    git_pull_push(OUTPUT_FILE)
+    git_push(OUTPUT_FILE)
 
 if __name__ == "__main__":
     main()
