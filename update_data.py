@@ -13,6 +13,7 @@ def fetch_blob() -> dict:
     return resp.json()
 
 def git_pull_push(file_path: Path):
+    subprocess.run(["git", "stash"], check=True)
     subprocess.run(["git", "pull"], check=True)
     subprocess.run(["git", "add", str(file_path)], check=True)
     subprocess.run(["git", "commit", "--amend", "-m", f"Auto update {datetime.now().isoformat()}"], check=True)
