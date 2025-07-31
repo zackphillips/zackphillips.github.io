@@ -12,14 +12,17 @@ def fetch_blob() -> dict:
     resp.raise_for_status()
     return resp.json()
 
-def git_pull_push(file_path: Path):
-    subprocess.run(["git", "stash"], check=True)
-    subprocess.run(["git", "pull"], check=True)
+def git_reset():
+    subprocess.run(["git", "fetch", "--all"], check=True)
+    subprocess.run(["git", "reset", "--hard", "origin/main"], check=True)
+
+def git_push(file_path: Path):
     subprocess.run(["git", "add", str(file_path)], check=True)
     subprocess.run(["git", "commit", "--amend", "-m", f"Auto update {datetime.now().isoformat()}"], check=True)
     subprocess.run(["git", "push", "--force"], check=True)
 
 def main():
+    git_reset()
     blob = fetch_blob()
     OUTPUT_FILE.write_text(json.dumps(blob, indent=2))
     git_pull_push(OUTPUT_FILE)
