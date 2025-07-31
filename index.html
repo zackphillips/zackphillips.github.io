@@ -17,7 +17,7 @@
     }
     .container {
       max-width: 1200px;
-      margin: 0 auto;
+      margin: git ad0 auto;
       background-color: white;
       border-radius: 10px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -32,9 +32,11 @@
     }
     .logo-side {
       max-width: 220px;
+      width: auto;
       height: auto;
       display: block;
       flex-shrink: 0;
+      object-fit: contain;
     }
     .info-panel {
       flex: 1;
@@ -129,7 +131,10 @@
       }
       .logo-side {
         max-width: 120px;
+        width: auto;
+        height: auto;
         margin: 0 auto;
+        object-fit: contain;
       }
       .data-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -200,6 +205,7 @@
       height: auto;
       display: block;
       flex-shrink: 0;
+      object-fit: contain;
     }
     .info-panel {
       flex: 1 1 0%;
@@ -260,7 +266,9 @@
       .logo-side {
         max-width: 120px;
         width: auto;
+        height: auto;
         margin: 0 auto;
+        object-fit: contain;
       }
       .info-panel {
         padding: 10px;
@@ -284,6 +292,12 @@
     .footer a:hover {
       text-decoration: underline;
     }
+    .ais-btn {
+      background-color: #8e44ad;
+    }
+    .ais-btn:hover {
+      background-color: #6c3483;
+    }
   </style>
 </head>
 <body>
@@ -296,10 +310,14 @@
       <div class="info-panel" id="info-panel">
         <div class="data-grid" id="data-grid"></div>
         <div class="button-row">
-          <a href="http://192.168.8.50:3000/admin/#/webapps" target="_blank" class="action-btn signal-btn">Open SignalK</a>
-          <a href="http://192.168.8.50:3000/@signalk/freeboard-sk" target="_blank" class="action-btn plotter-btn">Open Freeboard-SK</a>
+          <a href="http://192.168.8.50:3000/admin/#/webapps" target="_blank" class="action-btn signal-btn">Open SignalK*</a>
+          <a href="http://192.168.8.50:3000/@signalk/freeboard-sk" target="_blank" class="action-btn plotter-btn">Open Freeboard-SK*</a>
         </div>
         <p class="wifi-note">*Only works on Mermug WiFi</p>
+        <div class="button-row" style="margin-top: 10px;">
+          <a href="https://www.marinetraffic.com/en/ais/details/ships/mmsi:338543654" target="_blank" class="action-btn ais-btn">MarineTraffic</a>
+          <a href="https://www.myshiptracking.com/vessels/mmsi-338543654" target="_blank" class="action-btn ais-btn">MyShipTracking</a>
+        </div>
       </div>
     </div>
 
@@ -566,14 +584,13 @@
           <div class="info-item"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
           <div class="info-item"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Satellites</div><div class="value">${nav.gnss?.satellites?.value ?? 'N/A'}</div></div>
-          <div class="info-item"><div class="label">GPS Quality</div><div class="value">${nav.gnss?.methodQuality?.value ?? 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Anchor Distance</div><div class="value">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? (nav.anchor.currentRadius.value > nav.anchor.maxRadius.value ? '#e74c3c' : '#27ae60') : '#2c3e50'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Anchor Max Radius</div><div class="value">${nav.anchor?.maxRadius?.value ? (nav.anchor.maxRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">MMSI</div><div class="value">338543654</div></div>
+          <div class="info-item"><div class="label">USCG #</div><div class="value">1024168</div></div>
         `;
       } catch (err) {
         console.error("Failed to load data:", err);
