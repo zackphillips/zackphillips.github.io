@@ -298,6 +298,46 @@
     .ais-btn:hover {
       background-color: #6c3483;
     }
+    
+    .wind-forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .wind-forecast-item {
+      background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+      border-radius: 10px;
+      padding: 15px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 4px 15px rgba(116, 185, 255, 0.3);
+    }
+    
+    .wind-time {
+      font-size: 0.9em;
+      font-weight: bold;
+      margin-bottom: 8px;
+      opacity: 0.9;
+    }
+    
+    .wind-speed {
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .wind-direction {
+      font-size: 1.1em;
+      opacity: 0.9;
+    }
+    
+    @media (max-width: 700px) {
+      .wind-forecast-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
   </style>
 </head>
 <body>
@@ -326,6 +366,25 @@
       <canvas id="tideChart"></canvas>
     </div>
 
+    <!-- WIND FORECAST SECTION -->
+    <div class="map-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div id="windHeader" style="font-weight: bold; font-size: 1.1em; text-align: center; flex: 1;">Wind Forecast at Mermug's Location</div>
+        <select id="forecast-model" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: white; font-size: 0.9em; cursor: pointer;">
+          <option value="wttr">wttr.in (Global)</option>
+          <option value="ecmwf">ECMWF (Global)</option>
+          <option value="gfs">GFS Model (US Only)</option>
+          <option value="nam">NAM Model (US Only)</option>
+        </select>
+      </div>
+      <div class="wind-forecast-grid" id="wind-forecast-grid">
+        <div class="wind-forecast-item">
+          <div class="wind-time">Loading...</div>
+          <div class="wind-speed">--</div>
+          <div class="wind-direction">--</div>
+        </div>
+      </div>
+    </div>
 
     <div class="map-container">
       <div id="map"></div>
@@ -336,6 +395,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     let map, marker;
+    let lat, lon; // Global variables for coordinates
 
     const stations = [
       { id: "9414290", name: "San Francisco", lat: 37.806, lon: -122.465 },
@@ -519,9 +579,12 @@
       }
 
       try {
+        console.log('Starting to load data...');
         const res = await fetch('signalk_latest.json');
+        console.log('Fetch response status:', res.status);
         const lastModified = res.headers.get('last-modified');
         const data = await res.json();
+        console.log('JSON data loaded successfully');
         const nav = data.navigation || {};
         const elec = data.electrical || {};
         const env = data.environment || {};
@@ -550,8 +613,8 @@
           banner.style.color = "#721c24";
         }
 
-        const lat = nav.position?.value?.latitude;
-        const lon = nav.position?.value?.longitude;
+        lat = nav.position?.value?.latitude;
+        lon = nav.position?.value?.longitude;
 
         if (lat && lon) {
           if (!map) {
@@ -566,8 +629,11 @@
           }
 
           drawTideGraph(lat, lon);
+          // Load wind forecast asynchronously without blocking main data load
+          loadWindForecast().catch(err => console.error('Wind forecast error:', err));
         }
 
+        // Update the data grid with vessel information
         document.getElementById('data-grid').innerHTML = `
           <div class="info-item"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
           <div class="info-item"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
@@ -601,14 +667,236 @@
         `;
       } catch (err) {
         console.error("Failed to load data:", err);
+        console.error("Error details:", err.message);
         const banner = document.getElementById('updateBanner');
-        banner.textContent = "Error loading update time";
+        banner.textContent = `Error loading data: ${err.message}`;
         banner.style.background = "#f8d7da";
         banner.style.color = "#721c24";
       }
     }
 
-    document.addEventListener("DOMContentLoaded", loadData);
+    async function loadWindForecast() {
+      try {
+        if (!lat || !lon) {
+          document.getElementById('wind-forecast-grid').innerHTML = `
+            <div class="wind-forecast-item">
+              <div class="wind-time">Waiting</div>
+              <div class="wind-speed">For GPS</div>
+              <div class="wind-direction">Position</div>
+            </div>
+          `;
+          return;
+        }
+        
+        const selectedModel = document.getElementById('forecast-model').value;
+        let response;
+        
+        // Select API based on chosen model
+        switch(selectedModel) {
+          case 'gfs':
+            // GFS model via NOAA API (US only)
+            response = await fetch(`https://api.weather.gov/points/${lat},${lon}/forecast`);
+            if (!response.ok) {
+              throw new Error('GFS model only available for US locations');
+            }
+            break;
+          case 'ecmwf':
+            // ECMWF via OpenMeteo (free tier, global)
+            response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_direction_10m&timezone=auto`);
+            break;
+
+
+          case 'nam':
+            // NAM model via NOAA API (US only)
+            response = await fetch(`https://api.weather.gov/points/${lat},${lon}/forecast/hourly`);
+            if (!response.ok) {
+              throw new Error('NAM model only available for US locations');
+            }
+            break;
+          default:
+            // Default to wttr.in (global)
+            response = await fetch(`https://wttr.in/?format=j1&lat=${lat}&lon=${lon}`);
+            break;
+        }
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        let forecastHTML = '';
+        const windForecastGrid = document.getElementById('wind-forecast-grid');
+        
+        // Parse data based on selected model
+        if (selectedModel === 'wttr' && data && data.weather && data.weather[0] && data.weather[0].hourly) {
+          // wttr.in format
+          const timeIntervals = [3, 6, 9, 12];
+          const usedIndices = new Set();
+          
+          timeIntervals.forEach(hours => {
+            const targetTime = new Date();
+            targetTime.setHours(targetTime.getHours() + hours);
+            
+            let closestForecast = null;
+            let closestIndex = -1;
+            let minDiff = Infinity;
+            
+            data.weather[0].hourly.forEach((forecast, index) => {
+              if (usedIndices.has(index)) return;
+              
+              const forecastTime = new Date(forecast.time);
+              const diff = Math.abs(forecastTime - targetTime);
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestForecast = forecast;
+                closestIndex = index;
+              }
+            });
+            
+            if (closestForecast && closestForecast.windspeedKmph) {
+              usedIndices.add(closestIndex);
+              const windSpeedKmph = parseInt(closestForecast.windspeedKmph);
+              const windSpeedKts = (windSpeedKmph * 0.539957).toFixed(1);
+              const windDeg = parseInt(closestForecast.winddirDegree);
+              const windDirection = getWindDirection(windDeg);
+              
+              const targetTime = new Date();
+              targetTime.setHours(targetTime.getHours() + hours);
+              const timeStr = targetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              
+              const speedKts = parseFloat(windSpeedKts);
+              let windColor = '';
+              if (speedKts < 10) {
+                windColor = 'background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);';
+              } else if (speedKts >= 10 && speedKts < 15) {
+                windColor = 'background: linear-gradient(135deg, #00b894 0%, #00a085 100%);';
+              } else if (speedKts >= 15 && speedKts < 20) {
+                windColor = 'background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);';
+              } else if (speedKts >= 20 && speedKts < 25) {
+                windColor = 'background: linear-gradient(135deg, #e17055 0%, #d63031 100%);';
+              } else {
+                windColor = 'background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);';
+              }
+              
+              forecastHTML += `
+                <div class="wind-forecast-item" style="${windColor}">
+                  <div class="wind-time">+${hours}h (${timeStr})</div>
+                  <div class="wind-speed">${windSpeedKts} kts</div>
+                  <div class="wind-direction">${windDirection} (${windDeg}°)</div>
+                </div>
+              `;
+            }
+          });
+        } else if (selectedModel === 'ecmwf' && data && data.hourly) {
+          // ECMWF format
+          const timeIntervals = [3, 6, 9, 12];
+          const usedIndices = new Set();
+          
+          timeIntervals.forEach(hours => {
+            const targetTime = new Date();
+            targetTime.setHours(targetTime.getHours() + hours);
+            
+            let closestIndex = -1;
+            let minDiff = Infinity;
+            
+            data.hourly.time.forEach((timeStr, index) => {
+              if (usedIndices.has(index)) return;
+              
+              const forecastTime = new Date(timeStr);
+              const diff = Math.abs(forecastTime - targetTime);
+              if (diff < minDiff) {
+                minDiff = diff;
+                closestIndex = index;
+              }
+            });
+            
+            if (closestIndex >= 0) {
+              usedIndices.add(closestIndex);
+              const windSpeedMs = data.hourly.wind_speed_10m[closestIndex];
+              const windSpeedKts = (windSpeedMs * 1.94384).toFixed(1); // m/s to knots
+              const windDeg = data.hourly.wind_direction_10m[closestIndex];
+              const windDirection = getWindDirection(windDeg);
+              
+              const targetTime = new Date();
+              targetTime.setHours(targetTime.getHours() + hours);
+              const timeStr = targetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              
+              const speedKts = parseFloat(windSpeedKts);
+              let windColor = '';
+              if (speedKts < 10) {
+                windColor = 'background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);';
+              } else if (speedKts >= 10 && speedKts < 15) {
+                windColor = 'background: linear-gradient(135deg, #00b894 0%, #00a085 100%);';
+              } else if (speedKts >= 15 && speedKts < 20) {
+                windColor = 'background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);';
+              } else if (speedKts >= 20 && speedKts < 25) {
+                windColor = 'background: linear-gradient(135deg, #e17055 0%, #d63031 100%);';
+              } else {
+                windColor = 'background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);';
+              }
+              
+              forecastHTML += `
+                <div class="wind-forecast-item" style="${windColor}">
+                  <div class="wind-time">+${hours}h (${timeStr})</div>
+                  <div class="wind-speed">${windSpeedKts} kts</div>
+                  <div class="wind-direction">${windDirection} (${windDeg}°)</div>
+                </div>
+              `;
+            }
+          });
+
+        } else {
+          // Fallback for other models or errors
+          forecastHTML = `
+            <div class="wind-forecast-item">
+              <div class="wind-time">Model</div>
+              <div class="wind-speed">Not</div>
+              <div class="wind-direction">Available</div>
+            </div>
+          `;
+        }
+        
+        if (forecastHTML) {
+          windForecastGrid.innerHTML = forecastHTML;
+        } else {
+          throw new Error('No forecast data available for this location');
+        }
+      } catch (error) {
+        console.error('Wind forecast fetch error:', error);
+        document.getElementById('wind-forecast-grid').innerHTML = `
+          <div class="wind-forecast-item" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+            <div class="wind-time">Error</div>
+            <div class="wind-speed">${error.message}</div>
+            <div class="wind-direction">Try another model</div>
+          </div>
+        `;
+      }
+    }
+    
+    function getWindDirection(degrees) {
+      const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+      const index = Math.round(degrees / 22.5) % 16;
+      return directions[index];
+    }
+    
+    document.addEventListener("DOMContentLoaded", function() {
+      loadData();
+      
+      // Add event listener for forecast model dropdown
+      document.getElementById('forecast-model').addEventListener('change', function() {
+        if (lat && lon) {
+          loadWindForecast();
+        }
+      });
+      
+      // Update wind forecast every hour
+      setInterval(() => {
+        if (lat && lon) {
+          loadWindForecast();
+        }
+      }, 60 * 60 * 1000);
+    });
   </script>
   <div class="footer">
     Created by <a href="https://zackphillips.com" target="_blank">Zack Phillips</a>
