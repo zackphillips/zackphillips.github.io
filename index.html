@@ -591,6 +591,13 @@
           <div class="info-item"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
           <div class="info-item"><div class="label">MMSI</div><div class="value">338543654</div></div>
           <div class="info-item"><div class="label">USCG #</div><div class="value">1024168</div></div>
+          <div class="info-item"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Distance to WP</div><div class="value">${data.navigation?.courseRhumbline?.nextPoint?.distance?.value ? (data.navigation.courseRhumbline.nextPoint.distance.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Course Bearing</div><div class="value">${data.navigation?.courseRhumbline?.bearingTrackTrue?.value ? (data.navigation.courseRhumbline.bearingTrackTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Bearing to Dest</div><div class="value">${data.navigation?.courseRhumbline?.bearingToDestinationTrue?.value ? (data.navigation.courseRhumbline.bearingToDestinationTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Cross Track Error</div><div class="value">${data.navigation?.courseRhumbline?.crossTrackError?.value ? data.navigation.courseRhumbline.crossTrackError.value.toFixed(1) + ' m' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
         `;
       } catch (err) {
         console.error("Failed to load data:", err);
