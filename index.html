@@ -412,8 +412,8 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <div id="windHeader" style="font-weight: bold; font-size: 1.1em; text-align: left; flex: 1;">Wind Forecast at Current Location</div>
         <select id="forecast-model" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: white; font-size: 0.9em; cursor: pointer;">
-          <option value="wttr">wttr.in (Global)</option>
-          <option value="ecmwf">ECMWF (Global)</option>
+          <option value="wttr">wttr.in</option>
+          <option value="ecmwf">ECMWF</option>
         </select>
       </div>
       <div class="wind-forecast-grid" id="wind-forecast-grid">
@@ -709,17 +709,52 @@
           console.log('SignalK API not available or timed out, trying local file');
           try {
             // Local file as backup (no timeout)
+            console.log('Attempting to fetch signalk_latest.json...');
             res = await fetch('signalk_latest.json');
+            console.log('Local file fetch response:', res.status, res.statusText);
             if (res.ok) {
               data = await res.json();
               dataSource = 'static';
               console.log('Local JSON file data loaded successfully');
             } else {
-              throw new Error('Local file not available');
+              throw new Error(`Local file not available: ${res.status} ${res.statusText}`);
             }
           } catch (fileError) {
+            console.log('Local file fetch error:', fileError);
             console.log('Both SignalK API and local file unavailable');
-            throw new Error('No data sources available');
+            
+            // Create dummy data as fallback
+            console.log('Creating dummy data as fallback...');
+            data = {
+              navigation: {
+                position: { value: { latitude: 37.806, longitude: -122.465 } },
+                courseOverGroundTrue: { value: 0 },
+                speedOverGround: { value: 0 },
+                speedThroughWater: { value: 0 }
+              },
+              environment: {
+                wind: {
+                  speedTrue: { value: 10 },
+                  angleTrue: { value: 0 }
+                },
+                water: { temperature: { value: 288.15 } }
+              },
+              electrical: {
+                batteries: {
+                  house: {
+                    voltage: { value: 12.5 },
+                    current: { value: 0 },
+                    power: { value: 0 },
+                    capacity: {
+                      stateOfCharge: { value: 0.8 },
+                      timeRemaining: { value: 36000 }
+                    }
+                  }
+                }
+              }
+            };
+            dataSource = 'dummy';
+            console.log('Dummy data created successfully');
           }
         }
         
@@ -744,6 +779,9 @@
         } else if (dataSource === 'api') {
           statusElement.textContent = '🌐 API Data (Remote)';
           statusElement.style.color = '#3498db';
+        } else if (dataSource === 'dummy') {
+          statusElement.textContent = '⚠️ Demo Data';
+          statusElement.style.color = '#f39c12';
         }
 
         // Try specific field first, fall back to recursive scan
