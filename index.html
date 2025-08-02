@@ -384,6 +384,59 @@
       background: #1e3a1e;
       color: #d4edda;
     }
+    
+    /* Floating Dark Mode Button */
+    .floating-dark-mode-btn {
+      position: fixed;
+      left: 0;
+      top: 100px;
+      transform: none;
+      z-index: 1000;
+      padding: 16px 8px;
+      border: none;
+      border-radius: 0 8px 8px 0;
+      background: #2c3e50;
+      color: white;
+      cursor: pointer;
+      font-size: 0.8em;
+      font-weight: 600;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-left: none;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .floating-dark-mode-btn:hover {
+      opacity: 0.8;
+    }
+    
+    .floating-dark-mode-btn:active {
+      opacity: 0.6;
+    }
+    
+    /* Dark mode button styling */
+    [data-theme="dark"] .floating-dark-mode-btn {
+      background: #f39c12;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-left: none;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      .floating-dark-mode-btn {
+        padding: 12px 6px;
+        font-size: 0.7em;
+        min-height: 100px;
+      }
+    }
     .ais-btn {
       background-color: #8e44ad;
     }
@@ -470,13 +523,15 @@
 </head>
 <body>
   <div id="updateBanner">
-    <div style="display: flex; justify-content: center; align-items: center; position: relative;">
+    <div style="display: flex; justify-content: center; align-items: center;">
       <div style="text-align: center;">
         <span id="dataStatus">Loading data...</span> | <span id="updateTime">--</span>
       </div>
-      <button id="darkModeToggle" style="position: absolute; right: 0; padding: 5px 10px; border: none; border-radius: 4px; background: #2c3e50; color: white; cursor: pointer; font-size: 0.9em;">🌙 Dark Mode</button>
     </div>
   </div>
+  
+  <!-- Floating Dark Mode Button -->
+  <button id="darkModeToggle" class="floating-dark-mode-btn">🌙 Dark Mode</button>
   <div class="container">
     <div class="info-logo-row">
       <img src="mermug.png" alt="Mermug Logo" class="logo-side" />
@@ -663,6 +718,17 @@
     let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
     let lastPolarChartUpdate = 0; // Timestamp of last chart update
     let themeChangeTimeout = null; // Timeout for theme change debouncing
+    
+    // Helper function to get theme-aware anchor distance colors
+    function getAnchorDistanceColor(isOutsideSafeRadius) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      if (isOutsideSafeRadius) {
+        return isDark ? '#ff6b6b' : '#e74c3c'; // Red for outside safe radius
+      } else {
+        return isDark ? '#51cf66' : '#27ae60'; // Green for inside safe radius
+      }
+    }
+    
     async function drawTideGraph(lat, lon) {
       const nearest = stations.reduce((a, b) =>
         haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
@@ -1028,7 +1094,7 @@
           <div class="info-item" title="House battery bank power consumption or generation"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
           <div class="info-item" title="State of Charge - percentage of battery capacity remaining"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
           <div class="info-item" title="Estimated time remaining until battery depletion"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
-          <div class="info-item" title="Distance from anchor position - red if outside safe radius"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? (nav.anchor.currentRadius.value > nav.anchor.maxRadius.value ? '#e74c3c' : '#27ae60') : '#2c3e50'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+          <div class="info-item" title="Distance from anchor position - red if outside safe radius"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
           <div class="info-item" title="Bearing to anchor position from current location"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
           <div class="info-item" title="Overall vessel length from bow to stern"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
           <div class="info-item" title="Vessel beam - maximum width of the vessel"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
@@ -1899,7 +1965,7 @@
         <div class="info-item"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
         <div class="info-item"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
         <div class="info-item"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
-        <div class="info-item"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? (nav.anchor.currentRadius.value > nav.anchor.maxRadius.value ? '#e74c3c' : '#27ae60') : '#2c3e50'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
         <div class="info-item"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
         <div class="info-item"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
         <div class="info-item"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
@@ -2045,6 +2111,28 @@
         if (marker) {
           marker.addTo(map);
         }
+      }
+      
+      // Update anchor distance colors in the data grid
+      const anchorDistanceElement = document.querySelector('.info-item .value[style*="color"]');
+      if (anchorDistanceElement && anchorDistanceElement.textContent.includes('ft')) {
+        // Find the anchor distance element and update its color
+        const anchorItems = document.querySelectorAll('.info-item');
+        anchorItems.forEach(item => {
+          const label = item.querySelector('.label');
+          const value = item.querySelector('.value');
+          if (label && label.textContent === 'Anchor Distance' && value) {
+            const currentColor = value.style.color;
+            // Check if it's currently red or green and update accordingly
+            if (currentColor.includes('#e74c3c') || currentColor.includes('#ff6b6b')) {
+              // Currently red (outside safe radius)
+              value.style.color = getAnchorDistanceColor(true);
+            } else if (currentColor.includes('#27ae60') || currentColor.includes('#51cf66')) {
+              // Currently green (inside safe radius)
+              value.style.color = getAnchorDistanceColor(false);
+            }
+          }
+        });
       }
     }
 
