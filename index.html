@@ -373,8 +373,6 @@
         <select id="forecast-model" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; background: white; font-size: 0.9em; cursor: pointer;">
           <option value="wttr">wttr.in (Global)</option>
           <option value="ecmwf">ECMWF (Global)</option>
-          <option value="gfs">GFS Model (US Only)</option>
-          <option value="nam">NAM Model (US Only)</option>
         </select>
       </div>
       <div class="wind-forecast-grid" id="wind-forecast-grid">
@@ -693,25 +691,9 @@
         
         // Select API based on chosen model
         switch(selectedModel) {
-          case 'gfs':
-            // GFS model via NOAA API (US only)
-            response = await fetch(`https://api.weather.gov/points/${lat},${lon}/forecast`);
-            if (!response.ok) {
-              throw new Error('GFS model only available for US locations');
-            }
-            break;
           case 'ecmwf':
             // ECMWF via OpenMeteo (free tier, global)
             response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_direction_10m&timezone=auto`);
-            break;
-
-
-          case 'nam':
-            // NAM model via NOAA API (US only)
-            response = await fetch(`https://api.weather.gov/points/${lat},${lon}/forecast/hourly`);
-            if (!response.ok) {
-              throw new Error('NAM model only available for US locations');
-            }
             break;
           default:
             // Default to wttr.in (global)
