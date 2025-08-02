@@ -511,6 +511,8 @@
     let currentEnv = null; // Global environment data
     let currentNav = null; // Global navigation data
     let signalKWebSocket = null; // WebSocket connection for real-time updates
+    let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
+    let lastPolarChartUpdate = 0; // Timestamp of last chart update
     async function drawTideGraph(lat, lon) {
       const nearest = stations.reduce((a, b) =>
         haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
@@ -953,7 +955,7 @@
         return;
       }
       
-      const twa = Math.abs(windAngle * 180 / Math.PI);
+      const twa = windAngle * 180 / Math.PI;
       const bsp = boatSpeed * 1.94384; // Convert to knots
       const tws = currentEnv.wind.speedTrue.value * 1.94384; // Convert to knots
       
@@ -981,18 +983,46 @@
       `;
       
       // Update polar chart
+      console.log('Drawing polar chart with:', { twa, bsp, tws });
       drawPolarChart(twa, bsp, tws);
     }
 
     function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
+      const timestamp = new Date().toISOString();
+      console.log(`[${timestamp}] drawPolarChart called with:`, { currentTWA, currentSpeed, currentTWS });
+      
+      const now = Date.now();
+      if (isDrawingPolarChart) {
+        console.log('Chart drawing already in progress, skipping...');
+        return;
+      }
+      
+      // Throttle chart updates to prevent too frequent redraws
+      if (now - lastPolarChartUpdate < 2000) { // 2 second throttle
+        console.log('Chart update throttled, last update was', now - lastPolarChartUpdate, 'ms ago');
+        return;
+      }
+      
       if (!polarData) return;
+      
+      isDrawingPolarChart = true;
+      lastPolarChartUpdate = now;
       
       const canvas = document.getElementById('polarChart');
       const ctx = canvas.getContext('2d');
       
+      // Ensure previous chart is properly destroyed
       if (polarChartInstance) {
+        console.log('Destroying previous chart instance');
         polarChartInstance.destroy();
+        polarChartInstance = null;
+      } else {
+        console.log('No previous chart instance to destroy');
       }
+      
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      console.log('Canvas cleared');
       
       // Determine which side to show based on boat course
       let focusSide = 'starboard'; // default
@@ -1051,36 +1081,73 @@
         
         const validSpeeds = speeds.filter(speed => speed > 0);
         if (validSpeeds.length > 0) {
+          // Reverse the color order: red for max wind, blue for min wind
+          const reversedIndex = windSpeeds.length - 1 - index;
+          const hue = reversedIndex * 30; // 0 = red, 30 = orange, 60 = yellow, 120 = green, 180 = cyan, 240 = blue
+          
           polarDatasets.push({
             label: `${tws} kts`,
             data: speeds,
-            borderColor: `hsl(${index * 30}, 70%, 50%)`,
-            backgroundColor: `hsla(${index * 30}, 70%, 50%, 0.1)`,
+            borderColor: `hsl(${hue}, 70%, 50%)`,
+            backgroundColor: `hsla(${hue}, 70%, 50%, 0.1)`,
             borderWidth: 2,
             fill: false,
-            tension: 0.4
+            tension: 0.4,
+            order: 1 // Higher order values are drawn first (behind)
           });
         }
       });
       
-      // Add current position as a point
-      const currentData = new Array(fullAngles.length).fill(0);
+      // Add current position as a single point
+      // Normalize TWA to 0-360 range
+      let normalizedTWA = currentTWA;
+      while (normalizedTWA < 0) normalizedTWA += 360;
+      while (normalizedTWA >= 360) normalizedTWA -= 360;
+      
+      // Find the closest angle in our chart's angle array
       const closestAngleIndex = fullAngles.reduce((closest, angle, index) => {
-        return Math.abs(angle - currentTWA) < Math.abs(fullAngles[closest] - currentTWA) ? index : closest;
+        return Math.abs(angle - normalizedTWA) < Math.abs(fullAngles[closest] - normalizedTWA) ? index : closest;
       }, 0);
+      
+      // Create a dataset with just the single point
+      const currentData = new Array(fullAngles.length).fill(null);
       currentData[closestAngleIndex] = currentSpeed;
       
+      console.log('Current position calculation:', {
+        currentTWA,
+        normalizedTWA,
+        currentSpeed,
+        closestAngleIndex,
+        closestAngle: fullAngles[closestAngleIndex],
+        fullAngles: fullAngles
+      });
+      
+      console.log('Adding Current dataset:', {
+        label: 'Current',
+        data: currentData,
+        closestAngleIndex,
+        currentSpeed,
+        nonZeroValues: currentData.filter(d => d > 0),
+        nonZeroIndices: currentData.map((d, i) => d > 0 ? i : -1).filter(i => i !== -1)
+      });
+      
+      // Add current position last so it appears on top
       polarDatasets.push({
         label: 'Current',
         data: currentData,
         borderColor: '#000000',
         backgroundColor: '#000000',
-        borderWidth: 4,
+        borderWidth: 0, // No line
         pointRadius: 12,
         pointHoverRadius: 16,
         fill: false,
-        tension: 0
+        tension: 0,
+        showLine: false, // Don't draw lines between points
+        order: -1 // Lower order values are drawn last (on top)
       });
+      
+      console.log('Total datasets:', polarDatasets.length);
+      console.log('All datasets:', polarDatasets.map(ds => ({ label: ds.label, dataPoints: ds.data.filter(d => d > 0).length })));
       
       // Determine start and end angles based on focus side
       let startAngle, endAngle;
@@ -1131,6 +1198,9 @@
           }
         }
       });
+      
+      isDrawingPolarChart = false;
+      console.log('Chart drawing completed');
     }
 
 
