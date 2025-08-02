@@ -65,6 +65,7 @@
       color: #2c3e50;
       margin-top: 5px;
       font-weight: 600;
+      font-family: 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace;
     }
     .button-row {
       display: flex;
@@ -869,35 +870,35 @@
 
         // Update the data grid with vessel information
         document.getElementById('data-grid').innerHTML = `
-          <div class="info-item"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
-          <div class="info-item"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
-          <div class="info-item"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
-          <div class="info-item"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
-          <div class="info-item"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? (nav.anchor.currentRadius.value > nav.anchor.maxRadius.value ? '#e74c3c' : '#27ae60') : '#2c3e50'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">MMSI</div><div class="value">338543654</div></div>
-          <div class="info-item"><div class="label">USCG #</div><div class="value">1024168</div></div>
-          <div class="info-item"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Distance to WP</div><div class="value">${data.navigation?.courseRhumbline?.nextPoint?.distance?.value ? (data.navigation.courseRhumbline.nextPoint.distance.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Course Bearing</div><div class="value">${data.navigation?.courseRhumbline?.bearingTrackTrue?.value ? (data.navigation.courseRhumbline.bearingTrackTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Bearing to Dest</div><div class="value">${data.navigation?.courseRhumbline?.bearingToDestinationTrue?.value ? (data.navigation.courseRhumbline.bearingToDestinationTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Cross Track Error</div><div class="value">${data.navigation?.courseRhumbline?.crossTrackError?.value ? data.navigation.courseRhumbline.crossTrackError.value.toFixed(1) + ' m' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+          <div class="info-item" title="Current vessel latitude position"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
+          <div class="info-item" title="Current vessel longitude position"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
+          <div class="info-item" title="Course Over Ground - true direction the vessel is moving"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="Speed Over Ground - actual speed relative to the seabed"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+          <div class="info-item" title="Speed Through Water - speed relative to the water"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+          <div class="info-item" title="Trip distance - distance traveled on current trip"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+          <div class="info-item" title="Total log distance - cumulative distance traveled"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+          <div class="info-item" title="Water temperature at the surface"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
+          <div class="info-item" title="True wind speed - actual wind speed in the atmosphere"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+          <div class="info-item" title="True wind direction - actual wind direction relative to true north"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="House battery bank voltage"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
+          <div class="info-item" title="House battery bank current - positive is charging, negative is discharging"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
+          <div class="info-item" title="House battery bank power consumption or generation"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
+          <div class="info-item" title="State of Charge - percentage of battery capacity remaining"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
+          <div class="info-item" title="Estimated time remaining until battery depletion"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
+          <div class="info-item" title="Distance from anchor position - red if outside safe radius"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? (nav.anchor.currentRadius.value > nav.anchor.maxRadius.value ? '#e74c3c' : '#27ae60') : '#2c3e50'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+          <div class="info-item" title="Bearing to anchor position from current location"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="Overall vessel length from bow to stern"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+          <div class="info-item" title="Vessel beam - maximum width of the vessel"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+          <div class="info-item" title="Maximum vessel draft - depth below waterline"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+          <div class="info-item" title="Maritime Mobile Service Identity - unique vessel identifier"><div class="label">MMSI</div><div class="value">338543654</div></div>
+          <div class="info-item" title="US Coast Guard vessel registration number"><div class="label">USCG #</div><div class="value">1024168</div></div>
+          <div class="info-item" title="Current rudder angle - positive is starboard, negative is port"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="Distance to next waypoint on current route"><div class="label">Distance to WP</div><div class="value">${data.navigation?.courseRhumbline?.nextPoint?.distance?.value ? (data.navigation.courseRhumbline.nextPoint.distance.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+          <div class="info-item" title="Bearing of the current route track line"><div class="label">Course Bearing</div><div class="value">${data.navigation?.courseRhumbline?.bearingTrackTrue?.value ? (data.navigation.courseRhumbline.bearingTrackTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="Bearing to final destination from current position"><div class="label">Bearing to Dest</div><div class="value">${data.navigation?.courseRhumbline?.bearingToDestinationTrue?.value ? (data.navigation.courseRhumbline.bearingToDestinationTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="Distance perpendicular to the planned route track"><div class="label">Cross Track Error</div><div class="value">${data.navigation?.courseRhumbline?.crossTrackError?.value ? data.navigation.courseRhumbline.crossTrackError.value.toFixed(1) + ' m' : 'N/A'}</div></div>
+          <div class="info-item" title="Apparent wind angle - wind direction relative to vessel heading"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="Apparent wind speed - wind speed as felt on the vessel"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
         `;
       } catch (err) {
         console.error("Failed to load data:", err);
