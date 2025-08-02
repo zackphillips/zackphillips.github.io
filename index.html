@@ -1441,7 +1441,7 @@
       });
       
       isDrawingPolarChart = false;
-      console.log('Chart drawing completed');
+      console.log('Chart drawing completed with theme:', isDark ? 'dark' : 'light');
     }
 
 
@@ -1980,15 +1980,23 @@
       }
       
       // Update polar chart - force complete redraw for point labels
-      if (polarChartInstance && currentNav && currentEnv) {
+      if (polarChartInstance && currentNav && currentEnv && polarData && !isDrawingPolarChart) {
         // Get current data for redraw
         const twa = currentEnv.wind?.angleTrue?.value ? currentEnv.wind.angleTrue.value * 180 / Math.PI : 0;
         const bsp = currentNav.speedThroughWater?.value ? currentNav.speedThroughWater.value * 1.94384 : 0;
         const tws = currentEnv.wind?.speedTrue?.value ? currentEnv.wind.speedTrue.value * 1.94384 : 0;
         
-        // Destroy and recreate the chart to ensure point labels update
-        polarChartInstance.destroy();
-        drawPolarChart(twa, bsp, tws);
+        // Only redraw if we have valid data and chart is not currently drawing
+        if ((twa !== 0 || bsp !== 0 || tws !== 0) && polarChartInstance.data && polarChartInstance.data.datasets.length > 0) {
+          console.log('Updating polar chart for theme change:', theme);
+          // Destroy and recreate the chart to ensure point labels update
+          polarChartInstance.destroy();
+          drawPolarChart(twa, bsp, tws);
+        } else {
+          console.log('Skipping polar chart update - insufficient data or chart not ready');
+        }
+      } else {
+        console.log('Polar chart update skipped - chart not ready or already drawing');
       }
       
       // Update banner colors
