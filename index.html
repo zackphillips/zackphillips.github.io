@@ -357,8 +357,8 @@
       <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left;">Dashboard</div>
       <div class="data-grid" id="data-grid"></div>
       <div class="button-row">
-        <a href="http://192.168.8.50:3000/admin/#/webapps" target="_blank" class="action-btn signal-btn">Open SignalK*</a>
-        <a href="http://192.168.8.50:3000/@signalk/freeboard-sk" target="_blank" class="action-btn plotter-btn">Open Freeboard-SK*</a>
+        <a href="https://192.168.8.50:3000/admin/#/webapps" target="_blank" class="action-btn signal-btn">Open SignalK*</a>
+        <a href="https://192.168.8.50:3000/@signalk/freeboard-sk" target="_blank" class="action-btn plotter-btn">Open Freeboard-SK*</a>
       </div>
       <p class="wifi-note">*Only works on Mermug WiFi</p>
       <div class="button-row" style="margin-top: 10px;">
@@ -658,7 +658,7 @@
           });
           
           res = await Promise.race([
-            fetch('http://192.168.8.50:3000/signalk/v1/api/vessels/self'),
+            fetch('https://192.168.8.50:3000/signalk/v1/api/vessels/self'),
             apiTimeoutPromise
           ]);
           if (res.ok) {
@@ -1292,7 +1292,7 @@
     function connectSignalKWebSocket() {
       try {
         // SignalK WebSocket endpoint
-        signalKWebSocket = new WebSocket('ws://192.168.8.50:3000/signalk/v1/stream');
+        signalKWebSocket = new WebSocket('wss://192.168.8.50:3000/signalk/v1/stream');
         
         signalKWebSocket.onopen = function() {
           console.log('SignalK WebSocket connected');
