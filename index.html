@@ -342,8 +342,8 @@
 </head>
 <body>
   <div id="updateBanner" style="text-align:center; padding:10px; font-weight:bold; background:#dff0d8; color:#2c3e50;">
-  Loading data update time...
-</div>
+    <span id="dataStatus">Loading data...</span> | <span id="updateTime">--</span>
+  </div>
   <div class="container">
     <div class="info-logo-row">
       <img src="mermug.png" alt="Mermug Logo" class="logo-side" />
@@ -386,6 +386,37 @@
           <div class="wind-time">Loading...</div>
           <div class="wind-speed">--</div>
           <div class="wind-direction">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POLAR PERFORMANCE SECTION -->
+    <div class="info-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left;">Polar Performance</div>
+      <div style="display: grid; grid-template-columns: 250px 1fr; gap: 20px;">
+        <!-- Left Column: Performance Data -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <!-- Current Performance -->
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: #2c3e50;">Current Performance</div>
+            <div id="polar-performance" style="font-size: 0.9em;">
+              <div>Loading polar data...</div>
+            </div>
+          </div>
+          <!-- VMG Analysis -->
+          <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: #2c3e50;">VMG Analysis</div>
+            <div id="vmg-analysis" style="font-size: 0.9em;">
+              <div>Calculating VMG...</div>
+            </div>
+          </div>
+        </div>
+        <!-- Right Column: Polar Chart -->
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+          <div style="font-weight: bold; margin-bottom: 10px; color: #2c3e50;">Polar Chart</div>
+          <div style="position: relative; height: 600px; width: 100%;">
+            <canvas id="polarChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -440,6 +471,11 @@
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
     let tideChartInstance = null;
+    let polarChartInstance = null;
+    let polarData = null;
+    let currentEnv = null; // Global environment data
+    let currentNav = null; // Global navigation data
+    let signalKWebSocket = null; // WebSocket connection for real-time updates
     async function drawTideGraph(lat, lon) {
       const nearest = stations.reduce((a, b) =>
         haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
@@ -609,17 +645,69 @@
 
       try {
         console.log('Starting to load data...');
-        const res = await fetch('signalk_latest.json');
+        
+        // Try SignalK API first, then local file as backup
+        let res;
+        let data;
+        let dataSource = 'api';
+        
+        try {
+          // SignalK REST API endpoint first with quick timeout
+          const apiTimeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('API Timeout')), 250);
+          });
+          
+          res = await Promise.race([
+            fetch('http://192.168.8.50:3000/signalk/v1/api/vessels/self'),
+            apiTimeoutPromise
+          ]);
+          if (res.ok) {
+            data = await res.json();
+            dataSource = 'api';
+            console.log('SignalK API data loaded successfully');
+          } else {
+            throw new Error('SignalK API not available');
+          }
+        } catch (apiError) {
+          console.log('SignalK API not available or timed out, trying local file');
+          try {
+            // Local file as backup (no timeout)
+            res = await fetch('signalk_latest.json');
+            if (res.ok) {
+              data = await res.json();
+              dataSource = 'static';
+              console.log('Local JSON file data loaded successfully');
+            } else {
+              throw new Error('Local file not available');
+            }
+          } catch (fileError) {
+            console.log('Both SignalK API and local file unavailable');
+            throw new Error('No data sources available');
+          }
+        }
+        
         console.log('Fetch response status:', res.status);
-        const lastModified = res.headers.get('last-modified');
-        const data = await res.json();
-        console.log('JSON data loaded successfully');
         const nav = data.navigation || {};
         const elec = data.electrical || {};
         const env = data.environment || {};
+        
+        // Store globally for polar performance calculations
+        currentNav = nav;
+        currentEnv = env;
 
-        // Update banner with last modified time
+        // Update banner with data source and timestamp
+        const statusElement = document.getElementById('dataStatus');
+        const timeElement = document.getElementById('updateTime');
         const banner = document.getElementById('updateBanner');
+
+        // Set data source status
+        if (dataSource === 'static') {
+          statusElement.textContent = 'Static Data';
+          statusElement.style.color = '#2c3e50';
+        } else if (dataSource === 'api') {
+          statusElement.textContent = '🌐 API Data (Remote)';
+          statusElement.style.color = '#3498db';
+        }
 
         // Try specific field first, fall back to recursive scan
         let timestampStr = data.navigation?.position?.timestamp;
@@ -628,7 +716,7 @@
         if (modifiedDate && !isNaN(modifiedDate.getTime())) {
           const now = new Date();
           const diffHours = (now - modifiedDate) / (1000 * 60 * 60);
-          banner.textContent = `Data Last Updated: ${modifiedDate.toLocaleString()}`;
+          timeElement.textContent = `Last Updated: ${modifiedDate.toLocaleString()}`;
           if (diffHours > 3) {
             banner.style.background = "#f8d7da";
             banner.style.color = "#721c24";
@@ -637,7 +725,7 @@
             banner.style.color = '#2c3e50';
           }
         } else {
-          banner.textContent = "Timestamp not found in JSON data";
+          timeElement.textContent = "Timestamp not found";
           banner.style.background = "#f8d7da";
           banner.style.color = "#721c24";
         }
@@ -662,6 +750,8 @@
           loadWindForecast().catch(err => console.error('Wind forecast error:', err));
           // Update map location title
           updateMapLocation(lat, lon).catch(err => console.error('Location fetch error:', err));
+          // Update polar performance
+          updatePolarPerformance();
         }
 
         // Update the data grid with vessel information
@@ -705,6 +795,310 @@
         banner.style.color = "#721c24";
       }
     }
+
+    async function loadPolarData() {
+      try {
+        console.log('Loading polar data...');
+        const response = await fetch('resources/polars/polars.csv');
+        console.log('Polar fetch response:', response.status, response.ok);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const csvText = await response.text();
+        console.log('Polar CSV loaded, length:', csvText.length);
+        
+        // Parse CSV data
+        const lines = csvText.split('\n');
+        const headers = lines[0].split(';');
+        const windSpeeds = headers.slice(1).map(Number); // [4, 6, 8, 10, 12, 14, 16, 20, 24]
+        console.log('Wind speeds:', windSpeeds);
+        
+        polarData = [];
+        for (let i = 1; i < lines.length; i++) {
+          const values = lines[i].split(';');
+          const twa = parseFloat(values[0]); // True Wind Angle
+          if (!isNaN(twa)) {
+            const speeds = values.slice(1).map(v => parseFloat(v) || 0);
+            polarData.push({ twa, speeds });
+          }
+        }
+        
+        console.log('Polar data loaded:', polarData.length, 'angles');
+        console.log('Sample polar data:', polarData.slice(0, 3));
+      } catch (error) {
+        console.error('Error loading polar data:', error);
+        document.getElementById('polar-performance').innerHTML = `
+          <div style="color: #e74c3c;">Error loading polar data: ${error.message}</div>
+        `;
+      }
+    }
+
+    function getPolarSpeed(twa, tws) {
+      if (!polarData) return 0;
+      
+      // Find closest wind speed
+      const windSpeeds = [4, 6, 8, 10, 12, 14, 16, 20, 24];
+      let speedIndex = 0;
+      for (let i = 0; i < windSpeeds.length; i++) {
+        if (tws <= windSpeeds[i]) {
+          speedIndex = i;
+          break;
+        }
+      }
+      if (speedIndex === 0) speedIndex = 1;
+      
+      // Find closest TWA
+      let closestAngle = polarData[0];
+      let minDiff = Math.abs(twa - polarData[0].twa);
+      
+      for (const angle of polarData) {
+        const diff = Math.abs(twa - angle.twa);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestAngle = angle;
+        }
+      }
+      
+      return closestAngle.speeds[speedIndex - 1];
+    }
+
+    function calculateVMG(twa, bsp, tws) {
+      // VMG = Boat Speed * cos(angle to wind)
+      const angleRad = (twa * Math.PI) / 180;
+      return bsp * Math.cos(angleRad);
+    }
+
+    function updatePolarPerformance() {
+      console.log('updatePolarPerformance called');
+      console.log('polarData available:', !!polarData);
+      console.log('currentEnv available:', !!currentEnv);
+      console.log('currentNav available:', !!currentNav);
+      
+      if (!polarData) {
+        console.log('No polar data available');
+        return;
+      }
+      
+      console.log('Available wind data:', currentEnv?.wind);
+      
+      // Check for different wind angle data sources
+      let windAngle = null;
+      if (currentEnv?.wind?.angleTrue?.value) {
+        windAngle = currentEnv.wind.angleTrue.value;
+      } else if (currentEnv?.wind?.angleTrueWater?.value) {
+        windAngle = currentEnv.wind.angleTrueWater.value;
+      } else if (currentEnv?.wind?.angleApparent?.value) {
+        windAngle = currentEnv.wind.angleApparent.value;
+      }
+      
+      if (!windAngle) {
+        console.log('No wind angle data available');
+        return;
+      }
+      
+      console.log('Available navigation data:', currentNav);
+      
+      // Check for different boat speed data sources
+      let boatSpeed = null;
+      if (currentNav?.speedThroughWater?.value) {
+        boatSpeed = currentNav.speedThroughWater.value;
+      } else if (currentNav?.speedOverGround?.value) {
+        boatSpeed = currentNav.speedOverGround.value;
+      }
+      
+      if (!boatSpeed) {
+        console.log('No boat speed data available');
+        return;
+      }
+      
+      if (!currentEnv?.wind?.speedTrue?.value) {
+        console.log('No wind speed data');
+        return;
+      }
+      
+      const twa = Math.abs(windAngle * 180 / Math.PI);
+      const bsp = boatSpeed * 1.94384; // Convert to knots
+      const tws = currentEnv.wind.speedTrue.value * 1.94384; // Convert to knots
+      
+      console.log('Calculated values:', { twa, bsp, tws });
+      
+      const polarSpeed = getPolarSpeed(twa, tws);
+      const performancePercent = polarSpeed > 0 ? (bsp / polarSpeed * 100).toFixed(1) : 0;
+      
+      const vmg = calculateVMG(twa, bsp, tws);
+      const polarVMG = calculateVMG(twa, polarSpeed, tws);
+      
+      // Update performance display
+      document.getElementById('polar-performance').innerHTML = `
+        <div><strong>True Wind Angle:</strong> ${twa.toFixed(1)}°</div>
+        <div><strong>Boat Speed:</strong> ${bsp.toFixed(1)} kts</div>
+        <div><strong>Polar Speed:</strong> ${polarSpeed.toFixed(1)} kts</div>
+        <div><strong>Performance:</strong> <span style="color: ${performancePercent >= 95 ? '#27ae60' : performancePercent >= 85 ? '#f39c12' : '#e74c3c'}">${performancePercent}%</span></div>
+      `;
+      
+      // Update VMG display
+      document.getElementById('vmg-analysis').innerHTML = `
+        <div><strong>Current VMG:</strong> ${vmg.toFixed(1)} kts</div>
+        <div><strong>Polar VMG:</strong> ${polarVMG.toFixed(1)} kts</div>
+        <div><strong>VMG %:</strong> <span style="color: ${vmg >= polarVMG * 0.95 ? '#27ae60' : vmg >= polarVMG * 0.85 ? '#f39c12' : '#e74c3c'}">${polarVMG > 0 ? (vmg / polarVMG * 100).toFixed(1) : 0}%</span></div>
+      `;
+      
+      // Update polar chart
+      drawPolarChart(twa, bsp, tws);
+    }
+
+    function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
+      if (!polarData) return;
+      
+      const canvas = document.getElementById('polarChart');
+      const ctx = canvas.getContext('2d');
+      
+      if (polarChartInstance) {
+        polarChartInstance.destroy();
+      }
+      
+      // Determine which side to show based on boat course
+      let focusSide = 'starboard'; // default
+      if (currentNav?.courseOverGroundTrue?.value) {
+        const boatCourse = currentNav.courseOverGroundTrue.value * 180 / Math.PI;
+        const windDirection = currentEnv?.wind?.angleTrueWater?.value * 180 / Math.PI;
+        
+        // Calculate relative angle to determine tack
+        let relativeAngle = boatCourse - windDirection;
+        if (relativeAngle > 180) relativeAngle -= 360;
+        if (relativeAngle < -180) relativeAngle += 360;
+        
+        // Positive = starboard tack, negative = port tack
+        focusSide = relativeAngle > 0 ? 'starboard' : 'port';
+      }
+      
+      // Create full 360° angle array
+      const fullAngles = [];
+      const fullLabels = [];
+      
+      // Add angles from 0° to 180° (port side)
+      for (let i = 0; i <= 180; i += 15) {
+        fullAngles.push(i);
+        fullLabels.push(`${i}°`);
+      }
+      
+      // Add angles from 195° to 345° (starboard side)
+      for (let i = 195; i <= 345; i += 15) {
+        fullAngles.push(i);
+        fullLabels.push(`${i}°`);
+      }
+      
+      // Create datasets for each wind speed
+      const polarDatasets = [];
+      const windSpeeds = [4, 6, 8, 10, 12, 14, 16, 20, 24];
+      
+      windSpeeds.forEach((tws, index) => {
+        const speeds = fullAngles.map(angle => {
+          // For angles > 180°, use the mirror angle (360° - angle)
+          const lookupAngle = angle > 180 ? 360 - angle : angle;
+          
+          // Find closest angle in polar data
+          let closestAngle = polarData[0];
+          let minDiff = Math.abs(lookupAngle - polarData[0].twa);
+          
+          for (const point of polarData) {
+            const diff = Math.abs(lookupAngle - point.twa);
+            if (diff < minDiff) {
+              minDiff = diff;
+              closestAngle = point;
+            }
+          }
+          
+          return closestAngle.speeds[index] || 0;
+        });
+        
+        const validSpeeds = speeds.filter(speed => speed > 0);
+        if (validSpeeds.length > 0) {
+          polarDatasets.push({
+            label: `${tws} kts`,
+            data: speeds,
+            borderColor: `hsl(${index * 30}, 70%, 50%)`,
+            backgroundColor: `hsla(${index * 30}, 70%, 50%, 0.1)`,
+            borderWidth: 2,
+            fill: false,
+            tension: 0.4
+          });
+        }
+      });
+      
+      // Add current position as a point
+      const currentData = new Array(fullAngles.length).fill(0);
+      const closestAngleIndex = fullAngles.reduce((closest, angle, index) => {
+        return Math.abs(angle - currentTWA) < Math.abs(fullAngles[closest] - currentTWA) ? index : closest;
+      }, 0);
+      currentData[closestAngleIndex] = currentSpeed;
+      
+      polarDatasets.push({
+        label: 'Current',
+        data: currentData,
+        borderColor: '#000000',
+        backgroundColor: '#000000',
+        borderWidth: 4,
+        pointRadius: 12,
+        pointHoverRadius: 16,
+        fill: false,
+        tension: 0
+      });
+      
+      // Determine start and end angles based on focus side
+      let startAngle, endAngle;
+      if (focusSide === 'port') {
+        startAngle = 180;
+        endAngle = 0;
+      } else {
+        startAngle = 0;
+        endAngle = 180;
+      }
+      
+      polarChartInstance = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: fullLabels,
+          datasets: polarDatasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            tooltip: {
+              callbacks: {
+                title: ctx => `TWA: ${ctx[0].label}`,
+                label: ctx => `${ctx.dataset.label}: ${ctx[0].parsed.r.toFixed(1)} kts`
+              }
+            },
+            legend: {
+              position: 'top',
+              labels: { usePointStyle: true }
+            }
+          },
+          scales: {
+            r: {
+              beginAtZero: true,
+              title: { display: true, text: 'Boat Speed (kts)' },
+              ticks: {
+                stepSize: 2
+              },
+              pointLabels: {
+                callback: function(value, index) {
+                  return value;
+                }
+              },
+              startAngle: startAngle,
+              min: 0
+            }
+          }
+        }
+      });
+    }
+
+
 
     async function loadWindForecast() {
       try {
@@ -895,8 +1289,161 @@
       return directions[index];
     }
     
+    function connectSignalKWebSocket() {
+      try {
+        // SignalK WebSocket endpoint
+        signalKWebSocket = new WebSocket('ws://192.168.8.50:3000/signalk/v1/stream');
+        
+        signalKWebSocket.onopen = function() {
+          console.log('SignalK WebSocket connected');
+          
+          // Update status to show streaming
+          const statusElement = document.getElementById('dataStatus');
+          statusElement.textContent = '📡 Streaming Data (Real-time)';
+          statusElement.style.color = '#27ae60';
+          
+          // Subscribe to all updates
+          signalKWebSocket.send(JSON.stringify({
+            context: 'vessels.self',
+            subscribe: [{
+              path: '*',
+              policy: 'instant'
+            }]
+          }));
+        };
+        
+        signalKWebSocket.onmessage = function(event) {
+          try {
+            const update = JSON.parse(event.data);
+            if (update.updates) {
+              // Process real-time updates
+              update.updates.forEach(updateData => {
+                if (updateData.values) {
+                  updateData.values.forEach(value => {
+                    // Update the global data objects
+                    updateSignalKData(value.path, value.value);
+                  });
+                }
+              });
+              // Refresh the display with new data
+              updateDisplay();
+            }
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
+        
+        signalKWebSocket.onerror = function(error) {
+          console.error('SignalK WebSocket error:', error);
+        };
+        
+        signalKWebSocket.onclose = function() {
+          console.log('SignalK WebSocket disconnected');
+          // Try to reconnect after 5 seconds
+          setTimeout(connectSignalKWebSocket, 5000);
+        };
+      } catch (error) {
+        console.error('Failed to connect to SignalK WebSocket:', error);
+      }
+    }
+    
+    function updateSignalKData(path, value) {
+      // Update the global data objects based on SignalK path
+      const pathParts = path.split('.');
+      let current = window.signalKData || {};
+      
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        if (!current[pathParts[i]]) {
+          current[pathParts[i]] = {};
+        }
+        current = current[pathParts[i]];
+      }
+      
+      current[pathParts[pathParts.length - 1]] = value;
+      window.signalKData = window.signalKData || {};
+      
+      // Update specific global variables
+      if (path.startsWith('navigation.')) {
+        currentNav = window.signalKData.navigation || {};
+      } else if (path.startsWith('environment.')) {
+        currentEnv = window.signalKData.environment || {};
+      }
+    }
+    
+    function updateDisplay() {
+      // Update the dashboard display with current data
+      if (window.signalKData) {
+        const data = window.signalKData;
+        const nav = data.navigation || {};
+        const elec = data.electrical || {};
+        const env = data.environment || {};
+        
+        // Update timestamp for streaming data
+        const timeElement = document.getElementById('updateTime');
+        const now = new Date();
+        timeElement.textContent = `Last Updated: ${now.toLocaleString()}`;
+        
+        // Keep streaming status green
+        const banner = document.getElementById('updateBanner');
+        banner.style.background = '#dff0d8';
+        banner.style.color = '#2c3e50';
+        
+        // Update data grid
+        updateDataGrid(nav, elec, env, data);
+        
+        // Update polar performance
+        updatePolarPerformance();
+        
+        // Update map location if coordinates available
+        if (nav.position?.value?.latitude && nav.position?.value?.longitude) {
+          updateMapLocation(nav.position.value.latitude, nav.position.value.longitude);
+        }
+      }
+    }
+    
+    function updateDataGrid(nav, elec, env, data) {
+      const lat = nav.position?.value?.latitude;
+      const lon = nav.position?.value?.longitude;
+      
+      document.getElementById('data-grid').innerHTML = `
+        <div class="info-item"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
+        <div class="info-item"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrueWater?.value ? (env.wind.angleTrueWater.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
+        <div class="info-item"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
+        <div class="info-item"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
+        <div class="info-item"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? (nav.anchor.currentRadius.value > nav.anchor.maxRadius.value ? '#e74c3c' : '#27ae60') : '#2c3e50'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">MMSI</div><div class="value">338543654</div></div>
+        <div class="info-item"><div class="label">USCG #</div><div class="value">1024168</div></div>
+        <div class="info-item"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Distance to WP</div><div class="value">${data.navigation?.courseRhumbline?.nextPoint?.distance?.value ? (data.navigation.courseRhumbline.nextPoint.distance.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Course Bearing</div><div class="value">${data.navigation?.courseRhumbline?.bearingTrackTrue?.value ? (data.navigation.courseRhumbline.bearingTrackTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Bearing to Dest</div><div class="value">${data.navigation?.courseRhumbline?.bearingToDestinationTrue?.value ? (data.navigation.courseRhumbline.bearingToDestinationTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Cross Track Error</div><div class="value">${data.navigation?.courseRhumbline?.crossTrackError?.value ? data.navigation.courseRhumbline.crossTrackError.value.toFixed(1) + ' m' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+        <div class="info-item"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      `;
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
+      loadPolarData();
       loadData();
+      
+      // Try to connect to SignalK WebSocket for real-time updates
+      connectSignalKWebSocket();
       
       // Add event listener for forecast model dropdown
       document.getElementById('forecast-model').addEventListener('change', function() {
