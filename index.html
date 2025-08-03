@@ -1291,6 +1291,9 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
 
       if (!polarData) return;
       
+      // Get theme information early for use throughout the function
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      
       isDrawingPolarChart = true;
       lastPolarChartUpdate = now;
       
@@ -1421,8 +1424,8 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       polarDatasets.push({
         label: 'Current',
         data: currentData,
-        borderColor: '#000000',
-        backgroundColor: '#000000',
+        borderColor: isDark ? '#ffffff' : '#000000',
+        backgroundColor: isDark ? '#ffffff' : '#000000',
         borderWidth: 0, // No line
         pointRadius: 12,
         pointHoverRadius: 16,
@@ -1437,8 +1440,6 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       
       let startAngle = 0;
       let endAngle = 180;
-      
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       
       polarChartInstance = new Chart(ctx, {
         type: 'radar',
