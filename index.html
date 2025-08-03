@@ -1435,15 +1435,8 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       console.log('Total datasets:', polarDatasets.length);
       console.log('All datasets:', polarDatasets.map(ds => ({ label: ds.label, dataPoints: ds.data.filter(d => d > 0).length })));
       
-      // Determine start and end angles based on focus side
-      let startAngle, endAngle;
-      if (focusSide === 'port') {
-        startAngle = 180;
-        endAngle = 0;
-      } else {
-        startAngle = 0;
-        endAngle = 180;
-      }
+      let startAngle = 0;
+      let endAngle = 180;
       
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       
