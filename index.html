@@ -1124,22 +1124,18 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
 
     async function loadPolarData() {
       try {
-        console.log('Loading polar data...');
         const response = await fetch('resources/polars/polars.csv');
-        console.log('Polar fetch response:', response.status, response.ok);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const csvText = await response.text();
-        console.log('Polar CSV loaded, length:', csvText.length);
         
         // Parse CSV data
         const lines = csvText.split('\n');
         const headers = lines[0].split(';');
         const windSpeeds = headers.slice(1).map(Number); // [4, 6, 8, 10, 12, 14, 16, 20, 24]
-        console.log('Wind speeds:', windSpeeds);
         
         polarData = [];
         for (let i = 1; i < lines.length; i++) {
@@ -1150,9 +1146,6 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
             polarData.push({ twa, speeds });
           }
         }
-        
-        console.log('Polar data loaded:', polarData.length, 'angles');
-        console.log('Sample polar data:', polarData.slice(0, 3));
       } catch (error) {
         console.error('Error loading polar data:', error);
         document.getElementById('polar-performance').innerHTML = `
@@ -1167,27 +1160,38 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       // Find closest wind speed
       const windSpeeds = [4, 6, 8, 10, 12, 14, 16, 20, 24];
       let speedIndex = 0;
+      
+      // Find the closest wind speed index
       for (let i = 0; i < windSpeeds.length; i++) {
         if (tws <= windSpeeds[i]) {
           speedIndex = i;
           break;
         }
       }
-      if (speedIndex === 0) speedIndex = 1;
       
-      // Find closest TWA
+      // If wind speed is higher than all available speeds, use the last one
+      if (speedIndex === 0 && tws > windSpeeds[0]) {
+        speedIndex = windSpeeds.length - 1;
+      }
+      
+      // Find closest TWA, but avoid 0° if possible since it has zero speed
       let closestAngle = polarData[0];
       let minDiff = Math.abs(twa - polarData[0].twa);
       
       for (const angle of polarData) {
         const diff = Math.abs(twa - angle.twa);
         if (diff < minDiff) {
+          // Prefer non-zero speeds when possible
+          if (angle.twa === 0 && twa > 10) {
+            // Skip 0° angle if we're not very close to it
+            continue;
+          }
           minDiff = diff;
           closestAngle = angle;
         }
       }
       
-      return closestAngle.speeds[speedIndex - 1];
+      return closestAngle.speeds[speedIndex] || 0;
     }
 
     function calculateVMG(twa, bsp, tws) {
@@ -1197,17 +1201,9 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
     }
 
     function updatePolarPerformance() {
-      console.log('updatePolarPerformance called');
-      console.log('polarData available:', !!polarData);
-      console.log('currentEnv available:', !!currentEnv);
-      console.log('currentNav available:', !!currentNav);
-      
       if (!polarData) {
-        console.log('No polar data available');
         return;
       }
-      
-      console.log('Available wind data:', currentEnv?.wind);
       
       // Check for different wind angle data sources
       let windAngle = null;
@@ -1218,8 +1214,6 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       } else if (currentEnv?.wind?.angleApparent?.value) {
         windAngle = currentEnv.wind.angleApparent.value;
       }
-      
-      console.log('Available navigation data:', currentNav);
       
       // Check for different boat speed data sources
       let boatSpeed = null;
@@ -1239,14 +1233,6 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       const twa = windAngle ? windAngle * 180 / Math.PI : 90; // Default to 90 degrees
       const bsp = boatSpeed ? boatSpeed * 1.94384 : 5; // Default to 5 knots
       const tws = windSpeed ? windSpeed * 1.94384 : 10; // Default to 10 knots
-      
-      console.log('Calculated values:', { twa, bsp, tws });
-      console.log('Data status:', { 
-        hasWindAngle: !!windAngle, 
-        hasBoatSpeed: !!boatSpeed, 
-        hasWindSpeed: !!windSpeed,
-        usingDefaults: !windAngle || !boatSpeed || !windSpeed
-      });
       
       const polarSpeed = getPolarSpeed(twa, tws);
       const performancePercent = polarSpeed > 0 ? (bsp / polarSpeed * 100).toFixed(1) : 0;
@@ -1274,17 +1260,12 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       `;
       
       // Always draw polar chart, even with default values
-      console.log('Drawing polar chart with:', { twa, bsp, tws });
       drawPolarChart(twa, bsp, tws);
     }
 
     function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
-      const timestamp = new Date().toISOString();
-      console.log(`[${timestamp}] drawPolarChart called with:`, { currentTWA, currentSpeed, currentTWS });
-      
       const now = Date.now();
       if (isDrawingPolarChart) {
-        console.log('Chart drawing already in progress, skipping...');
         return;
       }
       
@@ -1302,16 +1283,12 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       
       // Ensure previous chart is properly destroyed
       if (polarChartInstance) {
-        console.log('Destroying previous chart instance');
         polarChartInstance.destroy();
         polarChartInstance = null;
-      } else {
-        console.log('No previous chart instance to destroy');
       }
       
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      console.log('Canvas cleared');
       
       // Determine which side to show based on boat course
       let focusSide = 'starboard'; // default
@@ -1402,23 +1379,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       const currentData = new Array(fullAngles.length).fill(null);
       currentData[closestAngleIndex] = currentSpeed;
       
-      console.log('Current position calculation:', {
-        currentTWA,
-        normalizedTWA,
-        currentSpeed,
-        closestAngleIndex,
-        closestAngle: fullAngles[closestAngleIndex],
-        fullAngles: fullAngles
-      });
-      
-      console.log('Adding Current dataset:', {
-        label: 'Current',
-        data: currentData,
-        closestAngleIndex,
-        currentSpeed,
-        nonZeroValues: currentData.filter(d => d > 0),
-        nonZeroIndices: currentData.map((d, i) => d > 0 ? i : -1).filter(i => i !== -1)
-      });
+
       
       // Add current position last so it appears on top
       polarDatasets.push({
@@ -1435,8 +1396,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
         order: -1 // Lower order values are drawn last (on top)
       });
       
-      console.log('Total datasets:', polarDatasets.length);
-      console.log('All datasets:', polarDatasets.map(ds => ({ label: ds.label, dataPoints: ds.data.filter(d => d > 0).length })));
+
       
       let startAngle = 0;
       let endAngle = 180;
@@ -1455,10 +1415,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           },
           plugins: {
             tooltip: {
-              callbacks: {
-                title: ctx => `TWA: ${ctx[0].label}`,
-                label: ctx => `${ctx.dataset.label}: ${ctx[0].parsed.r.toFixed(1)} kts`
-              }
+              enabled: false
             },
             legend: {
               position: 'top',
@@ -1507,7 +1464,6 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       });
       
       isDrawingPolarChart = false;
-      console.log('Chart drawing completed with theme:', isDark ? 'dark' : 'light');
     }
 
 
@@ -1551,7 +1507,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           }
         });
         
-        console.log('Current time index:', currentIndex, 'Current time:', now.toISOString());
+
         
         // Get next 4 time periods starting from current time
         const timeIntervals = [0, 3, 6, 9];
@@ -1594,7 +1550,6 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
             else directionText = 'N';
             
             const time = new Date(data.hourly.time[dataIndex]);
-            console.log(`Wave time ${hourOffset}:`, data.hourly.time[dataIndex], '->', time.toISOString()); // Debug time conversion
             const timeStr = time.toLocaleTimeString('en-US', { 
               hour: 'numeric', 
               minute: '2-digit',
@@ -2096,11 +2051,8 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
         const bsp = boatSpeed ? boatSpeed * 1.94384 : 5;
         const tws = windSpeed ? windSpeed * 1.94384 : 10;
         
-        console.log('Updating polar chart for theme change:', theme, 'with values:', { twa, bsp, tws });
         // Always draw the chart to ensure it appears
         drawPolarChart(twa, bsp, tws);
-      } else {
-        console.log('Polar chart update skipped - polarData not ready or chart already drawing');
       }
       
       // Update banner colors
