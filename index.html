@@ -718,6 +718,7 @@
     let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
     let lastPolarChartUpdate = 0; // Timestamp of last chart update
     let themeChangeTimeout = null; // Timeout for theme change debouncing
+let isThemeChanging = false; // Flag to prevent multiple theme changes
     
     // Helper function to get theme-aware anchor distance colors
     function getAnchorDistanceColor(isOutsideSafeRadius) {
@@ -1218,11 +1219,6 @@
         windAngle = currentEnv.wind.angleApparent.value;
       }
       
-      if (!windAngle) {
-        console.log('No wind angle data available');
-        return;
-      }
-      
       console.log('Available navigation data:', currentNav);
       
       // Check for different boat speed data sources
@@ -1233,21 +1229,24 @@
         boatSpeed = currentNav.speedOverGround.value;
       }
       
-      if (!boatSpeed) {
-        console.log('No boat speed data available');
-        return;
+      // Check for wind speed data
+      let windSpeed = null;
+      if (currentEnv?.wind?.speedTrue?.value) {
+        windSpeed = currentEnv.wind.speedTrue.value;
       }
       
-      if (!currentEnv?.wind?.speedTrue?.value) {
-        console.log('No wind speed data');
-        return;
-      }
-      
-      const twa = windAngle * 180 / Math.PI;
-      const bsp = boatSpeed * 1.94384; // Convert to knots
-      const tws = currentEnv.wind.speedTrue.value * 1.94384; // Convert to knots
+      // Use default values if data is missing
+      const twa = windAngle ? windAngle * 180 / Math.PI : 90; // Default to 90 degrees
+      const bsp = boatSpeed ? boatSpeed * 1.94384 : 5; // Default to 5 knots
+      const tws = windSpeed ? windSpeed * 1.94384 : 10; // Default to 10 knots
       
       console.log('Calculated values:', { twa, bsp, tws });
+      console.log('Data status:', { 
+        hasWindAngle: !!windAngle, 
+        hasBoatSpeed: !!boatSpeed, 
+        hasWindSpeed: !!windSpeed,
+        usingDefaults: !windAngle || !boatSpeed || !windSpeed
+      });
       
       const polarSpeed = getPolarSpeed(twa, tws);
       const performancePercent = polarSpeed > 0 ? (bsp / polarSpeed * 100).toFixed(1) : 0;
@@ -1255,10 +1254,14 @@
       const vmg = calculateVMG(twa, bsp, tws);
       const polarVMG = calculateVMG(twa, polarSpeed, tws);
       
-      // Update performance display
+      // Update performance display with data availability indicators
+      const windAngleDisplay = windAngle ? `${twa.toFixed(1)}°` : 'N/A (using 90°)';
+      const boatSpeedDisplay = boatSpeed ? `${bsp.toFixed(1)} kts` : 'N/A (using 5 kts)';
+      const windSpeedDisplay = windSpeed ? `${tws.toFixed(1)} kts` : 'N/A (using 10 kts)';
+      
       document.getElementById('polar-performance').innerHTML = `
-        <div><strong>True Wind Angle:</strong> ${twa.toFixed(1)}°</div>
-        <div><strong>Boat Speed:</strong> ${bsp.toFixed(1)} kts</div>
+        <div><strong>True Wind Angle:</strong> ${windAngleDisplay}</div>
+        <div><strong>Boat Speed:</strong> ${boatSpeedDisplay}</div>
         <div><strong>Polar Speed:</strong> ${polarSpeed.toFixed(1)} kts</div>
         <div><strong>Performance:</strong> <span style="color: ${performancePercent >= 95 ? '#27ae60' : performancePercent >= 85 ? '#f39c12' : '#e74c3c'}">${performancePercent}%</span></div>
       `;
@@ -1270,7 +1273,7 @@
         <div><strong>VMG %:</strong> <span style="color: ${vmg >= polarVMG * 0.95 ? '#27ae60' : vmg >= polarVMG * 0.85 ? '#f39c12' : '#e74c3c'}">${polarVMG > 0 ? (vmg / polarVMG * 100).toFixed(1) : 0}%</span></div>
       `;
       
-      // Update polar chart
+      // Always draw polar chart, even with default values
       console.log('Drawing polar chart with:', { twa, bsp, tws });
       drawPolarChart(twa, bsp, tws);
     }
@@ -1285,12 +1288,7 @@
         return;
       }
       
-      // Throttle chart updates to prevent too frequent redraws
-      if (now - lastPolarChartUpdate < 2000) { // 2 second throttle
-        console.log('Chart update throttled, last update was', now - lastPolarChartUpdate, 'ms ago');
-        return;
-      }
-      
+
       if (!polarData) return;
       
       isDrawingPolarChart = true;
@@ -1458,6 +1456,9 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          animation: {
+            duration: 0 // Disable all animations
+          },
           plugins: {
             tooltip: {
               callbacks: {
@@ -1477,18 +1478,22 @@
             r: {
                 beginAtZero: true,
                 grid: {
-                  color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+                  color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.1)'
                 },
                 ticks: {
                   stepSize: 2,
                   color: isDark ? '#ffffff' : '#2c3e50',
-                  backdropColor: 'transparent'
+                  backdropColor: 'transparent',
+                  font: {
+                    size: 11,
+                    weight: 'bold'
+                  }
                 },
                 pointLabels: {
                   color: isDark ? '#ffffff' : '#2c3e50',
                   font: {
-                    size: 12,
-                    weight: 'normal'
+                    size: 14,
+                    weight: 'bold'
                   },
                   callback: function(value, index) {
                     return value;
@@ -1993,11 +1998,17 @@
       updateDarkModeButton(savedTheme);
       
       darkModeToggle.addEventListener('click', () => {
+          // Prevent multiple clicks while theme is changing
+          if (isThemeChanging) {
+            console.log('Theme change already in progress, ignoring click');
+            return;
+          }
+          
+          isThemeChanging = true;
           const currentTheme = html.getAttribute('data-theme');
           const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
           
-          html.setAttribute('data-theme', newTheme);
-          localStorage.setItem('theme', newTheme);
+          // Update button immediately to show it's been clicked
           updateDarkModeButton(newTheme);
           
           // Debounce chart updates to prevent rapid toggling issues
@@ -2005,8 +2016,18 @@
             clearTimeout(themeChangeTimeout);
           }
           themeChangeTimeout = setTimeout(() => {
+            // Apply theme change after delay
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // Update charts
             updateChartsForTheme(newTheme);
-          }, 100);
+            
+            // Re-enable theme changes after chart update completes
+            setTimeout(() => {
+              isThemeChanging = false;
+            }, 200); // Reduced delay to ensure chart is fully rendered
+          }, 150); // Reduced delay to 150ms
         });
     }
     
@@ -2047,23 +2068,45 @@
       }
       
       // Update polar chart - force complete redraw for point labels
-      if (polarChartInstance && currentNav && currentEnv && polarData && !isDrawingPolarChart) {
-        // Get current data for redraw
-        const twa = currentEnv.wind?.angleTrue?.value ? currentEnv.wind.angleTrue.value * 180 / Math.PI : 0;
-        const bsp = currentNav.speedThroughWater?.value ? currentNav.speedThroughWater.value * 1.94384 : 0;
-        const tws = currentEnv.wind?.speedTrue?.value ? currentEnv.wind.speedTrue.value * 1.94384 : 0;
-        
-        // Only redraw if we have valid data and chart is not currently drawing
-        if ((twa !== 0 || bsp !== 0 || tws !== 0) && polarChartInstance.data && polarChartInstance.data.datasets.length > 0) {
-          console.log('Updating polar chart for theme change:', theme);
-          // Destroy and recreate the chart to ensure point labels update
+      if (polarData && !isDrawingPolarChart) {
+        // Destroy existing chart if it exists
+        if (polarChartInstance) {
           polarChartInstance.destroy();
-          drawPolarChart(twa, bsp, tws);
-        } else {
-          console.log('Skipping polar chart update - insufficient data or chart not ready');
+          polarChartInstance = null;
         }
+        
+        // Use the same logic as updatePolarPerformance for consistency
+        let windAngle = null;
+        if (currentEnv?.wind?.angleTrue?.value) {
+          windAngle = currentEnv.wind.angleTrue.value;
+        } else if (currentEnv?.wind?.angleTrueWater?.value) {
+          windAngle = currentEnv.wind.angleTrueWater.value;
+        } else if (currentEnv?.wind?.angleApparent?.value) {
+          windAngle = currentEnv.wind.angleApparent.value;
+        }
+        
+        let boatSpeed = null;
+        if (currentNav?.speedThroughWater?.value) {
+          boatSpeed = currentNav.speedThroughWater.value;
+        } else if (currentNav?.speedOverGround?.value) {
+          boatSpeed = currentNav.speedOverGround.value;
+        }
+        
+        let windSpeed = null;
+        if (currentEnv?.wind?.speedTrue?.value) {
+          windSpeed = currentEnv.wind.speedTrue.value;
+        }
+        
+        // Use default values if data is missing (same as updatePolarPerformance)
+        const twa = windAngle ? windAngle * 180 / Math.PI : 90;
+        const bsp = boatSpeed ? boatSpeed * 1.94384 : 5;
+        const tws = windSpeed ? windSpeed * 1.94384 : 10;
+        
+        console.log('Updating polar chart for theme change:', theme, 'with values:', { twa, bsp, tws });
+        // Always draw the chart to ensure it appears
+        drawPolarChart(twa, bsp, tws);
       } else {
-        console.log('Polar chart update skipped - chart not ready or already drawing');
+        console.log('Polar chart update skipped - polarData not ready or chart already drawing');
       }
       
       // Update banner colors
