@@ -11,7 +11,7 @@ A comprehensive marine vessel tracking and monitoring dashboard for the S.V. Mer
 - **Navigation Data**: Course over ground, speed over ground, speed through water
 - **Environmental Data**: Wind speed/direction, water temperature
 - **Electrical Systems**: Battery voltage, current, power, state of charge
-- **Anchor Monitoring**: Distance from anchor position with safety radius alerts
+- **Anchor Monitoring**: Distance from anchor position with safety radius alerts (visual only)
 
 ### **Marine Weather & Tides**
 - **Tide Predictions**: NOAA tide data with nearest station detection
@@ -119,11 +119,11 @@ zackphillips.github.io/
 ├── Makefile                # Build and service management
 ├── README.md              # This file
 ├── mermug.png             # Vessel logo
-├── signalk_latest.json    # Fallback data file
+├── signalk_latest.json    # Data file that is regularly updated
 └── resources/
     └── polars/
-        ├── polars.csv     # Polar performance data
-        └── polars_readme.md
+        ├── polars.csv     # Polar performance data for our boat
+        └── polars_readme.md # Source for our polar data
 ```
 
 ### **Available Make Commands**
@@ -206,16 +206,12 @@ This project is open source. Please check the license file for details.
 
 ## About S.V. Mermug
 
-The S.V. Mermug is a Beneteau Oceanis 40.1 sailing vessel based in San Francisco, CA. This dashboard provides comprehensive monitoring and analysis tools for safe and efficient sailing operations.
+The S.V. Mermug is a 1994 Beneteau First 42s7 sailing vessel based in San Francisco, CA. It is owned by Zack Phillips, Chris Lalau-Kerely, and Brandon Wood
 
 **Vessel Details**:
 - **MMSI**: 338543654
 - **USCG**: 1024168
 - **Hull #**: BEY57004E494
-- **Length**: 40.1 feet
+- **Length**: 42.7 feet
 - **Beam**: 13.9 feet
 - **Draft**: 6.2 feet
-
----
-
-*Built with ❤️ for the sailing community*
