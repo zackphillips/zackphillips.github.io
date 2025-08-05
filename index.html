@@ -1194,9 +1194,10 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       return closestAngle.speeds[speedIndex] || 0;
     }
 
-    function calculateVMG(twa, bsp, tws) {
-      // VMG = Boat Speed * cos(angle to wind)
-      const angleRad = (twa * Math.PI) / 180;
+    function calculateVMG(bearingToDest, bsp) {
+      // VMG = Boat Speed * cos(angle between boat heading and destination bearing)
+      // This calculates how fast you're progressing toward your destination
+      const angleRad = (bearingToDest * Math.PI) / 180;
       return bsp * Math.cos(angleRad);
     }
 
@@ -1230,18 +1231,25 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       }
       
       // Use default values if data is missing
-      const twa = windAngle ? windAngle * 180 / Math.PI : 90; // Default to 90 degrees
+      const twa = windAngle ? windAngle * 180 / Math.PI : 180; // Default to 180 degrees
       const bsp = boatSpeed ? boatSpeed * 1.94384 : 5; // Default to 5 knots
       const tws = windSpeed ? windSpeed * 1.94384 : 10; // Default to 10 knots
       
       const polarSpeed = getPolarSpeed(twa, tws);
       const performancePercent = polarSpeed > 0 ? (bsp / polarSpeed * 100).toFixed(1) : 0;
       
-      const vmg = calculateVMG(twa, bsp, tws);
-      const polarVMG = calculateVMG(twa, polarSpeed, tws);
+      // Get bearing to destination for VMG calculation
+      let bearingToDest = null;
+      if (currentNav?.courseRhumbline?.bearingToDestinationTrue?.value) {
+        bearingToDest = currentNav.courseRhumbline.bearingToDestinationTrue.value * 180 / Math.PI;
+      }
+      
+      // Calculate VMG relative to destination (not wind)
+      const vmg = bearingToDest ? calculateVMG(bearingToDest, bsp) : 0;
+      const polarVMG = bearingToDest ? calculateVMG(bearingToDest, polarSpeed) : 0;
       
       // Update performance display with data availability indicators
-      const windAngleDisplay = windAngle ? `${twa.toFixed(1)}°` : 'N/A (using 90°)';
+      const windAngleDisplay = windAngle ? `${twa.toFixed(1)}°` : 'N/A (using 180°)';
       const boatSpeedDisplay = boatSpeed ? `${bsp.toFixed(1)} kts` : 'N/A (using 5 kts)';
       const windSpeedDisplay = windSpeed ? `${tws.toFixed(1)} kts` : 'N/A (using 10 kts)';
       
@@ -1253,11 +1261,19 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       `;
       
       // Update VMG display
-      document.getElementById('vmg-analysis').innerHTML = `
-        <div><strong>Current VMG:</strong> ${vmg.toFixed(1)} kts</div>
-        <div><strong>Polar VMG:</strong> ${polarVMG.toFixed(1)} kts</div>
-        <div><strong>VMG %:</strong> <span style="color: ${vmg >= polarVMG * 0.95 ? '#27ae60' : vmg >= polarVMG * 0.85 ? '#f39c12' : '#e74c3c'}">${polarVMG > 0 ? (vmg / polarVMG * 100).toFixed(1) : 0}%</span></div>
-      `;
+      if (bearingToDest) {
+        document.getElementById('vmg-analysis').innerHTML = `
+          <div><strong>Current VMG:</strong> ${vmg.toFixed(1)} kts</div>
+          <div><strong>Polar VMG:</strong> ${polarVMG.toFixed(1)} kts</div>
+          <div><strong>VMG %:</strong> <span style="color: ${vmg >= polarVMG * 0.95 ? '#27ae60' : vmg >= polarVMG * 0.85 ? '#f39c12' : '#e74c3c'}">${polarVMG > 0 ? (vmg / polarVMG * 100).toFixed(1) : 0}%</span></div>
+        `;
+      } else {
+        document.getElementById('vmg-analysis').innerHTML = `
+          <div><strong>Current VMG:</strong> <span style="color: #7f8c8d;">No destination set</span></div>
+          <div><strong>Polar VMG:</strong> <span style="color: #7f8c8d;">No destination set</span></div>
+          <div><strong>VMG %:</strong> <span style="color: #7f8c8d;">No destination set</span></div>
+        `;
+      }
       
       // Always draw polar chart, even with default values
       drawPolarChart(twa, bsp, tws);
@@ -1286,6 +1302,8 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
         polarChartInstance.destroy();
         polarChartInstance = null;
       }
+      
+
       
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -1325,6 +1343,17 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       const polarDatasets = [];
       const windSpeeds = [4, 6, 8, 10, 12, 14, 16, 20, 24];
       
+      // Find the closest wind speed to current wind speed
+      let closestWindSpeedIndex = 0;
+      let minWindSpeedDiff = Math.abs(currentTWS - windSpeeds[0]);
+      for (let i = 1; i < windSpeeds.length; i++) {
+        const diff = Math.abs(currentTWS - windSpeeds[i]);
+        if (diff < minWindSpeedDiff) {
+          minWindSpeedDiff = diff;
+          closestWindSpeedIndex = i;
+        }
+      }
+      
       windSpeeds.forEach((tws, index) => {
         const speeds = fullAngles.map(angle => {
           // For angles > 180°, use the mirror angle (360° - angle)
@@ -1351,15 +1380,18 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           const reversedIndex = windSpeeds.length - 1 - index;
           const hue = reversedIndex * 30; // 0 = red, 30 = orange, 60 = yellow, 120 = green, 180 = cyan, 240 = blue
           
+          // Highlight the closest wind speed line
+          const isClosestWindSpeed = index === closestWindSpeedIndex;
+          
           polarDatasets.push({
-            label: `${tws} kts`,
+            label: `${tws} kts${isClosestWindSpeed ? ' (Current)' : ''}`,
             data: speeds,
-            borderColor: `hsl(${hue}, 70%, 50%)`,
-            backgroundColor: `hsla(${hue}, 70%, 50%, 0.1)`,
-            borderWidth: 2,
+            borderColor: isClosestWindSpeed ? (isDark ? '#ffffff' : '#000000') : `hsla(${hue}, 70%, 50%, 0.50)`, // 50% alpha for non-current lines
+            backgroundColor: isClosestWindSpeed ? (isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)') : `hsla(${hue}, 70%, 50%, 0.025)`, // Reduced alpha for background too
+            borderWidth: isClosestWindSpeed ? 4 : 2, // Thicker line for current wind speed
             fill: false,
             tension: 0.4,
-            order: 1 // Higher order values are drawn first (behind)
+            order: isClosestWindSpeed ? 0 : 1 // Current wind speed drawn last (on top)
           });
         }
       });
@@ -1396,7 +1428,9 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
         order: -1 // Lower order values are drawn last (on top)
       });
       
-
+      // Note: Chart.js radar charts don't support true straight radial lines
+      // The TWA line would need to be implemented as a custom canvas overlay
+      // For now, the current position marker and highlighted wind speed line provide good reference
       
       let startAngle = 0;
       let endAngle = 180;
@@ -1464,6 +1498,8 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       });
       
       isDrawingPolarChart = false;
+      
+
     }
 
 
@@ -2053,6 +2089,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
         
         // Always draw the chart to ensure it appears
         drawPolarChart(twa, bsp, tws);
+
       }
       
       // Update banner colors
