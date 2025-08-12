@@ -1,0 +1,373 @@
+{
+  "uuid": "urn:mrn:signalk:uuid:2b686b86-2820-4e6b-bb81-043375cb343c",
+  "name": "Tivoli",
+  "design": {
+    "draft": {
+      "meta": {
+        "description": "The draft of the vessel",
+        "properties": {
+          "minimum": {
+            "description": "The minimum draft of the vessel",
+            "type": "number",
+            "units": "m"
+          },
+          "maximum": {
+            "description": "The maximum draft of the vessel",
+            "type": "number",
+            "units": "m"
+          },
+          "current": {
+            "description": "The current draft of the vessel",
+            "type": "number",
+            "units": "m"
+          },
+          "canoe": {
+            "description": "The draft of the vessel without protrusions such as keel, centerboard, rudder",
+            "type": "number",
+            "units": "m"
+          }
+        }
+      },
+      "value": {
+        "maximum": 2
+      },
+      "$source": "defaults",
+      "timestamp": "2025-09-08T05:10:58.098Z"
+    },
+    "length": {
+      "meta": {
+        "description": "The various lengths of the vessel",
+        "properties": {
+          "overall": {
+            "type": "number",
+            "description": "Length overall",
+            "units": "m"
+          },
+          "hull": {
+            "type": "number",
+            "description": "Length of hull",
+            "units": "m"
+          },
+          "waterline": {
+            "type": "number",
+            "description": "Length at waterline",
+            "units": "m"
+          }
+        }
+      },
+      "value": {
+        "overall": 13
+      },
+      "$source": "defaults",
+      "timestamp": "2025-09-08T05:10:58.098Z"
+    },
+    "beam": {
+      "meta": {
+        "units": "m",
+        "description": "Data should be of type number."
+      },
+      "value": 4,
+      "$source": "defaults",
+      "timestamp": "2025-09-08T05:10:58.098Z"
+    },
+    "airHeight": {
+      "meta": {
+        "units": "m",
+        "description": "Data should be of type number."
+      },
+      "value": 20,
+      "$source": "defaults",
+      "timestamp": "2025-09-08T05:10:58.098Z"
+    },
+    "aisShipType": {
+      "meta": {
+        "description": "The ais ship type see http://www.bosunsmate.org/ais/message5.php",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "The ship type number"
+          },
+          "name": {
+            "type": "string",
+            "description": "The ship type name"
+          }
+        }
+      },
+      "value": {
+        "name": "Sailing",
+        "id": 36
+      },
+      "$source": "defaults",
+      "timestamp": "2025-09-08T05:10:58.098Z"
+    }
+  },
+  "environment": {
+    "moon": {
+      "fraction": {
+        "meta": {},
+        "value": 0.98,
+        "$source": "derived-data",
+        "timestamp": "2025-09-09T01:37:00.084Z"
+      },
+      "phase": {
+        "meta": {},
+        "value": 0.55,
+        "$source": "derived-data",
+        "timestamp": "2025-09-09T01:37:00.084Z"
+      },
+      "phaseName": {
+        "meta": {},
+        "value": "Waning Gibbous",
+        "$source": "derived-data",
+        "timestamp": "2025-09-09T01:37:00.084Z"
+      },
+      "angle": {
+        "meta": {},
+        "value": 1.06,
+        "$source": "derived-data",
+        "timestamp": "2025-09-09T01:37:00.084Z"
+      },
+      "times": {
+        "rise": {
+          "meta": {},
+          "value": "2025-09-09T02:56:59.767Z",
+          "$source": "derived-data",
+          "timestamp": "2025-09-09T01:37:00.084Z"
+        },
+        "set": {
+          "meta": {},
+          "value": "2025-09-08T14:43:26.779Z",
+          "$source": "derived-data",
+          "timestamp": "2025-09-09T01:37:00.084Z"
+        },
+        "alwaysUp": {
+          "meta": {},
+          "value": false,
+          "$source": "derived-data",
+          "timestamp": "2025-09-09T01:37:00.084Z"
+        },
+        "alwaysDown": {
+          "meta": {},
+          "value": false,
+          "$source": "derived-data",
+          "timestamp": "2025-09-09T01:37:00.084Z"
+        }
+      }
+    }
+  },
+  "navigation": {
+    "position": {
+      "meta": {
+        "description": "The position of the vessel in 2 or 3 dimensions (WGS84 datum)",
+        "properties": {
+          "longitude": {
+            "type": "number",
+            "description": "Longitude",
+            "units": "deg",
+            "example": 4.98765245
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Latitude",
+            "units": "deg",
+            "example": 52.0987654
+          },
+          "altitude": {
+            "type": "number",
+            "description": "Altitude",
+            "units": "m"
+          }
+        }
+      },
+      "value": {
+        "longitude": -122.38548516666667,
+        "latitude": 37.780986
+      },
+      "$source": "ais.GP",
+      "timestamp": "2025-09-09T01:37:53.000Z",
+      "sentence": "GLL"
+    },
+    "courseOverGroundTrue": {
+      "meta": {
+        "units": "rad",
+        "description": "Course over ground (true)"
+      },
+      "value": null,
+      "$source": "ais.GP",
+      "timestamp": "2025-09-09T01:37:53.000Z",
+      "sentence": "RMC"
+    },
+    "speedOverGround": {
+      "meta": {
+        "units": "m/s",
+        "description": "Vessel speed over ground. If converting from AIS 'HIGH' value, set to 102.2 (Ais max value) and add warning in notifications"
+      },
+      "value": 0.036011120233928245,
+      "$source": "ais.GP",
+      "timestamp": "2025-09-09T01:37:53.000Z",
+      "sentence": "RMC"
+    },
+    "magneticVariation": {
+      "meta": {
+        "units": "rad",
+        "description": "The magnetic variation (declination) at the current position that must be added to the magnetic heading to derive the true heading. Easterly variations are positive and Westerly variations are negative (in Radians)."
+      },
+      "value": null,
+      "$source": "ais.GP",
+      "timestamp": "2025-09-09T01:37:53.000Z",
+      "sentence": "RMC"
+    },
+    "magneticVariationAgeOfService": {
+      "meta": {
+        "units": "s",
+        "description": "Seconds since the 1st Jan 1970 that the variation calculation was made"
+      },
+      "value": 1757381873,
+      "$source": "ais.GP",
+      "timestamp": "2025-09-09T01:37:53.000Z",
+      "sentence": "RMC"
+    },
+    "datetime": {
+      "meta": {
+        "description": "Time and Date from the GNSS Positioning System"
+      },
+      "value": "2025-09-09T01:37:53.000Z",
+      "$source": "ais.GP",
+      "timestamp": "2025-09-09T01:37:53.000Z",
+      "sentence": "RMC"
+    },
+    "gnss": {
+      "methodQuality": {
+        "meta": {
+          "description": "Quality of the satellite fix"
+        },
+        "value": "DGNSS fix",
+        "$source": "ais.GP",
+        "timestamp": "2025-09-09T01:37:53.000Z",
+        "sentence": "GGA"
+      },
+      "satellites": {
+        "meta": {
+          "description": "Number of satellites"
+        },
+        "value": 12,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-09T01:37:53.000Z",
+        "sentence": "GGA"
+      },
+      "antennaAltitude": {
+        "meta": {
+          "units": "m",
+          "description": "Altitude of antenna"
+        },
+        "value": -3.2,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-09T01:37:53.000Z",
+        "sentence": "GGA"
+      },
+      "horizontalDilution": {
+        "meta": {
+          "description": "Horizontal Dilution of Precision"
+        },
+        "value": 0.8,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-09T01:37:53.000Z",
+        "sentence": "GGA"
+      },
+      "differentialAge": {
+        "meta": {
+          "units": "s",
+          "description": "Age of DGPS data"
+        },
+        "value": 0,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-09T01:37:53.000Z",
+        "sentence": "GGA"
+      },
+      "differentialReference": {
+        "meta": {
+          "description": "ID of DGPS base station"
+        },
+        "value": 0,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-09T01:37:53.000Z",
+        "sentence": "GGA"
+      }
+    }
+  },
+  "validation": {
+    "I2C": {
+      "meta": {
+        "description": "AC equipment common qualities"
+      },
+      "value": "39caa3f1-d42c-496d-ac97-6130015afa26",
+      "$source": "OpenPlotter",
+      "timestamp": "2025-09-08T19:56:47.043Z"
+    },
+    "NOTIFICATIONS": {
+      "meta": {},
+      "value": "cf655efb-157c-4eaa-b802-1155c68f3964",
+      "$source": "OpenPlotter",
+      "timestamp": "2025-09-08T19:56:47.422Z"
+    }
+  },
+  "electrical": {
+    "batteries": {
+      "house": {
+        "capacity": {
+          "dischargeSinceFull": {
+            "meta": {
+              "units": "C",
+              "description": "Data should be of type number."
+            },
+            "value": 0,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-09-09T01:37:53.804383Z"
+          },
+          "stateOfCharge": {
+            "meta": {
+              "units": "ratio",
+              "description": "Data should be of type number."
+            },
+            "value": 1,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-09-09T01:37:53.804383Z"
+          },
+          "timeRemaining": {
+            "meta": {
+              "units": "s",
+              "description": "Data should be of type number."
+            },
+            "value": 864000,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-09-09T01:17:08.732739Z"
+          }
+        },
+        "current": {
+          "meta": {
+            "units": "A",
+            "description": "Current flowing out (+ve) or in (-ve) to the device"
+          },
+          "value": 0.27,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-09-09T01:37:53.804383Z"
+        },
+        "power": {
+          "meta": {},
+          "value": 3.5829,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-09-09T01:37:53.804383Z"
+        },
+        "voltage": {
+          "meta": {
+            "units": "V",
+            "description": "Voltage measured at or as close as possible to the device"
+          },
+          "value": 13.27,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-09-09T01:37:53.804383Z"
+        }
+      }
+    }
+  }
+}
