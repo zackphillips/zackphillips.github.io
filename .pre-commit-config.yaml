@@ -19,3 +19,13 @@ repos:
       - id: check-json
       - id: check-merge-conflict
       - id: debug-statements
+      
+  - repo: local
+    hooks:
+      - id: playwright-tests
+        name: Playwright Tests
+        entry: uv run python scripts/run_playwright_tests.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [manual]

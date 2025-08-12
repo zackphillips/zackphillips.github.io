@@ -169,6 +169,8 @@ make uninstall-service   # Remove systemd service (Linux)
 make change-server-update-period RESTART_SEC=600 # Change update period
 make change-server-branch [BRANCH=<name>] # Switch updater branch
 make test                # Run unit/integration tests
+make test-playwright     # Run Playwright browser tests for JavaScript components
+make test-all           # Run all tests (unit + Playwright)
 make check-uv            # Check if uv is installed and install if necessary
 make pre-commit-install  # Install pre-commit hooks
 make pre-commit-run      # Run pre-commit on all files
@@ -182,12 +184,46 @@ This project uses modern Python development tools:
 - **ruff**: Extremely fast Python linter and formatter
 - **pre-commit**: Git hooks for code quality
 - **pytest**: Testing framework
+- **Playwright**: Browser automation for JavaScript component testing
 
 ### **Data Flow**
 1. **SignalK WebSocket**: Real-time data streaming
 2. **REST API Fallback**: HTTP requests to SignalK server
 3. **Local File**: Static JSON data file
 4. **Demo Data**: Hardcoded fallback values
+
+### **Testing**
+
+The project includes comprehensive testing for both Python backend and JavaScript frontend components:
+
+#### **Unit Tests**
+```bash
+make test  # Run Python unit and integration tests
+```
+
+#### **Browser Tests (Playwright)**
+```bash
+make test-playwright  # Run JavaScript component tests
+make test-all        # Run all tests
+```
+
+The Playwright tests cover:
+- **Page Loading**: Verify the dashboard loads correctly
+- **Dark Mode Toggle**: Test theme switching functionality
+- **Data Grid Population**: Ensure vessel data displays properly
+- **Map Initialization**: Test Leaflet map rendering
+- **Chart Rendering**: Verify tide and polar charts work
+- **Forecast Loading**: Test weather and wave forecast displays
+- **Responsive Design**: Test mobile and tablet layouts
+- **Error Handling**: Verify graceful handling of missing data
+- **Accessibility**: Check basic accessibility features
+
+#### **Test Coverage**
+- **JavaScript Components**: All major UI interactions
+- **Data Loading**: API and file-based data sources
+- **Chart Functionality**: Chart.js and custom chart rendering
+- **Responsive Design**: Multiple viewport sizes
+- **Error Scenarios**: Missing data and network failures
 
 ## Mobile Support
 
