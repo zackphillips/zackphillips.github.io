@@ -155,3 +155,9 @@ def test_branch_manager():
     
     # Cleanup happens automatically after the test
     manager.cleanup_test_branch()
+
+
+@pytest.fixture
+def test_branch():
+    """Fixture that returns the test branch name used across all tests."""
+    return "_test_branch_tmp"
