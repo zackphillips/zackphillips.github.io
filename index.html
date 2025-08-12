@@ -664,11 +664,8 @@
     function getAllStations() {
       if (!tideStations) return [];
 
-      const allStations = [];
-      tideStations.stations.forEach(region => {
-        allStations.push(...region.stations);
-      });
-      return allStations;
+      // New format: tideStations.stations is a flat array
+      return tideStations.stations || [];
     }
 
     function haversine(lat1, lon1, lat2, lon2) {
@@ -725,12 +722,7 @@
         // Set default values if loading fails
         tideStations = {
           stations: [
-            {
-              region: "Default",
-              stations: [
-                { id: "9414290", name: "San Francisco", lat: 37.806, lon: -122.465 }
-              ]
-            }
+            { id: "9414290", name: "San Francisco", lat: 37.806, lon: -122.465 }
           ]
         };
       }
