@@ -53,6 +53,8 @@ help:
 	@echo "  make change-server-update-period RESTART_SEC=600 - Change systemd update period in seconds (Linux only)"
 	@echo "  make change-server-branch [BRANCH=<name>] - Switch updater branch (defaults to current git branch)"
 	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
+	@echo "  make test-playwright - Run Playwright browser tests for JavaScript components"
+	@echo "  make test-all       - Run all tests (unit + Playwright)"
 	@echo "  make check-uv       - Check if uv is installed and install if necessary"
 	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
 	@echo "  make pre-commit-run - Run pre-commit on all files (requires uv)"
@@ -207,6 +209,21 @@ test:
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
 	fi
+
+# Run Playwright tests
+test-playwright: check-uv
+	@echo "Installing Playwright browsers..."
+	@if command -v uv >/dev/null 2>&1; then \
+		"$(UV_BIN)" run playwright install; \
+		echo "Running Playwright tests..."; \
+		"$(UV_BIN)" run pytest tests/test_vessel_tracker_playwright.py -v -m playwright; \
+	else \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
+
+# Run all tests (unit + Playwright)
+test-all: test test-playwright
 
 # Install pre-commit hooks
 pre-commit-install: check-uv

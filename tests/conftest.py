@@ -8,11 +8,16 @@ from pathlib import Path
 
 
 @pytest.fixture(autouse=True)
-def check_signalk_running():
+def check_signalk_running(request):
     """
     Autouse fixture that checks if SignalK is running on the specified port and URL
     from info.json before each test. This ensures tests only run when SignalK is available.
+    
+    Skip this check for Playwright tests that don't need SignalK.
     """
+    # Skip SignalK check for Playwright tests
+    if request.node.get_closest_marker('playwright'):
+        return
     # Read SignalK configuration from info.json
     info_path = Path(__file__).parent.parent / "data" / "vessel" / "info.json"
     

@@ -1,0 +1,46 @@
+name: Playwright Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: latest
+    
+    - name: Install dependencies
+      run: |
+        uv sync --group test
+    
+    - name: Install Playwright browsers
+      run: |
+        uv run playwright install --with-deps
+    
+    - name: Run Playwright tests
+      run: |
+        uv run pytest tests/test_vessel_tracker_playwright.py -v -m playwright
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: playwright-report
+        path: |
+          playwright-report/
+          test-results/
+        retention-days: 30

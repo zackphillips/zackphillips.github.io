@@ -1,0 +1,64 @@
+# Playwright configuration for vessel tracker tests
+[global]
+# Global timeout for all tests
+timeout = 30000
+
+# Global expect timeout
+expect_timeout = 10000
+
+# Global navigation timeout
+navigation_timeout = 30000
+
+# Global action timeout
+action_timeout = 15000
+
+[projects]
+# Default project configuration
+[projects.default]
+name = "chromium"
+use = { channel = "chrome" }
+test_dir = "tests"
+test_match = "**/test_playwright_*.py"
+
+# Reporter configuration
+[reporter]
+# HTML reporter
+[reporter.html]
+output_folder = "playwright-report"
+open = "never"
+
+# JSON reporter
+[reporter.json]
+output_file = "test-results/results.json"
+
+# JUnit reporter
+[reporter.junit]
+output_file = "test-results/results.xml"
+
+# Test retry configuration
+[retry]
+# Retry failed tests up to 2 times
+retries = 2
+
+# Browser configuration
+[browsers]
+# Chromium configuration
+[browsers.chromium]
+name = "chromium"
+use = { channel = "chrome" }
+args = [
+  "--no-sandbox",
+  "--disable-dev-shm-usage",
+  "--disable-web-security",
+  "--disable-features=VizDisplayCompositor"
+]
+
+# Firefox configuration
+[browsers.firefox]
+name = "firefox"
+use = { channel = "firefox" }
+
+# WebKit configuration
+[browsers.webkit]
+name = "webkit"
+use = { channel = "webkit" }
