@@ -1,0 +1,798 @@
+{
+  "uuid": "urn:mrn:signalk:uuid:2b686b86-2820-4e6b-bb81-043375cb343c",
+  "name": "Tivoli",
+  "design": {
+    "draft": {
+      "meta": {
+        "description": "The draft of the vessel",
+        "properties": {
+          "minimum": {
+            "description": "The minimum draft of the vessel",
+            "type": "number",
+            "units": "m"
+          },
+          "maximum": {
+            "description": "The maximum draft of the vessel",
+            "type": "number",
+            "units": "m"
+          },
+          "current": {
+            "description": "The current draft of the vessel",
+            "type": "number",
+            "units": "m"
+          },
+          "canoe": {
+            "description": "The draft of the vessel without protrusions such as keel, centerboard, rudder",
+            "type": "number",
+            "units": "m"
+          }
+        }
+      },
+      "value": {
+        "maximum": 2
+      },
+      "$source": "defaults",
+      "timestamp": "2025-09-06T04:47:15.964Z"
+    },
+    "length": {
+      "meta": {
+        "description": "The various lengths of the vessel",
+        "properties": {
+          "overall": {
+            "type": "number",
+            "description": "Length overall",
+            "units": "m"
+          },
+          "hull": {
+            "type": "number",
+            "description": "Length of hull",
+            "units": "m"
+          },
+          "waterline": {
+            "type": "number",
+            "description": "Length at waterline",
+            "units": "m"
+          }
+        }
+      },
+      "value": {
+        "overall": 13
+      },
+      "$source": "defaults",
+      "timestamp": "2025-09-06T04:47:15.964Z"
+    },
+    "beam": {
+      "meta": {
+        "units": "m",
+        "description": "Data should be of type number."
+      },
+      "value": 4,
+      "$source": "defaults",
+      "timestamp": "2025-09-06T04:47:15.964Z"
+    },
+    "airHeight": {
+      "meta": {
+        "units": "m",
+        "description": "Data should be of type number."
+      },
+      "value": 20,
+      "$source": "defaults",
+      "timestamp": "2025-09-06T04:47:15.964Z"
+    },
+    "aisShipType": {
+      "meta": {
+        "description": "The ais ship type see http://www.bosunsmate.org/ais/message5.php",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "The ship type number"
+          },
+          "name": {
+            "type": "string",
+            "description": "The ship type name"
+          }
+        }
+      },
+      "value": {
+        "name": "Sailing",
+        "id": 36
+      },
+      "$source": "defaults",
+      "timestamp": "2025-09-06T04:47:15.964Z"
+    }
+  },
+  "navigation": {
+    "headingMagnetic": {
+      "meta": {
+        "units": "rad",
+        "description": "Current magnetic heading of the vessel, equals 'headingCompass adjusted for magneticDeviation'"
+      },
+      "value": 2.6867,
+      "$source": "can0.2",
+      "timestamp": "2025-09-06T18:46:13.875Z",
+      "pgn": 127250
+    },
+    "rateOfTurn": {
+      "meta": {
+        "units": "rad/s",
+        "description": "Rate of turn (+ve is change to starboard). If the value is AIS RIGHT or LEFT, set to +-0.0206 rads and add warning in notifications"
+      },
+      "value": -0.00680697,
+      "$source": "can0.2",
+      "timestamp": "2025-09-06T18:46:13.851Z",
+      "pgn": 127251
+    },
+    "trip": {
+      "log": {
+        "meta": {
+          "units": "m",
+          "description": "Total distance traveled on this trip / since trip reset"
+        },
+        "value": 27409.600023133702,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.577Z",
+        "values": {
+          "can0.0": {
+            "value": 0,
+            "pgn": 128275,
+            "timestamp": "2025-09-06T18:46:12.930Z"
+          },
+          "tacktick.II": {
+            "value": 27409.600023133702,
+            "timestamp": "2025-09-06T18:46:13.577Z",
+            "sentence": "VLW"
+          }
+        },
+        "sentence": "VLW"
+      }
+    },
+    "log": {
+      "meta": {
+        "units": "m",
+        "description": "Total distance traveled"
+      },
+      "value": 16567992.013983384,
+      "$source": "tacktick.II",
+      "timestamp": "2025-09-06T18:46:13.577Z",
+      "values": {
+        "can0.0": {
+          "value": 0,
+          "pgn": 128275,
+          "timestamp": "2025-09-06T18:46:12.930Z"
+        },
+        "tacktick.II": {
+          "value": 16567992.013983384,
+          "timestamp": "2025-09-06T18:46:13.577Z",
+          "sentence": "VLW"
+        }
+      },
+      "sentence": "VLW"
+    },
+    "position": {
+      "meta": {
+        "description": "The position of the vessel in 2 or 3 dimensions (WGS84 datum)",
+        "properties": {
+          "longitude": {
+            "type": "number",
+            "description": "Longitude",
+            "units": "deg",
+            "example": 4.98765245
+          },
+          "latitude": {
+            "type": "number",
+            "description": "Latitude",
+            "units": "deg",
+            "example": 52.0987654
+          },
+          "altitude": {
+            "type": "number",
+            "description": "Altitude",
+            "units": "m"
+          }
+        }
+      },
+      "value": {
+        "longitude": -120.85371916666666,
+        "latitude": 35.3645525
+      },
+      "$source": "ais.GP",
+      "timestamp": "2025-09-06T18:46:13.000Z",
+      "sentence": "GLL",
+      "values": {
+        "ais.GP": {
+          "value": {
+            "longitude": -120.85371916666666,
+            "latitude": 35.3645525
+          },
+          "sentence": "GLL",
+          "timestamp": "2025-09-06T18:46:13.000Z"
+        },
+        "opencon.EC": {
+          "value": {
+            "longitude": -120.89478333333334,
+            "latitude": 35.324016666666665
+          },
+          "timestamp": "2025-09-06T17:31:35.000Z",
+          "sentence": "RMC"
+        },
+        "tacktick.II": {
+          "value": {
+            "longitude": -120.85371666666667,
+            "latitude": 35.36456666666667
+          },
+          "timestamp": "2025-09-06T18:46:12.000Z",
+          "sentence": "GLL"
+        }
+      }
+    },
+    "courseOverGroundTrue": {
+      "meta": {
+        "units": "rad",
+        "description": "Course over ground (true)"
+      },
+      "value": 2.862339973924257,
+      "$source": "tacktick.II",
+      "timestamp": "2025-09-06T18:46:12.000Z",
+      "sentence": "RMC",
+      "values": {
+        "ais.GP": {
+          "value": 2.8721138177376573,
+          "sentence": "RMC",
+          "timestamp": "2025-09-06T18:46:13.000Z"
+        },
+        "opencon.EC": {
+          "value": 0.31189033740260047,
+          "timestamp": "2025-09-06T17:31:35.000Z",
+          "sentence": "RMC"
+        },
+        "tacktick.II": {
+          "value": 2.862339973924257,
+          "timestamp": "2025-09-06T18:46:12.000Z",
+          "sentence": "RMC"
+        }
+      }
+    },
+    "speedOverGround": {
+      "meta": {
+        "units": "m/s",
+        "description": "Vessel speed over ground. If converting from AIS 'HIGH' value, set to 102.2 (Ais max value) and add warning in notifications"
+      },
+      "value": 1.8520004691734524,
+      "$source": "tacktick.II",
+      "timestamp": "2025-09-06T18:46:12.000Z",
+      "sentence": "RMC",
+      "values": {
+        "ais.GP": {
+          "value": 1.8550871366220747,
+          "sentence": "RMC",
+          "timestamp": "2025-09-06T18:46:13.000Z"
+        },
+        "opencon.EC": {
+          "value": 3.560985346560732,
+          "timestamp": "2025-09-06T17:31:35.000Z",
+          "sentence": "RMC"
+        },
+        "tacktick.II": {
+          "value": 1.8520004691734524,
+          "timestamp": "2025-09-06T18:46:12.000Z",
+          "sentence": "RMC"
+        }
+      }
+    },
+    "magneticVariation": {
+      "meta": {
+        "units": "rad",
+        "description": "The magnetic variation (declination) at the current position that must be added to the magnetic heading to derive the true heading. Easterly variations are positive and Westerly variations are negative (in Radians)."
+      },
+      "value": 0.19198621776321237,
+      "$source": "tacktick.II",
+      "timestamp": "2025-09-06T18:46:12.000Z",
+      "sentence": "RMC",
+      "values": {
+        "ais.GP": {
+          "value": null,
+          "sentence": "RMC",
+          "timestamp": "2025-09-06T18:46:13.000Z"
+        },
+        "opencon.EC": {
+          "value": 0.19198621776321237,
+          "timestamp": "2025-09-06T17:31:35.000Z",
+          "sentence": "RMC"
+        },
+        "tacktick.II": {
+          "value": 0.19198621776321237,
+          "timestamp": "2025-09-06T18:46:12.000Z",
+          "sentence": "RMC"
+        }
+      }
+    },
+    "magneticVariationAgeOfService": {
+      "meta": {
+        "units": "s",
+        "description": "Seconds since the 1st Jan 1970 that the variation calculation was made"
+      },
+      "value": 1757184372,
+      "$source": "tacktick.II",
+      "timestamp": "2025-09-06T18:46:12.000Z",
+      "sentence": "RMC",
+      "values": {
+        "ais.GP": {
+          "value": 1757184373,
+          "sentence": "RMC",
+          "timestamp": "2025-09-06T18:46:13.000Z"
+        },
+        "opencon.EC": {
+          "value": 1757179895,
+          "timestamp": "2025-09-06T17:31:35.000Z",
+          "sentence": "RMC"
+        },
+        "tacktick.II": {
+          "value": 1757184372,
+          "timestamp": "2025-09-06T18:46:12.000Z",
+          "sentence": "RMC"
+        }
+      }
+    },
+    "datetime": {
+      "meta": {
+        "description": "Time and Date from the GNSS Positioning System"
+      },
+      "value": "2025-09-06T18:46:12.000Z",
+      "$source": "tacktick.II",
+      "timestamp": "2025-09-06T18:46:12.000Z",
+      "sentence": "RMC",
+      "values": {
+        "ais.GP": {
+          "value": "2025-09-06T18:46:13.000Z",
+          "sentence": "RMC",
+          "timestamp": "2025-09-06T18:46:13.000Z"
+        },
+        "opencon.EC": {
+          "value": "2025-09-06T17:31:35.000Z",
+          "timestamp": "2025-09-06T17:31:35.000Z",
+          "sentence": "RMC"
+        },
+        "tacktick.II": {
+          "value": "2025-09-06T18:46:12.000Z",
+          "timestamp": "2025-09-06T18:46:12.000Z",
+          "sentence": "RMC"
+        }
+      }
+    },
+    "courseRhumbline": {
+      "nextPoint": {
+        "position": {
+          "meta": {},
+          "value": {
+            "longitude": -120.86866666666667,
+            "latitude": 35.361666666666665
+          },
+          "$source": "opencon.EC",
+          "timestamp": "2025-09-06T17:31:35.047Z",
+          "sentence": "RMB"
+        },
+        "bearingTrue": {
+          "meta": {},
+          "value": 0.5148895827484117,
+          "$source": "opencon.EC",
+          "timestamp": "2025-09-06T17:31:35.047Z",
+          "sentence": "RMB"
+        },
+        "velocityMadeGood": {
+          "meta": {},
+          "value": 3.4879342169433354,
+          "$source": "opencon.EC",
+          "timestamp": "2025-09-06T17:31:35.047Z",
+          "sentence": "RMB"
+        },
+        "distance": {
+          "meta": {},
+          "value": 4807.7920040577765,
+          "$source": "opencon.EC",
+          "timestamp": "2025-09-06T17:31:35.047Z",
+          "sentence": "RMB"
+        },
+        "ID": {
+          "meta": {},
+          "value": "006",
+          "$source": "opencon.EC",
+          "timestamp": "2025-09-06T17:31:35.048Z",
+          "sentence": "APB"
+        }
+      },
+      "crossTrackError": {
+        "meta": {
+          "units": "m",
+          "description": "The distance from the vessel's present position to the closest point on a line (track) between previousPoint and nextPoint. A negative number indicates that the vessel is currently to the left of this line (and thus must steer right to compensate), a positive number means the vessel is to the right of the line (steer left to compensate)."
+        },
+        "value": -361.14000030480213,
+        "$source": "opencon.EC",
+        "timestamp": "2025-09-06T17:31:35.048Z",
+        "sentence": "XTE"
+      },
+      "bearingTrackTrue": {
+        "meta": {
+          "units": "rad",
+          "description": "The bearing of a line between previousPoint and nextPoint, relative to true north."
+        },
+        "value": 0.4397007985553282,
+        "$source": "opencon.EC",
+        "timestamp": "2025-09-06T17:31:35.048Z",
+        "sentence": "APB"
+      },
+      "bearingOriginToDestinationTrue": {
+        "meta": {},
+        "value": 0.4397007985553282,
+        "$source": "opencon.EC",
+        "timestamp": "2025-09-06T17:31:35.048Z",
+        "sentence": "APB"
+      },
+      "bearingToDestinationTrue": {
+        "meta": {},
+        "value": 0.5148895827484117,
+        "$source": "opencon.EC",
+        "timestamp": "2025-09-06T17:31:35.048Z",
+        "sentence": "APB"
+      }
+    },
+    "headingTrue": {
+      "meta": {
+        "units": "rad",
+        "description": "The current true north heading of the vessel, equals 'headingMagnetic adjusted for magneticVariation'"
+      },
+      "value": 2.8786862177632124,
+      "$source": "derived-data",
+      "timestamp": "2025-09-06T18:46:13.876Z"
+    },
+    "gnss": {
+      "methodQuality": {
+        "meta": {
+          "description": "Quality of the satellite fix"
+        },
+        "value": "GNSS Fix",
+        "$source": "ais.GP",
+        "timestamp": "2025-09-06T18:46:13.000Z",
+        "sentence": "GGA"
+      },
+      "satellites": {
+        "meta": {
+          "description": "Number of satellites"
+        },
+        "value": 8,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-06T18:46:13.000Z",
+        "sentence": "GGA"
+      },
+      "antennaAltitude": {
+        "meta": {
+          "units": "m",
+          "description": "Altitude of antenna"
+        },
+        "value": 2.3,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-06T18:46:13.000Z",
+        "sentence": "GGA"
+      },
+      "horizontalDilution": {
+        "meta": {
+          "description": "Horizontal Dilution of Precision"
+        },
+        "value": 1.16,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-06T18:46:13.000Z",
+        "sentence": "GGA"
+      },
+      "differentialAge": {
+        "meta": {
+          "units": "s",
+          "description": "Age of DGPS data"
+        },
+        "value": 0,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-06T18:46:13.000Z",
+        "sentence": "GGA"
+      },
+      "differentialReference": {
+        "meta": {
+          "description": "ID of DGPS base station"
+        },
+        "value": 0,
+        "$source": "ais.GP",
+        "timestamp": "2025-09-06T18:46:13.000Z",
+        "sentence": "GGA"
+      }
+    },
+    "speedThroughWater": {
+      "meta": {
+        "units": "m/s",
+        "description": "Vessel speed through the water"
+      },
+      "value": 2.2121116715127345,
+      "$source": "tacktick.II",
+      "timestamp": "2025-09-06T18:46:13.577Z",
+      "sentence": "VHW"
+    }
+  },
+  "steering": {
+    "autopilot": {
+      "target": {
+        "headingMagnetic": {
+          "meta": {
+            "units": "rad",
+            "description": "Data should be of type number."
+          },
+          "value": 0.1396,
+          "$source": "can0.0",
+          "timestamp": "2025-09-06T17:56:57.053Z",
+          "pgn": 127237
+        },
+        "headingTrue": {
+          "meta": {
+            "units": "rad",
+            "description": "Data should be of type number."
+          },
+          "value": 0.5148895827484117,
+          "$source": "opencon.EC",
+          "timestamp": "2025-09-06T17:31:35.048Z",
+          "sentence": "APB"
+        }
+      }
+    },
+    "rudderAngle": {
+      "meta": {
+        "units": "rad",
+        "description": "Data should be of type number."
+      },
+      "value": 0.0192,
+      "$source": "can0.0",
+      "timestamp": "2025-09-06T18:46:13.877Z",
+      "pgn": 127245
+    }
+  },
+  "environment": {
+    "moon": {
+      "fraction": {
+        "meta": {},
+        "value": 0.99,
+        "$source": "derived-data",
+        "timestamp": "2025-09-06T18:45:27.704Z"
+      },
+      "phase": {
+        "meta": {},
+        "value": 0.46,
+        "$source": "derived-data",
+        "timestamp": "2025-09-06T18:45:27.704Z"
+      },
+      "phaseName": {
+        "meta": {},
+        "value": "Waxing Gibbous",
+        "$source": "derived-data",
+        "timestamp": "2025-09-06T18:45:27.704Z"
+      },
+      "angle": {
+        "meta": {},
+        "value": -2.01,
+        "$source": "derived-data",
+        "timestamp": "2025-09-06T18:45:27.704Z"
+      },
+      "times": {
+        "rise": {
+          "meta": {},
+          "value": "2025-09-07T01:55:45.764Z",
+          "$source": "derived-data",
+          "timestamp": "2025-09-06T18:45:27.704Z"
+        },
+        "set": {
+          "meta": {},
+          "value": "2025-09-06T12:21:46.147Z",
+          "$source": "derived-data",
+          "timestamp": "2025-09-06T18:45:27.704Z"
+        },
+        "alwaysUp": {
+          "meta": {},
+          "value": false,
+          "$source": "derived-data",
+          "timestamp": "2025-09-06T18:45:27.704Z"
+        },
+        "alwaysDown": {
+          "meta": {},
+          "value": false,
+          "$source": "derived-data",
+          "timestamp": "2025-09-06T18:45:27.704Z"
+        }
+      }
+    },
+    "wind": {
+      "directionTrue": {
+        "meta": {
+          "units": "rad",
+          "description": "The wind direction relative to true north"
+        },
+        "value": 4.484389129964625,
+        "$source": "derived-data",
+        "timestamp": "2025-09-06T18:46:13.876Z"
+      },
+      "angleApparent": {
+        "meta": {
+          "units": "rad",
+          "description": "Apparent wind angle, negative to port"
+        },
+        "value": 1.6057029122014126,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.892Z",
+        "sentence": "MWV"
+      },
+      "speedApparent": {
+        "meta": {
+          "units": "m/s",
+          "description": "Apparent wind speed"
+        },
+        "value": 5.7617792374285175,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.892Z",
+        "sentence": "MWV"
+      },
+      "angleTrueWater": {
+        "meta": {
+          "units": "rad",
+          "description": "True wind angle based on speed through water, negative to port"
+        },
+        "value": 1.9373154701560522,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.892Z",
+        "values": {
+          "derived-data": {
+            "value": 1.9676448749931286,
+            "timestamp": "2025-09-06T18:46:13.876Z"
+          },
+          "tacktick.II": {
+            "value": 1.9373154701560522,
+            "timestamp": "2025-09-06T18:46:13.892Z",
+            "sentence": "MWV"
+          }
+        },
+        "sentence": "MWV"
+      },
+      "speedTrue": {
+        "meta": {
+          "units": "m/s",
+          "description": "Wind speed over water (as calculated from speedApparent and vessel's speed through water)"
+        },
+        "value": 6.1218904397678005,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.892Z",
+        "values": {
+          "derived-data": {
+            "value": 6.243490610616322,
+            "timestamp": "2025-09-06T18:46:13.876Z"
+          },
+          "tacktick.II": {
+            "value": 6.1218904397678005,
+            "timestamp": "2025-09-06T18:46:13.892Z",
+            "sentence": "MWV"
+          }
+        },
+        "sentence": "MWV"
+      }
+    },
+    "water": {
+      "temperature": {
+        "meta": {
+          "units": "K",
+          "description": "Current water temperature"
+        },
+        "value": 288.65,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.892Z",
+        "sentence": "MTW"
+      }
+    },
+    "depth": {
+      "belowTransducer": {
+        "meta": {
+          "units": "m",
+          "description": "Depth below Transducer"
+        },
+        "value": 5.3,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.636Z",
+        "sentence": "DPT"
+      },
+      "surfaceToTransducer": {
+        "meta": {
+          "units": "m",
+          "description": "Depth transducer is below the water surface"
+        },
+        "value": 0.4,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.636Z",
+        "sentence": "DPT"
+      },
+      "belowSurface": {
+        "meta": {
+          "units": "m",
+          "description": "Depth from surface"
+        },
+        "value": 5.7,
+        "$source": "tacktick.II",
+        "timestamp": "2025-09-06T18:46:13.636Z",
+        "sentence": "DPT"
+      }
+    }
+  },
+  "notifications": {
+    "arrivalCircleEntered": {
+      "meta": {},
+      "value": null,
+      "$source": "opencon.EC",
+      "timestamp": "2025-09-06T17:31:35.048Z",
+      "sentence": "APB"
+    },
+    "perpendicularPassed": {
+      "meta": {},
+      "value": null,
+      "$source": "opencon.EC",
+      "timestamp": "2025-09-06T17:31:35.048Z",
+      "sentence": "APB"
+    }
+  },
+  "electrical": {
+    "batteries": {
+      "house": {
+        "capacity": {
+          "dischargeSinceFull": {
+            "meta": {
+              "units": "C",
+              "description": "Data should be of type number."
+            },
+            "value": -21600,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-09-06T18:46:10.535858Z"
+          },
+          "stateOfCharge": {
+            "meta": {
+              "units": "ratio",
+              "description": "Data should be of type number."
+            },
+            "value": 0.986,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-09-06T18:46:10.535858Z"
+          },
+          "timeRemaining": {
+            "meta": {
+              "units": "s",
+              "description": "Data should be of type number."
+            },
+            "value": 210240,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-09-06T18:40:47.522224Z"
+          }
+        },
+        "current": {
+          "meta": {
+            "units": "A",
+            "description": "Current flowing out (+ve) or in (-ve) to the device"
+          },
+          "value": 11.719,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-09-06T18:46:10.535858Z"
+        },
+        "power": {
+          "meta": {},
+          "value": 158.2065,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-09-06T18:46:10.535858Z"
+        },
+        "voltage": {
+          "meta": {
+            "units": "V",
+            "description": "Voltage measured at or as close as possible to the device"
+          },
+          "value": 13.5,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-09-06T18:46:10.535858Z"
+        }
+      }
+    }
+  }
+}
