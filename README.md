@@ -113,7 +113,7 @@ The dashboard automatically tries to connect to SignalK at `https://192.168.8.50
 3. Modify the data parsing logic if needed
 
 ### **Polar Data**
-Polar performance data is loaded from `data/vessel/polars/polars.csv`. The file should contain:
+Polar performance data is loaded from `data/vessel/polars.csv`. These files may be downloaded from [https://jieter.github.io/orc-data/site/](here). The file should contain:
 - Wind speeds in the header row
 - True wind angles in the first column
 - Boat speeds for each wind speed/angle combination
