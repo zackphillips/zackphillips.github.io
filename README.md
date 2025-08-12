@@ -1,8 +1,11 @@
-# Mermug Tracker
+# Vessel Tracker
 
-![Mermug Logo](mermug.png)
+![Vessel Logo](data/vessel/logo.png)
 
-A comprehensive marine vessel tracking and monitoring dashboard for the S.V. Mermug. This web application provides real-time vessel data, tide information, weather forecasts, and polar performance analysis with a modern dark/light mode interface.
+A comprehensive marine vessel tracking and monitoring dashboard. This web application provides real-time vessel data, tide information, weather forecasts, and polar performance analysis with a modern dark/light mode interface.
+
+## Configuring SSL Access in SignalK
+1. `sudo signalk-server-setup`
 
 ## Features
 
@@ -34,11 +37,11 @@ A comprehensive marine vessel tracking and monitoring dashboard for the S.V. Mer
 ## Quick Start
 
 ### **Prerequisites**
-- Python 3.6 or higher
+- Python 3.12 or higher
 - Linux system (for system service features)
 - SignalK server (optional, for real-time data)
 
-### **Basic Setup**
+### **Development Setup**
 
 1. **Clone the repository**:
    ```bash
@@ -46,12 +49,22 @@ A comprehensive marine vessel tracking and monitoring dashboard for the S.V. Mer
    cd zackphillips.github.io
    ```
 
-2. **Start the development server**:
+2. **Install development tools** (if not already installed):
+   ```bash
+   make check-uv
+   ```
+
+3. **Install pre-commit hooks**:
+   ```bash
+   make pre-commit-install
+   ```
+
+4. **Start the development server**:
    ```bash
    make server
    ```
 
-3. **Open in browser**:
+5. **Open in browser**:
    Navigate to `http://localhost:8000`
 
 ### **System Service Installation (Linux)**
@@ -76,7 +89,7 @@ make uninstall-service
 
 ### **Primary Data Sources**
 - **SignalK API**: Real-time vessel data via WebSocket
-- **Local JSON**: Fallback to `signalk_latest.json` file
+- **Local JSON**: Fallback to `data/telemetry/signalk_latest.json` file
 - **Demo Data**: Static data when no live sources available
 
 ### **Weather & Marine Data**
@@ -100,7 +113,7 @@ The dashboard automatically tries to connect to SignalK at `https://192.168.8.50
 3. Modify the data parsing logic if needed
 
 ### **Polar Data**
-Polar performance data is loaded from `resources/polars/polars.csv`. The file should contain:
+Polar performance data is loaded from `data/vessel/polars/polars.csv`. The file should contain:
 - Wind speeds in the header row
 - True wind angles in the first column
 - Boat speeds for each wind speed/angle combination
@@ -115,15 +128,34 @@ Polar performance data is loaded from `resources/polars/polars.csv`. The file sh
 ### **Project Structure**
 ```
 zackphillips.github.io/
-├── index.html              # Main dashboard file
-├── Makefile                # Build and service management
-├── README.md              # This file
-├── mermug.png             # Vessel logo
-├── signalk_latest.json    # Data file that is regularly updated
-└── resources/
-    └── polars/
-        ├── polars.csv     # Polar performance data for our boat
-        └── polars_readme.md # Source for our polar data
+├── index.html                    # Main dashboard file
+├── Makefile                      # Build and service management
+├── pyproject.toml               # Python project configuration
+├── uv.lock                      # Dependency lock file
+├── .pre-commit-config.yaml      # Pre-commit hooks configuration
+├── README.md                    # This file
+├── LICENSE                      # License file
+├── assets/                      # Web app assets
+│   ├── favicon.ico             # Favicon
+│   ├── site.webmanifest        # Web app manifest
+│   └── *.png                   # App icons
+├── data/
+│   ├── vessel/
+│   │   ├── info.json           # Vessel configuration
+│   │   ├── logo.png            # Vessel logo
+│   │   └── polars/
+│   │       ├── polars.csv      # Polar performance data
+│   │       └── polars_readme.md # Polar data documentation
+│   ├── telemetry/
+│   │   └── signalk_latest.json # Data file that is regularly updated
+│   └── tide_stations.json      # NOAA tide station data
+├── scripts/
+│   ├── update_signalk_data.py  # SignalK data updater script
+│   └── vessel_config_wizard.py # Configuration wizard
+├── services/
+│   └── systemd.service.tpl     # Systemd service template
+└── tests/
+    └── test_update_signalk_data_integration.py # Integration tests
 ```
 
 ### **Available Make Commands**
@@ -134,7 +166,22 @@ make install-service     # Install systemd service (Linux)
 make check-service-status # Check service status (Linux)
 make logs                # View service logs (Linux)
 make uninstall-service   # Remove systemd service (Linux)
+make change-server-update-period RESTART_SEC=600 # Change update period
+make change-server-branch [BRANCH=<name>] # Switch updater branch
+make test                # Run unit/integration tests
+make check-uv            # Check if uv is installed and install if necessary
+make pre-commit-install  # Install pre-commit hooks
+make pre-commit-run      # Run pre-commit on all files
+make config              # Interactive vessel configuration wizard
 ```
+
+### **Development Tools**
+This project uses modern Python development tools:
+
+- **uv**: Fast Python package manager and project management
+- **ruff**: Extremely fast Python linter and formatter
+- **pre-commit**: Git hooks for code quality
+- **pytest**: Testing framework
 
 ### **Data Flow**
 1. **SignalK WebSocket**: Real-time data streaming
@@ -174,11 +221,11 @@ make logs
 
 **No data showing**:
 - Check SignalK server connectivity
-- Verify `signalk_latest.json` exists
+- Verify `data/telemetry/signalk_latest.json` exists
 - Check browser console for errors
 
 **Charts not updating**:
-- Ensure polar data file exists
+- Ensure polar data file exists at `data/vessel/polars/polars.csv`
 - Check JavaScript console for errors
 - Verify data format in CSV file
 
@@ -187,8 +234,20 @@ make logs
 - Check localStorage for theme preference
 - Verify CSS variables are loaded
 
+**Development environment issues**:
+```bash
+# Check if uv is installed
+make check-uv
+
+# Install pre-commit hooks
+make pre-commit-install
+
+# Run tests
+make test
+```
+
 ### **Log Locations**
-- **Service logs**: `journalctl -u mermug-tracker`
+- **Service logs**: `journalctl -u vessel-tracker`
 - **Browser logs**: Developer Tools Console
 - **System logs**: `/var/log/syslog`
 
@@ -197,16 +256,20 @@ make logs
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Test thoroughly
+4. Run tests and linting:
+   ```bash
+   make test
+   make pre-commit-run
+   ```
 5. Submit a pull request
 
 ## License
 
-This project is open source. Please check the license file for details.
+This project is open source. Please check the LICENSE file for details.
 
-## About S.V. Mermug
+## About the Vessel
 
-The S.V. Mermug is a 1994 Beneteau First 42s7 sailing vessel based in San Francisco, CA. It is owned by Zack Phillips, Chris Lalau-Kerely, and Brandon Wood
+This tracking system is designed for marine vessels and can be configured for any vessel by updating the `data/vessel/info.json` file.
 
 **Vessel Details**:
 - **MMSI**: 338543654
