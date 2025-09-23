@@ -11,7 +11,7 @@ import math
 import time
 from datetime import UTC, datetime
 
-import adafruit_mmc56x3
+# MMC5603 availability will be checked during initialization
 import board
 import busio
 import jwt
@@ -140,6 +140,8 @@ class SensorReader:
 
         # MMC5603 (Magnetometer)
         try:
+            import adafruit_mmc56x3
+
             self.mmc5603_sensor = adafruit_mmc56x3.MMC5603(self.i2c)
             logger.info("MMC5603 sensor initialized")
         except Exception as e:
