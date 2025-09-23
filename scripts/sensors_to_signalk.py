@@ -8,13 +8,14 @@ and publishes to SignalK server.
 import json
 import logging
 import math
+import os
+import socket
 import time
 from datetime import UTC, datetime
 
 # MMC5603 availability will be checked during initialization
 import board
 import busio
-import jwt
 import requests
 import smbus2
 import websocket
@@ -28,18 +29,64 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class SensorReader:
-    def __init__(self, signalk_host="192.168.8.50", signalk_port=3000):
-        """Initialize sensor reader and SignalK connection."""
-        self.signalk_host = signalk_host
-        self.signalk_port = signalk_port
-        self.signalk_ws_url = (
-            f"ws://{signalk_host}:{signalk_port}/signalk/v1/stream?subscribe=self"
-        )
+def load_vessel_info(info_path="data/vessel/info.json"):
+    """Load vessel information from info.json file."""
+    try:
+        # Get the absolute path relative to the script location
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(script_dir)
+        full_path = os.path.join(project_root, info_path)
 
-        # SignalK authentication
-        self.device_id = "I2C-SENSORS-156E6713"
-        self.secret_key = "384be8119536488e85baa23a64c3560e33095656907349c4b856fd33651835ebdf19b5ce155d45d2a1011de6c7e1ec9f8b84d59ec5084ac4841b83436e03b599c5ac6f92ff7a48a9bebf1a4ed62e4fb23637d3662f7f423ab995f8a20c255adbc6a74d96924048e9899701a047b9e4c89083b80c0a294bd3aab151ec4900c89882d676101d634152af71054e8da58a4cd2956b540fc9484c988c09306762ff07ed7ce318b9d448ae9e1a55b32ea7e115370a0e6f09024010a8fbca0167d1806e0e2c27fa494e4268885f9b216172538afee5d1b7d9794730b947bc166d7742f3d396c09e0eab4239aace5c61c46719bcd8d2eadcf11646cc82e766c2c54e3843"
+        with open(full_path) as f:
+            info = json.load(f)
+
+        logger.info(f"Loaded vessel info from {full_path}")
+        return info
+    except Exception as e:
+        logger.error(f"Failed to load vessel info from {info_path}: {e}")
+        return None
+
+
+class SensorReader:
+    def __init__(
+        self,
+        signalk_host=None,
+        signalk_port=None,
+        tcp_port=None,
+        info_path="data/vessel/info.json",
+    ):
+        """Initialize sensor reader and SignalK connection."""
+        # Load vessel info from JSON file
+        self.vessel_info = load_vessel_info(info_path)
+
+        if self.vessel_info and "signalk" in self.vessel_info:
+            signalk_config = self.vessel_info["signalk"]
+            self.signalk_host = signalk_host or signalk_config.get(
+                "host", "192.168.8.50"
+            )
+            self.signalk_port = signalk_port or signalk_config.get("port", 3000)
+            self.signalk_protocol = signalk_config.get("protocol", "http")
+            self.signalk_token = signalk_config.get("token")
+        else:
+            # Fallback to defaults if info.json not available
+            self.signalk_host = signalk_host or "192.168.8.50"
+            self.signalk_port = signalk_port or 3000
+            self.signalk_protocol = "http"
+            self.signalk_token = None
+            logger.warning(
+                "No SignalK configuration found in vessel info, using defaults"
+            )
+
+        # UDP configuration for data publishing
+        self.udp_port = (
+            tcp_port or 4123
+        )  # Default SignalK UDP port (reusing tcp_port parameter)
+        self.udp_socket = None
+
+        self.signalk_ws_url = f"ws://{self.signalk_host}:{self.signalk_port}/signalk/v1/stream?subscribe=self"
+        self.signalk_ws_publish_url = (
+            f"ws://{self.signalk_host}:{self.signalk_port}/signalk/v1/stream/self"
+        )
 
         self.ws = None
         self.ws_connected = False
@@ -58,59 +105,30 @@ class SensorReader:
         # Initialize sensors
         self._initialize_sensors()
 
-    def generate_jwt_token(self):
-        """Generate JWT token for SignalK authentication."""
-        payload = {
-            "exp": int(time.time()) + 3600,  # Expires in 1 hour
-            "iat": int(time.time()),
-            "sub": self.device_id,
-            "permissions": "readwrite",
-        }
-        return jwt.encode(payload, self.secret_key, algorithm="HS256")
-
     def get_auth_token(self):
-        """Get authentication token using SignalK device authentication."""
-        if not hasattr(self, "_auth_token") or not self._auth_token:
-            try:
-                # Try device authentication first - use the existing device
-                device_url = f"http://{self.signalk_host}:{self.signalk_port}/signalk/v1/access/request"
-                device_payload = {
-                    "clientId": "sensor-client",
-                    "description": "I2C Sensor Data Publisher",
-                }
+        """Get authentication token from info.json."""
+        if self.signalk_token:
+            logger.info("Using SignalK token from vessel info")
+            return self.signalk_token
+        else:
+            logger.error("No SignalK token available in vessel info")
+            return None
 
-                response = requests.post(device_url, json=device_payload, timeout=5)
-                if response.status_code == 200:
-                    device_data = response.json()
-                    token = device_data.get("token")
-                    if token:
-                        logger.info("Successfully obtained device token")
-                        self._auth_token = token
-                        return token
-
-                # If device auth fails, try user auth with the existing user
-                login_url = f"http://{self.signalk_host}:{self.signalk_port}/signalk/v1/auth/login"
-                login_payload = {
-                    "username": "mermug",
-                    "password": "mermug",  # Correct password
-                }
-
-                response = requests.post(login_url, json=login_payload, timeout=5)
-                if response.status_code == 200:
-                    login_data = response.json()
-                    token = login_data.get("token")
-                    if token:
-                        logger.info("Successfully obtained user token")
-                        self._auth_token = token
-                        return token
-
-                logger.error("Failed to get authentication token")
-                return None
-
-            except Exception as e:
-                logger.error(f"Error getting access token: {e}")
-                return None
-        return self._auth_token
+    def connect_udp(self):
+        """Connect to SignalK server via UDP."""
+        try:
+            self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.udp_socket.settimeout(5.0)
+            logger.info(
+                f"UDP socket created for SignalK server at {self.signalk_host}:{self.udp_port}"
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to create UDP socket: {e}")
+            if self.udp_socket:
+                self.udp_socket.close()
+                self.udp_socket = None
+            return False
 
     def _initialize_sensors(self):
         """Initialize all available sensors."""
@@ -284,12 +302,17 @@ class SensorReader:
         # Use the vessel self ID from hello message, fallback to vessels.self
         context = self.vessel_self if self.vessel_self else "vessels.self"
 
-        # Try a simpler delta format
+        # Create delta with proper SignalK format including $source
         delta = {
             "context": context,
             "updates": [
                 {
-                    "source": {"label": "I2C Sensors", "type": "I2C", "src": "inside"},
+                    "source": {
+                        "label": "I2C Sensors",
+                        "type": "I2C",
+                        "src": "inside",
+                        "$source": "i2c-sensors",
+                    },
                     "timestamp": timestamp,
                     "values": [],
                 }
@@ -299,42 +322,40 @@ class SensorReader:
         # Add each data point to the delta
         for path, value in data.items():
             delta["updates"][0]["values"].append(
-                {"path": path, "value": value["value"]}
+                {"path": path, "value": value["value"], "$source": "i2c-sensors"}
             )
 
         return delta
 
     def connect_websocket(self):
-        """Connect to SignalK WebSocket."""
+        """Connect to SignalK WebSocket using token from info.json."""
         try:
-            # First try without authentication (if security allows it)
-            try:
-                self.ws = websocket.WebSocket()
-                self.ws.connect(self.signalk_ws_url)
-                self.ws_connected = True
-                logger.info("Connected to SignalK WebSocket without authentication")
-
-                # Wait for and handle hello message
-                self._handle_hello_message()
+            # Get token from info.json
+            token = self.get_auth_token()
+            if not token:
+                logger.error(
+                    "Cannot connect to SignalK WebSocket: no authentication token available"
+                )
+                self.ws_connected = False
                 return
 
-            except Exception as auth_error:
-                logger.warning(f"Connection without auth failed: {auth_error}")
-
-            # If that fails, try with JWT authentication
-            token = self.generate_jwt_token()
-            headers = {"Authorization": f"JWT {token}"}
+            # Connect with Bearer token authentication
+            headers = {"Authorization": f"Bearer {token}"}
+            logger.debug(f"Connecting to SignalK WebSocket: {self.signalk_ws_url}")
+            logger.debug(f"Using Authorization header: Bearer {token[:20]}...")
 
             self.ws = websocket.WebSocket()
             self.ws.connect(self.signalk_ws_url, header=headers)
             self.ws_connected = True
-            logger.info("Connected to SignalK WebSocket with JWT authentication")
+            logger.info("Connected to SignalK WebSocket with token from vessel info")
 
             # Wait for and handle hello message
             self._handle_hello_message()
 
         except Exception as e:
             logger.error(f"Failed to connect to SignalK WebSocket: {e}")
+            logger.debug(f"WebSocket URL: {self.signalk_ws_url}")
+            logger.debug(f"Token available: {token is not None}")
             self.ws_connected = False
 
     def _handle_hello_message(self):
@@ -359,7 +380,7 @@ class SensorReader:
             # Continue anyway, we'll use fallback context
 
     def publish_to_signalk(self, data):
-        """Publish data to SignalK server via WebSocket with authentication."""
+        """Publish data to SignalK server via TCP."""
         if not data:
             logger.warning("No data to publish")
             return
@@ -371,21 +392,160 @@ class SensorReader:
             # Debug: log the delta message
             logger.debug(f"Sending delta: {json.dumps(delta, indent=2)}")
 
-            # Send delta via WebSocket
-            if self.ws and self.ws_connected:
-                # Send delta directly
-                self.ws.send(json.dumps(delta))
-                logger.info(
-                    f"Published {len(data)} data points to SignalK via WebSocket"
-                )
+            # Try UDP publishing first (most reliable for sensor data)
+            logger.info("Publishing via UDP")
+            if self._publish_via_udp(delta):
+                logger.info(f"Successfully published {len(data)} data points via UDP")
             else:
-                logger.warning("WebSocket not connected, cannot publish data")
+                logger.warning("UDP publishing failed, trying WebSocket as fallback")
+                self._publish_via_websocket_delta(delta)
 
         except Exception as e:
             logger.error(f"Error publishing to SignalK: {e}")
+            logger.debug(
+                f"TCP socket: {self.tcp_socket is not None}, WebSocket: {self.ws_connected}"
+            )
+
+    def _publish_via_http(self, delta):
+        """Publish data to SignalK server via HTTP API."""
+        try:
+            token = self.get_auth_token()
+            if not token:
+                logger.error(
+                    "Cannot publish via HTTP: no authentication token available"
+                )
+                return
+
+            # Use HTTP API to publish delta
+            url = f"http://{self.signalk_host}:{self.signalk_port}/signalk/v1/api/vessels/self"
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            }
+
+            # Send each value individually via HTTP API
+            for update in delta["updates"]:
+                for value in update["values"]:
+                    path = value["path"]
+                    val = value["value"]
+
+                    # Create HTTP API payload
+                    payload = {"value": val}
+
+                    # Send to HTTP API
+                    response = requests.put(
+                        f"{url}/{path.replace('.', '/')}/value",
+                        json=payload,
+                        headers=headers,
+                        timeout=5,
+                    )
+
+                    if response.status_code in [200, 201]:
+                        logger.debug(f"HTTP API: Published {path} = {val}")
+                    else:
+                        logger.warning(
+                            f"HTTP API: Failed to publish {path}: {response.status_code} - {response.text}"
+                        )
+
+            logger.info(
+                f"Published {len(delta['updates'][0]['values'])} data points to SignalK via HTTP API"
+            )
+
+        except Exception as e:
+            logger.error(f"Error publishing via HTTP API: {e}")
+
+    def _publish_via_websocket_delta(self, delta):
+        """Publish data to SignalK server via WebSocket delta endpoint."""
+        try:
+            token = self.get_auth_token()
+            if not token:
+                logger.error(
+                    "Cannot publish via WebSocket delta: no authentication token available"
+                )
+                return
+
+            # Create a separate WebSocket connection for publishing deltas
+            headers = {"Authorization": f"Bearer {token}"}
+            logger.debug(
+                f"Connecting to delta publishing endpoint: {self.signalk_ws_publish_url}"
+            )
+
+            publish_ws = websocket.WebSocket()
+            publish_ws.connect(self.signalk_ws_publish_url, header=headers)
+
+            # Send the delta
+            message = json.dumps(delta)
+            publish_ws.send(message)
+            logger.info(
+                f"Published delta via WebSocket to {self.signalk_ws_publish_url}"
+            )
+            logger.debug(f"Delta sent successfully, length: {len(message)} bytes")
+
+            # Close the publishing connection
+            publish_ws.close()
+
+        except Exception as e:
+            logger.error(f"Error publishing via WebSocket delta: {e}")
+            logger.debug(f"Delta endpoint: {self.signalk_ws_publish_url}")
+
+    def _publish_via_udp(self, delta):
+        """Publish data to SignalK server via UDP."""
+        try:
+            # Ensure UDP socket is created
+            if not self.udp_socket:
+                if not self.connect_udp():
+                    return False
+
+            # Convert delta to JSON and send via UDP
+            message = (
+                json.dumps(delta) + "\n"
+            )  # SignalK expects newline-terminated messages
+            message_bytes = message.encode("utf-8")
+
+            # Send and capture return value (number of bytes sent)
+            bytes_sent = self.udp_socket.sendto(
+                message_bytes, (self.signalk_host, self.udp_port)
+            )
+
+            # Check if all bytes were sent
+            if bytes_sent == len(message_bytes):
+                logger.debug(
+                    f"UDP send successful: {bytes_sent}/{len(message_bytes)} bytes sent to {self.signalk_host}:{self.udp_port}"
+                )
+                return True
+            else:
+                logger.warning(
+                    f"UDP send incomplete: {bytes_sent}/{len(message_bytes)} bytes sent to {self.signalk_host}:{self.udp_port}"
+                )
+                return False
+
+        except TimeoutError:
+            logger.error(f"UDP send timeout to {self.signalk_host}:{self.udp_port}")
+            return False
+        except OSError as e:
+            logger.error(f"UDP socket error: {e}")
+            # Close and reset UDP socket on error
+            if self.udp_socket:
+                try:
+                    self.udp_socket.close()
+                except Exception:
+                    pass
+                self.udp_socket = None
+            return False
+        except Exception as e:
+            logger.error(f"Error publishing via UDP: {e}")
+            # Close and reset UDP socket on error
+            if self.udp_socket:
+                try:
+                    self.udp_socket.close()
+                except Exception:
+                    pass
+                self.udp_socket = None
+            return False
 
     def cleanup(self):
         """Clean up resources."""
+        # Close WebSocket connection
         if self.ws and self.ws_connected:
             try:
                 self.ws.close()
@@ -393,6 +553,15 @@ class SensorReader:
             except Exception:
                 pass
         self.ws_connected = False
+
+        # Close TCP connection
+        if self.tcp_socket:
+            try:
+                self.tcp_socket.close()
+                logger.info("TCP connection closed")
+            except Exception:
+                pass
+            self.tcp_socket = None
 
     def run(self, interval=1.0):
         """Main loop to read sensors and publish data."""
@@ -429,11 +598,11 @@ class SensorReader:
             self.cleanup()
 
 
-def test_signalk_connection(host="192.168.8.50", port=3000):
+def test_signalk_connection(host=None, port=None, tcp_port=None):
     """Test SignalK connection without sensors."""
     logger.info("Testing SignalK connection...")
 
-    reader = SensorReader(host, port)
+    reader = SensorReader(signalk_host=host, signalk_port=port, tcp_port=tcp_port)
 
     # Test connection
     reader.connect_websocket()
@@ -466,6 +635,9 @@ def main():
     parser.add_argument("--host", default="192.168.8.50", help="SignalK server host")
     parser.add_argument("--port", type=int, default=3000, help="SignalK server port")
     parser.add_argument(
+        "--tcp-port", type=int, default=4123, help="SignalK TCP data port"
+    )
+    parser.add_argument(
         "--interval", type=float, default=1.0, help="Reading interval in seconds"
     )
     parser.add_argument(
@@ -476,11 +648,13 @@ def main():
 
     if args.test:
         # Test mode - just test connection
-        success = test_signalk_connection(args.host, args.port)
+        success = test_signalk_connection(args.host, args.port, args.tcp_port)
         exit(0 if success else 1)
     else:
         # Normal mode - run sensor reader
-        reader = SensorReader(args.host, args.port)
+        reader = SensorReader(
+            signalk_host=args.host, signalk_port=args.port, tcp_port=args.tcp_port
+        )
         reader.run(args.interval)
 
 
