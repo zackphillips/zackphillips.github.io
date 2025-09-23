@@ -17,7 +17,6 @@ import board
 import busio
 import smbus2
 from adafruit_bno055 import BNO055_I2C
-from adafruit_sgp30 import Adafruit_SGP30
 
 # Constants
 DEFAULT_UDP_PORT = 4123
@@ -128,7 +127,8 @@ class SensorReader:
         try:
             import bme280.bme280 as bme280_module
 
-            bme280_module.full_setup(1, 0x76)  # bus_number=1, i2c_address=0x76
+            # Initialize BME280 with smbus2
+            bme280_module.full_setup(1, 0x77)  # bus_number=1, i2c_address=0x77
             self.bme280_sensor = bme280_module
             logger.info("BME280 sensor initialized")
         except Exception as e:
@@ -143,8 +143,19 @@ class SensorReader:
 
         # SGP30 (Air Quality)
         try:
+            from adafruit_sgp30 import Adafruit_SGP30
+
             self.sgp30_sensor = Adafruit_SGP30(self.i2c)
             logger.info("SGP30 sensor initialized")
+            logger.info("SGP30 warming up... (takes ~15 seconds)")
+            # Give sensor time to warm up
+            import time
+
+            time.sleep(1)
+            # Read initial values to start calibration
+            _ = self.sgp30_sensor.TVOC
+            _ = self.sgp30_sensor.eCO2
+            logger.info("SGP30 warm-up complete")
         except Exception as e:
             logger.warning(f"SGP30 not available: {e}")
 
@@ -165,12 +176,12 @@ class SensorReader:
         try:
             data = self.bme280_sensor.read_all()
             return {
-                "environment.outside.temperature": {
+                "environment.inside.temperature": {
                     "value": data.temperature + 273.15,  # Convert C to K
                     "units": "K",
                 },
-                "environment.outside.humidity": {"value": data.humidity, "units": "%"},
-                "environment.outside.pressure": {
+                "environment.inside.humidity": {"value": data.humidity, "units": "%"},
+                "environment.inside.pressure": {
                     "value": data.pressure * 100,  # Convert hPa to Pa
                     "units": "Pa",
                 },
@@ -239,6 +250,14 @@ class SensorReader:
             # Read TVOC and eCO2
             tvoc = self.sgp30_sensor.TVOC
             eco2 = self.sgp30_sensor.eCO2
+
+            # Log sensor status for debugging
+            if tvoc == 0 and eco2 == 400:
+                logger.debug(
+                    "SGP30: Reading default values (sensor may need calibration)"
+                )
+            else:
+                logger.debug(f"SGP30: TVOC={tvoc} ppb, eCO2={eco2} ppm")
 
             return {
                 "environment.inside.airQuality.tvoc": {"value": tvoc, "units": "ppb"},
@@ -421,8 +440,8 @@ class SensorReader:
                 self.publish_to_signalk(data)
 
                 # Log some key values
-                if "environment.outside.temperature" in data:
-                    temp = data["environment.outside.temperature"]["value"]
+                if "environment.inside.temperature" in data:
+                    temp = data["environment.inside.temperature"]["value"]
                     logger.info(f"Temperature: {temp:.1f}K")
 
                 logger.info(f"Successfully published {len(data)} sensor readings")
@@ -448,7 +467,7 @@ def test_signalk_connection(host=None, port=None, udp_port=None):
 
         # Test publishing dummy data
         test_data = {
-            "environment.outside.temperature": {
+            "environment.inside.temperature": {
                 "value": 293.15,  # 20°C in Kelvin
                 "units": "K",
             }
