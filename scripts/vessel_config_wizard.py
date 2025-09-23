@@ -5,9 +5,12 @@ Steps through each field sequentially with defaults shown in parentheses.
 """
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+import requests
 
 
 class VesselConfigWizard:
@@ -60,6 +63,88 @@ class VesselConfigWizard:
         else:
             return input(f"{prompt}: ").strip()
 
+    def test_existing_token(self) -> bool:
+        """Test if the existing token is valid."""
+        token = self.config["signalk"].get("token")
+        if not token:
+            print("No token to test.")
+            return False
+
+        host = self.config["signalk"].get("host", "192.168.8.50")
+        port = self.config["signalk"].get("port", "3000")
+
+        try:
+            headers = {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            }
+
+            response = requests.get(
+                f"http://{host}:{port}/signalk/v1/api/vessels/self",
+                headers=headers,
+                timeout=10,
+            )
+
+            if response.status_code == 200:
+                print("[OK] Token is valid and working!")
+                return True
+            else:
+                print(f"[ERROR] Token test failed: {response.status_code}")
+                return False
+
+        except Exception as e:
+            print(f"[ERROR] Error testing token: {e}")
+            return False
+
+    def request_new_token(self) -> None:
+        """Request a new SignalK token."""
+        print("\nRequesting new SignalK token...")
+        print("This will open a browser window for approval.")
+
+        host = self.config["signalk"].get("host", "192.168.8.50")
+        port = self.config["signalk"].get("port", "3000")
+
+        try:
+            # Run the token request script
+            result = subprocess.run(
+                [
+                    "python3",
+                    "scripts/request_signalk_token.py",
+                    "--host",
+                    host,
+                    "--port",
+                    port,
+                    "--timeout",
+                    "60",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+
+            if result.returncode == 0:
+                print("[SUCCESS] Token request completed!")
+                # The token should now be saved to info.json
+                # Reload the config to get the new token
+                self.config = self.load_config()
+            else:
+                print("[ERROR] Token request failed:")
+                print(result.stderr)
+                print("\nYou can manually request a token by running:")
+                print(
+                    f"python3 scripts/request_signalk_token.py --host {host} --port {port}"
+                )
+
+        except subprocess.TimeoutExpired:
+            print("[ERROR] Token request timed out.")
+            print("Please approve the request in your browser and try again.")
+        except Exception as e:
+            print(f"[ERROR] Error requesting token: {e}")
+            print("You can manually request a token by running:")
+            print(
+                f"python3 scripts/request_signalk_token.py --host {host} --port {port}"
+            )
+
     def run(self) -> None:
         """Run the step-by-step configuration wizard."""
         print("Welcome to the Vessel Configuration Wizard!")
@@ -109,6 +194,27 @@ class VesselConfigWizard:
             protocol = "https"
 
         self.config["signalk"]["protocol"] = protocol.lower()
+
+        # SignalK Token Management
+        print("\n--- SignalK Token Management ---")
+
+        # Check if token exists
+        existing_token = self.config["signalk"].get("token")
+        if existing_token:
+            print(f"Existing token found: {existing_token[:20]}...")
+            token_action = self.get_input(
+                "Token action (keep/regenerate/test)", "keep"
+            ).lower()
+
+            if token_action in ["regenerate", "new"]:
+                self.request_new_token()
+            elif token_action == "test":
+                self.test_existing_token()
+        else:
+            print("No SignalK token found.")
+            create_token = self.get_input("Create SignalK token? (y/N)", "y").lower()
+            if create_token in ["y", "yes"]:
+                self.request_new_token()
 
         # Show final configuration
         print("\n" + "=" * 60)
