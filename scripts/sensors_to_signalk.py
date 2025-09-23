@@ -10,7 +10,6 @@ import logging
 import math
 import os
 import socket
-import time
 from datetime import UTC, datetime
 
 # MMC5603 availability will be checked during initialization
@@ -409,32 +408,28 @@ class SensorReader:
                 pass
             self.udp_socket = None
 
-    def run(self, interval=1.0):
-        """Main loop to read sensors and publish data."""
-        logger.info("Starting sensor reading loop...")
+    def run(self):
+        """Read sensors and publish data once."""
+        logger.info("Reading sensors and publishing data...")
 
         try:
-            while True:
-                # Read all sensors
-                data = self.read_all_sensors()
+            # Read all sensors
+            data = self.read_all_sensors()
 
-                if data:
-                    # Publish to SignalK
-                    self.publish_to_signalk(data)
+            if data:
+                # Publish to SignalK
+                self.publish_to_signalk(data)
 
-                    # Log some key values
-                    if "environment.outside.temperature" in data:
-                        temp = data["environment.outside.temperature"]["value"]
-                        logger.info(f"Temperature: {temp:.1f}K")
+                # Log some key values
+                if "environment.outside.temperature" in data:
+                    temp = data["environment.outside.temperature"]["value"]
+                    logger.info(f"Temperature: {temp:.1f}K")
 
-                else:
-                    logger.warning("No sensor data available")
+                logger.info(f"Successfully published {len(data)} sensor readings")
 
-                # Wait before next reading
-                time.sleep(interval)
+            else:
+                logger.warning("No sensor data available")
 
-        except KeyboardInterrupt:
-            logger.info("Stopping sensor reader...")
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
         finally:
@@ -486,9 +481,6 @@ def main():
         help=f"SignalK UDP data port (default: {DEFAULT_UDP_PORT})",
     )
     parser.add_argument(
-        "--interval", type=float, default=1.0, help="Reading interval in seconds"
-    )
-    parser.add_argument(
         "--test", action="store_true", help="Test SignalK connection only"
     )
 
@@ -503,7 +495,7 @@ def main():
         reader = SensorReader(
             signalk_host=args.host, signalk_port=args.port, udp_port=args.udp_port
         )
-        reader.run(args.interval)
+        reader.run()
 
 
 if __name__ == "__main__":

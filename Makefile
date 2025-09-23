@@ -1,11 +1,22 @@
-.PHONY: server help install-service logs uninstall-service check-service-status
+.PHONY: server help install-website-service website-logs uninstall-website-service check-website-service-status
 .PHONY: test check-uv pre-commit-install pre-commit-run config
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
+.PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-logs
 
 # Check if running on Linux
 UNAME_S := $(shell uname -s)
-SERVICE_NAME := vessel-tracker
-SERVICE_FILE := /etc/systemd/system/$(SERVICE_NAME).service
+WEBSITE_SERVICE_NAME := vessel-tracker
+WEBSITE_SERVICE_FILE := /etc/systemd/system/$(WEBSITE_SERVICE_NAME).service
+
+# Sensor service configuration
+SENSOR_SERVICE_NAME := vessel-sensors
+SENSOR_SERVICE_FILE := /etc/systemd/system/$(SENSOR_SERVICE_NAME).service
+SENSOR_SERVICE_DESCRIPTION ?= Vessel Sensor Data Publisher
+SENSOR_SERVICE_USER ?= $(shell whoami)
+SENSOR_SERVICE_WORKING_DIR ?= $(CURDIR)
+SENSOR_SERVICE_INTERVAL ?= 1
+SENSOR_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
+SENSOR_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/sensors_to_signalk.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 # Optional: server port
 SERVER_PORT ?= 8000
@@ -13,7 +24,6 @@ SERVER_PORT ?= 8000
 # Sensor configuration
 SENSOR_HOST ?= 192.168.8.50
 SENSOR_PORT ?= 3000
-SENSOR_INTERVAL ?= 1.0
 
 # Resolve uv binary (absolute path for systemd); allow override
 UV_BIN ?= $(shell command -v uv 2>/dev/null || true)
@@ -52,18 +62,22 @@ OUTPUT_FILE ?= $(CURDIR)/data/telemetry/signalk_latest.json
 help:
 	@echo "Available commands:"
 	@echo "  make server         - Start Python HTTP server on port 8000"
-	@echo "  make install-service - Install systemd service (Linux only)"
-	@echo "  make check-service-status - Check service status (Linux only)"
-	@echo "  make logs           - Show service logs (Linux only)"
-	@echo "  make uninstall-service - Uninstall systemd service (Linux only)"
+	@echo "  make install-website-service - Install website data updater service (Linux only)"
+	@echo "  make check-website-service-status - Check website service status (Linux only)"
+	@echo "  make website-logs   - Show website service logs (Linux only)"
+	@echo "  make uninstall-website-service - Uninstall website service (Linux only)"
 	@echo "  make change-server-update-period RESTART_SEC=600 - Change systemd update period in seconds (Linux only)"
 	@echo "  make change-server-branch [BRANCH=<name>] - Switch updater branch (defaults to current git branch)"
 	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
 	@echo "  make check-uv       - Check if uv is installed and install if necessary"
 	@echo "  make install-sensors - Install I2C sensor dependencies and enable I2C (Raspberry Pi only)"
-	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher"
+	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
 	@echo "  make test-sensors   - Test SignalK connection without running sensors"
 	@echo "  make check-i2c      - Check I2C devices and permissions"
+	@echo "  make install-sensor-service - Install recurring sensor service (runs every 1s)"
+	@echo "  make check-sensor-service-status - Check sensor service status (Linux only)"
+	@echo "  make sensor-logs    - Show sensor service logs (Linux only)"
+	@echo "  make uninstall-sensor-service - Uninstall sensor service (Linux only)"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
 	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
@@ -103,18 +117,18 @@ server:
 	fi
 
 # Install systemd service
-install-service: check-linux
-	@echo "Installing $(SERVICE_NAME) systemd service..."
-	@if [ -f "$(SERVICE_FILE)" ]; then \
-		echo "Service already exists. Uninstalling first..."; \
-		sudo systemctl stop $(SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SERVICE_NAME) 2>/dev/null || true; \
+install-website-service: check-linux
+	@echo "Installing $(WEBSITE_SERVICE_NAME) systemd service..."
+	@if [ -f "$(WEBSITE_SERVICE_FILE)" ]; then \
+		echo "Website service already exists. Uninstalling first..."; \
+		sudo systemctl stop $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
+		sudo systemctl disable $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
 	fi
 	@if [ -z "$(UV_BIN)" ]; then \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
 	fi
-	@echo "Rendering service template from $(TEMPLATE_FILE)..."
+	@echo "Rendering website service template from $(TEMPLATE_FILE)..."
 	@if [ ! -f "$(TEMPLATE_FILE)" ]; then \
 		echo "Error: Template file not found at $(TEMPLATE_FILE)"; \
 		exit 1; \
@@ -131,84 +145,154 @@ install-service: check-linux
 	     -e "s|{{GIT_FORCE_PUSH}}|$(GIT_FORCE_PUSH)|g" \
 	     -e "s|{{SIGNALK_URL}}|$(SIGNALK_URL)|g" \
 	     -e "s|{{OUTPUT_FILE}}|$(OUTPUT_FILE)|g" \
-	     "$(TEMPLATE_FILE)" | sudo tee $(SERVICE_FILE) > /dev/null
+	     "$(TEMPLATE_FILE)" | sudo tee $(WEBSITE_SERVICE_FILE) > /dev/null
 	@echo "Reloading systemd..."
 	@sudo systemctl daemon-reload
-	@echo "Enabling and starting service..."
-	@sudo systemctl enable $(SERVICE_NAME)
-	@sudo systemctl start $(SERVICE_NAME)
-	@echo "Service installed and started successfully!"
-	@echo "Check status with: make check-service-status"
-	@echo "View logs with: make logs"
+	@echo "Enabling and starting website service..."
+	@sudo systemctl enable $(WEBSITE_SERVICE_NAME)
+	@sudo systemctl start $(WEBSITE_SERVICE_NAME)
+	@echo "Website service installed and started successfully!"
+	@echo "Check status with: make check-website-service-status"
+	@echo "View logs with: make website-logs"
 
-# Show service logs
-logs: check-linux
-	@echo "Showing logs for $(SERVICE_NAME) service..."
+# Show website service logs
+website-logs: check-linux
+	@echo "Showing logs for $(WEBSITE_SERVICE_NAME) service..."
 	@echo "Press Ctrl+C to exit logs"
-	@sudo journalctl -u $(SERVICE_NAME) -f
+	@sudo journalctl -u $(WEBSITE_SERVICE_NAME) -f
 
-# Check service status
-check-service-status: check-linux
-	@echo "Checking status of $(SERVICE_NAME) service..."
-	@if [ -f "$(SERVICE_FILE)" ]; then \
-		echo "Service file exists at $(SERVICE_FILE)"; \
+# Check website service status
+check-website-service-status: check-linux
+	@echo "Checking status of $(WEBSITE_SERVICE_NAME) service..."
+	@if [ -f "$(WEBSITE_SERVICE_FILE)" ]; then \
+		echo "Website service file exists at $(WEBSITE_SERVICE_FILE)"; \
 		echo ""; \
-		echo "Service Status:"; \
-		sudo systemctl status $(SERVICE_NAME) --no-pager -l; \
+		echo "Website Service Status:"; \
+		sudo systemctl status $(WEBSITE_SERVICE_NAME) --no-pager -l; \
 	else \
-		echo "Service file not found at $(SERVICE_FILE)"; \
-		echo "Service is not installed. Run 'make install-service' to install it."; \
+		echo "Website service file not found at $(WEBSITE_SERVICE_FILE)"; \
+		echo "Website service is not installed. Run 'make install-website-service' to install it."; \
 	fi
 
-# Uninstall systemd service
-uninstall-service: check-linux
-	@echo "Uninstalling $(SERVICE_NAME) systemd service..."
-	@if [ -f "$(SERVICE_FILE)" ]; then \
-		echo "Stopping and disabling service..."; \
-		sudo systemctl stop $(SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SERVICE_NAME) 2>/dev/null || true; \
-		echo "Removing service file..."; \
-		sudo rm -f $(SERVICE_FILE); \
+# Uninstall website systemd service
+uninstall-website-service: check-linux
+	@echo "Uninstalling $(WEBSITE_SERVICE_NAME) systemd service..."
+	@if [ -f "$(WEBSITE_SERVICE_FILE)" ]; then \
+		echo "Stopping and disabling website service..."; \
+		sudo systemctl stop $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
+		sudo systemctl disable $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
+		echo "Removing website service file..."; \
+		sudo rm -f $(WEBSITE_SERVICE_FILE); \
 		echo "Reloading systemd..."; \
 		sudo systemctl daemon-reload; \
-		echo "Service uninstalled successfully!"; \
+		echo "Website service uninstalled successfully!"; \
 	else \
-		echo "Service file not found. Nothing to uninstall."; \
+		echo "Website service file not found. Nothing to uninstall."; \
 	fi
 
-# Change service restart cadence (policy/interval) after install
+# Change website service restart cadence (policy/interval) after install
 change-server-update-period: check-linux
-	@if [ ! -f "$(SERVICE_FILE)" ]; then \
-		echo "Service file not found at $(SERVICE_FILE). Install it first with 'make install-service'."; \
+	@if [ ! -f "$(WEBSITE_SERVICE_FILE)" ]; then \
+		echo "Website service file not found at $(WEBSITE_SERVICE_FILE). Install it first with 'make install-website-service'."; \
 		exit 1; \
 	fi
-	@echo "Updating $(SERVICE_NAME) restart policy to '$(RESTART_POLICY)' and interval to '$(RESTART_SEC)' seconds..."
-	@sudo sed -i -E 's/^Restart=.*/Restart=$(RESTART_POLICY)/' $(SERVICE_FILE)
-	@sudo sed -i -E 's/^RestartSec=.*/RestartSec=$(RESTART_SEC)/' $(SERVICE_FILE)
-	@echo "Reloading systemd and restarting service..."
+	@echo "Updating $(WEBSITE_SERVICE_NAME) restart policy to '$(RESTART_POLICY)' and interval to '$(RESTART_SEC)' seconds..."
+	@sudo sed -i -E 's/^Restart=.*/Restart=$(RESTART_POLICY)/' $(WEBSITE_SERVICE_FILE)
+	@sudo sed -i -E 's/^RestartSec=.*/RestartSec=$(RESTART_SEC)/' $(WEBSITE_SERVICE_FILE)
+	@echo "Reloading systemd and restarting website service..."
 	@sudo systemctl daemon-reload
-	@sudo systemctl restart $(SERVICE_NAME)
+	@sudo systemctl restart $(WEBSITE_SERVICE_NAME)
 	@echo "New settings:"
-	@sudo grep -E '^(Restart|RestartSec)=' $(SERVICE_FILE) | sed 's/^/  /'
+	@sudo grep -E '^(Restart|RestartSec)=' $(WEBSITE_SERVICE_FILE) | sed 's/^/  /'
 
 # Change service branch (dev/prod) after install
 
 change-server-branch: check-linux
-	@if [ ! -f "$(SERVICE_FILE)" ]; then \
-		echo "Service file not found at $(SERVICE_FILE). Install it first with 'make install-service'."; \
+	@if [ ! -f "$(WEBSITE_SERVICE_FILE)" ]; then \
+		echo "Website service file not found at $(WEBSITE_SERVICE_FILE). Install it first with 'make install-website-service'."; \
 		exit 1; \
 	fi
 	@branch="$(BRANCH)"; \
 	if [ -z "$$branch" ]; then \
 		branch="$$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"; \
 	fi; \
-	echo "Switching $(SERVICE_NAME) branch to '$$branch'..."; \
-	sudo sed -i -E "s/^Environment=GIT_BRANCH=.*/Environment=GIT_BRANCH=$$branch/" $(SERVICE_FILE)
-	@echo "Reloading systemd and restarting service..."
+	echo "Switching $(WEBSITE_SERVICE_NAME) branch to '$$branch'..."; \
+	sudo sed -i -E "s/^Environment=GIT_BRANCH=.*/Environment=GIT_BRANCH=$$branch/" $(WEBSITE_SERVICE_FILE)
+	@echo "Reloading systemd and restarting website service..."
 	@sudo systemctl daemon-reload
-	@sudo systemctl restart $(SERVICE_NAME)
+	@sudo systemctl restart $(WEBSITE_SERVICE_NAME)
 	@echo "New branch configuration:"
-	@sudo grep -E '^Environment=GIT_BRANCH=' $(SERVICE_FILE) | sed 's/^/  /'
+	@sudo grep -E '^Environment=GIT_BRANCH=' $(WEBSITE_SERVICE_FILE) | sed 's/^/  /'
+
+# Install sensor service (runs every 1 second)
+install-sensor-service: check-linux check-uv check-signalk-token
+	@echo "Installing $(SENSOR_SERVICE_NAME) systemd service..."
+	@if [ -f "$(SENSOR_SERVICE_FILE)" ]; then \
+		echo "Sensor service already exists. Uninstalling first..."; \
+		sudo systemctl stop $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
+		sudo systemctl disable $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
+	fi
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
+	@echo "Rendering sensor service template from $(SENSOR_TEMPLATE_FILE)..."
+	@if [ ! -f "$(SENSOR_TEMPLATE_FILE)" ]; then \
+		echo "Error: Sensor template file not found at $(SENSOR_TEMPLATE_FILE)"; \
+		exit 1; \
+	fi
+	@sed -e "s|{{DESCRIPTION}}|$(SENSOR_SERVICE_DESCRIPTION)|g" \
+	     -e "s|{{USER}}|$(SENSOR_SERVICE_USER)|g" \
+	     -e "s|{{WORKING_DIRECTORY}}|$(SENSOR_SERVICE_WORKING_DIR)|g" \
+	     -e "s|{{EXEC_START}}|$(SENSOR_SERVICE_EXEC_START)|g" \
+	     -e "s|{{RESTART_SEC}}|$(SENSOR_SERVICE_INTERVAL)|g" \
+	     -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
+	     -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
+	     "$(SENSOR_TEMPLATE_FILE)" | sudo tee $(SENSOR_SERVICE_FILE) > /dev/null
+	@echo "Reloading systemd..."
+	@sudo systemctl daemon-reload
+	@echo "Enabling and starting sensor service..."
+	@sudo systemctl enable $(SENSOR_SERVICE_NAME)
+	@sudo systemctl start $(SENSOR_SERVICE_NAME)
+	@echo "Sensor service installed and started successfully!"
+	@echo "Service runs every $(SENSOR_SERVICE_INTERVAL) second(s)"
+	@echo "Check status with: make check-sensor-service-status"
+	@echo "View logs with: make sensor-logs"
+
+# Check sensor service status
+check-sensor-service-status: check-linux
+	@echo "Checking status of $(SENSOR_SERVICE_NAME) service..."
+	@if [ -f "$(SENSOR_SERVICE_FILE)" ]; then \
+		echo "Sensor service file exists at $(SENSOR_SERVICE_FILE)"; \
+		echo ""; \
+		echo "Sensor Service Status:"; \
+		sudo systemctl status $(SENSOR_SERVICE_NAME) --no-pager -l; \
+	else \
+		echo "Sensor service file not found at $(SENSOR_SERVICE_FILE)"; \
+		echo "Sensor service is not installed. Run 'make install-sensor-service' to install it."; \
+	fi
+
+# Show sensor service logs
+sensor-logs: check-linux
+	@echo "Showing logs for $(SENSOR_SERVICE_NAME) service..."
+	@echo "Press Ctrl+C to exit logs"
+	@sudo journalctl -u $(SENSOR_SERVICE_NAME) -f
+
+# Uninstall sensor service
+uninstall-sensor-service: check-linux
+	@echo "Uninstalling $(SENSOR_SERVICE_NAME) systemd service..."
+	@if [ -f "$(SENSOR_SERVICE_FILE)" ]; then \
+		echo "Stopping and disabling sensor service..."; \
+		sudo systemctl stop $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
+		sudo systemctl disable $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
+		echo "Removing sensor service file..."; \
+		sudo rm -f $(SENSOR_SERVICE_FILE); \
+		echo "Reloading systemd..."; \
+		sudo systemctl daemon-reload; \
+		echo "Sensor service uninstalled successfully!"; \
+	else \
+		echo "Sensor service file not found. Nothing to uninstall."; \
+	fi
 
 # Run tests
 test:
@@ -267,7 +351,7 @@ install-sensors: check-linux check-uv check-signalk-token
 	@echo "  make run-sensors"
 	@echo ""
 	@echo "To run with custom settings:"
-	@echo "  make run-sensors SENSOR_HOST=192.168.8.50 SENSOR_PORT=3000 SENSOR_INTERVAL=1.0"
+	@echo "  make run-sensors SENSOR_HOST=192.168.8.50 SENSOR_PORT=3000"
 	@echo ""
 	@echo "To check I2C devices:"
 	@echo "  make check-i2c"
@@ -290,10 +374,10 @@ test-sensors: check-uv check-signalk-token
 # Run I2C sensors to SignalK publisher
 run-sensors: check-uv check-signalk-token
 	@echo "Starting I2C sensors to SignalK publisher..."
-	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT), Interval: $(SENSOR_INTERVAL)s"
+	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "Running with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run scripts/sensors_to_signalk.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --interval $(SENSOR_INTERVAL); \
+		"$(UV_BIN)" run scripts/sensors_to_signalk.py --host $(SENSOR_HOST) --port $(SENSOR_PORT); \
 	else \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
