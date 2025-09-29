@@ -280,7 +280,7 @@ class SensorReader:
             # Calculate magnetic heading (simplified)
             heading = 0
             if mag_x != 0 or mag_y != 0:
-                heading = (3.14159 / 2 - math.atan2(mag_y, mag_x))
+                heading = 3.14159 / 2 - math.atan2(mag_y, mag_x)
                 heading += HEADING_CORRECTION_OFFSET
                 if heading < 0:
                     heading += 3.14159 * 2
