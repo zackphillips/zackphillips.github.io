@@ -11,6 +11,7 @@ import math
 import os
 import socket
 from datetime import UTC, datetime
+import time
 
 # MMC5603 availability will be checked during initialization
 import board
@@ -23,6 +24,10 @@ DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
 I2C_SENSORS_SOURCE = "i2c-sensors"
 HEADING_CORRECTION_OFFSET = -13.0 * 3.14159 / 180.0
+SGP30_WARMUP_POLL_PERIOD_S = 0.5
+SGP30_WARMUP_TIMEOUT_S = 5.0
+SGP30_VOC_PLACEHOLDER_VALUE = 0.0
+SGP30_CO2_PLACEHOLDER_VALUE = 400
 
 # Configure logging
 logging.basicConfig(
@@ -147,16 +152,21 @@ class SensorReader:
             from adafruit_sgp30 import Adafruit_SGP30
 
             self.sgp30_sensor = Adafruit_SGP30(self.i2c)
-            logger.info("SGP30 sensor initialized")
-            logger.info("SGP30 warming up... (takes ~15 seconds)")
-            # Give sensor time to warm up
-            import time
 
-            time.sleep(1)
-            # Read initial values to start calibration
-            _ = self.sgp30_sensor.TVOC
-            _ = self.sgp30_sensor.eCO2
-            logger.info("SGP30 warm-up complete")
+            self.sgp30_sensor.set_iaq_baseline(0x8973, 0x8AAE)
+            self.sgp30_sensor.set_iaq_relative_humidity(celsius=25.0, relative_humidity=50.0)
+
+            # Read initial values to warm-start
+            voc, co2 = SGP30_VOC_PLACEHOLDER_VALUE, SGP30_CO2_PLACEHOLDER_VALUE
+            t0 = datetime.now()
+            while (voc == SGP30_VOC_PLACEHOLDER_VALUE) and (co2 == SGP30_CO2_PLACEHOLDER_VALUE):
+                if (datetime.now() - t0).total_seconds() > SGP30_WARMUP_TIMEOUT_S:
+                      raise TimeoutError("SGP30 warm-up timeout.")
+            
+                voc = self.sgp30_sensor.TVOC
+                co2 = self.sgp30_sensor.eCO2
+                time.sleep(SGP30_WARMUP_POLL_PERIOD_S)
+                logger.info(f"SGP30 initial values: {voc} TVOC, {co2} eCO2")
         except Exception as e:
             logger.warning(f"SGP30 not available: {e}")
 
@@ -254,11 +264,10 @@ class SensorReader:
 
             # Log sensor status for debugging
             if tvoc == 0 and eco2 == 400:
-                logger.debug(
-                    "SGP30: Reading default values (sensor may need calibration)"
+                raise RuntimeError(
+                    "SGP30: Reas default values (sensor may need calibration)"
                 )
-            else:
-                logger.debug(f"SGP30: TVOC={tvoc} ppb, eCO2={eco2} ppm")
+            logger.debug(f"SGP30: TVOC={tvoc} ppb, eCO2={eco2} ppm")
 
             return {
                 "environment.inside.airQuality.tvoc": {"value": tvoc, "units": "ppb"},
@@ -280,7 +289,7 @@ class SensorReader:
             # Calculate magnetic heading (simplified)
             heading = 0
             if mag_x != 0 or mag_y != 0:
-                heading = 3.14159 / 2 - math.atan2(mag_y, mag_x)
+                heading = (3.14159 / 2 - math.atan2(mag_y, mag_x))
                 heading += HEADING_CORRECTION_OFFSET
                 if heading < 0:
                     heading += 3.14159 * 2
