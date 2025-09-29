@@ -10,8 +10,8 @@ import logging
 import math
 import os
 import socket
-from datetime import UTC, datetime
 import time
+from datetime import UTC, datetime
 
 # MMC5603 availability will be checked during initialization
 import board
@@ -154,15 +154,19 @@ class SensorReader:
             self.sgp30_sensor = Adafruit_SGP30(self.i2c)
 
             self.sgp30_sensor.set_iaq_baseline(0x8973, 0x8AAE)
-            self.sgp30_sensor.set_iaq_relative_humidity(celsius=25.0, relative_humidity=50.0)
+            self.sgp30_sensor.set_iaq_relative_humidity(
+                celsius=25.0, relative_humidity=50.0
+            )
 
             # Read initial values to warm-start
             voc, co2 = SGP30_VOC_PLACEHOLDER_VALUE, SGP30_CO2_PLACEHOLDER_VALUE
             t0 = datetime.now()
-            while (voc == SGP30_VOC_PLACEHOLDER_VALUE) and (co2 == SGP30_CO2_PLACEHOLDER_VALUE):
+            while (voc == SGP30_VOC_PLACEHOLDER_VALUE) and (
+                co2 == SGP30_CO2_PLACEHOLDER_VALUE
+            ):
                 if (datetime.now() - t0).total_seconds() > SGP30_WARMUP_TIMEOUT_S:
-                      raise TimeoutError("SGP30 warm-up timeout.")
-            
+                    raise TimeoutError("SGP30 warm-up timeout.")
+
                 voc = self.sgp30_sensor.TVOC
                 co2 = self.sgp30_sensor.eCO2
                 time.sleep(SGP30_WARMUP_POLL_PERIOD_S)
@@ -289,7 +293,7 @@ class SensorReader:
             # Calculate magnetic heading (simplified)
             heading = 0
             if mag_x != 0 or mag_y != 0:
-                heading = (3.14159 / 2 - math.atan2(mag_y, mag_x))
+                heading = 3.14159 / 2 - math.atan2(mag_y, mag_x)
                 heading += HEADING_CORRECTION_OFFSET
                 if heading < 0:
                     heading += 3.14159 * 2
