@@ -22,6 +22,7 @@ from adafruit_bno055 import BNO055_I2C
 DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
 I2C_SENSORS_SOURCE = "i2c-sensors"
+HEADING_CORRECTION_OFFSET = -13.0 * 3.14159 / 180.0
 
 # Configure logging
 logging.basicConfig(
@@ -279,9 +280,10 @@ class SensorReader:
             # Calculate magnetic heading (simplified)
             heading = 0
             if mag_x != 0 or mag_y != 0:
-                heading = (180 / 3.14159) * (3.14159 / 2 - math.atan2(mag_y, mag_x))
+                heading = (3.14159 / 2 - math.atan2(mag_y, mag_x))
+                heading += HEADING_CORRECTION_OFFSET
                 if heading < 0:
-                    heading += 360
+                    heading += 3.14159 * 2
 
             return {
                 "navigation.headingMagnetic": {"value": heading, "units": "rad"},
