@@ -241,7 +241,7 @@ make logs
 
 **No data showing**:
 - Check SignalK server connectivity
-- Verify `data/telemetry/signalk_latest.json` exists
+- Verify data file exists (see project structure)
 - Check browser console for errors
 
 **Charts not updating**:
