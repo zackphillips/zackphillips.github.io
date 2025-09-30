@@ -2,7 +2,7 @@
 .PHONY: test check-uv pre-commit-install pre-commit-run config
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-logs
-.PHONY: calibrate-heading
+.PHONY: calibrate-heading calibrate-imu calibrate-air
 
 # Check if running on Linux
 UNAME_S := $(shell uname -s)
@@ -81,7 +81,9 @@ help:
 	@echo "  make uninstall-sensor-service - Uninstall sensor service (Linux only)"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
-	@echo "  make calibrate-heading - Calibrate magnetic heading sensor offset"
+	@echo "  make calibrate-heading - Calibrate MMC5603 magnetic heading sensor offset"
+	@echo "  make calibrate-imu   - Calibrate BNO055 IMU sensor"
+	@echo "  make calibrate-air   - Calibrate SGP30 air quality sensor"
 	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
 	@echo "  make pre-commit-run - Run pre-commit on all files (requires uv)"
 	@echo "  make config         - Interactive vessel configuration wizard"
@@ -452,7 +454,35 @@ calibrate-heading: check-linux check-uv
 	@echo ""
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "Running heading calibration with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run python scripts/calibrate_heading.py; \
+		"$(UV_BIN)" run python scripts/calibrate_mmc5603_heading.py; \
+	else \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
+
+# Calibrate BNO055 IMU sensor
+calibrate-imu: check-linux check-uv
+	@echo "Calibrating BNO055 IMU sensor..."
+	@echo "This will guide you through calibrating the BNO055 IMU sensor."
+	@echo "The sensor requires calibration for accurate orientation and motion data."
+	@echo ""
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Running IMU calibration with uv: $(UV_BIN)"; \
+		"$(UV_BIN)" run python scripts/calibrate_bno055_imu.py; \
+	else \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
+
+# Calibrate SGP30 air quality sensor
+calibrate-air: check-linux check-uv
+	@echo "Calibrating SGP30 air quality sensor..."
+	@echo "This will guide you through calibrating the SGP30 air quality sensor."
+	@echo "The sensor measures TVOC and eCO2 and requires baseline calibration."
+	@echo ""
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Running air quality calibration with uv: $(UV_BIN)"; \
+		"$(UV_BIN)" run python scripts/calibrate_sgp30_air_quality.py; \
 	else \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \

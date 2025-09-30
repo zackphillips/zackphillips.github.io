@@ -150,7 +150,9 @@ zackphillips.github.io/
 │   │   └── signalk_latest.json # Data file that is regularly updated
 │   └── tide_stations.json      # NOAA tide station data
 ├── scripts/
-│   ├── calibrate_heading.py           # Magnetic heading sensor calibration
+│   ├── calibrate_mmc5603_heading.py  # MMC5603 magnetic heading sensor calibration
+│   ├── calibrate_bno055_imu.py       # BNO055 IMU sensor calibration
+│   ├── calibrate_sgp30_air_quality.py # SGP30 air quality sensor calibration
 │   ├── i2c_sensor_read_and_publish.py  # I2C sensor reader and SignalK publisher
 │   ├── signalk_token_management.py    # SignalK token management (create/check)
 │   ├── update_signalk_data.py         # SignalK data updater script
@@ -192,7 +194,9 @@ make check-signalk-token # Check if SignalK token exists and is valid
 make create-signalk-token # Create a new SignalK access token
 
 # Sensor Calibration
-make calibrate-heading # Calibrate magnetic heading sensor offset
+make calibrate-heading # Calibrate MMC5603 magnetic heading sensor offset
+make calibrate-imu     # Calibrate BNO055 IMU sensor
+make calibrate-air     # Calibrate SGP30 air quality sensor
 ```
 
 ### **Development Tools**
