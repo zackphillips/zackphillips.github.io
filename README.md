@@ -150,6 +150,7 @@ zackphillips.github.io/
 │   │   └── signalk_latest.json # Data file that is regularly updated
 │   └── tide_stations.json      # NOAA tide station data
 ├── scripts/
+│   ├── calibrate_heading.py           # Magnetic heading sensor calibration
 │   ├── i2c_sensor_read_and_publish.py  # I2C sensor reader and SignalK publisher
 │   ├── signalk_token_management.py    # SignalK token management (create/check)
 │   ├── update_signalk_data.py         # SignalK data updater script
@@ -189,6 +190,9 @@ make uninstall-sensor-service # Uninstall sensor service (Linux)
 # SignalK Token Management
 make check-signalk-token # Check if SignalK token exists and is valid
 make create-signalk-token # Create a new SignalK access token
+
+# Sensor Calibration
+make calibrate-heading # Calibrate magnetic heading sensor offset
 ```
 
 ### **Development Tools**

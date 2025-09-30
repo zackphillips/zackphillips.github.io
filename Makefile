@@ -2,6 +2,7 @@
 .PHONY: test check-uv pre-commit-install pre-commit-run config
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-logs
+.PHONY: calibrate-heading
 
 # Check if running on Linux
 UNAME_S := $(shell uname -s)
@@ -80,6 +81,7 @@ help:
 	@echo "  make uninstall-sensor-service - Uninstall sensor service (Linux only)"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
+	@echo "  make calibrate-heading - Calibrate magnetic heading sensor offset"
 	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
 	@echo "  make pre-commit-run - Run pre-commit on all files (requires uv)"
 	@echo "  make config         - Interactive vessel configuration wizard"
@@ -441,3 +443,17 @@ create-signalk-token:
 config:
 	@echo "Starting Vessel Configuration Wizard..."
 	@python scripts/vessel_config_wizard.py
+
+# Calibrate magnetic heading sensor offset
+calibrate-heading: check-linux check-uv
+	@echo "Calibrating magnetic heading sensor..."
+	@echo "This will help you set the correct heading offset for your vessel."
+	@echo "You'll need to know the current true heading of your vessel."
+	@echo ""
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Running heading calibration with uv: $(UV_BIN)"; \
+		"$(UV_BIN)" run python scripts/calibrate_heading.py; \
+	else \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi

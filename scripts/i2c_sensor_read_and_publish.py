@@ -23,7 +23,7 @@ from adafruit_bno055 import BNO055_I2C
 DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
 I2C_SENSORS_SOURCE = "i2c-sensors"
-HEADING_CORRECTION_OFFSET = -13.0 * 3.14159 / 180.0
+# HEADING_CORRECTION_OFFSET is now loaded from vessel info.json
 SGP30_WARMUP_POLL_PERIOD_S = 0.5
 SGP30_WARMUP_TIMEOUT_S = 5.0
 SGP30_VOC_PLACEHOLDER_VALUE = 0.0
@@ -82,6 +82,14 @@ class SensorReader:
         self.udp_port = (
             udp_port or DEFAULT_UDP_PORT
         )  # UDP port from command-line argument
+
+        # Load heading correction offset from vessel info
+        if self.vessel_info and "sensors" in self.vessel_info:
+            sensors_config = self.vessel_info["sensors"]
+            self.heading_correction_offset = sensors_config.get("heading_correction_offset_rad", 0.0)
+        else:
+            self.heading_correction_offset = 0.0
+            logger.warning("No sensors configuration found in vessel info, using default heading correction offset of 0.0")
 
         # Validate required configuration
         if not self.signalk_host:
@@ -294,7 +302,7 @@ class SensorReader:
             heading = 0
             if mag_x != 0 or mag_y != 0:
                 heading = 3.14159 / 2 - math.atan2(mag_y, mag_x)
-                heading += HEADING_CORRECTION_OFFSET
+                heading += self.heading_correction_offset
                 if heading < 0:
                     heading += 3.14159 * 2
 
