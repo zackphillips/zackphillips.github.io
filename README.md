@@ -150,8 +150,10 @@ zackphillips.github.io/
 │   │   └── signalk_latest.json # Data file that is regularly updated
 │   └── tide_stations.json      # NOAA tide station data
 ├── scripts/
-│   ├── update_signalk_data.py  # SignalK data updater script
-│   └── vessel_config_wizard.py # Configuration wizard
+│   ├── i2c_sensor_read_and_publish.py  # I2C sensor reader and SignalK publisher
+│   ├── signalk_token_management.py    # SignalK token management (create/check)
+│   ├── update_signalk_data.py         # SignalK data updater script
+│   └── vessel_config_wizard.py       # Configuration wizard
 ├── services/
 │   └── systemd.service.tpl     # Systemd service template
 └── tests/
@@ -173,6 +175,20 @@ make check-uv            # Check if uv is installed and install if necessary
 make pre-commit-install  # Install pre-commit hooks
 make pre-commit-run      # Run pre-commit on all files
 make config              # Interactive vessel configuration wizard
+
+# Sensor and SignalK Commands
+make install-sensors     # Install I2C sensor dependencies (Raspberry Pi)
+make run-sensors         # Run I2C sensors to SignalK publisher (one-time)
+make test-sensors        # Test SignalK connection without running sensors
+make check-i2c           # Check I2C devices and permissions
+make install-sensor-service # Install recurring sensor service (runs every 1s)
+make check-sensor-service-status # Check sensor service status (Linux)
+make sensor-logs         # Show sensor service logs (Linux)
+make uninstall-sensor-service # Uninstall sensor service (Linux)
+
+# SignalK Token Management
+make check-signalk-token # Check if SignalK token exists and is valid
+make create-signalk-token # Create a new SignalK access token
 ```
 
 ### **Development Tools**

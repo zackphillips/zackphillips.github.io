@@ -16,7 +16,7 @@ SENSOR_SERVICE_USER ?= $(shell whoami)
 SENSOR_SERVICE_WORKING_DIR ?= $(CURDIR)
 SENSOR_SERVICE_INTERVAL ?= 1
 SENSOR_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
-SENSOR_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/sensors_to_signalk.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+SENSOR_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 # Optional: server port
 SERVER_PORT ?= 8000
@@ -344,7 +344,7 @@ install-sensors: check-linux check-uv check-signalk-token
 		exit 1; \
 	fi
 	@echo "Making sensor script executable..."
-	@chmod +x scripts/sensors_to_signalk.py
+	@chmod +x scripts/i2c_sensor_read_and_publish.py
 	@echo "Installation complete!"
 	@echo ""
 	@echo "To run the sensor reader:"
@@ -365,7 +365,7 @@ test-sensors: check-uv check-signalk-token
 	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "Testing with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run scripts/sensors_to_signalk.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --test; \
+		"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --test; \
 	else \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
@@ -377,7 +377,7 @@ run-sensors: check-uv check-signalk-token
 	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "Running with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run scripts/sensors_to_signalk.py --host $(SENSOR_HOST) --port $(SENSOR_PORT); \
+		"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT); \
 	else \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
@@ -409,13 +409,13 @@ check-i2c: check-linux
 # Check SignalK token
 check-signalk-token:
 	@echo "Checking SignalK token..."
-	@python3 scripts/check_signalk_token.py || ( \
+	@python3 scripts/signalk_token_management.py --check || ( \
 		echo ""; \
 		echo "SignalK token is missing or invalid."; \
 		echo "To create a token, run one of these commands:"; \
 		echo "  make create-signalk-token      # Create SignalK token"; \
 		echo "  make config                    # Interactive vessel configuration"; \
-		echo "  python3 scripts/request_signalk_token.py  # Direct token request"; \
+		echo "  python3 scripts/signalk_token_management.py  # Direct token request"; \
 		exit 1 \
 	)
 
@@ -429,7 +429,7 @@ create-signalk-token:
 	@echo ""
 	@read -p "Continue? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo ""
-	@python3 scripts/request_signalk_token.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --timeout 300
+	@python3 scripts/signalk_token_management.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --timeout 300
 	@echo ""
 	@echo "Token creation completed!"
 	@echo "You can now run sensor-related commands:"
