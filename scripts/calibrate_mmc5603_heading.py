@@ -186,8 +186,8 @@ def main():
     # Save updated info
     if save_vessel_info(vessel_info):
         print()
-        print("✓ Heading calibration completed successfully!")
-        print(f"✓ Correction offset saved: {radians_to_degrees(correction_offset):.1f}°")
+        print("Heading calibration completed successfully!")
+        print(f"Correction offset saved: {radians_to_degrees(correction_offset):.1f}°")
         print()
         print("The sensor will now use this offset for all future readings.")
         print("You can run this calibration again anytime to update the offset.")
