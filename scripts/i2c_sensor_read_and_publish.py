@@ -239,23 +239,25 @@ class SensorReader:
 
             data = {}
 
-            if accel and all(x is not None for x in accel):
+            if gyro and all(x is not None for x in gyro):
+                # Convert gyroscope from degrees/s to radians/s
                 data["navigation.attitude.rateOfTurn"] = {
-                    "value": gyro[2] if gyro and gyro[2] is not None else 0,
+                    "value": (gyro[2] * math.pi / 180) if gyro[2] is not None else 0,
                     "units": "rad/s",
                 }
 
             if euler and all(x is not None for x in euler):
+                # Convert Euler angles from degrees to radians
                 data["navigation.attitude.roll"] = {
-                    "value": euler[0] if euler[0] is not None else 0,
+                    "value": (euler[0] * math.pi / 180) if euler[0] is not None else 0,
                     "units": "rad",
                 }
                 data["navigation.attitude.pitch"] = {
-                    "value": euler[1] if euler[1] is not None else 0,
+                    "value": (euler[1] * math.pi / 180) if euler[1] is not None else 0,
                     "units": "rad",
                 }
                 data["navigation.attitude.yaw"] = {
-                    "value": euler[2] if euler[2] is not None else 0,
+                    "value": (euler[2] * math.pi / 180) if euler[2] is not None else 0,
                     "units": "rad",
                 }
 
