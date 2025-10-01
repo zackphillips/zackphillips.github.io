@@ -19,6 +19,13 @@ import busio
 import smbus2
 from adafruit_bno055 import BNO055_I2C
 
+# Import BNO055 register I/O functions for calibration loading
+try:
+    from bno055_register_io import read_calibration, write_calibration, validate_calibration_data
+    BNO055_REGISTER_IO_AVAILABLE = True
+except ImportError:
+    BNO055_REGISTER_IO_AVAILABLE = False
+
 # Constants
 DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
@@ -152,6 +159,10 @@ class SensorReader:
         try:
             self.bno055_sensor = BNO055_I2C(self.i2c)
             logger.info("BNO055 sensor initialized")
+            
+            # Load calibration data if available
+            if BNO055_REGISTER_IO_AVAILABLE and self.vessel_info:
+                self._load_bno055_calibration()
         except Exception as e:
             logger.warning(f"BNO055 not available: {e}")
 
@@ -212,6 +223,35 @@ class SensorReader:
         except Exception as e:
             logger.error(f"Error reading BME280: {e}")
             return {}
+
+    def _load_bno055_calibration(self):
+        """Load calibration data from vessel info and apply to BNO055."""
+        try:
+            # Check if calibration data exists in vessel info
+            if ("sensors" not in self.vessel_info or 
+                "bno055_calibration" not in self.vessel_info["sensors"]):
+                logger.info("No saved BNO055 calibration data found in vessel info")
+                return False
+            
+            cal_data = self.vessel_info["sensors"]["bno055_calibration"]
+            
+            # Validate the calibration data
+            is_valid, message = validate_calibration_data(cal_data)
+            if not is_valid:
+                logger.warning(f"Invalid BNO055 calibration data: {message}")
+                return False
+            
+            # Apply calibration data to BNO055
+            if write_calibration(self.bno055_sensor, cal_data):
+                logger.info("BNO055 calibration data loaded and applied successfully")
+                return True
+            else:
+                logger.warning("Failed to apply BNO055 calibration data")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error loading BNO055 calibration data: {e}")
+            return False
 
     def read_bno055_data(self):
         """Read data from BNO055 sensor."""
@@ -488,23 +528,23 @@ def test_signalk_connection(host=None, port=None, udp_port=None):
 
     # Test UDP connection
     if reader.connect_udp():
-        logger.info("✓ SignalK UDP connection successful")
+        logger.info("SUCCESS: SignalK UDP connection successful")
 
         # Test publishing dummy data
         test_data = {
             "environment.inside.temperature": {
-                "value": 293.15,  # 20°C in Kelvin
+                "value": 293.15,  # 20 degC in Kelvin
                 "units": "K",
             }
         }
 
         reader.publish_to_signalk(test_data)
-        logger.info("✓ Test data published successfully")
+        logger.info("SUCCESS: Test data published successfully")
 
         reader.cleanup()
         return True
     else:
-        logger.error("✗ SignalK UDP connection failed")
+        logger.error("ERROR: SignalK UDP connection failed")
         return False
 
 

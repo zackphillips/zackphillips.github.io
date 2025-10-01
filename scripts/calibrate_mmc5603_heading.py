@@ -104,7 +104,7 @@ def radians_to_degrees(radians):
 
 
 def normalize_heading(heading_rad):
-    """Normalize heading to 0-2π range."""
+    """Normalize heading to 0-2*pi range."""
     while heading_rad < 0:
         heading_rad += 2 * math.pi
     while heading_rad >= 2 * math.pi:
@@ -164,18 +164,18 @@ def main():
     
     # Calculate average raw heading
     avg_raw_heading = sum(samples) / len(samples)
-    print(f"Average raw magnetic heading: {radians_to_degrees(avg_raw_heading):.1f}°")
+    print(f"Average raw magnetic heading: {radians_to_degrees(avg_raw_heading):.1f} deg")
     
     # Calculate correction offset
     correction_offset = true_heading_rad - avg_raw_heading
     
-    # Normalize the offset to -π to π range
+    # Normalize the offset to -pi to pi range
     while correction_offset > math.pi:
         correction_offset -= 2 * math.pi
     while correction_offset < -math.pi:
         correction_offset += 2 * math.pi
     
-    print(f"Calculated correction offset: {radians_to_degrees(correction_offset):.1f}° ({correction_offset:.4f} rad)")
+    print(f"Calculated correction offset: {radians_to_degrees(correction_offset):.1f} deg ({correction_offset:.4f} rad)")
     
     # Update vessel info
     if "sensors" not in vessel_info:
@@ -187,7 +187,7 @@ def main():
     if save_vessel_info(vessel_info):
         print()
         print("Heading calibration completed successfully!")
-        print(f"Correction offset saved: {radians_to_degrees(correction_offset):.1f}°")
+        print(f"Correction offset saved: {radians_to_degrees(correction_offset):.1f} deg")
         print()
         print("The sensor will now use this offset for all future readings.")
         print("You can run this calibration again anytime to update the offset.")

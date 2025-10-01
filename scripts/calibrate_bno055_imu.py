@@ -28,6 +28,17 @@ try:
 except ImportError:
     BNO055_AVAILABLE = False
 
+# Import BNO055 register I/O functions
+try:
+    from bno055_register_io import (
+        read_calibration, write_calibration, validate_calibration_data,
+        compare_calibration_data, print_calibration_data,
+        save_calibration_to_file, load_calibration_from_file
+    )
+    BNO055_REGISTER_IO_AVAILABLE = True
+except ImportError:
+    BNO055_REGISTER_IO_AVAILABLE = False
+
 
 def load_vessel_info(info_path="data/vessel/info.json"):
     """Load vessel information from info.json file."""
@@ -67,12 +78,16 @@ def save_vessel_info(info, info_path="data/vessel/info.json"):
 
 def get_calibration_status(bno055):
     """Get calibration status for all sensors."""
-    return {
-        'system': bno055.calibration_status[0],
-        'gyro': bno055.calibration_status[1],
-        'accel': bno055.calibration_status[2],
-        'mag': bno055.calibration_status[3]
-    }
+    while True:
+        try:
+            return {
+                'system': bno055.calibration_status[0],
+                'gyro': bno055.calibration_status[1],
+                'accel': bno055.calibration_status[2],
+                'mag': bno055.calibration_status[3]
+            }
+        except Exception as e:
+            print(f"Exception in sensor read: {e}")
 
 
 def print_calibration_status(status):
@@ -96,54 +111,78 @@ def wait_for_calibration(bno055, sensor_type, instructions):
     try:
         while True:
             status = get_calibration_status(bno055)
+            print(status)
             print(f"\r{sensor_type}: {status[sensor_type.lower()]}/3", end="", flush=True)
+
             
             if status[sensor_type.lower()] >= 3:
-                print(f"\n✓ {sensor_type} calibration complete!")
+                print(f"\n{sensor_type} calibration complete!")
                 return True
             
             time.sleep(0.5)
             
     except KeyboardInterrupt:
-        print(f"\n⚠ {sensor_type} calibration skipped.")
+        print(f"\n{sensor_type} calibration skipped.")
         return False
 
 
 def save_calibration_data(bno055, vessel_info):
     """Save calibration data to vessel info."""
     try:
-        # Get calibration data from BNO055
-        cal_data = bno055.calibration_data
+        # Get calibration data from BNO055 using our register access functions
+        cal_data = read_calibration(bno055)
         
         if cal_data:
             # Ensure sensors section exists
             if "sensors" not in vessel_info:
                 vessel_info["sensors"] = {}
+
+            if "bno055_calibration" not in vessel_info["sensors"]:
+                vessel_info["sensors"]["bno055_calibration"] = {}
             
-            # Store calibration data
-            vessel_info["sensors"]["bno055_calibration"] = {
-                "accel_offset_x": cal_data[0],
-                "accel_offset_y": cal_data[1], 
-                "accel_offset_z": cal_data[2],
-                "accel_radius": cal_data[3],
-                "gyro_offset_x": cal_data[4],
-                "gyro_offset_y": cal_data[5],
-                "gyro_offset_z": cal_data[6],
-                "mag_offset_x": cal_data[7],
-                "mag_offset_y": cal_data[8],
-                "mag_offset_z": cal_data[9],
-                "mag_radius": cal_data[10]
-            }
+            # Store calibration data (cal_data is already a dictionary with named fields)
+            vessel_info["sensors"]["bno055_calibration"] = cal_data
             
-            print("✓ Calibration data saved to vessel info")
+            print("Calibration data saved to vessel info")
             return True
         else:
-            print("⚠ No calibration data available to save")
+            print("No calibration data available to save")
             return False
             
     except Exception as e:
         print(f"Error saving calibration data: {e}")
         return False
+
+
+def load_calibration_data(bno055, vessel_info):
+    """Load calibration data from vessel info and apply to BNO055."""
+    try:
+        # Check if calibration data exists in vessel info
+        if ("sensors" not in vessel_info or 
+            "bno055_calibration" not in vessel_info["sensors"]):
+            print("No saved calibration data found in vessel info")
+            return False
+        
+        cal_data = vessel_info["sensors"]["bno055_calibration"]
+        
+        # Validate the calibration data
+        is_valid, message = validate_calibration_data(cal_data)
+        if not is_valid:
+            print(f"Invalid calibration data: {message}")
+            return False
+        
+        # Apply calibration data to BNO055
+        if write_calibration(bno055, cal_data):
+            print("Calibration data loaded and applied to BNO055")
+            return True
+        else:
+            print("Failed to apply calibration data to BNO055")
+            return False
+            
+    except Exception as e:
+        print(f"Error loading calibration data: {e}")
+        return False
+
 
 
 def main():
@@ -160,6 +199,12 @@ def main():
         print("Please install it with: pip install adafruit-circuitpython-bno055")
         sys.exit(1)
     
+    # Check if register I/O functions are available
+    if not BNO055_REGISTER_IO_AVAILABLE:
+        print("Error: BNO055 register I/O functions not available.")
+        print("Make sure bno055_register_io.py is in the same directory.")
+        sys.exit(1)
+    
     # Load current vessel info
     vessel_info = load_vessel_info()
     if not vessel_info:
@@ -172,19 +217,23 @@ def main():
         i2c = busio.I2C(board.SCL, board.SDA)
         bno055 = BNO055_I2C(i2c)
         
-        print("✓ BNO055 sensor initialized")
+        print("BNO055 sensor initialized")
+        
+        # Ask if user wants to load existing calibration data
+        print("\nWould you like to load existing calibration data from vessel info? (y/n)")
+        load_choice = input().lower().strip()
+        if load_choice in ['y', 'yes']:
+            if load_calibration_data(bno055, vessel_info):
+                print("Existing calibration data loaded successfully!")
+            else:
+                print("No existing calibration data found or failed to load.")
+            print()
         
         # Check current calibration status
         print("\n=== Current Calibration Status ===")
         status = get_calibration_status(bno055)
         print_calibration_status(status)
         
-        if all(v >= 3 for v in status.values()):
-            print("\n✓ All sensors are already calibrated!")
-            save_calibration_data(bno055, vessel_info)
-            if save_vessel_info(vessel_info):
-                print("✓ Calibration data saved successfully!")
-            sys.exit(0)
         
         print("\n=== Calibration Instructions ===")
         print("The BNO055 requires calibration for three sensors:")
@@ -197,7 +246,7 @@ def main():
         # Calibrate accelerometer
         accel_success = wait_for_calibration(
             bno055, 
-            "Accelerometer",
+            "accel",
             "Move the sensor in a figure-8 pattern slowly and smoothly.\n"
             "Make sure to rotate through all orientations.\n"
             "The sensor should experience different gravitational orientations."
@@ -206,7 +255,7 @@ def main():
         # Calibrate gyroscope
         gyro_success = wait_for_calibration(
             bno055,
-            "Gyroscope", 
+            "gyro", 
             "Keep the sensor completely stationary.\n"
             "Do not move or rotate the sensor at all.\n"
             "This helps the gyroscope establish a zero reference."
@@ -215,10 +264,17 @@ def main():
         # Calibrate magnetometer
         mag_success = wait_for_calibration(
             bno055,
-            "Magnetometer",
+            "mag",
             "Move the sensor in a figure-8 pattern in different orientations.\n"
             "Rotate the sensor through all three axes.\n"
             "Avoid magnetic interference (keep away from metal objects, electronics)."
+        )
+
+        # Calibrate system
+        system_success = wait_for_calibration(
+            bno055,
+            "system",
+            "Wait for the system to be calibrated overall."
         )
         
         # Final status check
@@ -229,22 +285,23 @@ def main():
         # Save calibration data
         if save_calibration_data(bno055, vessel_info):
             if save_vessel_info(vessel_info):
-                print("\n✓ IMU calibration completed successfully!")
-                print("✓ Calibration data saved to vessel info")
+                print("\nIMU calibration completed successfully!")
+                print("Calibration data saved to vessel info")
                 print()
                 print("The BNO055 sensor is now calibrated and ready for use.")
                 print("You can run this calibration again anytime to update the calibration.")
             else:
-                print("\n⚠ Calibration completed but failed to save data.")
+                print("\nCalibration completed but failed to save data.")
                 sys.exit(1)
         else:
-            print("\n⚠ Calibration completed but no data was saved.")
+            print("\nCalibration completed but no data was saved.")
             print("The sensor may still work with default calibration.")
             
     except Exception as e:
         print(f"\nError during calibration: {e}")
         print("Make sure the BNO055 sensor is properly connected and accessible.")
-        sys.exit(1)
+        raise e
+        #sys.exit(1)
 
 
 if __name__ == "__main__":

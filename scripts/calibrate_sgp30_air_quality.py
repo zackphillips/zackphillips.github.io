@@ -78,7 +78,7 @@ def get_environmental_conditions():
             if -50 <= temperature <= 100:
                 break
             else:
-                print("Please enter a temperature between -50 and 100°C.")
+                print("Please enter a temperature between -50 and 100 degC.")
         except ValueError:
             print("Please enter a valid number.")
     
@@ -112,7 +112,7 @@ def read_sgp30_baseline(sgp30, duration=60):
     
     print("Reading sensor values...")
     while time.time() - start_time < duration:
-        try:
+        
             tvoc = sgp30.TVOC
             eco2 = sgp30.eCO2
             
@@ -125,10 +125,7 @@ def read_sgp30_baseline(sgp30, duration=60):
                 print(f"\rSamples: {sample_count}, TVOC: {tvoc} ppb, eCO2: {eco2} ppm", end="", flush=True)
             
             time.sleep(1)
-            
-        except Exception as e:
-            print(f"\nError reading sensor: {e}")
-            time.sleep(1)
+           
     
     print(f"\n\nCollected {sample_count} valid samples")
     
@@ -162,7 +159,7 @@ def save_sgp30_calibration(temperature, humidity, tvoc_baseline, eco2_baseline, 
             "calibration_timestamp": datetime.now().isoformat()
         }
         
-        print("✓ SGP30 calibration data saved to vessel info")
+        print("SGP30 calibration data saved to vessel info")
         return True
         
     except Exception as e:
@@ -196,13 +193,13 @@ def main():
         i2c = busio.I2C(board.SCL, board.SDA)
         sgp30 = Adafruit_SGP30(i2c)
         
-        print("✓ SGP30 sensor initialized")
+        print("SGP30 sensor initialized")
         
         # Get environmental conditions
         temperature, humidity = get_environmental_conditions()
         
         # Set relative humidity for better accuracy
-        print(f"\nSetting relative humidity to {humidity}% at {temperature}°C...")
+        print(f"\nSetting relative humidity to {humidity}% at {temperature} degC...")
         sgp30.set_iaq_relative_humidity(celsius=temperature, relative_humidity=humidity)
         
         # Read baseline values
@@ -231,22 +228,22 @@ def main():
         # Save calibration data
         if save_sgp30_calibration(temperature, humidity, tvoc_baseline, eco2_baseline, vessel_info):
             if save_vessel_info(vessel_info):
-                print("\n✓ SGP30 calibration completed successfully!")
-                print("✓ Calibration data saved to vessel info")
+                print("\nSGP30 calibration completed successfully!")
+                print("Calibration data saved to vessel info")
                 print()
                 print("The SGP30 sensor is now calibrated and ready for use.")
                 print("You can run this calibration again anytime to update the calibration.")
                 print()
                 print("Calibration Summary:")
-                print(f"  Temperature: {temperature}°C")
+                print(f"  Temperature: {temperature} degC")
                 print(f"  Humidity: {humidity}%")
                 print(f"  TVOC Baseline: {tvoc_baseline:.1f} ppb")
                 print(f"  eCO2 Baseline: {eco2_baseline:.1f} ppm")
             else:
-                print("\n⚠ Calibration completed but failed to save data.")
+                print("\nCalibration completed but failed to save data.")
                 sys.exit(1)
         else:
-            print("\n⚠ Calibration completed but no data was saved.")
+            print("\nWARNING: Calibration completed but no data was saved.")
             print("The sensor may still work with default calibration.")
             
     except Exception as e:
