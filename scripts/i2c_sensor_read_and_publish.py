@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 I2C Sensors to SignalK Publisher
-Reads data from BME280, BNO055, SGP30, and MMC5603 sensors via I2C
+Reads data from BME280, BNO055, and MMC5603 sensors via I2C
 and publishes to SignalK server.
 """
 
@@ -30,11 +30,6 @@ except ImportError:
 DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
 I2C_SENSORS_SOURCE = "i2c-sensors"
-# HEADING_CORRECTION_OFFSET is now loaded from vessel info.json
-SGP30_WARMUP_POLL_PERIOD_S = 0.5
-SGP30_WARMUP_TIMEOUT_S = 5.0
-SGP30_VOC_PLACEHOLDER_VALUE = 0.0
-SGP30_CO2_PLACEHOLDER_VALUE = 400
 
 # Configure logging
 logging.basicConfig(
@@ -120,7 +115,6 @@ class SensorReader:
         # Sensor objects
         self.bme280_sensor = None
         self.bno055_sensor = None
-        self.sgp30_sensor = None
         self.mmc5603_sensor = None
 
         # Initialize sensors
@@ -165,33 +159,6 @@ class SensorReader:
                 self._load_bno055_calibration()
         except Exception as e:
             logger.warning(f"BNO055 not available: {e}")
-
-        # SGP30 (Air Quality)
-        try:
-            from adafruit_sgp30 import Adafruit_SGP30
-
-            self.sgp30_sensor = Adafruit_SGP30(self.i2c)
-
-            self.sgp30_sensor.set_iaq_baseline(0x8973, 0x8AAE)
-            self.sgp30_sensor.set_iaq_relative_humidity(
-                celsius=25.0, relative_humidity=50.0
-            )
-
-            # Read initial values to warm-start
-            voc, co2 = SGP30_VOC_PLACEHOLDER_VALUE, SGP30_CO2_PLACEHOLDER_VALUE
-            t0 = datetime.now()
-            while (voc == SGP30_VOC_PLACEHOLDER_VALUE) and (
-                co2 == SGP30_CO2_PLACEHOLDER_VALUE
-            ):
-                if (datetime.now() - t0).total_seconds() > SGP30_WARMUP_TIMEOUT_S:
-                    raise TimeoutError("SGP30 warm-up timeout.")
-
-                voc = self.sgp30_sensor.TVOC
-                co2 = self.sgp30_sensor.eCO2
-                time.sleep(SGP30_WARMUP_POLL_PERIOD_S)
-                logger.info(f"SGP30 initial values: {voc} TVOC, {co2} eCO2")
-        except Exception as e:
-            logger.warning(f"SGP30 not available: {e}")
 
         # MMC5603 (Magnetometer)
         try:
@@ -306,31 +273,6 @@ class SensorReader:
             logger.error(f"Error reading BNO055: {e}")
             return {}
 
-    def read_sgp30_data(self):
-        """Read data from SGP30 sensor."""
-        if not self.sgp30_sensor:
-            return {}
-
-        try:
-            # Read TVOC and eCO2
-            tvoc = self.sgp30_sensor.TVOC
-            eco2 = self.sgp30_sensor.eCO2
-
-            # Log sensor status for debugging
-            if tvoc == 0 and eco2 == 400:
-                raise RuntimeError(
-                    "SGP30: Reas default values (sensor may need calibration)"
-                )
-            logger.debug(f"SGP30: TVOC={tvoc} ppb, eCO2={eco2} ppm")
-
-            return {
-                "environment.inside.airQuality.tvoc": {"value": tvoc, "units": "ppb"},
-                "environment.inside.airQuality.co2": {"value": eco2, "units": "ppm"},
-            }
-        except Exception as e:
-            logger.error(f"Error reading SGP30: {e}")
-            return {}
-
     def read_mmc5603_data(self):
         """Read data from MMC5603 sensor."""
         if not self.mmc5603_sensor:
@@ -366,7 +308,6 @@ class SensorReader:
         # Read from each sensor
         data.update(self.read_bme280_data())
         data.update(self.read_bno055_data())
-        data.update(self.read_sgp30_data())
         data.update(self.read_mmc5603_data())
 
         return data
