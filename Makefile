@@ -1,5 +1,5 @@
 .PHONY: server help install-website-service website-logs uninstall-website-service check-website-service-status
-.PHONY: test check-uv pre-commit-install pre-commit-run config
+.PHONY: test check-uv pre-commit-install pre-commit-run lint config
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-logs
 .PHONY: calibrate-heading calibrate-imu calibrate-air
@@ -86,8 +86,9 @@ help:
 	@echo "  make calibrate-air   - Calibrate SGP30 air quality sensor"
 	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
 	@echo "  make pre-commit-run - Run pre-commit on all files (requires uv)"
-	@echo "  make config         - Interactive vessel configuration wizard"
-	@echo "  make help           - Show this help message"
+	@echo "  make lint          - Run ruff linter and auto-fix issues on all Python files"
+	@echo "  make config        - Interactive vessel configuration wizard"
+	@echo "  make help          - Show this help message"
 
 # Check Linux requirement
 check-linux:
@@ -325,6 +326,17 @@ pre-commit-run: check-uv
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "Running with uv: $(UV_BIN)"; \
 		"$(UV_BIN)" run pre-commit run --all-files; \
+	else \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' first."; \
+		exit 1; \
+	fi
+
+# Run ruff linter and auto-fix issues on all Python files
+lint: check-uv
+	@echo "Running ruff linter with auto-fix on all Python files..."
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Running with uv: $(UV_BIN)"; \
+		"$(UV_BIN)" run ruff check --fix .; \
 	else \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' first."; \
 		exit 1; \
