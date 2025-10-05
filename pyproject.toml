@@ -5,12 +5,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pytest>=8.4.1",
     "requests>=2.32.4",
-    "pre-commit>=3.6.0",
-    "ruff>=0.3.4",
     "websocket-client>=1.6.4",
     "PyJWT>=2.8.0",
+]
+
+[project.optional-dependencies]
+# Raspberry Pi / hardware-only dependencies
+pi = [
+    "lgpio>=0.2.0.0",
     "smbus2>=0.4.3",
     "smbus>=1.1",
     "bme280>=0.1.0",
@@ -18,7 +21,13 @@ dependencies = [
     "adafruit-circuitpython-sgp30>=1.2.0",
     "adafruit-circuitpython-mmc56x3>=1.0.0",
     "adafruit-blinka>=8.0.0",
-    "lgpio>=0.2.0.0",
+]
+
+# Developer tooling that should be available on Ubuntu/macOS, etc.
+dev = [
+    "pytest>=8.4.1",
+    "pre-commit>=3.6.0",
+    "ruff>=0.3.4",
 ]
 
 [tool.ruff]

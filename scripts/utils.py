@@ -55,9 +55,9 @@ def load_vessel_info(info_path: str = "data/vessel/info.json") -> dict[str, Any]
         return info
 
     except json.JSONDecodeError as e:
-        raise VesselConfigError(f"Invalid JSON in vessel info file: {e}")
+        raise VesselConfigError(f"Invalid JSON in vessel info file: {e}") from e
     except Exception as e:
-        raise VesselConfigError(f"Failed to load vessel info from {info_path}: {e}")
+        raise VesselConfigError(f"Failed to load vessel info from {info_path}: {e}") from e
 
 
 def save_vessel_info(info: dict[str, Any], info_path: str = "data/vessel/info.json") -> bool:
@@ -138,8 +138,8 @@ def validate_signalk_config(config: dict[str, Any]) -> None:
         port = int(config["port"])
         if not (1 <= port <= 65535):
             raise VesselConfigError(f"Invalid SignalK port: {port} (must be 1-65535)")
-    except ValueError:
-        raise VesselConfigError(f"Invalid SignalK port format: {config['port']} (must be numeric)")
+    except ValueError as e:
+        raise VesselConfigError(f"Invalid SignalK port format: {config['port']} (must be numeric)") from e
 
     # Validate protocol
     protocol = config.get("protocol", "https")

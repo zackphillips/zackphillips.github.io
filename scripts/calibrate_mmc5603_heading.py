@@ -71,13 +71,13 @@ def read_mmc5603_heading():
     try:
         # Initialize I2C bus
         i2c = busio.I2C(board.SCL, board.SDA)
-        
+
         # Initialize MMC5603 sensor
         mmc5603 = adafruit_mmc56x3.MMC5603(i2c)
-        
+
         # Read magnetic field
         mag_x, mag_y, mag_z = mmc5603.magnetic
-        
+
         # Calculate raw magnetic heading
         if mag_x != 0 or mag_y != 0:
             raw_heading = 3.14159 / 2 - math.atan2(mag_y, mag_x)
@@ -87,7 +87,7 @@ def read_mmc5603_heading():
         else:
             print("Warning: No magnetic field detected")
             return None
-            
+
     except Exception as e:
         print(f"Error reading MMC5603 sensor: {e}")
         return None
@@ -119,19 +119,19 @@ def main():
     print("This script will help you calibrate the magnetic heading sensor.")
     print("You'll need to know the current true heading of your vessel.")
     print()
-    
+
     # Check if MMC5603 is available
     if not MMC5603_AVAILABLE:
         print("Error: MMC5603 library not available.")
         print("Please install it with: pip install adafruit-circuitpython-mmc56x3")
         sys.exit(1)
-    
+
     # Load current vessel info
     vessel_info = load_vessel_info()
     if not vessel_info:
         print("Error: Could not load vessel info. Make sure data/vessel/info.json exists.")
         sys.exit(1)
-    
+
     # Get current true heading from user
     while True:
         try:
@@ -143,12 +143,12 @@ def main():
                 print("Please enter a value between 0 and 360 degrees.")
         except ValueError:
             print("Please enter a valid number.")
-    
+
     true_heading_rad = degrees_to_radians(true_heading_deg)
-    
+
     print()
     print("Reading magnetic sensor...")
-    
+
     # Read multiple samples for better accuracy
     samples = []
     for i in range(5):
@@ -157,32 +157,32 @@ def main():
         if raw_heading is not None:
             samples.append(raw_heading)
         time.sleep(0.5)
-    
+
     if not samples:
         print("Error: Could not read magnetic sensor. Check connections and permissions.")
         sys.exit(1)
-    
+
     # Calculate average raw heading
     avg_raw_heading = sum(samples) / len(samples)
     print(f"Average raw magnetic heading: {radians_to_degrees(avg_raw_heading):.1f} deg")
-    
+
     # Calculate correction offset
     correction_offset = true_heading_rad - avg_raw_heading
-    
+
     # Normalize the offset to -pi to pi range
     while correction_offset > math.pi:
         correction_offset -= 2 * math.pi
     while correction_offset < -math.pi:
         correction_offset += 2 * math.pi
-    
+
     print(f"Calculated correction offset: {radians_to_degrees(correction_offset):.1f} deg ({correction_offset:.4f} rad)")
-    
+
     # Update vessel info
     if "sensors" not in vessel_info:
         vessel_info["sensors"] = {}
-    
+
     vessel_info["sensors"]["heading_correction_offset_rad"] = correction_offset
-    
+
     # Save updated info
     if save_vessel_info(vessel_info):
         print()

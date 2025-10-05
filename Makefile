@@ -1,5 +1,5 @@
 .PHONY: server help install-website-service website-logs uninstall-website-service check-website-service-status
-.PHONY: test check-uv pre-commit-install pre-commit-run lint config
+.PHONY: test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-logs
 .PHONY: calibrate-heading calibrate-imu calibrate-air
@@ -71,6 +71,8 @@ help:
 	@echo "  make change-server-branch [BRANCH=<name>] - Switch updater branch (defaults to current git branch)"
 	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
 	@echo "  make check-uv       - Check if uv is installed and install if necessary"
+	@echo "  make sync-dev       - Install dev dependencies only (no Pi deps)"
+	@echo "  make sync-pi        - Install Pi + dev dependencies (on Raspberry Pi)"
 	@echo "  make install-sensors - Install I2C sensor dependencies and enable I2C (Raspberry Pi only)"
 	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
 	@echo "  make test-sensors   - Test SignalK connection without running sensors"
@@ -301,46 +303,55 @@ uninstall-sensor-service: check-linux
 
 # Run tests
 test:
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Running tests with uv..."; \
-		uv run pytest -q; \
+	@if command -v uvx >/dev/null 2>&1; then \
+		echo "Running tests with uvx (no project sync required)..."; \
+		uvx pytest -q; \
 	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		echo "Error: 'uvx' is not available. Ensure 'uv' is installed and on PATH."; \
 		exit 1; \
 	fi
 
 # Install pre-commit hooks
 pre-commit-install: check-uv
 	@echo "Installing pre-commit hooks..."
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Installing with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run pre-commit install; \
+	@if command -v uvx >/dev/null 2>&1; then \
+		echo "Installing with uvx..."; \
+		uvx pre-commit install; \
 	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' first."; \
+		echo "Error: 'uvx' is not available. Ensure 'uv' is installed and on PATH."; \
 		exit 1; \
 	fi
 
 # Run pre-commit on all files
 pre-commit-run: check-uv
 	@echo "Running pre-commit on all files..."
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Running with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run pre-commit run --all-files; \
+	@if command -v uvx >/dev/null 2>&1; then \
+		echo "Running with uvx..."; \
+		uvx pre-commit run --all-files; \
 	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' first."; \
+		echo "Error: 'uvx' is not available. Ensure 'uv' is installed and on PATH."; \
 		exit 1; \
 	fi
 
 # Run ruff linter and auto-fix issues on all Python files
 lint: check-uv
-	@echo "Running ruff linter with auto-fix on all Python files..."
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Running with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run ruff check --fix .; \
+	@echo "Running ruff linter with auto-fix on all Python files (uvx)..."
+	@if command -v uvx >/dev/null 2>&1; then \
+		echo "Running with uvx..."; \
+		uvx ruff check --fix .; \
 	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' first."; \
+		echo "Error: 'uvx' is not available. Ensure 'uv' is installed and on PATH."; \
 		exit 1; \
 	fi
+
+# Sync environments using extras
+sync-dev: check-uv
+	@echo "Syncing dev-only dependencies (no Pi deps)..."
+	@"$(UV_BIN)" sync --extra dev
+
+sync-pi: check-uv
+	@echo "Syncing Pi + dev dependencies (on Raspberry Pi)..."
+	@"$(UV_BIN)" sync --extra pi --extra dev
 
 # Install I2C sensors to SignalK dependencies
 install-sensors: check-linux check-uv check-signalk-token

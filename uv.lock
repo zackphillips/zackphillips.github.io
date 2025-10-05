@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 
 [[package]]
@@ -541,36 +541,43 @@ name = "zackphillips-github-io"
 version = "0.2.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "pyjwt" },
+    { name = "requests" },
+    { name = "websocket-client" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+pi = [
     { name = "adafruit-blinka" },
     { name = "adafruit-circuitpython-bno055" },
     { name = "adafruit-circuitpython-mmc56x3" },
     { name = "adafruit-circuitpython-sgp30" },
     { name = "bme280" },
     { name = "lgpio" },
-    { name = "pre-commit" },
-    { name = "pyjwt" },
-    { name = "pytest" },
-    { name = "requests" },
-    { name = "ruff" },
     { name = "smbus" },
     { name = "smbus2" },
-    { name = "websocket-client" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "adafruit-blinka", specifier = ">=8.0.0" },
-    { name = "adafruit-circuitpython-bno055", specifier = ">=1.4.0" },
-    { name = "adafruit-circuitpython-mmc56x3", specifier = ">=1.0.0" },
-    { name = "adafruit-circuitpython-sgp30", specifier = ">=1.2.0" },
-    { name = "bme280", specifier = ">=0.1.0" },
-    { name = "lgpio", specifier = ">=0.2.0.0" },
-    { name = "pre-commit", specifier = ">=3.6.0" },
+    { name = "adafruit-blinka", marker = "extra == 'pi'", specifier = ">=8.0.0" },
+    { name = "adafruit-circuitpython-bno055", marker = "extra == 'pi'", specifier = ">=1.4.0" },
+    { name = "adafruit-circuitpython-mmc56x3", marker = "extra == 'pi'", specifier = ">=1.0.0" },
+    { name = "adafruit-circuitpython-sgp30", marker = "extra == 'pi'", specifier = ">=1.2.0" },
+    { name = "bme280", marker = "extra == 'pi'", specifier = ">=0.1.0" },
+    { name = "lgpio", marker = "extra == 'pi'", specifier = ">=0.2.0.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.6.0" },
     { name = "pyjwt", specifier = ">=2.8.0" },
-    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.1" },
     { name = "requests", specifier = ">=2.32.4" },
-    { name = "ruff", specifier = ">=0.3.4" },
-    { name = "smbus", specifier = ">=1.1" },
-    { name = "smbus2", specifier = ">=0.4.3" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.4" },
+    { name = "smbus", marker = "extra == 'pi'", specifier = ">=1.1" },
+    { name = "smbus2", marker = "extra == 'pi'", specifier = ">=0.4.3" },
     { name = "websocket-client", specifier = ">=1.6.4" },
 ]
+provides-extras = ["pi", "dev"]

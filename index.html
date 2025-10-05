@@ -213,6 +213,14 @@
       .polar-chart-container {
         height: 350px !important;
       }
+      #now-playing-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+      }
+      #track-info {
+        text-align: center !important;
+      }
     }
 
     /* Force mobile layout for polar performance */
@@ -557,6 +565,21 @@
       <div class="data-grid" id="data-grid"></div>
     </div>
 
+    <!-- NOW PLAYING SECTION -->
+    <div class="info-panel" id="now-playing-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">🎵 Now Playing</div>
+      <div id="now-playing-content" style="display: flex; align-items: center; gap: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
+        <div style="flex: 1;">
+          <div id="track-name" style="font-size: 1.2em; font-weight: bold; color: var(--text-primary); margin-bottom: 5px;">No track playing</div>
+          <div id="artist-album" style="color: var(--text-secondary); font-size: 0.9em;">No artist information</div>
+        </div>
+        <div id="track-info" style="flex: 1; text-align: right;">
+          <div id="playback-source" style="color: var(--text-secondary); font-size: 0.9em;">No source</div>
+          <div id="track-number" style="color: var(--text-secondary); font-size: 0.8em;">Track -- of --</div>
+        </div>
+      </div>
+    </div>
+
     <div class="info-panel" style="margin: 20px;">
       <div id="tideHeader" style="text-align:left; padding-top: 10px; font-weight: bold; font-size: 1.1em;"></div>
       <canvas id="tideChart"></canvas>
@@ -810,6 +833,11 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
 
     async function drawTideGraph(lat, lon) {
       const stations = getAllStations();
+      if (!stations || stations.length === 0) {
+        const tideHeader = document.getElementById("tideHeader");
+        if (tideHeader) tideHeader.textContent = "Tides unavailable (no stations)";
+        return;
+      }
       const nearest = stations.reduce((a, b) =>
         haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
       );
@@ -828,15 +856,73 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours forward
 
 
-      const begin = startTime.toISOString().split("T")[0];
-      const end = endTime.toISOString().split("T")[0];
+      // NOAA expects YYYYMMDD for begin_date/end_date
+      function fmtYYYYMMDD(d) {
+        const y = d.getUTCFullYear();
+        const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const da = String(d.getUTCDate()).padStart(2, '0');
+        return `${y}${m}${da}`;
+      }
+      const begin = fmtYYYYMMDD(startTime);
+      const end = fmtYYYYMMDD(endTime);
 
-      const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=web&begin_date=${begin}&end_date=${end}&datum=MLLW&station=${nearest.id}&time_zone=gmt&units=english&interval=h&format=json`;
+      const buildUrl = (stationId) =>
+        `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=vessel-tracker&begin_date=${begin}&end_date=${end}&datum=MLLW&station=${stationId}&time_zone=GMT&units=english&interval=h&format=json`;
+      let targetStation = nearest;
+      let url = buildUrl(targetStation.id);
 
       try {
+        console.debug('Tide fetch: attempting station', {
+          id: targetStation.id,
+          name: targetStation.name,
+          lat: targetStation.lat,
+          lon: targetStation.lon,
+          url
+        });
         const res = await fetch(url);
-        const json = await res.json();
-        const rawData = json.predictions;
+        if (!res.ok) {
+          // Retry with known-good fallback station (San Francisco 9414290)
+          console.error('NOAA tide fetch failed for station', {
+            id: targetStation.id,
+            name: targetStation.name,
+            lat: targetStation.lat,
+            lon: targetStation.lon,
+            url,
+            status: res.status,
+            statusText: res.statusText
+          });
+          console.warn('Primary station failed, retrying with fallback 9414290');
+          const fallbackStation = { id: '9414290', name: 'San Francisco' };
+          targetStation = fallbackStation;
+          url = buildUrl(fallbackStation.id);
+          console.debug('Tide fetch: attempting fallback station', {
+            id: targetStation.id,
+            name: targetStation.name,
+            lat: targetStation.lat,
+            lon: targetStation.lon,
+            url
+          });
+          const retryRes = await fetch(url);
+          if (!retryRes.ok) {
+            throw new Error(`NOAA API ${retryRes.status} ${retryRes.statusText}`);
+          }
+          var json = await retryRes.json();
+        } else {
+          var json = await res.json();
+        }
+        const rawData = Array.isArray(json?.predictions) ? json.predictions : [];
+        if (rawData.length === 0) {
+          console.warn('No tide predictions returned from NOAA for station', {
+            id: targetStation.id,
+            name: targetStation.name,
+            lat: targetStation.lat,
+            lon: targetStation.lon,
+            url
+          });
+          const tideHeader = document.getElementById("tideHeader");
+          if (tideHeader) tideHeader.textContent = `Tides in ${targetStation.name} (no predictions available)`;
+          return;
+        }
 
         const data = rawData
           .map(d => ({ t: new Date(d.t), v: parseFloat(d.v) }))
@@ -886,7 +972,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
             labels,
             datasets: [
               {
-                label: `Tide Height (${nearest.name})`,
+                label: `Tide Height (${targetStation.name})`,
                 data: heights,
                 borderColor: '#3498db',
                 backgroundColor: 'rgba(52,152,219,0.1)',
@@ -1059,6 +1145,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
         const nav = data.navigation || {};
         const elec = data.electrical || {};
         const env = data.environment || {};
+        const entertainment = data.entertainment || {};
 
         // Store globally for polar performance calculations
         currentNav = nav;
@@ -1133,6 +1220,9 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           // Update polar performance
           updatePolarPerformance();
         }
+
+        // Update the Now Playing section
+        updateNowPlaying(entertainment);
 
         // Update the data grid with vessel information
         document.getElementById('data-grid').innerHTML = `
@@ -1275,6 +1365,51 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       // This calculates how fast you're progressing toward your destination
       const angleRad = (bearingToDest * Math.PI) / 180;
       return bsp * Math.cos(angleRad);
+    }
+
+    function updateNowPlaying(entertainment) {
+      const trackNameEl = document.getElementById('track-name');
+      const artistAlbumEl = document.getElementById('artist-album');
+      const playbackSourceEl = document.getElementById('playback-source');
+      const trackNumberEl = document.getElementById('track-number');
+
+      // Check if we have entertainment data from Fusion stereo
+      const fusion = entertainment?.device?.fusion1;
+      if (!fusion || !fusion.track) {
+        trackNameEl.textContent = 'No track playing';
+        artistAlbumEl.textContent = 'No artist information';
+        playbackSourceEl.textContent = 'No source';
+        trackNumberEl.textContent = 'Track -- of --';
+        return;
+      }
+
+      const track = fusion.track;
+      const trackName = track.name?.value || 'Unknown Track';
+      const artistName = track.artistName?.value || 'Unknown Artist';
+      const albumName = track.albumName?.value || '';
+      const trackNumber = track.number?.value || 0;
+      const totalTracks = track.totalTracks?.value || 0;
+
+      // Get the current playback source
+      let sourceName = 'Unknown Source';
+      if (fusion.output?.zone1?.source?.value) {
+        const sourcePath = fusion.output.zone1.source.value;
+        // Extract source name from path like "entertainment.device.fusion1.avsource.source6"
+        const sourceMatch = sourcePath.match(/\.source(\d+)$/);
+        if (sourceMatch) {
+          const sourceNum = sourceMatch[1];
+          const source = fusion.avsource?.[`source${sourceNum}`];
+          if (source?.name?.value) {
+            sourceName = source.name.value;
+          }
+        }
+      }
+
+      // Update the display
+      trackNameEl.textContent = trackName;
+      artistAlbumEl.textContent = albumName ? `${artistName} - ${albumName}` : artistName;
+      playbackSourceEl.textContent = sourceName;
+      trackNumberEl.textContent = `Track ${trackNumber} of ${totalTracks}`;
     }
 
     function updatePolarPerformance() {
@@ -2101,8 +2236,7 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
       loadPolarData();
       loadData();
 
-      // Try to connect to SignalK WebSocket for real-time updates
-      connectSignalKWebSocket();
+      // Real-time SignalK updates removed; using static data only
 
       // Add event listener for forecast model dropdown
       document.getElementById('forecast-model').addEventListener('change', function() {
