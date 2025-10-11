@@ -91,7 +91,7 @@ class SensorReader:
         self.enable_bno055 = enable_bno055
         self.enable_mmc5603 = enable_mmc5603
         self.enable_sgp30 = enable_sgp30
-        
+
         # Load vessel info from JSON file
         self.vessel_info = load_vessel_info(info_path)
 
@@ -214,15 +214,15 @@ class SensorReader:
                     self.sgp30_sensor = Adafruit_SGP30(self.i2c)
                     self.sgp30_start_time = time.time()  # Record start time for warmup
                     logger.info("SGP30 sensor initialized")
-                    
+
                     # Load calibration data if available
                     if self.vessel_info:
                         self._load_sgp30_calibration()
-                    
+
                     # Give sensor time to stabilize after calibration loading
                     logger.info("SGP30 stabilizing after calibration...")
                     time.sleep(2)
-                    
+
                     # Test initial reading to check if sensor is working
                     try:
                         tvoc = self.sgp30_sensor.TVOC
@@ -230,7 +230,7 @@ class SensorReader:
                         logger.info(f"SGP30 initial test - TVOC: {tvoc}, eCO2: {eco2}")
                     except Exception as test_e:
                         logger.warning(f"SGP30 initial test failed: {test_e}")
-                        
+
                 else:
                     logger.warning("SGP30 library not available")
             except Exception as e:
@@ -304,9 +304,9 @@ class SensorReader:
             if "relative_humidity_percent" in cal_data and "temperature_celsius" in cal_data:
                 humidity = cal_data["relative_humidity_percent"]
                 temperature = cal_data["temperature_celsius"]
-                
+
                 self.sgp30_sensor.set_iaq_relative_humidity(
-                    celsius=temperature, 
+                    celsius=temperature,
                     relative_humidity=humidity
                 )
                 logger.info(f"SGP30 relative humidity set to {humidity}% at {temperature}°C")
@@ -315,7 +315,7 @@ class SensorReader:
             if "tvoc_baseline_ppb" in cal_data and "eco2_baseline_ppm" in cal_data:
                 tvoc_baseline = int(cal_data["tvoc_baseline_ppb"])
                 eco2_baseline = int(cal_data["eco2_baseline_ppm"])
-                
+
                 # Set baseline values (these are internal to the sensor)
                 # Note: The SGP30 library doesn't expose direct baseline setting,
                 # but the sensor will use the environmental conditions we set above
@@ -402,7 +402,7 @@ class SensorReader:
             if MAGNETIC_DEVIATION_AVAILABLE:
                 try:
                     magnetic_variation = get_magnetic_declination_with_cache(
-                        self.signalk_host, 
+                        self.signalk_host,
                         self.signalk_port,
                         force_refresh=False
                     )
@@ -436,24 +436,24 @@ class SensorReader:
             attempt = 0
             consecutive_good_readings = 0
             required_good_readings = 5
-            
+
             while attempt < max_attempts:
                 # Small delay to let sensor update
                 time.sleep(1)
-                
+
                 # Read TVOC and eCO2 values
                 tvoc = self.sgp30_sensor.TVOC
                 eco2 = self.sgp30_sensor.eCO2
-                
+
                 # Check if we have meaningful readings (not just baseline values)
                 # Require TVOC > 0 AND eCO2 > 400 for a "good" reading
-                is_good_reading = (tvoc is not None and eco2 is not None and 
+                is_good_reading = (tvoc is not None and eco2 is not None and
                                  tvoc > 0 and eco2 > 400)
-                
+
                 if is_good_reading:
                     consecutive_good_readings += 1
                     logger.debug(f"SGP30 good reading {consecutive_good_readings}/{required_good_readings} - TVOC: {tvoc}, eCO2: {eco2}")
-                    
+
                     # If we have enough consecutive good readings, return the latest one
                     if consecutive_good_readings >= required_good_readings:
                         logger.info(f"SGP30 stabilized after {attempt + 1} seconds with {consecutive_good_readings} good readings - TVOC: {tvoc}, eCO2: {eco2}")
@@ -471,9 +471,9 @@ class SensorReader:
                     # Reset counter if we get a bad reading
                     consecutive_good_readings = 0
                     logger.debug(f"SGP30 stabilizing... attempt {attempt + 1}/{max_attempts} - TVOC: {tvoc}, eCO2: {eco2} (baseline)")
-                
+
                 attempt += 1
-            
+
             # If we've tried for 60 seconds and still getting baseline values, return them anyway
             logger.warning(f"SGP30 still returning baseline values after {max_attempts} seconds - TVOC: {tvoc}, eCO2: {eco2}")
             return {
@@ -731,8 +731,8 @@ def main():
     else:
         # Normal mode - run sensor reader
         reader = SensorReader(
-            signalk_host=args.host, 
-            signalk_port=args.port, 
+            signalk_host=args.host,
+            signalk_port=args.port,
             udp_port=args.udp_port,
             enable_bme280=enable_bme280,
             enable_bno055=enable_bno055,
