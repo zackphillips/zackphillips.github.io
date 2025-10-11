@@ -28,6 +28,13 @@ try:
 except ImportError:
     BNO055_REGISTER_IO_AVAILABLE = False
 
+# Import magnetic deviation calculation
+try:
+    from magnetic_deviation import get_magnetic_declination_with_cache
+    MAGNETIC_DEVIATION_AVAILABLE = True
+except ImportError:
+    MAGNETIC_DEVIATION_AVAILABLE = False
+
 # Constants
 DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
@@ -291,10 +298,28 @@ class SensorReader:
                 if heading < 0:
                     heading += 3.14159 * 2
 
+            # Calculate magnetic variation using NOAA model
+            magnetic_variation = 0.0
+            if MAGNETIC_DEVIATION_AVAILABLE:
+                try:
+                    magnetic_variation = get_magnetic_declination_with_cache(
+                        self.signalk_host, 
+                        self.signalk_port,
+                        force_refresh=False
+                    )
+                    if magnetic_variation is None:
+                        magnetic_variation = 0.0
+                        logger.warning("Could not calculate magnetic variation, using 0")
+                except Exception as e:
+                    logger.warning(f"Error calculating magnetic variation: {e}")
+                    magnetic_variation = 0.0
+            else:
+                logger.debug("Magnetic deviation calculation not available")
+
             return {
                 "navigation.headingMagnetic": {"value": heading, "units": "rad"},
                 "navigation.magneticVariation": {
-                    "value": 0,  # Would need to calculate based on location
+                    "value": magnetic_variation,
                     "units": "rad",
                 },
             }
