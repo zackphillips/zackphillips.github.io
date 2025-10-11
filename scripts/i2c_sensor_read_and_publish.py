@@ -80,8 +80,18 @@ class SensorReader:
         signalk_port=None,
         udp_port=None,
         info_path="data/vessel/info.json",
+        enable_bme280=True,
+        enable_bno055=True,
+        enable_mmc5603=True,
+        enable_sgp30=True,
     ):
         """Initialize sensor reader and SignalK connection."""
+        # Store sensor enable flags
+        self.enable_bme280 = enable_bme280
+        self.enable_bno055 = enable_bno055
+        self.enable_mmc5603 = enable_mmc5603
+        self.enable_sgp30 = enable_sgp30
+        
         # Load vessel info from JSON file
         self.vessel_info = load_vessel_info(info_path)
 
@@ -106,25 +116,9 @@ class SensorReader:
         if self.vessel_info and "sensors" in self.vessel_info:
             sensors_config = self.vessel_info["sensors"]
             self.heading_correction_offset = sensors_config.get("heading_correction_offset_rad", 0.0)
-            
-            # Load IMU leveling offsets
-            if "imu_leveling" in sensors_config:
-                leveling_data = sensors_config["imu_leveling"]
-                self.imu_roll_offset = math.radians(leveling_data.get("roll_offset_degrees", 0.0))
-                self.imu_pitch_offset = math.radians(leveling_data.get("pitch_offset_degrees", 0.0))
-                self.imu_yaw_offset = math.radians(leveling_data.get("yaw_offset_degrees", 0.0))
-                logger.info(f"IMU leveling offsets loaded - Roll: {math.degrees(self.imu_roll_offset):.2f}°, Pitch: {math.degrees(self.imu_pitch_offset):.2f}°, Yaw: {math.degrees(self.imu_yaw_offset):.2f}°")
-            else:
-                self.imu_roll_offset = 0.0
-                self.imu_pitch_offset = 0.0
-                self.imu_yaw_offset = 0.0
-                logger.info("No IMU leveling offsets found, using default (0°)")
         else:
             self.heading_correction_offset = 0.0
-            self.imu_roll_offset = 0.0
-            self.imu_pitch_offset = 0.0
-            self.imu_yaw_offset = 0.0
-            logger.warning("No sensors configuration found in vessel info, using default offsets")
+            logger.warning("No sensors configuration found in vessel info, using default heading correction offset of 0.0")
 
         # Validate required configuration
         if not self.signalk_host:
@@ -174,63 +168,75 @@ class SensorReader:
     def _initialize_sensors(self):
         """Initialize all available sensors."""
         # BME280 (Temperature, Humidity, Pressure)
-        try:
-            import bme280.bme280 as bme280_module
+        if self.enable_bme280:
+            try:
+                import bme280.bme280 as bme280_module
 
-            # Initialize BME280 with smbus2
-            bme280_module.full_setup(1, 0x77)  # bus_number=1, i2c_address=0x77
-            self.bme280_sensor = bme280_module
-            logger.info("BME280 sensor initialized")
-        except Exception as e:
-            logger.warning(f"BME280 not available: {e}")
+                # Initialize BME280 with smbus2
+                bme280_module.full_setup(1, 0x77)  # bus_number=1, i2c_address=0x77
+                self.bme280_sensor = bme280_module
+                logger.info("BME280 sensor initialized")
+            except Exception as e:
+                logger.warning(f"BME280 not available: {e}")
+        else:
+            logger.info("BME280 sensor disabled")
 
         # BNO055 (9-DOF IMU)
-        try:
-            self.bno055_sensor = BNO055_I2C(self.i2c)
-            logger.info("BNO055 sensor initialized")
+        if self.enable_bno055:
+            try:
+                self.bno055_sensor = BNO055_I2C(self.i2c)
+                logger.info("BNO055 sensor initialized")
 
-            # Load calibration data if available
-            if BNO055_REGISTER_IO_AVAILABLE and self.vessel_info:
-                self._load_bno055_calibration()
-        except Exception as e:
-            logger.warning(f"BNO055 not available: {e}")
+                # Load calibration data if available
+                if BNO055_REGISTER_IO_AVAILABLE and self.vessel_info:
+                    self._load_bno055_calibration()
+            except Exception as e:
+                logger.warning(f"BNO055 not available: {e}")
+        else:
+            logger.info("BNO055 sensor disabled")
 
         # MMC5603 (Magnetometer)
-        try:
-            import adafruit_mmc56x3
+        if self.enable_mmc5603:
+            try:
+                import adafruit_mmc56x3
 
-            self.mmc5603_sensor = adafruit_mmc56x3.MMC5603(self.i2c)
-            logger.info("MMC5603 sensor initialized")
-        except Exception as e:
-            logger.warning(f"MMC5603 not available: {e}")
+                self.mmc5603_sensor = adafruit_mmc56x3.MMC5603(self.i2c)
+                logger.info("MMC5603 sensor initialized")
+            except Exception as e:
+                logger.warning(f"MMC5603 not available: {e}")
+        else:
+            logger.info("MMC5603 sensor disabled")
 
         # SGP30 (Air Quality Sensor)
-        try:
-            if SGP30_AVAILABLE:
-                self.sgp30_sensor = Adafruit_SGP30(self.i2c)
-                self.sgp30_start_time = time.time()  # Record start time for warmup
-                logger.info("SGP30 sensor initialized")
-                
-                # Load calibration data if available
-                if self.vessel_info:
-                    self._load_sgp30_calibration()
-                
-                # Give sensor time to stabilize after calibration loading
-                logger.info("SGP30 stabilizing after calibration...")
-                time.sleep(2)
-                
-                # Test initial reading to check if sensor is working
-                try:
-                    tvoc = self.sgp30_sensor.TVOC
-                    eco2 = self.sgp30_sensor.eCO2
-                    logger.info(f"SGP30 initial test - TVOC: {tvoc}, eCO2: {eco2}")
-                except Exception as test_e:
-                    logger.warning(f"SGP30 initial test failed: {test_e}")
+        if self.enable_sgp30:
+            try:
+                if SGP30_AVAILABLE:
+                    self.sgp30_sensor = Adafruit_SGP30(self.i2c)
+                    self.sgp30_start_time = time.time()  # Record start time for warmup
+                    logger.info("SGP30 sensor initialized")
                     
-            else:
-                logger.warning("SGP30 library not available")
-        except Exception as e:
-            logger.warning(f"SGP30 not available: {e}")
+                    # Load calibration data if available
+                    if self.vessel_info:
+                        self._load_sgp30_calibration()
+                    
+                    # Give sensor time to stabilize after calibration loading
+                    logger.info("SGP30 stabilizing after calibration...")
+                    time.sleep(2)
+                    
+                    # Test initial reading to check if sensor is working
+                    try:
+                        tvoc = self.sgp30_sensor.TVOC
+                        eco2 = self.sgp30_sensor.eCO2
+                        logger.info(f"SGP30 initial test - TVOC: {tvoc}, eCO2: {eco2}")
+                    except Exception as test_e:
+                        logger.warning(f"SGP30 initial test failed: {test_e}")
+                        
+                else:
+                    logger.warning("SGP30 library not available")
+            except Exception as e:
+                logger.warning(f"SGP30 not available: {e}")
+        else:
+            logger.info("SGP30 sensor disabled")
 
     def read_bme280_data(self):
         """Read data from BME280 sensor."""
@@ -355,26 +361,17 @@ class SensorReader:
                 }
 
             if euler and all(x is not None for x in euler):
-                # Convert Euler angles from degrees to radians and apply leveling offsets
-                raw_roll = (euler[0] * math.pi / 180) if euler[0] is not None else 0
-                raw_pitch = (euler[1] * math.pi / 180) if euler[1] is not None else 0
-                raw_yaw = (euler[2] * math.pi / 180) if euler[2] is not None else 0
-                
-                # Apply leveling offsets (subtract the reference orientation)
-                leveled_roll = raw_roll - self.imu_roll_offset
-                leveled_pitch = raw_pitch - self.imu_pitch_offset
-                leveled_yaw = raw_yaw - self.imu_yaw_offset
-                
+                # Convert Euler angles from degrees to radians
                 data["navigation.attitude.roll"] = {
-                    "value": leveled_roll,
+                    "value": (euler[0] * math.pi / 180) if euler[0] is not None else 0,
                     "units": "rad",
                 }
                 data["navigation.attitude.pitch"] = {
-                    "value": leveled_pitch,
+                    "value": (euler[1] * math.pi / 180) if euler[1] is not None else 0,
                     "units": "rad",
                 }
                 data["navigation.attitude.yaw"] = {
-                    "value": leveled_yaw,
+                    "value": (euler[2] * math.pi / 180) if euler[2] is not None else 0,
                     "units": "rad",
                 }
 
@@ -400,7 +397,7 @@ class SensorReader:
                 if heading < 0:
                     heading += 3.14159 * 2
 
-            # Calculate magnetic variation using NOAA model
+            # Calculate magnetic variation if available
             magnetic_variation = 0.0
             if MAGNETIC_DEVIATION_AVAILABLE:
                 try:
@@ -409,11 +406,9 @@ class SensorReader:
                         self.signalk_port,
                         force_refresh=False
                     )
-                    if magnetic_variation is None:
-                        magnetic_variation = 0.0
-                        logger.warning("Could not calculate magnetic variation, using 0")
+                    logger.debug(f"Magnetic variation calculated: {magnetic_variation} rad")
                 except Exception as e:
-                    logger.warning(f"Error calculating magnetic variation: {e}")
+                    logger.warning(f"Could not calculate magnetic variation: {e}")
                     magnetic_variation = 0.0
             else:
                 logger.debug("Magnetic deviation calculation not available")
@@ -467,7 +462,7 @@ class SensorReader:
                                 "value": tvoc,
                                 "units": "ppb",
                             },
-                            "environment.inside.airQuality.co2": {
+                            "environment.inside.airQuality.eco2": {
                                 "value": eco2,
                                 "units": "ppm",
                             },
@@ -486,7 +481,7 @@ class SensorReader:
                     "value": tvoc,
                     "units": "ppb",
                 },
-                "environment.inside.airQuality.co2": {
+                "environment.inside.airQuality.eco2": {
                     "value": eco2,
                     "units": "ppm",
                 },
@@ -495,27 +490,6 @@ class SensorReader:
         except Exception as e:
             logger.error(f"Error reading SGP30: {e}")
             return {}
-
-    def force_sgp30_reading(self):
-        """Force SGP30 reading for testing/debugging purposes."""
-        if not self.sgp30_sensor:
-            logger.error("SGP30 sensor not available")
-            return None, None
-            
-        try:
-            # Try multiple readings to see if values change
-            readings = []
-            for i in range(3):
-                tvoc = self.sgp30_sensor.TVOC
-                eco2 = self.sgp30_sensor.eCO2
-                readings.append((tvoc, eco2))
-                time.sleep(1)  # Wait between readings
-            
-            logger.info(f"SGP30 forced readings - {readings}")
-            return readings[-1]  # Return last reading
-        except Exception as e:
-            logger.error(f"Error in forced SGP30 reading: {e}")
-            return None, None
 
     def read_all_sensors(self):
         """Read data from all available sensors."""
@@ -667,11 +641,6 @@ class SensorReader:
                     temp = data["environment.inside.temperature"]["value"]
                     logger.info(f"Temperature: {temp:.1f}K")
 
-                if "environment.inside.airQuality.tvoc" in data:
-                    tvoc = data["environment.inside.airQuality.tvoc"]["value"]
-                    eco2 = data["environment.inside.airQuality.co2"]["value"]
-                    logger.info(f"Air Quality - TVOC: {tvoc} ppb, eCO2: {eco2} ppm")
-
                 logger.info(f"Successfully published {len(data)} sensor readings")
 
             else:
@@ -730,8 +699,30 @@ def main():
     parser.add_argument(
         "--test", action="store_true", help="Test SignalK connection only"
     )
+    parser.add_argument(
+        "--disable-bme280", action="store_true",
+        help="Disable BME280 sensor (temperature, humidity, pressure)"
+    )
+    parser.add_argument(
+        "--disable-bno055", action="store_true",
+        help="Disable BNO055 sensor (IMU)"
+    )
+    parser.add_argument(
+        "--disable-mmc5603", action="store_true",
+        help="Disable MMC5603 sensor (magnetometer)"
+    )
+    parser.add_argument(
+        "--disable-sgp30", action="store_true",
+        help="Disable SGP30 sensor (air quality)"
+    )
 
     args = parser.parse_args()
+
+    # Process sensor disable flags (all sensors enabled by default)
+    enable_bme280 = not args.disable_bme280
+    enable_bno055 = not args.disable_bno055
+    enable_mmc5603 = not args.disable_mmc5603
+    enable_sgp30 = not args.disable_sgp30
 
     if args.test:
         # Test mode - just test connection
@@ -740,7 +731,13 @@ def main():
     else:
         # Normal mode - run sensor reader
         reader = SensorReader(
-            signalk_host=args.host, signalk_port=args.port, udp_port=args.udp_port
+            signalk_host=args.host, 
+            signalk_port=args.port, 
+            udp_port=args.udp_port,
+            enable_bme280=enable_bme280,
+            enable_bno055=enable_bno055,
+            enable_mmc5603=enable_mmc5603,
+            enable_sgp30=enable_sgp30,
         )
         reader.run()
 
