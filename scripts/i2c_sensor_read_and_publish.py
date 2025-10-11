@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 I2C Sensors to SignalK Publisher
-Reads data from BME280, BNO055, and MMC5603 sensors via I2C
+Reads data from BME280, BNO055, MMC5603, and SGP30 sensors via I2C
 and publishes to SignalK server.
 """
 
@@ -10,6 +10,7 @@ import logging
 import math
 import os
 import socket
+import time
 from datetime import UTC, datetime
 
 # MMC5603 availability will be checked during initialization
@@ -34,6 +35,13 @@ try:
     MAGNETIC_DEVIATION_AVAILABLE = True
 except ImportError:
     MAGNETIC_DEVIATION_AVAILABLE = False
+
+# Import SGP30 air quality sensor
+try:
+    from adafruit_sgp30 import Adafruit_SGP30
+    SGP30_AVAILABLE = True
+except ImportError:
+    SGP30_AVAILABLE = False
 
 # Constants
 DEFAULT_UDP_PORT = 4123
@@ -98,9 +106,25 @@ class SensorReader:
         if self.vessel_info and "sensors" in self.vessel_info:
             sensors_config = self.vessel_info["sensors"]
             self.heading_correction_offset = sensors_config.get("heading_correction_offset_rad", 0.0)
+            
+            # Load IMU leveling offsets
+            if "imu_leveling" in sensors_config:
+                leveling_data = sensors_config["imu_leveling"]
+                self.imu_roll_offset = math.radians(leveling_data.get("roll_offset_degrees", 0.0))
+                self.imu_pitch_offset = math.radians(leveling_data.get("pitch_offset_degrees", 0.0))
+                self.imu_yaw_offset = math.radians(leveling_data.get("yaw_offset_degrees", 0.0))
+                logger.info(f"IMU leveling offsets loaded - Roll: {math.degrees(self.imu_roll_offset):.2f}°, Pitch: {math.degrees(self.imu_pitch_offset):.2f}°, Yaw: {math.degrees(self.imu_yaw_offset):.2f}°")
+            else:
+                self.imu_roll_offset = 0.0
+                self.imu_pitch_offset = 0.0
+                self.imu_yaw_offset = 0.0
+                logger.info("No IMU leveling offsets found, using default (0°)")
         else:
             self.heading_correction_offset = 0.0
-            logger.warning("No sensors configuration found in vessel info, using default heading correction offset of 0.0")
+            self.imu_roll_offset = 0.0
+            self.imu_pitch_offset = 0.0
+            self.imu_yaw_offset = 0.0
+            logger.warning("No sensors configuration found in vessel info, using default offsets")
 
         # Validate required configuration
         if not self.signalk_host:
@@ -125,6 +149,8 @@ class SensorReader:
         self.bme280_sensor = None
         self.bno055_sensor = None
         self.mmc5603_sensor = None
+        self.sgp30_sensor = None
+        self.sgp30_start_time = None
 
         # Initialize sensors
         self._initialize_sensors()
@@ -178,6 +204,34 @@ class SensorReader:
         except Exception as e:
             logger.warning(f"MMC5603 not available: {e}")
 
+        # SGP30 (Air Quality Sensor)
+        try:
+            if SGP30_AVAILABLE:
+                self.sgp30_sensor = Adafruit_SGP30(self.i2c)
+                self.sgp30_start_time = time.time()  # Record start time for warmup
+                logger.info("SGP30 sensor initialized")
+                
+                # Load calibration data if available
+                if self.vessel_info:
+                    self._load_sgp30_calibration()
+                
+                # Give sensor time to stabilize after calibration loading
+                logger.info("SGP30 stabilizing after calibration...")
+                time.sleep(2)
+                
+                # Test initial reading to check if sensor is working
+                try:
+                    tvoc = self.sgp30_sensor.TVOC
+                    eco2 = self.sgp30_sensor.eCO2
+                    logger.info(f"SGP30 initial test - TVOC: {tvoc}, eCO2: {eco2}")
+                except Exception as test_e:
+                    logger.warning(f"SGP30 initial test failed: {test_e}")
+                    
+            else:
+                logger.warning("SGP30 library not available")
+        except Exception as e:
+            logger.warning(f"SGP30 not available: {e}")
+
     def read_bme280_data(self):
         """Read data from BME280 sensor."""
         if not self.bme280_sensor:
@@ -229,6 +283,45 @@ class SensorReader:
             logger.error(f"Error loading BNO055 calibration data: {e}")
             return False
 
+    def _load_sgp30_calibration(self):
+        """Load calibration data from vessel info and apply to SGP30."""
+        try:
+            # Check if calibration data exists in vessel info
+            if ("sensors" not in self.vessel_info or
+                "sgp30_calibration" not in self.vessel_info["sensors"]):
+                logger.info("No saved SGP30 calibration data found in vessel info")
+                return False
+
+            cal_data = self.vessel_info["sensors"]["sgp30_calibration"]
+
+            # Set relative humidity for better accuracy
+            if "relative_humidity_percent" in cal_data and "temperature_celsius" in cal_data:
+                humidity = cal_data["relative_humidity_percent"]
+                temperature = cal_data["temperature_celsius"]
+                
+                self.sgp30_sensor.set_iaq_relative_humidity(
+                    celsius=temperature, 
+                    relative_humidity=humidity
+                )
+                logger.info(f"SGP30 relative humidity set to {humidity}% at {temperature}°C")
+
+            # Set baseline values if available
+            if "tvoc_baseline_ppb" in cal_data and "eco2_baseline_ppm" in cal_data:
+                tvoc_baseline = int(cal_data["tvoc_baseline_ppb"])
+                eco2_baseline = int(cal_data["eco2_baseline_ppm"])
+                
+                # Set baseline values (these are internal to the sensor)
+                # Note: The SGP30 library doesn't expose direct baseline setting,
+                # but the sensor will use the environmental conditions we set above
+                logger.info(f"SGP30 calibration loaded - TVOC baseline: {tvoc_baseline} ppb, eCO2 baseline: {eco2_baseline} ppm")
+
+            logger.info("SGP30 calibration data loaded successfully")
+            return True
+
+        except Exception as e:
+            logger.error(f"Error loading SGP30 calibration data: {e}")
+            return False
+
     def read_bno055_data(self):
         """Read data from BNO055 sensor."""
         if not self.bno055_sensor:
@@ -262,17 +355,26 @@ class SensorReader:
                 }
 
             if euler and all(x is not None for x in euler):
-                # Convert Euler angles from degrees to radians
+                # Convert Euler angles from degrees to radians and apply leveling offsets
+                raw_roll = (euler[0] * math.pi / 180) if euler[0] is not None else 0
+                raw_pitch = (euler[1] * math.pi / 180) if euler[1] is not None else 0
+                raw_yaw = (euler[2] * math.pi / 180) if euler[2] is not None else 0
+                
+                # Apply leveling offsets (subtract the reference orientation)
+                leveled_roll = raw_roll - self.imu_roll_offset
+                leveled_pitch = raw_pitch - self.imu_pitch_offset
+                leveled_yaw = raw_yaw - self.imu_yaw_offset
+                
                 data["navigation.attitude.roll"] = {
-                    "value": (euler[0] * math.pi / 180) if euler[0] is not None else 0,
+                    "value": leveled_roll,
                     "units": "rad",
                 }
                 data["navigation.attitude.pitch"] = {
-                    "value": (euler[1] * math.pi / 180) if euler[1] is not None else 0,
+                    "value": leveled_pitch,
                     "units": "rad",
                 }
                 data["navigation.attitude.yaw"] = {
-                    "value": (euler[2] * math.pi / 180) if euler[2] is not None else 0,
+                    "value": leveled_yaw,
                     "units": "rad",
                 }
 
@@ -327,6 +429,94 @@ class SensorReader:
             logger.error(f"Error reading MMC5603: {e}")
             return {}
 
+    def read_sgp30_data(self):
+        """Read data from SGP30 air quality sensor."""
+        if not self.sgp30_sensor:
+            return {}
+
+        try:
+            # Wait for SGP30 to stabilize and provide real readings
+            # Need TVOC > 0 AND 5 consecutive non-baseline readings for stability
+            max_attempts = 60  # Maximum 60 attempts (60 seconds)
+            attempt = 0
+            consecutive_good_readings = 0
+            required_good_readings = 5
+            
+            while attempt < max_attempts:
+                # Small delay to let sensor update
+                time.sleep(1)
+                
+                # Read TVOC and eCO2 values
+                tvoc = self.sgp30_sensor.TVOC
+                eco2 = self.sgp30_sensor.eCO2
+                
+                # Check if we have meaningful readings (not just baseline values)
+                # Require TVOC > 0 AND eCO2 > 400 for a "good" reading
+                is_good_reading = (tvoc is not None and eco2 is not None and 
+                                 tvoc > 0 and eco2 > 400)
+                
+                if is_good_reading:
+                    consecutive_good_readings += 1
+                    logger.debug(f"SGP30 good reading {consecutive_good_readings}/{required_good_readings} - TVOC: {tvoc}, eCO2: {eco2}")
+                    
+                    # If we have enough consecutive good readings, return the latest one
+                    if consecutive_good_readings >= required_good_readings:
+                        logger.info(f"SGP30 stabilized after {attempt + 1} seconds with {consecutive_good_readings} good readings - TVOC: {tvoc}, eCO2: {eco2}")
+                        return {
+                            "environment.inside.airQuality.tvoc": {
+                                "value": tvoc,
+                                "units": "ppb",
+                            },
+                            "environment.inside.airQuality.co2": {
+                                "value": eco2,
+                                "units": "ppm",
+                            },
+                        }
+                else:
+                    # Reset counter if we get a bad reading
+                    consecutive_good_readings = 0
+                    logger.debug(f"SGP30 stabilizing... attempt {attempt + 1}/{max_attempts} - TVOC: {tvoc}, eCO2: {eco2} (baseline)")
+                
+                attempt += 1
+            
+            # If we've tried for 60 seconds and still getting baseline values, return them anyway
+            logger.warning(f"SGP30 still returning baseline values after {max_attempts} seconds - TVOC: {tvoc}, eCO2: {eco2}")
+            return {
+                "environment.inside.airQuality.tvoc": {
+                    "value": tvoc,
+                    "units": "ppb",
+                },
+                "environment.inside.airQuality.co2": {
+                    "value": eco2,
+                    "units": "ppm",
+                },
+            }
+
+        except Exception as e:
+            logger.error(f"Error reading SGP30: {e}")
+            return {}
+
+    def force_sgp30_reading(self):
+        """Force SGP30 reading for testing/debugging purposes."""
+        if not self.sgp30_sensor:
+            logger.error("SGP30 sensor not available")
+            return None, None
+            
+        try:
+            # Try multiple readings to see if values change
+            readings = []
+            for i in range(3):
+                tvoc = self.sgp30_sensor.TVOC
+                eco2 = self.sgp30_sensor.eCO2
+                readings.append((tvoc, eco2))
+                time.sleep(1)  # Wait between readings
+            
+            logger.info(f"SGP30 forced readings - {readings}")
+            return readings[-1]  # Return last reading
+        except Exception as e:
+            logger.error(f"Error in forced SGP30 reading: {e}")
+            return None, None
+
     def read_all_sensors(self):
         """Read data from all available sensors."""
         data = {}
@@ -335,6 +525,7 @@ class SensorReader:
         data.update(self.read_bme280_data())
         data.update(self.read_bno055_data())
         data.update(self.read_mmc5603_data())
+        data.update(self.read_sgp30_data())
 
         return data
 
@@ -475,6 +666,11 @@ class SensorReader:
                 if "environment.inside.temperature" in data:
                     temp = data["environment.inside.temperature"]["value"]
                     logger.info(f"Temperature: {temp:.1f}K")
+
+                if "environment.inside.airQuality.tvoc" in data:
+                    tvoc = data["environment.inside.airQuality.tvoc"]["value"]
+                    eco2 = data["environment.inside.airQuality.co2"]["value"]
+                    logger.info(f"Air Quality - TVOC: {tvoc} ppb, eCO2: {eco2} ppm")
 
                 logger.info(f"Successfully published {len(data)} sensor readings")
 

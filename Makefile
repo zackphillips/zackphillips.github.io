@@ -15,7 +15,7 @@ SENSOR_SERVICE_FILE := /etc/systemd/system/$(SENSOR_SERVICE_NAME).service
 SENSOR_SERVICE_DESCRIPTION ?= Vessel Sensor Data Publisher
 SENSOR_SERVICE_USER ?= $(shell whoami)
 SENSOR_SERVICE_WORKING_DIR ?= $(CURDIR)
-SENSOR_SERVICE_INTERVAL ?= 1
+SENSOR_SERVICE_INTERVAL ?= 30
 SENSOR_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
 SENSOR_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
@@ -77,7 +77,7 @@ help:
 	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
 	@echo "  make test-sensors   - Test SignalK connection without running sensors"
 	@echo "  make check-i2c      - Check I2C devices and permissions"
-	@echo "  make install-sensor-service - Install recurring sensor service (runs every 1s)"
+	@echo "  make install-sensor-service - Install recurring sensor service (runs every 30s)"
 	@echo "  make check-sensor-service-status - Check sensor service status (Linux only)"
 	@echo "  make sensor-logs    - Show sensor service logs (Linux only)"
 	@echo "  make uninstall-sensor-service - Uninstall sensor service (Linux only)"
