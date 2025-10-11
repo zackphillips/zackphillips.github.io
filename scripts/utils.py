@@ -31,13 +31,13 @@ def get_project_root() -> Path:
 def load_vessel_info(info_path: str = "data/vessel/info.json") -> dict[str, Any]:
     """
     Load vessel information from info.json file.
-    
+
     Args:
         info_path: Relative path to the vessel info JSON file
-        
+
     Returns:
         Dictionary containing vessel configuration
-        
+
     Raises:
         VesselConfigError: If the file cannot be loaded or parsed
     """
@@ -63,11 +63,11 @@ def load_vessel_info(info_path: str = "data/vessel/info.json") -> dict[str, Any]
 def save_vessel_info(info: dict[str, Any], info_path: str = "data/vessel/info.json") -> bool:
     """
     Save vessel information to info.json file.
-    
+
     Args:
         info: Dictionary containing vessel configuration
         info_path: Relative path to the vessel info JSON file
-        
+
     Returns:
         True if successful, False otherwise
     """
@@ -92,10 +92,10 @@ def save_vessel_info(info: dict[str, Any], info_path: str = "data/vessel/info.js
 def validate_vessel_config(config: dict[str, Any]) -> None:
     """
     Validate vessel configuration.
-    
+
     Args:
         config: Dictionary containing vessel configuration
-        
+
     Raises:
         VesselConfigError: If configuration is invalid
     """
@@ -117,10 +117,10 @@ def validate_vessel_config(config: dict[str, Any]) -> None:
 def validate_signalk_config(config: dict[str, Any]) -> None:
     """
     Validate SignalK configuration.
-    
+
     Args:
         config: Dictionary containing SignalK configuration
-        
+
     Raises:
         VesselConfigError: If SignalK configuration is invalid
     """
@@ -150,10 +150,10 @@ def validate_signalk_config(config: dict[str, Any]) -> None:
 def get_sensor_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
     """
     Get sensor configuration from vessel info.
-    
+
     Args:
         vessel_info: Dictionary containing vessel configuration
-        
+
     Returns:
         Dictionary containing sensor configuration
     """
@@ -163,10 +163,10 @@ def get_sensor_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
 def get_signalk_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
     """
     Get SignalK configuration from vessel info.
-    
+
     Args:
         vessel_info: Dictionary containing vessel configuration
-        
+
     Returns:
         Dictionary containing SignalK configuration
     """
@@ -176,10 +176,10 @@ def get_signalk_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
 def validate_sensor_config(sensor_config: dict[str, Any]) -> None:
     """
     Validate sensor configuration.
-    
+
     Args:
         sensor_config: Dictionary containing sensor configuration
-        
+
     Raises:
         SensorConfigError: If sensor configuration is invalid
     """
@@ -197,7 +197,7 @@ def validate_sensor_config(sensor_config: dict[str, Any]) -> None:
 def create_default_vessel_config() -> dict[str, Any]:
     """
     Create a default vessel configuration.
-    
+
     Returns:
         Dictionary containing default vessel configuration
     """
@@ -220,12 +220,12 @@ def create_default_vessel_config() -> dict[str, Any]:
 def safe_get_nested_value(data: dict[str, Any], keys: tuple[str, ...], default: Any = None) -> Any:
     """
     Safely get a nested value from a dictionary.
-    
+
     Args:
         data: Dictionary to search
         keys: Tuple of keys to traverse
         default: Default value if key path doesn't exist
-        
+
     Returns:
         Value at the key path or default value
     """
