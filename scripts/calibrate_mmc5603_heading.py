@@ -15,11 +15,10 @@ import os
 import sys
 import time
 
-import board
-import busio
-
 # Import MMC5603 magnetometer
 import adafruit_mmc56x3
+import board
+import busio
 
 
 def load_vessel_info(info_path="data/vessel/info.json"):

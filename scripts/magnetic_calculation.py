@@ -11,12 +11,11 @@ import logging
 import math
 from datetime import UTC, datetime
 
+import geomag
 import requests
 
 logger = logging.getLogger(__name__)
 
-# Import geomag library for magnetic declination calculation
-import geomag
 
 # NOAA Magnetic Declination API endpoint (backup method)
 NOAA_MAGNETIC_API_URL = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination"

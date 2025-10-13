@@ -19,16 +19,15 @@ import busio
 import smbus2
 from adafruit_bno055 import BNO055_I2C
 
+# Magnetic variation is now handled by a separate service
+# Import SGP30 air quality sensor
+from adafruit_sgp30 import Adafruit_SGP30
+
 # Import BNO055 register I/O functions for calibration loading
 from bno055_register_io import (
     validate_calibration_data,
     write_calibration,
 )
-
-# Magnetic variation is now handled by a separate service
-
-# Import SGP30 air quality sensor
-from adafruit_sgp30 import Adafruit_SGP30
 
 # Constants
 DEFAULT_UDP_PORT = 4123

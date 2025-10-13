@@ -10,10 +10,7 @@ import json
 import logging
 import os
 import socket
-import time
 from datetime import UTC, datetime
-
-import requests
 
 # Import magnetic calculation functions
 from magnetic_calculation import get_magnetic_declination_with_cache
@@ -170,10 +167,10 @@ class MagneticVariationService:
 
             if magnetic_variation is not None:
                 logger.info(f"Magnetic variation calculated: {magnetic_variation:.4f} rad ({magnetic_variation * 180 / 3.14159:.2f}°)")
-                
+
                 # Publish to SignalK
                 self.publish_to_signalk(magnetic_variation)
-                
+
                 logger.info("Successfully published magnetic variation")
             else:
                 logger.warning("Could not calculate magnetic variation")
