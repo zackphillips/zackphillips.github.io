@@ -16,11 +16,7 @@ from datetime import UTC, datetime
 import requests
 
 # Import magnetic calculation functions
-try:
-    from magnetic_calculation import get_magnetic_declination_with_cache
-    MAGNETIC_CALCULATION_AVAILABLE = True
-except ImportError:
-    MAGNETIC_CALCULATION_AVAILABLE = False
+from magnetic_calculation import get_magnetic_declination_with_cache
 
 # Constants
 DEFAULT_UDP_PORT = 4123
@@ -164,9 +160,6 @@ class MagneticVariationService:
         logger.info("Calculating and publishing magnetic variation...")
 
         try:
-            if not MAGNETIC_CALCULATION_AVAILABLE:
-                logger.error("Magnetic calculation not available")
-                return
 
             # Calculate magnetic variation
             magnetic_variation = get_magnetic_declination_with_cache(

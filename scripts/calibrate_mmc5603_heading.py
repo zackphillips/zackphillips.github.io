@@ -18,12 +18,8 @@ import time
 import board
 import busio
 
-# MMC5603 availability will be checked during initialization
-try:
-    import adafruit_mmc56x3
-    MMC5603_AVAILABLE = True
-except ImportError:
-    MMC5603_AVAILABLE = False
+# Import MMC5603 magnetometer
+import adafruit_mmc56x3
 
 
 def load_vessel_info(info_path="data/vessel/info.json"):
@@ -64,9 +60,6 @@ def save_vessel_info(info, info_path="data/vessel/info.json"):
 
 def read_mmc5603_heading():
     """Read magnetic heading from MMC5603 sensor."""
-    if not MMC5603_AVAILABLE:
-        print("Error: MMC5603 library not available. Please install adafruit-circuitpython-mmc56x3")
-        return None
 
     try:
         # Initialize I2C bus
@@ -120,11 +113,6 @@ def main():
     print("You'll need to know the current true heading of your vessel.")
     print()
 
-    # Check if MMC5603 is available
-    if not MMC5603_AVAILABLE:
-        print("Error: MMC5603 library not available.")
-        print("Please install it with: pip install adafruit-circuitpython-mmc56x3")
-        sys.exit(1)
 
     # Load current vessel info
     vessel_info = load_vessel_info()

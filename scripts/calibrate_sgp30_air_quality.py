@@ -19,12 +19,8 @@ from datetime import datetime
 import board
 import busio
 
-# SGP30 availability will be checked during initialization
-try:
-    from adafruit_sgp30 import Adafruit_SGP30
-    SGP30_AVAILABLE = True
-except ImportError:
-    SGP30_AVAILABLE = False
+# Import SGP30 air quality sensor
+from adafruit_sgp30 import Adafruit_SGP30
 
 
 def load_vessel_info(info_path="data/vessel/info.json"):
@@ -175,11 +171,6 @@ def main():
     print("The SGP30 measures TVOC (Total Volatile Organic Compounds) and eCO2 (equivalent CO2).")
     print()
 
-    # Check if SGP30 is available
-    if not SGP30_AVAILABLE:
-        print("Error: SGP30 library not available.")
-        print("Please install it with: pip install adafruit-circuitpython-sgp30")
-        sys.exit(1)
 
     # Load current vessel info
     vessel_info = load_vessel_info()

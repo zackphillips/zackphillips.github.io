@@ -15,12 +15,8 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# Try to import geomag library for magnetic declination calculation
-try:
-    import geomag
-    GEOMAG_AVAILABLE = True
-except ImportError:
-    GEOMAG_AVAILABLE = False
+# Import geomag library for magnetic declination calculation
+import geomag
 
 # NOAA Magnetic Declination API endpoint (backup method)
 NOAA_MAGNETIC_API_URL = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination"
@@ -47,27 +43,26 @@ def calculate_magnetic_declination(
     if date is None:
         date = datetime.now(UTC)
 
-    # Try geomag library first (more reliable)
-    if GEOMAG_AVAILABLE:
-        try:
-            logger.debug(f"Calculating magnetic declination using geomag for lat={latitude}, lon={longitude}, date={date}")
+    # Use geomag library (primary method)
+    try:
+        logger.debug(f"Calculating magnetic declination using geomag for lat={latitude}, lon={longitude}, date={date}")
 
-            # Convert elevation from meters to kilometers
-            elevation_km = elevation / 1000.0
+        # Convert elevation from meters to kilometers
+        elevation_km = elevation / 1000.0
 
-            # Calculate declination using geomag
-            # Convert datetime to date for geomag compatibility
-            date_for_geomag = date.date()
-            declination_deg = geomag.declination(latitude, longitude, h=elevation_km, time=date_for_geomag)
+        # Calculate declination using geomag
+        # Convert datetime to date for geomag compatibility
+        date_for_geomag = date.date()
+        declination_deg = geomag.declination(latitude, longitude, h=elevation_km, time=date_for_geomag)
 
-            # Convert degrees to radians
-            declination_rad = math.radians(declination_deg)
+        # Convert degrees to radians
+        declination_rad = math.radians(declination_deg)
 
-            logger.info(f"Magnetic declination (geomag): {declination_deg:.2f}° ({declination_rad:.4f} rad)")
-            return declination_rad
+        logger.info(f"Magnetic declination (geomag): {declination_deg:.2f}° ({declination_rad:.4f} rad)")
+        return declination_rad
 
-        except Exception as e:
-            logger.warning(f"Geomag calculation failed: {e}, trying NOAA API")
+    except Exception as e:
+        logger.warning(f"Geomag calculation failed: {e}, trying NOAA API")
 
     # Fallback to NOAA API
     try:

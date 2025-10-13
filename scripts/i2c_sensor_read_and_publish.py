@@ -20,28 +20,15 @@ import smbus2
 from adafruit_bno055 import BNO055_I2C
 
 # Import BNO055 register I/O functions for calibration loading
-try:
-    from bno055_register_io import (
-        validate_calibration_data,
-        write_calibration,
-    )
-    BNO055_REGISTER_IO_AVAILABLE = True
-except ImportError:
-    BNO055_REGISTER_IO_AVAILABLE = False
+from bno055_register_io import (
+    validate_calibration_data,
+    write_calibration,
+)
 
-# Import magnetic deviation calculation
-try:
-    from magnetic_deviation import get_magnetic_declination_with_cache
-    MAGNETIC_DEVIATION_AVAILABLE = True
-except ImportError:
-    MAGNETIC_DEVIATION_AVAILABLE = False
+# Magnetic variation is now handled by a separate service
 
 # Import SGP30 air quality sensor
-try:
-    from adafruit_sgp30 import Adafruit_SGP30
-    SGP30_AVAILABLE = True
-except ImportError:
-    SGP30_AVAILABLE = False
+from adafruit_sgp30 import Adafruit_SGP30
 
 # Constants
 DEFAULT_UDP_PORT = 4123
@@ -188,7 +175,7 @@ class SensorReader:
                 logger.info("BNO055 sensor initialized")
 
                 # Load calibration data if available
-                if BNO055_REGISTER_IO_AVAILABLE and self.vessel_info:
+                if self.vessel_info:
                     self._load_bno055_calibration()
             except Exception as e:
                 logger.warning(f"BNO055 not available: {e}")
@@ -210,29 +197,25 @@ class SensorReader:
         # SGP30 (Air Quality Sensor)
         if self.enable_sgp30:
             try:
-                if SGP30_AVAILABLE:
-                    self.sgp30_sensor = Adafruit_SGP30(self.i2c)
-                    self.sgp30_start_time = time.time()  # Record start time for warmup
-                    logger.info("SGP30 sensor initialized")
+                self.sgp30_sensor = Adafruit_SGP30(self.i2c)
+                self.sgp30_start_time = time.time()  # Record start time for warmup
+                logger.info("SGP30 sensor initialized")
 
-                    # Load calibration data if available
-                    if self.vessel_info:
-                        self._load_sgp30_calibration()
+                # Load calibration data if available
+                if self.vessel_info:
+                    self._load_sgp30_calibration()
 
-                    # Give sensor time to stabilize after calibration loading
-                    logger.info("SGP30 stabilizing after calibration...")
-                    time.sleep(2)
+                # Give sensor time to stabilize after calibration loading
+                logger.info("SGP30 stabilizing after calibration...")
+                time.sleep(2)
 
-                    # Test initial reading to check if sensor is working
-                    try:
-                        tvoc = self.sgp30_sensor.TVOC
-                        eco2 = self.sgp30_sensor.eCO2
-                        logger.info(f"SGP30 initial test - TVOC: {tvoc}, eCO2: {eco2}")
-                    except Exception as test_e:
-                        logger.warning(f"SGP30 initial test failed: {test_e}")
-
-                else:
-                    logger.warning("SGP30 library not available")
+                # Test initial reading to check if sensor is working
+                try:
+                    tvoc = self.sgp30_sensor.TVOC
+                    eco2 = self.sgp30_sensor.eCO2
+                    logger.info(f"SGP30 initial test - TVOC: {tvoc}, eCO2: {eco2}")
+                except Exception as test_e:
+                    logger.warning(f"SGP30 initial test failed: {test_e}")
             except Exception as e:
                 logger.warning(f"SGP30 not available: {e}")
         else:
@@ -397,28 +380,8 @@ class SensorReader:
                 if heading < 0:
                     heading += 3.14159 * 2
 
-            # Calculate magnetic variation if available
-            magnetic_variation = 0.0
-            if MAGNETIC_DEVIATION_AVAILABLE:
-                try:
-                    magnetic_variation = get_magnetic_declination_with_cache(
-                        self.signalk_host,
-                        self.signalk_port,
-                        force_refresh=False
-                    )
-                    logger.debug(f"Magnetic variation calculated: {magnetic_variation} rad")
-                except Exception as e:
-                    logger.warning(f"Could not calculate magnetic variation: {e}")
-                    magnetic_variation = 0.0
-            else:
-                logger.debug("Magnetic deviation calculation not available")
-
             return {
                 "navigation.headingMagnetic": {"value": heading, "units": "rad"},
-                "navigation.magneticVariation": {
-                    "value": magnetic_variation,
-                    "units": "rad",
-                },
             }
         except Exception as e:
             logger.error(f"Error reading MMC5603: {e}")

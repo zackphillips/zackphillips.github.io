@@ -20,23 +20,15 @@ import time
 import board
 import busio
 
-# BNO055 availability will be checked during initialization
-try:
-    from adafruit_bno055 import BNO055_I2C
-    BNO055_AVAILABLE = True
-except ImportError:
-    BNO055_AVAILABLE = False
+# Import BNO055 sensor
+from adafruit_bno055 import BNO055_I2C
 
 # Import BNO055 register I/O functions
-try:
-    from bno055_register_io import (
-        read_calibration,
-        validate_calibration_data,
-        write_calibration,
-    )
-    BNO055_REGISTER_IO_AVAILABLE = True
-except ImportError:
-    BNO055_REGISTER_IO_AVAILABLE = False
+from bno055_register_io import (
+    read_calibration,
+    validate_calibration_data,
+    write_calibration,
+)
 
 
 def load_vessel_info(info_path="data/vessel/info.json"):
@@ -192,17 +184,6 @@ def main():
     print("The BNO055 requires calibration for accurate orientation and motion data.")
     print()
 
-    # Check if BNO055 is available
-    if not BNO055_AVAILABLE:
-        print("Error: BNO055 library not available.")
-        print("Please install it with: pip install adafruit-circuitpython-bno055")
-        sys.exit(1)
-
-    # Check if register I/O functions are available
-    if not BNO055_REGISTER_IO_AVAILABLE:
-        print("Error: BNO055 register I/O functions not available.")
-        print("Make sure bno055_register_io.py is in the same directory.")
-        sys.exit(1)
 
     # Load current vessel info
     vessel_info = load_vessel_info()
