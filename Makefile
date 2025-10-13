@@ -2,7 +2,7 @@
 .PHONY: test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-logs
-.PHONY: install-sensor-services uninstall-sensor-services check-sensor-services-status sensor-services-logs
+.PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-service-logs
 .PHONY: calibrate-heading calibrate-imu calibrate-air
 
 # Check if running on Linux
@@ -30,13 +30,13 @@ SENSOR_FAST_SERVICE_INTERVAL ?= 1
 SENSOR_FAST_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
 SENSOR_FAST_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --disable-sgp30
 
-# Slow sensor service configuration (30s interval, includes SGP30 and magnetic deviation)
+# Slow sensor service configuration (60s interval, includes SGP30 and magnetic deviation)
 SENSOR_SLOW_SERVICE_NAME := vessel-sensors-slow
 SENSOR_SLOW_SERVICE_FILE := /etc/systemd/system/$(SENSOR_SLOW_SERVICE_NAME).service
-SENSOR_SLOW_SERVICE_DESCRIPTION ?= Vessel Slow Sensor Data Publisher (30s)
+SENSOR_SLOW_SERVICE_DESCRIPTION ?= Vessel Slow Sensor Data Publisher (60s)
 SENSOR_SLOW_SERVICE_USER ?= $(shell whoami)
 SENSOR_SLOW_SERVICE_WORKING_DIR ?= $(CURDIR)
-SENSOR_SLOW_SERVICE_INTERVAL ?= 30
+SENSOR_SLOW_SERVICE_INTERVAL ?= 60
 SENSOR_SLOW_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
 SENSOR_SLOW_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
@@ -92,20 +92,13 @@ help:
 	@echo "  make change-server-branch [BRANCH=<name>] - Switch updater branch (defaults to current git branch)"
 	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
 	@echo "  make check-uv       - Check if uv is installed and install if necessary"
-	@echo "  make sync-dev       - Install dev dependencies only (no Pi deps)"
-	@echo "  make sync-pi        - Install Pi + dev dependencies (on Raspberry Pi)"
-	@echo "  make install-sensors - Install I2C sensor dependencies and enable I2C (Raspberry Pi only)"
 	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
 	@echo "  make test-sensors   - Test SignalK connection without running sensors"
 	@echo "  make check-i2c      - Check I2C devices and permissions"
-	@echo "  make install-sensor-service - Install recurring sensor service (runs every 30s)"
 	@echo "  make check-sensor-service-status - Check sensor service status (Linux only)"
-	@echo "  make sensor-logs    - Show sensor service logs (Linux only)"
-	@echo "  make uninstall-sensor-service - Uninstall sensor service (Linux only)"
-	@echo "  make install-sensor-services - Install both fast (1s) and slow (30s) sensor services"
-	@echo "  make check-sensor-services-status - Check both sensor services status (Linux only)"
-	@echo "  make sensor-services-logs - Show both sensor services logs (Linux only)"
-	@echo "  make uninstall-sensor-services - Uninstall both sensor services (Linux only)"
+	@echo "  make sensor-service-logs    - Show sensor service logs (Linux only)"
+	@echo "  make install-sensor-service - Install both fast (1s) and slow (60s) sensor services"
+	@echo "  make uninstall-sensor-service - Uninstall both sensor services (Linux only)"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
 	@echo "  make calibrate-heading - Calibrate MMC5603 magnetic heading sensor offset"
@@ -256,78 +249,8 @@ change-server-branch: check-linux
 	@echo "New branch configuration:"
 	@sudo grep -E '^Environment=GIT_BRANCH=' $(WEBSITE_SERVICE_FILE) | sed 's/^/  /'
 
-# Install sensor service (runs every 1 second)
-install-sensor-service: check-linux check-uv check-signalk-token
-	@echo "Installing $(SENSOR_SERVICE_NAME) systemd service..."
-	@if [ -f "$(SENSOR_SERVICE_FILE)" ]; then \
-		echo "Sensor service already exists. Uninstalling first..."; \
-		sudo systemctl stop $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
-	fi
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
-	@echo "Rendering sensor service template from $(SENSOR_TEMPLATE_FILE)..."
-	@if [ ! -f "$(SENSOR_TEMPLATE_FILE)" ]; then \
-		echo "Error: Sensor template file not found at $(SENSOR_TEMPLATE_FILE)"; \
-		exit 1; \
-	fi
-	@sed -e "s|{{DESCRIPTION}}|$(SENSOR_SERVICE_DESCRIPTION)|g" \
-	     -e "s|{{USER}}|$(SENSOR_SERVICE_USER)|g" \
-	     -e "s|{{WORKING_DIRECTORY}}|$(SENSOR_SERVICE_WORKING_DIR)|g" \
-	     -e "s|{{EXEC_START}}|$(SENSOR_SERVICE_EXEC_START)|g" \
-	     -e "s|{{RESTART_SEC}}|$(SENSOR_SERVICE_INTERVAL)|g" \
-	     -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
-	     -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
-	     "$(SENSOR_TEMPLATE_FILE)" | sudo tee $(SENSOR_SERVICE_FILE) > /dev/null
-	@echo "Reloading systemd..."
-	@sudo systemctl daemon-reload
-	@echo "Enabling and starting sensor service..."
-	@sudo systemctl enable $(SENSOR_SERVICE_NAME)
-	@sudo systemctl start $(SENSOR_SERVICE_NAME)
-	@echo "Sensor service installed and started successfully!"
-	@echo "Service runs every $(SENSOR_SERVICE_INTERVAL) second(s)"
-	@echo "Check status with: make check-sensor-service-status"
-	@echo "View logs with: make sensor-logs"
-
-# Check sensor service status
-check-sensor-service-status: check-linux
-	@echo "Checking status of $(SENSOR_SERVICE_NAME) service..."
-	@if [ -f "$(SENSOR_SERVICE_FILE)" ]; then \
-		echo "Sensor service file exists at $(SENSOR_SERVICE_FILE)"; \
-		echo ""; \
-		echo "Sensor Service Status:"; \
-		sudo systemctl status $(SENSOR_SERVICE_NAME) --no-pager -l; \
-	else \
-		echo "Sensor service file not found at $(SENSOR_SERVICE_FILE)"; \
-		echo "Sensor service is not installed. Run 'make install-sensor-service' to install it."; \
-	fi
-
-# Show sensor service logs
-sensor-logs: check-linux
-	@echo "Showing logs for $(SENSOR_SERVICE_NAME) service..."
-	@echo "Press Ctrl+C to exit logs"
-	@sudo journalctl -u $(SENSOR_SERVICE_NAME) -f
-
-# Uninstall sensor service
-uninstall-sensor-service: check-linux
-	@echo "Uninstalling $(SENSOR_SERVICE_NAME) systemd service..."
-	@if [ -f "$(SENSOR_SERVICE_FILE)" ]; then \
-		echo "Stopping and disabling sensor service..."; \
-		sudo systemctl stop $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SENSOR_SERVICE_NAME) 2>/dev/null || true; \
-		echo "Removing sensor service file..."; \
-		sudo rm -f $(SENSOR_SERVICE_FILE); \
-		echo "Reloading systemd..."; \
-		sudo systemctl daemon-reload; \
-		echo "Sensor service uninstalled successfully!"; \
-	else \
-		echo "Sensor service file not found. Nothing to uninstall."; \
-	fi
-
 # Install both fast and slow sensor services
-install-sensor-services: check-linux check-uv check-signalk-token
+install-sensor-service: check-linux check-uv check-signalk-token
 	@echo "Installing both fast and slow sensor services..."
 	@echo "Installing $(SENSOR_FAST_SERVICE_NAME) systemd service..."
 	@if [ -f "$(SENSOR_FAST_SERVICE_FILE)" ]; then \
@@ -385,7 +308,7 @@ install-sensor-services: check-linux check-uv check-signalk-token
 	@echo "View logs with: make sensor-services-logs"
 
 # Check both sensor services status
-check-sensor-services-status: check-linux
+check-sensor-service-status: check-linux
 	@echo "Checking status of both sensor services..."
 	@echo ""
 	@if [ -f "$(SENSOR_FAST_SERVICE_FILE)" ]; then \
@@ -410,13 +333,13 @@ check-sensor-services-status: check-linux
 	fi
 
 # Show both sensor services logs
-sensor-services-logs: check-linux
+sensor-service-logs: check-linux
 	@echo "Showing logs for both sensor services..."
 	@echo "Press Ctrl+C to exit logs"
 	@sudo journalctl -u $(SENSOR_FAST_SERVICE_NAME) -u $(SENSOR_SLOW_SERVICE_NAME) -f
 
 # Uninstall both sensor services
-uninstall-sensor-services: check-linux
+uninstall-sensor-service: check-linux
 	@echo "Uninstalling both sensor services..."
 	@echo "Uninstalling $(SENSOR_FAST_SERVICE_NAME) systemd service..."
 	@if [ -f "$(SENSOR_FAST_SERVICE_FILE)" ]; then \
