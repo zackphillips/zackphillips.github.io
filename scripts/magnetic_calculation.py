@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Magnetic Deviation Calculation Module
+Magnetic Calculation Module
 
 This module provides functions to calculate magnetic declination (variation)
 based on latitude, longitude, and date using the NOAA World Magnetic Model.
@@ -10,12 +10,17 @@ import json
 import logging
 import math
 from datetime import UTC, datetime
-import geomag
 
 import requests
 
 logger = logging.getLogger(__name__)
 
+# Try to import geomag library for magnetic declination calculation
+try:
+    import geomag
+    GEOMAG_AVAILABLE = True
+except ImportError:
+    GEOMAG_AVAILABLE = False
 
 # NOAA Magnetic Declination API endpoint (backup method)
 NOAA_MAGNETIC_API_URL = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination"
@@ -42,26 +47,79 @@ def calculate_magnetic_declination(
     if date is None:
         date = datetime.now(UTC)
 
+    # Try geomag library first (more reliable)
+    if GEOMAG_AVAILABLE:
+        try:
+            logger.debug(f"Calculating magnetic declination using geomag for lat={latitude}, lon={longitude}, date={date}")
 
+            # Convert elevation from meters to kilometers
+            elevation_km = elevation / 1000.0
+
+            # Calculate declination using geomag
+            # Convert datetime to date for geomag compatibility
+            date_for_geomag = date.date()
+            declination_deg = geomag.declination(latitude, longitude, h=elevation_km, time=date_for_geomag)
+
+            # Convert degrees to radians
+            declination_rad = math.radians(declination_deg)
+
+            logger.info(f"Magnetic declination (geomag): {declination_deg:.2f}° ({declination_rad:.4f} rad)")
+            return declination_rad
+
+        except Exception as e:
+            logger.warning(f"Geomag calculation failed: {e}, trying NOAA API")
+
+    # Fallback to NOAA API
     try:
-        logger.debug(f"Calculating magnetic declination using geomag for lat={latitude}, lon={longitude}, date={date}")
+        # Prepare API request parameters
+        params = {
+            'lat1': latitude,
+            'lon1': longitude,
+            'model': 'WMM',
+            'startYear': date.year,
+            'startMonth': date.month,
+            'startDay': date.day,
+            'endYear': date.year,
+            'endMonth': date.month,
+            'endDay': date.day,
+            'resultFormat': 'json'
+        }
 
-        # Convert elevation from meters to kilometers
-        elevation_km = elevation / 1000.0
+        # Add elevation if provided
+        if elevation > 0:
+            params['height'] = elevation
 
-        # Calculate declination using geomag
-        # Convert datetime to date for geomag compatibility
-        date_for_geomag = date.date()
-        declination_deg = geomag.declination(latitude, longitude, h=elevation_km, time=date_for_geomag)
+        logger.debug(f"Requesting magnetic declination from NOAA API for lat={latitude}, lon={longitude}, date={date}")
 
-        # Convert degrees to radians
-        declination_rad = math.radians(declination_deg)
+        # Make API request
+        response = requests.get(NOAA_MAGNETIC_API_URL, params=params, timeout=10)
+        response.raise_for_status()
 
-        logger.info(f"Magnetic declination (geomag): {declination_deg:.2f}° ({declination_rad:.4f} rad)")
-        return declination_rad
+        # Parse response
+        data = response.json()
 
+        if 'result' in data and len(data['result']) > 0:
+            result = data['result'][0]
+            declination_deg = result.get('declination', 0.0)
+
+            # Convert degrees to radians
+            declination_rad = math.radians(declination_deg)
+
+            logger.info(f"Magnetic declination (NOAA API): {declination_deg:.2f}° ({declination_rad:.4f} rad)")
+            return declination_rad
+        else:
+            logger.error("No declination data in NOAA API response")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"NOAA API request failed: {e}")
+        return None
+    except (KeyError, ValueError, IndexError) as e:
+        logger.error(f"Error parsing NOAA API response: {e}")
+        return None
     except Exception as e:
-        logger.warning(f"Geomag calculation failed: {e}, trying NOAA API")
+        logger.error(f"Unexpected error calculating magnetic declination: {e}")
+        return None
 
 
 def get_position_from_signalk(signalk_host: str, signalk_port: int) -> tuple[float, float] | None:
