@@ -250,7 +250,7 @@ class SensorReader:
                     "value": data.temperature + 273.15,  # Convert C to K
                     "units": "K",
                 },
-                "environment.inside.humidity": {"value": data.humidity, "units": "%"},
+                "environment.inside.humidity": {"value": data.humidity / 100.0, "units": "ratio"},
                 "environment.inside.pressure": {
                     "value": data.pressure * 100,  # Convert hPa to Pa
                     "units": "Pa",
