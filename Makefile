@@ -30,7 +30,7 @@ SENSOR_FAST_SERVICE_INTERVAL ?= 1
 SENSOR_FAST_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
 SENSOR_FAST_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --disable-sgp30
 
-# Slow sensor service configuration (60s interval, includes SGP30 and magnetic deviation)
+# Slow sensor service configuration (60s interval, includes SGP30)
 SENSOR_SLOW_SERVICE_NAME := vessel-sensors-slow
 SENSOR_SLOW_SERVICE_FILE := /etc/systemd/system/$(SENSOR_SLOW_SERVICE_NAME).service
 SENSOR_SLOW_SERVICE_DESCRIPTION ?= Vessel Slow Sensor Data Publisher (60s)
@@ -39,6 +39,16 @@ SENSOR_SLOW_SERVICE_WORKING_DIR ?= $(CURDIR)
 SENSOR_SLOW_SERVICE_INTERVAL ?= 60
 SENSOR_SLOW_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
 SENSOR_SLOW_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+
+# Magnetic variation service configuration (daily interval)
+MAGNETIC_SERVICE_NAME := vessel-magnetic-variation
+MAGNETIC_SERVICE_FILE := /etc/systemd/system/$(MAGNETIC_SERVICE_NAME).service
+MAGNETIC_SERVICE_DESCRIPTION ?= Vessel Magnetic Variation Service (daily)
+MAGNETIC_SERVICE_USER ?= $(shell whoami)
+MAGNETIC_SERVICE_WORKING_DIR ?= $(CURDIR)
+MAGNETIC_SERVICE_INTERVAL ?= 86400
+MAGNETIC_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
+MAGNETIC_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/magnetic_variation_service.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 # Optional: server port
 SERVER_PORT ?= 8000
@@ -99,6 +109,10 @@ help:
 	@echo "  make sensor-service-logs    - Show sensor service logs (Linux only)"
 	@echo "  make install-sensor-service - Install both fast (1s) and slow (60s) sensor services"
 	@echo "  make uninstall-sensor-service - Uninstall both sensor services (Linux only)"
+	@echo "  make install-magnetic-service - Install magnetic variation service (daily)"
+	@echo "  make uninstall-magnetic-service - Uninstall magnetic variation service (Linux only)"
+	@echo "  make install           - Install all services (website, sensors, magnetic variation)"
+	@echo "  make uninstall         - Uninstall all services (Linux only)"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
 	@echo "  make calibrate-heading - Calibrate MMC5603 magnetic heading sensor offset"
@@ -576,3 +590,134 @@ calibrate-air: check-linux check-uv
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
 	fi
+
+# Install magnetic variation service
+install-magnetic-service: check-linux check-uv check-signalk-token
+	@echo "Installing $(MAGNETIC_SERVICE_NAME) systemd service..."
+	@if [ -f "$(MAGNETIC_SERVICE_FILE)" ]; then \
+		echo "Magnetic variation service already exists. Uninstalling first..."; \
+		sudo systemctl stop $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
+		sudo systemctl disable $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
+	fi
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
+	@echo "Rendering magnetic variation service template from $(MAGNETIC_TEMPLATE_FILE)..."
+	@if [ ! -f "$(MAGNETIC_TEMPLATE_FILE)" ]; then \
+		echo "Error: Magnetic variation template file not found at $(MAGNETIC_TEMPLATE_FILE)"; \
+		exit 1; \
+	fi
+	@sed -e "s|{{DESCRIPTION}}|$(MAGNETIC_SERVICE_DESCRIPTION)|g" \
+	     -e "s|{{USER}}|$(MAGNETIC_SERVICE_USER)|g" \
+	     -e "s|{{WORKING_DIRECTORY}}|$(MAGNETIC_SERVICE_WORKING_DIR)|g" \
+	     -e "s|{{EXEC_START}}|$(MAGNETIC_SERVICE_EXEC_START)|g" \
+	     -e "s|{{RESTART_SEC}}|$(MAGNETIC_SERVICE_INTERVAL)|g" \
+	     -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
+	     -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
+	     "$(MAGNETIC_TEMPLATE_FILE)" | sudo tee $(MAGNETIC_SERVICE_FILE) > /dev/null
+	@echo "Reloading systemd..."
+	@sudo systemctl daemon-reload
+	@echo "Enabling and starting magnetic variation service..."
+	@sudo systemctl enable $(MAGNETIC_SERVICE_NAME)
+	@sudo systemctl start $(MAGNETIC_SERVICE_NAME)
+	@echo "Magnetic variation service installed and started successfully!"
+	@echo "Service runs every $(MAGNETIC_SERVICE_INTERVAL) second(s) (daily)"
+	@echo "Check status with: make check-magnetic-service-status"
+	@echo "View logs with: make magnetic-service-logs"
+
+# Check magnetic variation service status
+check-magnetic-service-status: check-linux
+	@echo "Checking status of $(MAGNETIC_SERVICE_NAME) service..."
+	@if [ -f "$(MAGNETIC_SERVICE_FILE)" ]; then \
+		echo "Magnetic variation service file exists at $(MAGNETIC_SERVICE_FILE)"; \
+		echo ""; \
+		echo "Magnetic Variation Service Status:"; \
+		sudo systemctl status $(MAGNETIC_SERVICE_NAME) --no-pager -l; \
+	else \
+		echo "Magnetic variation service file not found at $(MAGNETIC_SERVICE_FILE)"; \
+		echo "Magnetic variation service is not installed. Run 'make install-magnetic-service' to install it."; \
+	fi
+
+# Show magnetic variation service logs
+magnetic-service-logs: check-linux
+	@echo "Showing logs for $(MAGNETIC_SERVICE_NAME) service..."
+	@echo "Press Ctrl+C to exit logs"
+	@sudo journalctl -u $(MAGNETIC_SERVICE_NAME) -f
+
+# Uninstall magnetic variation service
+uninstall-magnetic-service: check-linux
+	@echo "Uninstalling $(MAGNETIC_SERVICE_NAME) systemd service..."
+	@if [ -f "$(MAGNETIC_SERVICE_FILE)" ]; then \
+		echo "Stopping and disabling magnetic variation service..."; \
+		sudo systemctl stop $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
+		sudo systemctl disable $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
+		echo "Removing magnetic variation service file..."; \
+		sudo rm -f $(MAGNETIC_SERVICE_FILE); \
+		echo "Reloading systemd..."; \
+		sudo systemctl daemon-reload; \
+		echo "Magnetic variation service uninstalled successfully!"; \
+	else \
+		echo "Magnetic variation service file not found. Nothing to uninstall."; \
+	fi
+
+# Install all services
+install: check-linux check-uv check-signalk-token
+	@echo "Installing all vessel tracker services..."
+	@echo ""
+	@echo "This will install:"
+	@echo "  - Website data updater service (updates telemetry data)"
+	@echo "  - Fast sensor service (1s interval, basic sensors)"
+	@echo "  - Slow sensor service (60s interval, includes SGP30)"
+	@echo "  - Magnetic variation service (daily)"
+	@echo ""
+	@read -p "Continue with installation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo ""
+	@echo "Installing website service..."
+	@$(MAKE) install-website-service
+	@echo ""
+	@echo "Installing sensor services..."
+	@$(MAKE) install-sensor-service
+	@echo ""
+	@echo "Installing magnetic variation service..."
+	@$(MAKE) install-magnetic-service
+	@echo ""
+	@echo "All services installed successfully!"
+	@echo ""
+	@echo "Service Summary:"
+	@echo "  - Website service: Updates telemetry data every $(RESTART_SEC) seconds"
+	@echo "  - Fast sensor service: Publishes basic sensor data every $(SENSOR_FAST_SERVICE_INTERVAL) second"
+	@echo "  - Slow sensor service: Publishes all sensor data every $(SENSOR_SLOW_SERVICE_INTERVAL) seconds"
+	@echo "  - Magnetic variation service: Updates magnetic variation daily"
+	@echo ""
+	@echo "Check status of all services:"
+	@echo "  make check-website-service-status"
+	@echo "  make check-sensor-service-status"
+	@echo "  make check-magnetic-service-status"
+	@echo ""
+	@echo "View logs:"
+	@echo "  make website-logs"
+	@echo "  make sensor-service-logs"
+	@echo "  make magnetic-service-logs"
+
+# Uninstall all services
+uninstall: check-linux
+	@echo "Uninstalling all vessel tracker services..."
+	@echo ""
+	@echo "This will uninstall:"
+	@echo "  - Website data updater service"
+	@echo "  - Fast and slow sensor services"
+	@echo "  - Magnetic variation service"
+	@echo ""
+	@read -p "Continue with uninstallation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo ""
+	@echo "Uninstalling website service..."
+	@$(MAKE) uninstall-website-service
+	@echo ""
+	@echo "Uninstalling sensor services..."
+	@$(MAKE) uninstall-sensor-service
+	@echo ""
+	@echo "Uninstalling magnetic variation service..."
+	@$(MAKE) uninstall-magnetic-service
+	@echo ""
+	@echo "All services uninstalled successfully!"
