@@ -1,128 +1,87 @@
-.PHONY: server help install-website-service website-logs uninstall-website-service check-website-service-status
-.PHONY: test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi
+.PHONY: server help install uninstall test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
-.PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-logs
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-service-logs
+.PHONY: install-magnetic-service uninstall-magnetic-service check-magnetic-service-status magnetic-service-logs
 .PHONY: calibrate-heading calibrate-imu calibrate-air
 
-# Check if running on Linux
+# System check
 UNAME_S := $(shell uname -s)
-WEBSITE_SERVICE_NAME := vessel-tracker
-WEBSITE_SERVICE_FILE := /etc/systemd/system/$(WEBSITE_SERVICE_NAME).service
 
-# Sensor service configuration
-SENSOR_SERVICE_NAME := vessel-sensors
-SENSOR_SERVICE_FILE := /etc/systemd/system/$(SENSOR_SERVICE_NAME).service
-SENSOR_SERVICE_DESCRIPTION ?= Vessel Sensor Data Publisher
-SENSOR_SERVICE_USER ?= $(shell whoami)
-SENSOR_SERVICE_WORKING_DIR ?= $(CURDIR)
-SENSOR_SERVICE_INTERVAL ?= 30
-SENSOR_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
-SENSOR_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
-
-# Fast sensor service configuration (1s interval, excludes SGP30 and magnetic deviation)
-SENSOR_FAST_SERVICE_NAME := vessel-sensors-fast
-SENSOR_FAST_SERVICE_FILE := /etc/systemd/system/$(SENSOR_FAST_SERVICE_NAME).service
-SENSOR_FAST_SERVICE_DESCRIPTION ?= Vessel Fast Sensor Data Publisher (1s)
-SENSOR_FAST_SERVICE_USER ?= $(shell whoami)
-SENSOR_FAST_SERVICE_WORKING_DIR ?= $(CURDIR)
-SENSOR_FAST_SERVICE_INTERVAL ?= 1
-SENSOR_FAST_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
-SENSOR_FAST_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --disable-sgp30
-
-# Slow sensor service configuration (60s interval, includes SGP30)
-SENSOR_SLOW_SERVICE_NAME := vessel-sensors-slow
-SENSOR_SLOW_SERVICE_FILE := /etc/systemd/system/$(SENSOR_SLOW_SERVICE_NAME).service
-SENSOR_SLOW_SERVICE_DESCRIPTION ?= Vessel Slow Sensor Data Publisher (60s)
-SENSOR_SLOW_SERVICE_USER ?= $(shell whoami)
-SENSOR_SLOW_SERVICE_WORKING_DIR ?= $(CURDIR)
-SENSOR_SLOW_SERVICE_INTERVAL ?= 60
-SENSOR_SLOW_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
-SENSOR_SLOW_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
-
-# Magnetic variation service configuration (daily interval)
-MAGNETIC_SERVICE_NAME := vessel-magnetic-variation
-MAGNETIC_SERVICE_FILE := /etc/systemd/system/$(MAGNETIC_SERVICE_NAME).service
-MAGNETIC_SERVICE_DESCRIPTION ?= Vessel Magnetic Variation Service (daily)
-MAGNETIC_SERVICE_USER ?= $(shell whoami)
-MAGNETIC_SERVICE_WORKING_DIR ?= $(CURDIR)
-MAGNETIC_SERVICE_INTERVAL ?= 86400
-MAGNETIC_TEMPLATE_FILE ?= $(CURDIR)/services/sensor.service.tpl
-MAGNETIC_SERVICE_EXEC_START ?= $(UV_BIN) run scripts/magnetic_variation_service.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
-
-# Optional: server port
+# Core configuration
 SERVER_PORT ?= 8000
-
-# Sensor configuration
 SENSOR_HOST ?= 192.168.8.50
 SENSOR_PORT ?= 3000
-
-# Resolve uv binary (absolute path for systemd); allow override
 UV_BIN ?= $(shell command -v uv 2>/dev/null || true)
-
-# Update job entrypoint (can override)
-UPDATE_SCRIPT ?= $(CURDIR)/scripts/update_signalk_data.py
-
-# Compute default ExecStart for updater based on available runtime
-ifeq (,$(UV_BIN))
-  DEFAULT_EXEC_START :=
-else
-  DEFAULT_EXEC_START := $(UV_BIN) run python "$(UPDATE_SCRIPT)"
-endif
-
-# Service template and default values (override with: make VAR=value target)
-TEMPLATE_FILE ?= $(CURDIR)/services/systemd.service.tpl
-SERVICE_DESCRIPTION ?= Vessel Tracker Data Updater
-SERVICE_USER ?= $(shell whoami)
-SERVICE_WORKING_DIR ?= $(CURDIR)
-SERVICE_EXEC_START ?= $(DEFAULT_EXEC_START)
-# Restart behavior (period)
-RESTART_POLICY ?= always
-RESTART_SEC ?= 600
-
-# Git/environment parameters for updater
-# Detect current git branch; fallback to main if unavailable
 CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
-GIT_BRANCH ?= $(CURRENT_BRANCH)
-GIT_REMOTE ?= origin
-GIT_AMEND ?= true
-GIT_FORCE_PUSH ?= true
-SIGNALK_URL ?= http://localhost:3000/signalk/v1/api/vessels/self
-OUTPUT_FILE ?= $(CURDIR)/data/telemetry/signalk_latest.json
 
-# Default target
-help:
-	@echo "Available commands:"
-	@echo "  make server         - Start Python HTTP server on port 8000"
-	@echo "  make install-website-service - Install website data updater service (Linux only)"
-	@echo "  make check-website-service-status - Check website service status (Linux only)"
-	@echo "  make website-logs   - Show website service logs (Linux only)"
-	@echo "  make uninstall-website-service - Uninstall website service (Linux only)"
-	@echo "  make change-server-update-period RESTART_SEC=600 - Change systemd update period in seconds (Linux only)"
-	@echo "  make change-server-branch [BRANCH=<name>] - Switch updater branch (defaults to current git branch)"
-	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
-	@echo "  make check-uv       - Check if uv is installed and install if necessary"
-	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
-	@echo "  make test-sensors   - Test SignalK connection without running sensors"
-	@echo "  make check-i2c      - Check I2C devices and permissions"
-	@echo "  make check-sensor-service-status - Check sensor service status (Linux only)"
-	@echo "  make sensor-service-logs    - Show sensor service logs (Linux only)"
-	@echo "  make install-sensor-service - Install both fast (1s) and slow (60s) sensor services"
-	@echo "  make uninstall-sensor-service - Uninstall both sensor services (Linux only)"
-	@echo "  make install-magnetic-service - Install magnetic variation service (daily)"
-	@echo "  make uninstall-magnetic-service - Uninstall magnetic variation service (Linux only)"
-	@echo "  make install           - Install all services (website, sensors, magnetic variation)"
-	@echo "  make uninstall         - Uninstall all services (Linux only)"
-	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
-	@echo "  make create-signalk-token - Create a new SignalK access token"
-	@echo "  make calibrate-heading - Calibrate MMC5603 magnetic heading sensor offset"
-	@echo "  make calibrate-imu   - Calibrate BNO055 IMU sensor"
-	@echo "  make calibrate-air   - Calibrate SGP30 air quality sensor"
-	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
-	@echo "  make pre-commit-run - Run pre-commit on all files (requires uv)"
-	@echo "  make lint          - Run ruff linter and auto-fix issues on all Python files"
-	@echo "  make config        - Interactive vessel configuration wizard"
-	@echo "  make help          - Show this help message"
+# Service definitions (name:description:interval:script:args)
+SERVICES := \
+	website:vessel-tracker:Vessel Tracker Data Updater:600:update_signalk_data.py: \
+	fast-sensors:vessel-sensors-fast:Vessel Fast Sensor Data Publisher (1s):1:i2c_sensor_read_and_publish.py:--disable-sgp30 \
+	slow-sensors:vessel-sensors-slow:Vessel Slow Sensor Data Publisher (60s):60:i2c_sensor_read_and_publish.py: \
+	magnetic:vessel-magnetic-variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
+
+# Service management functions
+define install-service
+	@echo "Installing $(2) systemd service..."
+	@if [ -f "/etc/systemd/system/$(2).service" ]; then \
+		echo "$(2) service already exists. Uninstalling first..."; \
+		sudo systemctl stop $(2) 2>/dev/null || true; \
+		sudo systemctl disable $(2) 2>/dev/null || true; \
+	fi
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
+	@echo "Rendering $(2) service template..."
+	@sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+	     -e "s|{{USER}}|$$(whoami)|g" \
+	     -e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+	     -e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
+	     -e "s|{{RESTART_SEC}}|$(3)|g" \
+	     "$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null
+	@echo "Reloading systemd..."
+	@sudo systemctl daemon-reload
+	@echo "Enabling and starting $(2) service..."
+	@sudo systemctl enable $(2)
+	@sudo systemctl start $(2)
+	@echo "$(2) service installed and started successfully!"
+endef
+
+define uninstall-service
+	@echo "Uninstalling $(1) systemd service..."
+	@if [ -f "/etc/systemd/system/$(1).service" ]; then \
+		echo "Stopping and disabling $(1) service..."; \
+		sudo systemctl stop $(1) 2>/dev/null || true; \
+		sudo systemctl disable $(1) 2>/dev/null || true; \
+		echo "Removing $(1) service file..."; \
+		sudo rm -f /etc/systemd/system/$(1).service; \
+		echo "Reloading systemd..."; \
+		sudo systemctl daemon-reload; \
+		echo "$(1) service uninstalled successfully!"; \
+	else \
+		echo "$(1) service file not found. Nothing to uninstall."; \
+	fi
+endef
+
+define check-service-status
+	@echo "Checking status of $(1) service..."
+	@if [ -f "/etc/systemd/system/$(1).service" ]; then \
+		echo "$(1) service file exists at /etc/systemd/system/$(1).service"; \
+		echo ""; \
+		echo "$(1) Service Status:"; \
+		sudo systemctl status $(1) --no-pager -l; \
+	else \
+		echo "$(1) service file not found at /etc/systemd/system/$(1).service"; \
+		echo "$(1) service is not installed. Run 'make install-$(2)-service' to install it."; \
+	fi
+endef
+
+define show-service-logs
+	@echo "Showing logs for $(1) service..."
+	@echo "Press Ctrl+C to exit logs"
+	@sudo journalctl -u $(1) -f
+endef
 
 # Check Linux requirement
 check-linux:
@@ -143,6 +102,39 @@ check-uv:
 		echo "uv is already installed at: $$(command -v uv)"; \
 	fi
 
+# Default target
+help:
+	@echo "Available commands:"
+	@echo "  make server         - Start Python HTTP server on port $(SERVER_PORT)"
+	@echo "  make install        - Install all services (website, sensors, magnetic variation)"
+	@echo "  make uninstall      - Uninstall all services (Linux only)"
+	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
+	@echo "  make check-uv       - Check if uv is installed and install if necessary"
+	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
+	@echo "  make test-sensors   - Test SignalK connection without running sensors"
+	@echo "  make check-i2c      - Check I2C devices and permissions"
+	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
+	@echo "  make create-signalk-token - Create a new SignalK access token"
+	@echo "  make calibrate-heading - Calibrate MMC5603 magnetic heading sensor offset"
+	@echo "  make calibrate-imu   - Calibrate BNO055 IMU sensor"
+	@echo "  make calibrate-air   - Calibrate SGP30 air quality sensor"
+	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
+	@echo "  make pre-commit-run - Run pre-commit on all files (requires uv)"
+	@echo "  make lint          - Run ruff linter and auto-fix issues on all Python files"
+	@echo "  make config        - Interactive vessel configuration wizard"
+	@echo "  make help          - Show this help message"
+	@echo ""
+	@echo "Service management:"
+	@echo "  make install-website-service    - Install website data updater service"
+	@echo "  make install-sensor-service     - Install both fast and slow sensor services"
+	@echo "  make install-magnetic-service   - Install magnetic variation service"
+	@echo "  make check-website-service-status - Check website service status"
+	@echo "  make check-sensor-service-status - Check sensor service status"
+	@echo "  make check-magnetic-service-status - Check magnetic variation service status"
+	@echo "  make website-logs              - Show website service logs"
+	@echo "  make sensor-service-logs       - Show sensor service logs"
+	@echo "  make magnetic-service-logs     - Show magnetic variation service logs"
+
 # Start Python HTTP server
 server:
 	@echo "Open http://localhost:$(SERVER_PORT) in your browser"
@@ -155,231 +147,99 @@ server:
 		exit 1; \
 	fi
 
-# Install systemd service
-install-website-service: check-linux
-	@echo "Installing $(WEBSITE_SERVICE_NAME) systemd service..."
-	@if [ -f "$(WEBSITE_SERVICE_FILE)" ]; then \
-		echo "Website service already exists. Uninstalling first..."; \
-		sudo systemctl stop $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
-	fi
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
-	@echo "Rendering website service template from $(TEMPLATE_FILE)..."
-	@if [ ! -f "$(TEMPLATE_FILE)" ]; then \
-		echo "Error: Template file not found at $(TEMPLATE_FILE)"; \
-		exit 1; \
-	fi
-	@sed -e "s|{{DESCRIPTION}}|$(SERVICE_DESCRIPTION)|g" \
-	     -e "s|{{USER}}|$(SERVICE_USER)|g" \
-	     -e "s|{{WORKING_DIRECTORY}}|$(SERVICE_WORKING_DIR)|g" \
-	     -e "s|{{EXEC_START}}|$(SERVICE_EXEC_START)|g" \
-	     -e "s|{{RESTART_POLICY}}|$(RESTART_POLICY)|g" \
-	     -e "s|{{RESTART_SEC}}|$(RESTART_SEC)|g" \
-	     -e "s|{{GIT_BRANCH}}|$(GIT_BRANCH)|g" \
-	     -e "s|{{GIT_REMOTE}}|$(GIT_REMOTE)|g" \
-	     -e "s|{{GIT_AMEND}}|$(GIT_AMEND)|g" \
-	     -e "s|{{GIT_FORCE_PUSH}}|$(GIT_FORCE_PUSH)|g" \
-	     -e "s|{{SIGNALK_URL}}|$(SIGNALK_URL)|g" \
-	     -e "s|{{OUTPUT_FILE}}|$(OUTPUT_FILE)|g" \
-	     "$(TEMPLATE_FILE)" | sudo tee $(WEBSITE_SERVICE_FILE) > /dev/null
-	@echo "Reloading systemd..."
-	@sudo systemctl daemon-reload
-	@echo "Enabling and starting website service..."
-	@sudo systemctl enable $(WEBSITE_SERVICE_NAME)
-	@sudo systemctl start $(WEBSITE_SERVICE_NAME)
-	@echo "Website service installed and started successfully!"
-	@echo "Check status with: make check-website-service-status"
-	@echo "View logs with: make website-logs"
-
-# Show website service logs
-website-logs: check-linux
-	@echo "Showing logs for $(WEBSITE_SERVICE_NAME) service..."
-	@echo "Press Ctrl+C to exit logs"
-	@sudo journalctl -u $(WEBSITE_SERVICE_NAME) -f
-
-# Check website service status
-check-website-service-status: check-linux
-	@echo "Checking status of $(WEBSITE_SERVICE_NAME) service..."
-	@if [ -f "$(WEBSITE_SERVICE_FILE)" ]; then \
-		echo "Website service file exists at $(WEBSITE_SERVICE_FILE)"; \
-		echo ""; \
-		echo "Website Service Status:"; \
-		sudo systemctl status $(WEBSITE_SERVICE_NAME) --no-pager -l; \
-	else \
-		echo "Website service file not found at $(WEBSITE_SERVICE_FILE)"; \
-		echo "Website service is not installed. Run 'make install-website-service' to install it."; \
-	fi
-
-# Uninstall website systemd service
-uninstall-website-service: check-linux
-	@echo "Uninstalling $(WEBSITE_SERVICE_NAME) systemd service..."
-	@if [ -f "$(WEBSITE_SERVICE_FILE)" ]; then \
-		echo "Stopping and disabling website service..."; \
-		sudo systemctl stop $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(WEBSITE_SERVICE_NAME) 2>/dev/null || true; \
-		echo "Removing website service file..."; \
-		sudo rm -f $(WEBSITE_SERVICE_FILE); \
-		echo "Reloading systemd..."; \
-		sudo systemctl daemon-reload; \
-		echo "Website service uninstalled successfully!"; \
-	else \
-		echo "Website service file not found. Nothing to uninstall."; \
-	fi
-
-# Change website service restart cadence (policy/interval) after install
-change-server-update-period: check-linux
-	@if [ ! -f "$(WEBSITE_SERVICE_FILE)" ]; then \
-		echo "Website service file not found at $(WEBSITE_SERVICE_FILE). Install it first with 'make install-website-service'."; \
-		exit 1; \
-	fi
-	@echo "Updating $(WEBSITE_SERVICE_NAME) restart policy to '$(RESTART_POLICY)' and interval to '$(RESTART_SEC)' seconds..."
-	@sudo sed -i -E 's/^Restart=.*/Restart=$(RESTART_POLICY)/' $(WEBSITE_SERVICE_FILE)
-	@sudo sed -i -E 's/^RestartSec=.*/RestartSec=$(RESTART_SEC)/' $(WEBSITE_SERVICE_FILE)
-	@echo "Reloading systemd and restarting website service..."
-	@sudo systemctl daemon-reload
-	@sudo systemctl restart $(WEBSITE_SERVICE_NAME)
-	@echo "New settings:"
-	@sudo grep -E '^(Restart|RestartSec)=' $(WEBSITE_SERVICE_FILE) | sed 's/^/  /'
-
-# Change service branch (dev/prod) after install
-
-change-server-branch: check-linux
-	@if [ ! -f "$(WEBSITE_SERVICE_FILE)" ]; then \
-		echo "Website service file not found at $(WEBSITE_SERVICE_FILE). Install it first with 'make install-website-service'."; \
-		exit 1; \
-	fi
-	@branch="$(BRANCH)"; \
-	if [ -z "$$branch" ]; then \
-		branch="$$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)"; \
-	fi; \
-	echo "Switching $(WEBSITE_SERVICE_NAME) branch to '$$branch'..."; \
-	sudo sed -i -E "s/^Environment=GIT_BRANCH=.*/Environment=GIT_BRANCH=$$branch/" $(WEBSITE_SERVICE_FILE)
-	@echo "Reloading systemd and restarting website service..."
-	@sudo systemctl daemon-reload
-	@sudo systemctl restart $(WEBSITE_SERVICE_NAME)
-	@echo "New branch configuration:"
-	@sudo grep -E '^Environment=GIT_BRANCH=' $(WEBSITE_SERVICE_FILE) | sed 's/^/  /'
-
-# Install both fast and slow sensor services
-install-sensor-service: check-linux check-uv check-signalk-token
-	@echo "Installing both fast and slow sensor services..."
-	@echo "Installing $(SENSOR_FAST_SERVICE_NAME) systemd service..."
-	@if [ -f "$(SENSOR_FAST_SERVICE_FILE)" ]; then \
-		echo "Fast sensor service already exists. Uninstalling first..."; \
-		sudo systemctl stop $(SENSOR_FAST_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SENSOR_FAST_SERVICE_NAME) 2>/dev/null || true; \
-	fi
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
-	@echo "Rendering fast sensor service template from $(SENSOR_FAST_TEMPLATE_FILE)..."
-	@if [ ! -f "$(SENSOR_FAST_TEMPLATE_FILE)" ]; then \
-		echo "Error: Fast sensor template file not found at $(SENSOR_FAST_TEMPLATE_FILE)"; \
-		exit 1; \
-	fi
-	@sed -e "s|{{DESCRIPTION}}|$(SENSOR_FAST_SERVICE_DESCRIPTION)|g" \
-	     -e "s|{{USER}}|$(SENSOR_FAST_SERVICE_USER)|g" \
-	     -e "s|{{WORKING_DIRECTORY}}|$(SENSOR_FAST_SERVICE_WORKING_DIR)|g" \
-	     -e "s|{{EXEC_START}}|$(SENSOR_FAST_SERVICE_EXEC_START)|g" \
-	     -e "s|{{RESTART_SEC}}|$(SENSOR_FAST_SERVICE_INTERVAL)|g" \
-	     -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
-	     -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
-	     "$(SENSOR_FAST_TEMPLATE_FILE)" | sudo tee $(SENSOR_FAST_SERVICE_FILE) > /dev/null
-	@echo "Installing $(SENSOR_SLOW_SERVICE_NAME) systemd service..."
-	@if [ -f "$(SENSOR_SLOW_SERVICE_FILE)" ]; then \
-		echo "Slow sensor service already exists. Uninstalling first..."; \
-		sudo systemctl stop $(SENSOR_SLOW_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SENSOR_SLOW_SERVICE_NAME) 2>/dev/null || true; \
-	fi
-	@echo "Rendering slow sensor service template from $(SENSOR_SLOW_TEMPLATE_FILE)..."
-	@if [ ! -f "$(SENSOR_SLOW_TEMPLATE_FILE)" ]; then \
-		echo "Error: Slow sensor template file not found at $(SENSOR_SLOW_TEMPLATE_FILE)"; \
-		exit 1; \
-	fi
-	@sed -e "s|{{DESCRIPTION}}|$(SENSOR_SLOW_SERVICE_DESCRIPTION)|g" \
-	     -e "s|{{USER}}|$(SENSOR_SLOW_SERVICE_USER)|g" \
-	     -e "s|{{WORKING_DIRECTORY}}|$(SENSOR_SLOW_SERVICE_WORKING_DIR)|g" \
-	     -e "s|{{EXEC_START}}|$(SENSOR_SLOW_SERVICE_EXEC_START)|g" \
-	     -e "s|{{RESTART_SEC}}|$(SENSOR_SLOW_SERVICE_INTERVAL)|g" \
-	     -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
-	     -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
-	     "$(SENSOR_SLOW_TEMPLATE_FILE)" | sudo tee $(SENSOR_SLOW_SERVICE_FILE) > /dev/null
-	@echo "Reloading systemd..."
-	@sudo systemctl daemon-reload
-	@echo "Enabling and starting sensor services..."
-	@sudo systemctl enable $(SENSOR_FAST_SERVICE_NAME)
-	@sudo systemctl start $(SENSOR_FAST_SERVICE_NAME)
-	@sudo systemctl enable $(SENSOR_SLOW_SERVICE_NAME)
-	@sudo systemctl start $(SENSOR_SLOW_SERVICE_NAME)
-	@echo "Both sensor services installed and started successfully!"
-	@echo "Fast service runs every $(SENSOR_FAST_SERVICE_INTERVAL) second(s) (excludes SGP30)"
-	@echo "Slow service runs every $(SENSOR_SLOW_SERVICE_INTERVAL) second(s) (includes SGP30 and magnetic deviation)"
-	@echo "Check status with: make check-sensor-services-status"
-	@echo "View logs with: make sensor-services-logs"
-
-# Check both sensor services status
-check-sensor-service-status: check-linux
-	@echo "Checking status of both sensor services..."
+# Install all services
+install: check-linux check-uv check-signalk-token
+	@echo "Installing all vessel tracker services..."
 	@echo ""
-	@if [ -f "$(SENSOR_FAST_SERVICE_FILE)" ]; then \
-		echo "Fast sensor service file exists at $(SENSOR_FAST_SERVICE_FILE)"; \
-		echo ""; \
-		echo "Fast Sensor Service Status:"; \
-		sudo systemctl status $(SENSOR_FAST_SERVICE_NAME) --no-pager -l; \
-		echo ""; \
-	else \
-		echo "Fast sensor service file not found at $(SENSOR_FAST_SERVICE_FILE)"; \
-		echo "Fast sensor service is not installed."; \
-		echo ""; \
-	fi
-	@if [ -f "$(SENSOR_SLOW_SERVICE_FILE)" ]; then \
-		echo "Slow sensor service file exists at $(SENSOR_SLOW_SERVICE_FILE)"; \
-		echo ""; \
-		echo "Slow Sensor Service Status:"; \
-		sudo systemctl status $(SENSOR_SLOW_SERVICE_NAME) --no-pager -l; \
-	else \
-		echo "Slow sensor service file not found at $(SENSOR_SLOW_SERVICE_FILE)"; \
-		echo "Slow sensor service is not installed."; \
-	fi
+	@echo "This will install:"
+	@echo "  - Website data updater service (updates telemetry data)"
+	@echo "  - Fast sensor service (1s interval, basic sensors)"
+	@echo "  - Slow sensor service (60s interval, includes SGP30)"
+	@echo "  - Magnetic variation service (daily)"
+	@echo ""
+	@read -p "Continue with installation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo ""
+	@$(MAKE) install-website-service
+	@echo ""
+	@$(MAKE) install-sensor-service
+	@echo ""
+	@$(MAKE) install-magnetic-service
+	@echo ""
+	@echo "All services installed successfully!"
+	@echo ""
+	@echo "Service Summary:"
+	@echo "  - Website service: Updates telemetry data every 600 seconds"
+	@echo "  - Fast sensor service: Publishes basic sensor data every 1 second"
+	@echo "  - Slow sensor service: Publishes all sensor data every 60 seconds"
+	@echo "  - Magnetic variation service: Updates magnetic variation daily"
+	@echo ""
+	@echo "Check status of all services:"
+	@echo "  make check-website-service-status"
+	@echo "  make check-sensor-service-status"
+	@echo "  make check-magnetic-service-status"
 
-# Show both sensor services logs
-sensor-service-logs: check-linux
-	@echo "Showing logs for both sensor services..."
-	@echo "Press Ctrl+C to exit logs"
-	@sudo journalctl -u $(SENSOR_FAST_SERVICE_NAME) -u $(SENSOR_SLOW_SERVICE_NAME) -f
+# Uninstall all services
+uninstall: check-linux
+	@echo "Uninstalling all vessel tracker services..."
+	@echo ""
+	@echo "This will uninstall:"
+	@echo "  - Website data updater service"
+	@echo "  - Fast and slow sensor services"
+	@echo "  - Magnetic variation service"
+	@echo ""
+	@read -p "Continue with uninstallation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
+	@echo ""
+	@$(MAKE) uninstall-website-service
+	@echo ""
+	@$(MAKE) uninstall-sensor-service
+	@echo ""
+	@$(MAKE) uninstall-magnetic-service
+	@echo ""
+	@echo "All services uninstalled successfully!"
 
-# Uninstall both sensor services
+# Individual service installation
+install-website-service: check-linux check-uv check-signalk-token
+	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,600,update_signalk_data.py,)
+
+install-sensor-service: check-linux check-uv check-signalk-token
+	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (1s),1,i2c_sensor_read_and_publish.py,--disable-sgp30)
+	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (60s),60,i2c_sensor_read_and_publish.py,)
+
+install-magnetic-service: check-linux check-uv check-signalk-token
+	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),86400,magnetic_variation_service.py,)
+
+# Individual service uninstallation
+uninstall-website-service: check-linux
+	$(call uninstall-service,vessel-tracker)
+
 uninstall-sensor-service: check-linux
-	@echo "Uninstalling both sensor services..."
-	@echo "Uninstalling $(SENSOR_FAST_SERVICE_NAME) systemd service..."
-	@if [ -f "$(SENSOR_FAST_SERVICE_FILE)" ]; then \
-		echo "Stopping and disabling fast sensor service..."; \
-		sudo systemctl stop $(SENSOR_FAST_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SENSOR_FAST_SERVICE_NAME) 2>/dev/null || true; \
-		echo "Removing fast sensor service file..."; \
-		sudo rm -f $(SENSOR_FAST_SERVICE_FILE); \
-		echo "Fast sensor service uninstalled successfully!"; \
-	else \
-		echo "Fast sensor service file not found. Nothing to uninstall."; \
-	fi
-	@echo "Uninstalling $(SENSOR_SLOW_SERVICE_NAME) systemd service..."
-	@if [ -f "$(SENSOR_SLOW_SERVICE_FILE)" ]; then \
-		echo "Stopping and disabling slow sensor service..."; \
-		sudo systemctl stop $(SENSOR_SLOW_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(SENSOR_SLOW_SERVICE_NAME) 2>/dev/null || true; \
-		echo "Removing slow sensor service file..."; \
-		sudo rm -f $(SENSOR_SLOW_SERVICE_FILE); \
-		echo "Slow sensor service uninstalled successfully!"; \
-	else \
-		echo "Slow sensor service file not found. Nothing to uninstall."; \
-	fi
-	@echo "Reloading systemd..."
-	@sudo systemctl daemon-reload
-	@echo "Both sensor services uninstalled successfully!"
+	$(call uninstall-service,vessel-sensors-fast)
+	$(call uninstall-service,vessel-sensors-slow)
+
+uninstall-magnetic-service: check-linux
+	$(call uninstall-service,vessel-magnetic-variation)
+
+# Service status checking
+check-website-service-status: check-linux
+	$(call check-service-status,vessel-tracker,website)
+
+check-sensor-service-status: check-linux
+	$(call check-service-status,vessel-sensors-fast,fast-sensor)
+	$(call check-service-status,vessel-sensors-slow,slow-sensor)
+
+check-magnetic-service-status: check-linux
+	$(call check-service-status,vessel-magnetic-variation,magnetic)
+
+# Service logs
+website-logs: check-linux
+	$(call show-service-logs,vessel-tracker)
+
+sensor-service-logs: check-linux
+	$(call show-service-logs,vessel-sensors-fast)
+	$(call show-service-logs,vessel-sensors-slow)
+
+magnetic-service-logs: check-linux
+	$(call show-service-logs,vessel-magnetic-variation)
 
 # Run tests
 test:
@@ -490,7 +350,6 @@ run-sensors: check-uv check-signalk-token
 		exit 1; \
 	fi
 
-
 # Check I2C devices and permissions
 check-i2c: check-linux
 	@echo "Checking I2C devices and permissions..."
@@ -590,134 +449,3 @@ calibrate-air: check-linux check-uv
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
 	fi
-
-# Install magnetic variation service
-install-magnetic-service: check-linux check-uv check-signalk-token
-	@echo "Installing $(MAGNETIC_SERVICE_NAME) systemd service..."
-	@if [ -f "$(MAGNETIC_SERVICE_FILE)" ]; then \
-		echo "Magnetic variation service already exists. Uninstalling first..."; \
-		sudo systemctl stop $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
-	fi
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
-	@echo "Rendering magnetic variation service template from $(MAGNETIC_TEMPLATE_FILE)..."
-	@if [ ! -f "$(MAGNETIC_TEMPLATE_FILE)" ]; then \
-		echo "Error: Magnetic variation template file not found at $(MAGNETIC_TEMPLATE_FILE)"; \
-		exit 1; \
-	fi
-	@sed -e "s|{{DESCRIPTION}}|$(MAGNETIC_SERVICE_DESCRIPTION)|g" \
-	     -e "s|{{USER}}|$(MAGNETIC_SERVICE_USER)|g" \
-	     -e "s|{{WORKING_DIRECTORY}}|$(MAGNETIC_SERVICE_WORKING_DIR)|g" \
-	     -e "s|{{EXEC_START}}|$(MAGNETIC_SERVICE_EXEC_START)|g" \
-	     -e "s|{{RESTART_SEC}}|$(MAGNETIC_SERVICE_INTERVAL)|g" \
-	     -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
-	     -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
-	     "$(MAGNETIC_TEMPLATE_FILE)" | sudo tee $(MAGNETIC_SERVICE_FILE) > /dev/null
-	@echo "Reloading systemd..."
-	@sudo systemctl daemon-reload
-	@echo "Enabling and starting magnetic variation service..."
-	@sudo systemctl enable $(MAGNETIC_SERVICE_NAME)
-	@sudo systemctl start $(MAGNETIC_SERVICE_NAME)
-	@echo "Magnetic variation service installed and started successfully!"
-	@echo "Service runs every $(MAGNETIC_SERVICE_INTERVAL) second(s) (daily)"
-	@echo "Check status with: make check-magnetic-service-status"
-	@echo "View logs with: make magnetic-service-logs"
-
-# Check magnetic variation service status
-check-magnetic-service-status: check-linux
-	@echo "Checking status of $(MAGNETIC_SERVICE_NAME) service..."
-	@if [ -f "$(MAGNETIC_SERVICE_FILE)" ]; then \
-		echo "Magnetic variation service file exists at $(MAGNETIC_SERVICE_FILE)"; \
-		echo ""; \
-		echo "Magnetic Variation Service Status:"; \
-		sudo systemctl status $(MAGNETIC_SERVICE_NAME) --no-pager -l; \
-	else \
-		echo "Magnetic variation service file not found at $(MAGNETIC_SERVICE_FILE)"; \
-		echo "Magnetic variation service is not installed. Run 'make install-magnetic-service' to install it."; \
-	fi
-
-# Show magnetic variation service logs
-magnetic-service-logs: check-linux
-	@echo "Showing logs for $(MAGNETIC_SERVICE_NAME) service..."
-	@echo "Press Ctrl+C to exit logs"
-	@sudo journalctl -u $(MAGNETIC_SERVICE_NAME) -f
-
-# Uninstall magnetic variation service
-uninstall-magnetic-service: check-linux
-	@echo "Uninstalling $(MAGNETIC_SERVICE_NAME) systemd service..."
-	@if [ -f "$(MAGNETIC_SERVICE_FILE)" ]; then \
-		echo "Stopping and disabling magnetic variation service..."; \
-		sudo systemctl stop $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
-		sudo systemctl disable $(MAGNETIC_SERVICE_NAME) 2>/dev/null || true; \
-		echo "Removing magnetic variation service file..."; \
-		sudo rm -f $(MAGNETIC_SERVICE_FILE); \
-		echo "Reloading systemd..."; \
-		sudo systemctl daemon-reload; \
-		echo "Magnetic variation service uninstalled successfully!"; \
-	else \
-		echo "Magnetic variation service file not found. Nothing to uninstall."; \
-	fi
-
-# Install all services
-install: check-linux check-uv check-signalk-token
-	@echo "Installing all vessel tracker services..."
-	@echo ""
-	@echo "This will install:"
-	@echo "  - Website data updater service (updates telemetry data)"
-	@echo "  - Fast sensor service (1s interval, basic sensors)"
-	@echo "  - Slow sensor service (60s interval, includes SGP30)"
-	@echo "  - Magnetic variation service (daily)"
-	@echo ""
-	@read -p "Continue with installation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
-	@echo ""
-	@echo "Installing website service..."
-	@$(MAKE) install-website-service
-	@echo ""
-	@echo "Installing sensor services..."
-	@$(MAKE) install-sensor-service
-	@echo ""
-	@echo "Installing magnetic variation service..."
-	@$(MAKE) install-magnetic-service
-	@echo ""
-	@echo "All services installed successfully!"
-	@echo ""
-	@echo "Service Summary:"
-	@echo "  - Website service: Updates telemetry data every $(RESTART_SEC) seconds"
-	@echo "  - Fast sensor service: Publishes basic sensor data every $(SENSOR_FAST_SERVICE_INTERVAL) second"
-	@echo "  - Slow sensor service: Publishes all sensor data every $(SENSOR_SLOW_SERVICE_INTERVAL) seconds"
-	@echo "  - Magnetic variation service: Updates magnetic variation daily"
-	@echo ""
-	@echo "Check status of all services:"
-	@echo "  make check-website-service-status"
-	@echo "  make check-sensor-service-status"
-	@echo "  make check-magnetic-service-status"
-	@echo ""
-	@echo "View logs:"
-	@echo "  make website-logs"
-	@echo "  make sensor-service-logs"
-	@echo "  make magnetic-service-logs"
-
-# Uninstall all services
-uninstall: check-linux
-	@echo "Uninstalling all vessel tracker services..."
-	@echo ""
-	@echo "This will uninstall:"
-	@echo "  - Website data updater service"
-	@echo "  - Fast and slow sensor services"
-	@echo "  - Magnetic variation service"
-	@echo ""
-	@read -p "Continue with uninstallation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
-	@echo ""
-	@echo "Uninstalling website service..."
-	@$(MAKE) uninstall-website-service
-	@echo ""
-	@echo "Uninstalling sensor services..."
-	@$(MAKE) uninstall-sensor-service
-	@echo ""
-	@echo "Uninstalling magnetic variation service..."
-	@$(MAKE) uninstall-magnetic-service
-	@echo ""
-	@echo "All services uninstalled successfully!"
