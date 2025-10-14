@@ -20,29 +20,12 @@ DEFAULT_UDP_PORT = 4123
 MAGNETIC_SERVICE_LABEL = "Magnetic Variation Service"
 MAGNETIC_SERVICE_SOURCE = "magnetic-variation"
 
+# Import utilities
+from utils import load_vessel_info, setup_logging, create_signalk_delta
+
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+setup_logging(level="INFO")
 logger = logging.getLogger(__name__)
-
-
-def load_vessel_info(info_path="data/vessel/info.json"):
-    """Load vessel information from info.json file."""
-    try:
-        # Get the absolute path relative to the script location
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(script_dir)
-        full_path = os.path.join(project_root, info_path)
-
-        with open(full_path) as f:
-            info = json.load(f)
-
-        logger.info(f"Loaded vessel info from {full_path}")
-        return info
-    except Exception as e:
-        logger.error(f"Failed to load vessel info from {info_path}: {e}")
-        return None
 
 
 class MagneticVariationService:
@@ -76,29 +59,20 @@ class MagneticVariationService:
 
     def create_signalk_delta(self, magnetic_variation):
         """Create SignalK delta message for magnetic variation."""
-        delta = {
-            "context": "vessels.self",
-            "updates": [
-                {
-                    "source": {
-                        "label": MAGNETIC_SERVICE_LABEL,
-                        "type": "Magnetic Variation",
-                        "src": "magnetic-variation",
-                        "$source": MAGNETIC_SERVICE_SOURCE,
-                    },
-                    "timestamp": datetime.now(UTC).isoformat(),
-                    "values": [
-                        {
-                            "path": "navigation.magneticVariation",
-                            "value": magnetic_variation,
-                            "$source": MAGNETIC_SERVICE_SOURCE,
-                        }
-                    ],
-                }
-            ],
-        }
-
-        return delta
+        values = [
+            {
+                "path": "navigation.magneticVariation",
+                "value": magnetic_variation,
+                "$source": MAGNETIC_SERVICE_SOURCE,
+            }
+        ]
+        
+        return create_signalk_delta(
+            values=values,
+            source_label=MAGNETIC_SERVICE_LABEL,
+            source_type="Magnetic Variation",
+            source_src=MAGNETIC_SERVICE_SOURCE
+        )
 
     def publish_to_signalk(self, magnetic_variation):
         """Publish magnetic variation to SignalK server via UDP."""

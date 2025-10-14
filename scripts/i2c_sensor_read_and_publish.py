@@ -34,29 +34,12 @@ DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
 I2C_SENSORS_SOURCE = "i2c-sensors"
 
+# Import utilities
+from utils import load_vessel_info, setup_logging
+
 # Configure logging
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+setup_logging(level="DEBUG")
 logger = logging.getLogger(__name__)
-
-
-def load_vessel_info(info_path="data/vessel/info.json"):
-    """Load vessel information from info.json file."""
-    try:
-        # Get the absolute path relative to the script location
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(script_dir)
-        full_path = os.path.join(project_root, info_path)
-
-        with open(full_path) as f:
-            info = json.load(f)
-
-        logger.info(f"Loaded vessel info from {full_path}")
-        return info
-    except Exception as e:
-        logger.error(f"Failed to load vessel info from {info_path}: {e}")
-        return None
 
 
 class SensorReader:
