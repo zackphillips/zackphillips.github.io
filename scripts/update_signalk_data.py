@@ -6,6 +6,8 @@ from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
+from utils import get_project_root
+
 # requests is imported at runtime inside fetch_blob to make unit testing easier
 
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
@@ -134,11 +136,19 @@ def run_update(
     if use_https and signalk_url.startswith("http://"):
         signalk_url = signalk_url.replace("http://", "https://", 1)
 
-    output_file = Path(output_path).resolve()
+    # Resolve output path against project root if not absolute
+    output_file = Path(output_path)
+    if not output_file.is_absolute():
+        output_file = get_project_root() / output_file
+    output_file = output_file.resolve()
+
+    # Ensure destination directory exists
+    output_file.parent.mkdir(parents=True, exist_ok=True)
     if not no_reset:
         git_reset(remote=remote, branch=branch)
     blob = fetch_blob(signalk_url=signalk_url)
     output_file.write_text(json.dumps(blob, indent=2))
+    print(f"Wrote SignalK blob to {output_file}")
     git_commit_and_push(
         file_path=output_file, amend=amend, no_push=no_push, force_push=force_push
     )

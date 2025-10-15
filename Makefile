@@ -153,6 +153,7 @@ help:
 	@echo "  make website-logs              - Show website service logs"
 	@echo "  make sensor-service-logs       - Show sensor service logs"
 	@echo "  make magnetic-service-logs     - Show magnetic variation service logs"
+	@echo "  make run-website-update       - Run one website telemetry update now"
 
 # Start Python HTTP server
 server:
@@ -257,6 +258,17 @@ sensor-service-logs: check-linux
 
 magnetic-service-logs: check-linux
 	$(call show-service-logs,vessel-magnetic-variation)
+
+# Run one website telemetry update (single execution)
+run-website-update: check-uv
+	@echo "Running one website telemetry update..."
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Fetching from SignalK and writing data..."; \
+		"$(UV_BIN)" run scripts/update_signalk_data.py --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json; \
+	else \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
 
 # Run tests
 test:
