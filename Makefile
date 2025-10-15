@@ -33,31 +33,31 @@ define install-service
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
 	fi
-    @echo "Rendering $(2) service template..."
-    @if [ "$(1)" = "website" ]; then \
-        sed -e "s|{{DESCRIPTION}}|$(3)|g" \
-            -e "s|{{USER}}|$$(whoami)|g" \
-            -e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-            -e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) $(5)|g" \
-            -e "s|{{RESTART_POLICY}}|always|g" \
-            -e "s|{{RESTART_SEC}}|$(6)|g" \
-            -e "s|{{GIT_BRANCH}}|$(CURRENT_BRANCH)|g" \
-            -e "s|{{GIT_REMOTE}}|origin|g" \
-            -e "s|{{GIT_AMEND}}|false|g" \
-            -e "s|{{GIT_FORCE_PUSH}}|false|g" \
-            -e "s|{{SIGNALK_URL}}|http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self|g" \
-            -e "s|{{OUTPUT_FILE}}|telemetry.json|g" \
-            "$(CURDIR)/services/systemd.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
-    else \
-        sed -e "s|{{DESCRIPTION}}|$(3)|g" \
-            -e "s|{{USER}}|$$(whoami)|g" \
-            -e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-            -e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
-            -e "s|{{RESTART_SEC}}|$(6)|g" \
-            -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
-            -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
-            "$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
-    fi
+	@echo "Rendering $(2) service template..."
+	@if [ "$(1)" = "website" ]; then \
+		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+			-e "s|{{USER}}|$$(whoami)|g" \
+			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) $(5)|g" \
+			-e "s|{{RESTART_POLICY}}|always|g" \
+			-e "s|{{RESTART_SEC}}|$(6)|g" \
+			-e "s|{{GIT_BRANCH}}|$(CURRENT_BRANCH)|g" \
+			-e "s|{{GIT_REMOTE}}|origin|g" \
+			-e "s|{{GIT_AMEND}}|false|g" \
+			-e "s|{{GIT_FORCE_PUSH}}|false|g" \
+			-e "s|{{SIGNALK_URL}}|http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self|g" \
+			-e "s|{{OUTPUT_FILE}}|telemetry.json|g" \
+			"$(CURDIR)/services/systemd.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
+	else \
+		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+			-e "s|{{USER}}|$$(whoami)|g" \
+			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
+			-e "s|{{RESTART_SEC}}|$(6)|g" \
+			-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
+			-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
+			"$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
+	fi
 	@echo "Reloading systemd..."
 	@sudo systemctl daemon-reload
 	@echo "Enabling and starting $(2) service..."
