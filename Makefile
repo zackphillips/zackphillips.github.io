@@ -1,4 +1,4 @@
-.PHONY: server help install uninstall test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi
+.PHONY: server help install uninstall test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi check-sensors
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-service-logs
 .PHONY: install-magnetic-service uninstall-magnetic-service check-magnetic-service-status magnetic-service-logs
@@ -33,13 +33,31 @@ define install-service
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
 	fi
-	@echo "Rendering $(2) service template..."
-	@sed -e "s|{{DESCRIPTION}}|$(3)|g" \
-	     -e "s|{{USER}}|$$(whoami)|g" \
-	     -e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-	     -e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
-	     -e "s|{{RESTART_SEC}}|$(3)|g" \
-	     "$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null
+    @echo "Rendering $(2) service template..."
+    @if [ "$(1)" = "website" ]; then \
+        sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+            -e "s|{{USER}}|$$(whoami)|g" \
+            -e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+            -e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) $(5)|g" \
+            -e "s|{{RESTART_POLICY}}|always|g" \
+            -e "s|{{RESTART_SEC}}|$(6)|g" \
+            -e "s|{{GIT_BRANCH}}|$(CURRENT_BRANCH)|g" \
+            -e "s|{{GIT_REMOTE}}|origin|g" \
+            -e "s|{{GIT_AMEND}}|false|g" \
+            -e "s|{{GIT_FORCE_PUSH}}|false|g" \
+            -e "s|{{SIGNALK_URL}}|http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self|g" \
+            -e "s|{{OUTPUT_FILE}}|telemetry.json|g" \
+            "$(CURDIR)/services/systemd.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
+    else \
+        sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+            -e "s|{{USER}}|$$(whoami)|g" \
+            -e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+            -e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
+            -e "s|{{RESTART_SEC}}|$(6)|g" \
+            -e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
+            -e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
+            "$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
+    fi
 	@echo "Reloading systemd..."
 	@sudo systemctl daemon-reload
 	@echo "Enabling and starting $(2) service..."
@@ -112,6 +130,7 @@ help:
 	@echo "  make check-uv       - Check if uv is installed and install if necessary"
 	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
 	@echo "  make test-sensors   - Test SignalK connection without running sensors"
+	@echo "  make check-sensors  - Run I2C checks and SignalK test together"
 	@echo "  make check-i2c      - Check I2C devices and permissions"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
@@ -199,14 +218,14 @@ uninstall: check-linux
 
 # Individual service installation
 install-website-service: check-linux check-uv check-signalk-token
-	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,600,update_signalk_data.py,)
+	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,update_signalk_data.py,,600)
 
 install-sensor-service: check-linux check-uv check-signalk-token
-	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (1s),1,i2c_sensor_read_and_publish.py,--disable-sgp30)
-	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (60s),60,i2c_sensor_read_and_publish.py,)
+	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (1s),i2c_sensor_read_and_publish.py,--disable-sgp30,1)
+	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (60s),i2c_sensor_read_and_publish.py,,60)
 
 install-magnetic-service: check-linux check-uv check-signalk-token
-	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),86400,magnetic_variation_service.py,)
+	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),magnetic_variation_service.py,,86400)
 
 # Individual service uninstallation
 uninstall-website-service: check-linux
@@ -337,6 +356,12 @@ test-sensors: check-uv check-signalk-token
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
 	fi
+
+# Combined sensor checks (I2C devices and SignalK connectivity)
+check-sensors: check-linux
+	@echo "Running combined sensor checks (I2C + SignalK)..."
+	@$(MAKE) check-i2c
+	@$(MAKE) test-sensors
 
 # Run I2C sensors to SignalK publisher
 run-sensors: check-uv check-signalk-token
