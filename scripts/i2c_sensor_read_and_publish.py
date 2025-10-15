@@ -35,7 +35,7 @@ I2C_SENSORS_LABEL = "I2C Sensors"
 I2C_SENSORS_SOURCE = "i2c-sensors"
 
 # Import utilities
-from utils import load_vessel_info, setup_logging
+from utils import load_vessel_info, setup_logging, send_delta_over_udp
 
 # Configure logging
 setup_logging(level="DEBUG")
@@ -274,7 +274,7 @@ class SensorReader:
                     celsius=temperature,
                     relative_humidity=humidity
                 )
-                logger.info(f"SGP30 relative humidity set to {humidity}% at {temperature}°C")
+                logger.info(f"SGP30 relative humidity set to {humidity}% at {temperature}degC")
 
             # Set baseline values if available
             if "tvoc_baseline_ppb" in cal_data and "eco2_baseline_ppm" in cal_data:
@@ -511,16 +511,8 @@ class SensorReader:
                 if not self.connect_udp():
                     return False
 
-            # Convert delta to JSON and send via UDP
-            message = (
-                json.dumps(delta) + "\n"
-            )  # SignalK expects newline-terminated messages
-            message_bytes = message.encode("utf-8")
-
             # Send and capture return value (number of bytes sent)
-            bytes_sent = self.udp_socket.sendto(
-                message_bytes, (self.signalk_host, self.udp_port)
-            )
+            bytes_sent = send_delta_over_udp(self.udp_socket, self.signalk_host, self.udp_port, delta)
 
             # Check if all bytes were sent
             if bytes_sent == len(message_bytes):

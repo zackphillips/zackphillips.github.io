@@ -71,6 +71,25 @@ def create_signalk_delta(values: list[dict], source_label: str, source_type: str
     }
 
 
+def encode_signalk_udp_message(delta: dict) -> bytes:
+    """
+    Encode a SignalK delta for UDP transport.
+
+    Ensures messages are newline-terminated as expected by SignalK UDP input.
+    """
+    return (json.dumps(delta) + "\n").encode("utf-8")
+
+
+def send_delta_over_udp(udp_socket, host: str, port: int, delta: dict) -> int:
+    """
+    Send a SignalK delta over an existing UDP socket.
+
+    Returns the number of bytes sent.
+    """
+    message_bytes = encode_signalk_udp_message(delta)
+    return udp_socket.sendto(message_bytes, (host, port))
+
+
 def get_project_root() -> Path:
     """Get the project root directory."""
     script_dir = Path(__file__).parent

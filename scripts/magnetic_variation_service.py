@@ -11,9 +11,8 @@ import logging
 import os
 import socket
 from datetime import UTC, datetime
-
-# Import magnetic calculation functions
-from magnetic_calculation import get_magnetic_declination_with_cache
+import math
+import requests
 
 # Constants
 DEFAULT_UDP_PORT = 4123
@@ -21,11 +20,93 @@ MAGNETIC_SERVICE_LABEL = "Magnetic Variation Service"
 MAGNETIC_SERVICE_SOURCE = "magnetic-variation"
 
 # Import utilities
-from utils import load_vessel_info, setup_logging, create_signalk_delta
+from utils import load_vessel_info, setup_logging, create_signalk_delta, send_delta_over_udp
 
 # Configure logging
 setup_logging(level="INFO")
 logger = logging.getLogger(__name__)
+
+
+def calculate_magnetic_declination(
+    latitude: float,
+    longitude: float,
+    date: datetime | None = None,
+    elevation: float = 0.0,
+) -> float | None:
+    """Calculate magnetic declination (variation) in radians using geomag, fallback NOAA."""
+    if date is None:
+        date = datetime.now(UTC)
+
+    try:
+        import geomag  # local import to avoid hard dependency at import time
+
+        elevation_km = elevation / 1000.0
+        date_for_geomag = date.date()
+        declination_deg = geomag.declination(latitude, longitude, h=elevation_km, time=date_for_geomag)
+        return math.radians(declination_deg)
+    except Exception:
+        pass
+
+    try:
+        NOAA_MAGNETIC_API_URL = "https://www.ngdc.noaa.gov/geomag-web/calculators/calculateDeclination"
+        params = {
+            'lat1': latitude,
+            'lon1': longitude,
+            'model': 'WMM',
+            'startYear': date.year,
+            'startMonth': date.month,
+            'startDay': date.day,
+            'endYear': date.year,
+            'endMonth': date.month,
+            'endDay': date.day,
+            'resultFormat': 'json'
+        }
+        if elevation > 0:
+            params['height'] = elevation
+
+        response = requests.get(NOAA_MAGNETIC_API_URL, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        if 'result' in data and len(data['result']) > 0:
+            declination_deg = data['result'][0].get('declination', 0.0)
+            return math.radians(declination_deg)
+    except Exception:
+        return None
+
+
+def get_position_from_signalk(signalk_host: str, signalk_port: int, protocol: str | None = None) -> tuple[float, float] | None:
+    """Get current vessel position from SignalK server."""
+    if not protocol:
+        protocol = "http"
+    api_url = f"{protocol}://{signalk_host}:{signalk_port}/signalk/v1/api/vessels/self/navigation/position"
+    try:
+        response = requests.get(api_url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        if 'value' in data:
+            position = data['value']
+            latitude = position.get('latitude')
+            longitude = position.get('longitude')
+            if latitude is not None and longitude is not None:
+                return (latitude, longitude)
+    except requests.exceptions.RequestException:
+        return None
+    return None
+
+
+def calculate_magnetic_declination_from_signalk(
+    signalk_host: str,
+    signalk_port: int,
+    date: datetime | None = None,
+    elevation: float = 0.0,
+    protocol: str | None = None,
+) -> float | None:
+    """Calculate magnetic declination using current vessel position from SignalK."""
+    position = get_position_from_signalk(signalk_host, signalk_port, protocol)
+    if position is None:
+        return None
+    latitude, longitude = position
+    return calculate_magnetic_declination(latitude, longitude, date, elevation)
 
 
 class MagneticVariationService:
@@ -52,6 +133,9 @@ class MagneticVariationService:
 
         # UDP socket for publishing
         self.udp_socket = None
+
+        # Protocol from vessel info (default http)
+        self.signalk_protocol = self.vessel_info.get("signalk", {}).get("protocol", "http")
 
         logger.info(f"Initialized {MAGNETIC_SERVICE_LABEL}")
         logger.info(f"SignalK server: {self.signalk_host}:{self.signalk_port}")
@@ -101,13 +185,9 @@ class MagneticVariationService:
                 self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 logger.info(f"UDP socket created for SignalK server at {self.signalk_host}:{self.udp_port}")
 
-            # Convert delta to JSON
-            message = json.dumps(delta)
-            message_bytes = message.encode('utf-8')
-
-            # Send via UDP
-            self.udp_socket.sendto(message_bytes, (self.signalk_host, self.udp_port))
-            logger.debug(f"UDP send successful: {len(message_bytes)}/{len(message_bytes)} bytes sent to {self.signalk_host}:{self.udp_port}")
+            # Send via UDP using shared helper
+            bytes_sent = send_delta_over_udp(self.udp_socket, self.signalk_host, self.udp_port, delta)
+            logger.debug(f"UDP send successful: {bytes_sent} bytes sent to {self.signalk_host}:{self.udp_port}")
 
             return True
 
@@ -132,27 +212,23 @@ class MagneticVariationService:
 
         try:
 
-            # Calculate magnetic variation
-            magnetic_variation = get_magnetic_declination_with_cache(
+            # Calculate magnetic variation using live SignalK API (no cache)
+            magnetic_variation = calculate_magnetic_declination_from_signalk(
                 self.signalk_host,
                 self.signalk_port,
-                force_refresh=False
+                protocol=self.signalk_protocol,
             )
 
             if magnetic_variation is not None:
                 # Retrieve current position for logging context
-                try:
-                    from magnetic_calculation import get_position_from_signalk
-                    pos = get_position_from_signalk(self.signalk_host, self.signalk_port)
-                except Exception:
-                    pos = None
+                pos = get_position_from_signalk(self.signalk_host, self.signalk_port, protocol=self.signalk_protocol)
 
                 deg = magnetic_variation * 180 / 3.14159
                 if pos and isinstance(pos, tuple):
                     lat, lon = pos
-                    logger.info(f"Magnetic variation: {deg:.2f}° at lat={lat:.6f}, lon={lon:.6f}")
+                    logger.info(f"Magnetic variation: {deg:.2f}deg at lat={lat:.6f}, lon={lon:.6f}")
                 else:
-                    logger.info(f"Magnetic variation: {deg:.2f}° (position unavailable)")
+                    logger.info(f"Magnetic variation: {deg:.2f}deg (position unavailable)")
 
                 # Publish to SignalK
                 self.publish_to_signalk(magnetic_variation)
