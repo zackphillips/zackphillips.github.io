@@ -12,6 +12,7 @@ import os
 import socket
 from datetime import UTC, datetime
 import math
+import time
 import requests
 
 # Constants
@@ -141,6 +142,9 @@ class MagneticVariationService:
         logger.info(f"SignalK server: {self.signalk_host}:{self.signalk_port}")
         logger.info(f"UDP port: {self.udp_port}")
 
+        # Default publish interval (seconds)
+        self.interval_seconds = 600
+
     def create_signalk_delta(self, magnetic_variation):
         """Create SignalK delta message for magnetic variation."""
         values = [
@@ -207,38 +211,43 @@ class MagneticVariationService:
             self.udp_socket = None
 
     def run(self):
-        """Calculate and publish magnetic variation once."""
-        logger.info("Calculating and publishing magnetic variation...")
+        """Calculate and publish magnetic variation at a fixed interval."""
+        logger.info(f"Starting magnetic variation publishing every {self.interval_seconds} seconds...")
 
         try:
+            while True:
+                try:
+                    # Calculate magnetic variation using live SignalK API (no cache)
+                    magnetic_variation = calculate_magnetic_declination_from_signalk(
+                        self.signalk_host,
+                        self.signalk_port,
+                        protocol=self.signalk_protocol,
+                    )
 
-            # Calculate magnetic variation using live SignalK API (no cache)
-            magnetic_variation = calculate_magnetic_declination_from_signalk(
-                self.signalk_host,
-                self.signalk_port,
-                protocol=self.signalk_protocol,
-            )
+                    if magnetic_variation is not None:
+                        # Retrieve current position for logging context
+                        pos = get_position_from_signalk(self.signalk_host, self.signalk_port, protocol=self.signalk_protocol)
 
-            if magnetic_variation is not None:
-                # Retrieve current position for logging context
-                pos = get_position_from_signalk(self.signalk_host, self.signalk_port, protocol=self.signalk_protocol)
+                        deg = magnetic_variation * 180 / 3.14159
+                        if pos and isinstance(pos, tuple):
+                            lat, lon = pos
+                            logger.info(f"Magnetic variation: {deg:.2f}deg at lat={lat:.6f}, lon={lon:.6f}")
+                        else:
+                            logger.info(f"Magnetic variation: {deg:.2f}deg (position unavailable)")
 
-                deg = magnetic_variation * 180 / 3.14159
-                if pos and isinstance(pos, tuple):
-                    lat, lon = pos
-                    logger.info(f"Magnetic variation: {deg:.2f}deg at lat={lat:.6f}, lon={lon:.6f}")
-                else:
-                    logger.info(f"Magnetic variation: {deg:.2f}deg (position unavailable)")
+                        # Publish to SignalK
+                        self.publish_to_signalk(magnetic_variation)
 
-                # Publish to SignalK
-                self.publish_to_signalk(magnetic_variation)
+                        logger.info("Successfully published magnetic variation")
+                    else:
+                        logger.warning("Could not calculate magnetic variation")
+                except Exception as loop_err:
+                    logger.error(f"Unexpected error: {loop_err}")
 
-                logger.info("Successfully published magnetic variation")
-            else:
-                logger.warning("Could not calculate magnetic variation")
-
-        except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+                # Sleep until next publish
+                time.sleep(self.interval_seconds)
+        except KeyboardInterrupt:
+            logger.info("Stopping magnetic variation service (Ctrl+C)")
         finally:
             self.cleanup()
 
@@ -259,6 +268,12 @@ def main():
         type=int,
         help=f"SignalK UDP data port (default: {DEFAULT_UDP_PORT})",
     )
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=600,
+        help="Publish interval in seconds (default: 600)",
+    )
 
     args = parser.parse_args()
 
@@ -269,6 +284,8 @@ def main():
             signalk_port=args.port,
             udp_port=args.udp_port,
         )
+        if args.interval and args.interval > 0:
+            service.interval_seconds = args.interval
         service.run()
 
     except Exception as e:
