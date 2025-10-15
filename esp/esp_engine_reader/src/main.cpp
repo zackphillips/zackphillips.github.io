@@ -10,6 +10,8 @@
 
 #include <memory>
 
+#include <Wire.h>
+#include "HT_SSD1306Wire.h"   // OLED Display Library
 #include "sensesp.h"
 #include "sensesp/sensors/analog_input.h"
 #include "sensesp/sensors/digital_input.h"
@@ -18,7 +20,14 @@
 #include "sensesp/system/lambda_consumer.h"
 #include "sensesp_app_builder.h"
 
+
 using namespace sensesp;
+
+// Global variables to store sensor values for display
+float current_analog_value = 0.0;
+bool current_digital_input1 = false;
+bool current_digital_input2 = false;
+bool display_working = false;
 
 // GPIO number (NOT PIN NUMBER) to use for the analog input
 const uint8_t kAnalogInputPin = 7;
@@ -42,6 +51,31 @@ const unsigned int kDigitalInput2Interval = 1000;
 // Test this yourself by connecting pin 15 to pin 14 with a jumper wire and
 // see if the value changes!
 
+// Function to scan I2C bus for devices
+void scanI2C() {
+  Serial.println("Scanning I2C bus...");
+  int deviceCount = 0;
+  
+  for (byte address = 1; address < 127; address++) {
+    Wire.beginTransmission(address);
+    byte error = Wire.endTransmission();
+    
+    if (error == 0) {
+      Serial.printf("I2C device found at address 0x%02X\n", address);
+      deviceCount++;
+    }
+  }
+  
+  if (deviceCount == 0) {
+    Serial.println("No I2C devices found!");
+  } else {
+    Serial.printf("Found %d I2C device(s)\n", deviceCount);
+  }
+}
+
+// OLED Display Definition (try both 0x3C and 0x3D addresses)
+static SSD1306Wire display(0x3c, 500000, SDA_OLED, SCL_OLED, GEOMETRY_128_64, RST_OLED);
+
 // The setup function performs one-time application initialization.
 void setup() {
   SetupLogging(ESP_LOG_DEBUG);
@@ -64,10 +98,11 @@ void setup() {
   auto analog_input = std::make_shared<AnalogInput>(
       kAnalogInputPin, kAnalogInputReadInterval, "", kAnalogInputScale);
 
-  // Add an observer that prints out the current value of the analog input
-  // every time it changes.
+  // Add an observer that prints out the current valu e of the analog input
+  // every time it changes and store it for display.
   analog_input->attach([analog_input]() {
-    debugD("Analog input value: %f", analog_input->get());
+    current_analog_value = analog_input->get();
+    debugD("Analog input value: %f", current_analog_value);
   });
 
   // Set GPIO pin to output and toggle it every 650 ms
@@ -81,14 +116,18 @@ void setup() {
       kDigitalInput1Pin, INPUT_PULLUP, CHANGE);
 
   digital_input1->attach([digital_input1]() {
-    debugD("Digital input 1 value: %d", digital_input1->get());
+    current_digital_input1 = digital_input1->get();
+    debugD("Digital input 1 value: %d", current_digital_input1);
   });
 
   // Connect the digital input to a lambda consumer that prints out the
   // value every time it changes.
 
   auto digital_input1_consumer = std::make_shared<LambdaConsumer<bool>>(
-      [](bool input) { debugD("Digital input value changed: %d", input); });
+      [](bool input) { 
+        current_digital_input1 = input;
+        debugD("Digital input value changed: %d", input); 
+      });
 
   digital_input1->connect_to(digital_input1_consumer);
 
@@ -110,7 +149,8 @@ void setup() {
       [kDigitalInput2Pin]() { return digitalRead(kDigitalInput2Pin); });
 
   digital_input2->attach([digital_input2]() {
-    debugD("Digital input 2 value: %d", digital_input2->get());
+    current_digital_input2 = digital_input2->get();
+    debugD("Digital input 2 value: %d", current_digital_input2);
   });
 
   // Connect the analog input to Signal K output. This will publish the
@@ -145,6 +185,56 @@ void setup() {
 
   digital_input2->connect_to(di2_sk_output);
 
+  debugD("Starting OLED Display Test...");
+  
+  // Enable Vext power for peripherals (CRITICAL for Heltec V3!)
+  pinMode(Vext, OUTPUT);
+  digitalWrite(Vext, LOW);  // LOW = enable power to external components
+  delay(500);  // Give power time to stabilize
+  debugD("Vext power enabled for display");
+  debugD("OLED Pins - SDA: %d, SCL: %d, RST: %d\n", SDA_OLED, SCL_OLED, RST_OLED);
+
+  // Try multiple initialization approaches
+  debugD("Initializing display...");
+  
+  // Method 1: Try standard init
+  bool initSuccess = display.init();
+  display_working = initSuccess;
+  debugD("Standard init: %s\n", initSuccess ? "SUCCESS" : "FAILED");
+
+  if (initSuccess) {
+      // Scan for devices after successful init
+      scanI2C();
+      
+      // Test display functionality
+      display.clear();
+      display.setFont(ArialMT_Plain_10);
+      display.setTextAlignment(TEXT_ALIGN_LEFT);
+      display.drawString(0, 0, "Heltec V3");
+      display.drawString(0, 12, "Display Test");
+      display.drawString(0, 24, "Init: OK");
+      display.setFont(ArialMT_Plain_16);
+      display.setTextAlignment(TEXT_ALIGN_CENTER);
+      display.drawString(64, 45, "WORKING!");
+      display.display();
+      Serial.println("Display content updated");
+      
+    } else {
+      Serial.println("Display init failed - trying recovery...");
+      
+      // Try manual I2C setup and scan
+      Wire.begin(SDA_OLED, SCL_OLED);
+      delay(100);
+      scanI2C();
+      
+      // Try different approaches
+      Serial.println("Trying alternative initialization...");
+      display.end();
+      delay(100);
+      initSuccess = display.init();
+      Serial.printf("Retry init: %s\n", initSuccess ? "SUCCESS" : "FAILED");
+    }
+
   // To avoid garbage collecting all shared pointers created in setup(),
   // loop from here.
   while (true) {
@@ -152,4 +242,50 @@ void setup() {
   }
 }
 
-void loop() { event_loop()->tick(); }
+void loop() {
+  event_loop()->tick(); 
+  
+  static unsigned long lastDisplayUpdate = 0;
+  
+  // Update display every 1 second if working
+  if (display_working && millis() - lastDisplayUpdate > 1000) {
+    lastDisplayUpdate = millis();
+    
+    // Clear and set up display
+    display.clear();
+    display.setFont(ArialMT_Plain_10);
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
+    
+    // Title
+    display.drawString(0, 0, "SensESP Sensor Data");
+    
+    // Analog input value
+    display.drawString(0, 12, "Analog: " + String(current_analog_value, 2) + "V");
+    
+    // Digital input 1 (pin 5)
+    String digital1_str = current_digital_input1 ? "HIGH" : "LOW";
+    display.drawString(0, 24, "Digital1: " + digital1_str);
+    
+    // Digital input 2 (pin 4) 
+    String digital2_str = current_digital_input2 ? "HIGH" : "LOW";
+    display.drawString(0, 36, "Digital2: " + digital2_str);
+    
+    // Uptime
+    display.drawString(0, 48, "Up: " + String(millis()/1000) + "s");
+    
+    // Signal K status
+    display.setFont(ArialMT_Plain_10);
+    display.setTextAlignment(TEXT_ALIGN_RIGHT);
+    display.drawString(128, 54, "SignalK");
+    
+    display.display();
+    
+    // Also output to serial for debugging
+    debugD("Display: Analog=%.2fV, D1=%s, D2=%s", 
+           current_analog_value, 
+           current_digital_input1 ? "HIGH" : "LOW",
+           current_digital_input2 ? "HIGH" : "LOW");
+  }
+  
+  delay(100);  // Small delay to prevent excessive CPU usage
+}
