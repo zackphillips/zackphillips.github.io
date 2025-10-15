@@ -176,7 +176,6 @@ install: check-linux check-uv check-signalk-token
 	@echo "  - Slow sensor service (60s interval, includes SGP30)"
 	@echo "  - Magnetic variation service (daily)"
 	@echo ""
-	@read -p "Continue with installation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo ""
 	@$(MAKE) install-website-service
 	@echo ""
@@ -206,7 +205,6 @@ uninstall: check-linux
 	@echo "  - Fast and slow sensor services"
 	@echo "  - Magnetic variation service"
 	@echo ""
-	@read -p "Continue with uninstallation? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo ""
 	@$(MAKE) uninstall-website-service
 	@echo ""

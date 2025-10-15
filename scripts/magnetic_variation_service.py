@@ -140,7 +140,19 @@ class MagneticVariationService:
             )
 
             if magnetic_variation is not None:
-                logger.info(f"Magnetic variation calculated: {magnetic_variation:.4f} rad ({magnetic_variation * 180 / 3.14159:.2f}°)")
+                # Retrieve current position for logging context
+                try:
+                    from magnetic_calculation import get_position_from_signalk
+                    pos = get_position_from_signalk(self.signalk_host, self.signalk_port)
+                except Exception:
+                    pos = None
+
+                deg = magnetic_variation * 180 / 3.14159
+                if pos and isinstance(pos, tuple):
+                    lat, lon = pos
+                    logger.info(f"Magnetic variation: {deg:.2f}° at lat={lat:.6f}, lon={lon:.6f}")
+                else:
+                    logger.info(f"Magnetic variation: {deg:.2f}° (position unavailable)")
 
                 # Publish to SignalK
                 self.publish_to_signalk(magnetic_variation)
