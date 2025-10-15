@@ -24,13 +24,17 @@
 using namespace sensesp;
 
 // Global variables to store sensor values for display
-float current_analog_value = 0.0;
+float current_analog_value1 = 0.0;
+float current_analog_value2 = 0.0;
+float current_analog_value3 = 0.0;
 bool current_digital_input1 = false;
 bool current_digital_input2 = false;
 bool display_working = false;
 
-// GPIO number (NOT PIN NUMBER) to use for the analog input
-const uint8_t kAnalogInputPin = 7;
+// GPIO numbers (NOT PIN NUMBERS) to use for the analog inputs
+const uint8_t kAnalogInput1Gpio = 7;
+const uint8_t kAnalogInput2Gpio = 6;
+const uint8_t kAnalogInput3Gpio = 5;
 
 // Define how often (in milliseconds) new samples are acquired
 const unsigned int kAnalogInputReadInterval = 500;
@@ -39,14 +43,10 @@ const unsigned int kAnalogInputReadInterval = 500;
 // A value of 3.3 gives output equal to the input voltage.
 const float kAnalogInputScale = 3.3;
 
-// Digital output GPIO number (NOT PIN NUMBER) and interval
-const uint8_t kDigitalOutputPin = 6;
-const unsigned int kDigitalOutputInterval = 650;
-
 // Digital input GPIO numbers (NOT PIN NUMBERS) and interval
-const uint8_t kDigitalInput1Pin = 5;
-const uint8_t kDigitalInput2Pin = 4;
-const unsigned int kDigitalInput2Interval = 1000;
+const uint8_t kDigitalInput1Gpio = 4;
+const uint8_t kDigitalInput2Gpio = 3;
+const unsigned int kDigitalInputReadInterval = 500;
 
 // Test this yourself by connecting pin 15 to pin 14 with a jumper wire and
 // see if the value changes!
@@ -92,84 +92,123 @@ void setup() {
                     //->set_sk_server("192.168.10.3", 80)
                     ->get_app();
 
-  // Create a new Analog Input Sensor that reads an analog input pin
+  // Create three Analog Input Sensors that read analog input pins
   // periodically.
-  pinMode(kAnalogInputPin, INPUT);
-  auto analog_input = std::make_shared<AnalogInput>(
-      kAnalogInputPin, kAnalogInputReadInterval, "", kAnalogInputScale);
+  pinMode(kAnalogInput1Gpio, INPUT);
+  auto analog_input1 = std::make_shared<AnalogInput>(
+      kAnalogInput1Gpio, kAnalogInputReadInterval, "", kAnalogInputScale);
 
-  // Add an observer that prints out the current valu e of the analog input
-  // every time it changes and store it for display.
-  analog_input->attach([analog_input]() {
-    current_analog_value = analog_input->get();
-    debugD("Analog input value: %f", current_analog_value);
+  pinMode(kAnalogInput2Gpio, INPUT);
+  auto analog_input2 = std::make_shared<AnalogInput>(
+      kAnalogInput2Gpio, kAnalogInputReadInterval, "", kAnalogInputScale);
+
+  pinMode(kAnalogInput3Gpio, INPUT);
+  auto analog_input3 = std::make_shared<AnalogInput>(
+      kAnalogInput3Gpio, kAnalogInputReadInterval, "", kAnalogInputScale);
+
+  // Add observers that print out the current values of the analog inputs
+  // every time they change and store them for display.
+  analog_input1->attach([analog_input1]() {
+    current_analog_value1 = analog_input1->get();
+    debugD("Analog input 1 (GPIO %d) value: %.2fV", kAnalogInput1Gpio, current_analog_value1);
   });
 
-  // Set GPIO pin to output and toggle it every 650 ms
-  pinMode(kDigitalOutputPin, OUTPUT);
-  event_loop()->onRepeat(kDigitalOutputInterval, [kDigitalOutputPin]() {
-    digitalWrite(kDigitalOutputPin, !digitalRead(kDigitalOutputPin));
+  analog_input2->attach([analog_input2]() {
+    current_analog_value2 = analog_input2->get();
+    debugD("Analog input 2 (GPIO %d) value: %.2fV", kAnalogInput2Gpio, current_analog_value2);
   });
 
-  // Read GPIO pin every time it changes
-  auto digital_input1 = std::make_shared<DigitalInputChange>(
-      kDigitalInput1Pin, INPUT_PULLUP, CHANGE);
+  analog_input3->attach([analog_input3]() {
+    current_analog_value3 = analog_input3->get();
+    debugD("Analog input 3 (GPIO %d) value: %.2fV", kAnalogInput3Gpio, current_analog_value3);
+  });
 
+  // Create two Digital Input Sensors that read digital input pins
+   auto digital_input1 = std::make_shared<DigitalInputChange>(
+      kDigitalInput1Gpio, INPUT_PULLUP, CHANGE);
+    auto digital_input2 = std::make_shared<DigitalInputChange>(
+      kDigitalInput2Gpio, INPUT_PULLUP, CHANGE);
+
+  // Add observers that print out the current values of the digital inputs
   digital_input1->attach([digital_input1]() {
     current_digital_input1 = digital_input1->get();
     debugD("Digital input 1 value: %d", current_digital_input1);
   });
-
-  // Connect the digital input to a lambda consumer that prints out the
-  // value every time it changes.
-
-  auto digital_input1_consumer = std::make_shared<LambdaConsumer<bool>>(
-      [](bool input) { 
-        current_digital_input1 = input;
-        debugD("Digital input value changed: %d", input); 
-      });
-
-  digital_input1->connect_to(digital_input1_consumer);
-
-  // Create another digital input, this time with RepeatSensor. This approach
-  // can be used to connect external sensor library to SensESP!
-
-  // Configure the pin. Replace this with your custom library initialization
-  // code!
-  pinMode(kDigitalInput2Pin, INPUT_PULLUP);
-
-  // Define a new RepeatSensor that reads the pin every 100 ms.
-  // Replace the lambda function internals with the input routine of your custom
-  // library.
-
-  // Again, test this yourself by connecting pin 15 to pin 13 with a jumper
-  // wire and see if the value changes!
-  auto digital_input2 = std::make_shared<RepeatSensor<bool>>(
-      kDigitalInput2Interval,
-      [kDigitalInput2Pin]() { return digitalRead(kDigitalInput2Pin); });
-
   digital_input2->attach([digital_input2]() {
     current_digital_input2 = digital_input2->get();
     debugD("Digital input 2 value: %d", current_digital_input2);
   });
 
-  // Connect the analog input to Signal K output. This will publish the
-  // analog input value to the Signal K server every time it changes.
-  auto aiv_metadata = std::make_shared<SKMetadata>("V", "Analog input voltage");
-  auto aiv_sk_output = std::make_shared<SKOutput<float>>(
-      "sensors.analog_input.voltage",   // Signal K path
-      "/Sensors/Analog Input/Voltage",  // configuration path, used in the
-                                        // web UI and for storing the
-                                        // configuration
-      aiv_metadata
+  // Configure digital inputs
+  pinMode(kDigitalInput1Gpio, INPUT_PULLDOWN);
+  pinMode(kDigitalInput2Gpio, INPUT_PULLDOWN);
+
+  // Connect the digital inputs to LambdaConsumers that print the value when it changes.
+  auto digital_input1_consumer = std::make_shared<LambdaConsumer<bool>>(
+      [](bool input) { 
+        current_digital_input1 = input;
+        debugD("Digital input 1 (GPIO %d) value changed: %d", kDigitalInput1Gpio, input);
+      });
+  digital_input1->connect_to(digital_input1_consumer);
+  auto digital_input2_consumer = std::make_shared<LambdaConsumer<bool>>(
+      [](bool input) { 
+        current_digital_input2 = input;
+        debugD("Digital input 2 (GPIO %d) value changed: %d", kDigitalInput2Gpio, input);
+      });
+  digital_input2->connect_to(digital_input2_consumer);
+  
+  // Configure signalk outputs for the analog inputs
+  // Analog Input 1
+  auto ai1_metadata = std::make_shared<SKMetadata>("V", "Analog input 1 voltage");
+  auto ai1_sk_output = std::make_shared<SKOutput<float>>(
+      "sensors.analog_input1.voltage",   // Signal K path
+      "/Sensors/Analog Input 1/Voltage",  // configuration path
+      ai1_metadata
   );
-
-  ConfigItem(aiv_sk_output)
-      ->set_title("Analog Input Voltage SK Output Path")
-      ->set_description("The SK path to publish the analog input voltage")
+  ConfigItem(ai1_sk_output)
+      ->set_title("Analog Input 1 Voltage SK Output Path")
+      ->set_description("The SK path to publish the analog input 1 voltage")
       ->set_sort_order(100);
+  analog_input1->connect_to(ai1_sk_output);
 
-  analog_input->connect_to(aiv_sk_output);
+  // Analog Input 2
+  auto ai2_metadata = std::make_shared<SKMetadata>("V", "Analog input 2 voltage");
+  auto ai2_sk_output = std::make_shared<SKOutput<float>>(
+      "sensors.analog_input2.voltage",   // Signal K path
+      "/Sensors/Analog Input 2/Voltage",  // configuration path
+      ai2_metadata
+  );
+  ConfigItem(ai2_sk_output)
+      ->set_title("Analog Input 2 Voltage SK Output Path")
+      ->set_description("The SK path to publish the analog input 2 voltage")
+      ->set_sort_order(110);
+  analog_input2->connect_to(ai2_sk_output);
+
+  // Analog Input 3
+  auto ai3_metadata = std::make_shared<SKMetadata>("V", "Analog input 3 voltage");
+  auto ai3_sk_output = std::make_shared<SKOutput<float>>(
+      "sensors.analog_input3.voltage",   // Signal K path
+      "/Sensors/Analog Input 3/Voltage",  // configuration path
+      ai3_metadata
+  );
+  ConfigItem(ai3_sk_output)
+      ->set_title("Analog Input 3 Voltage SK Output Path")
+      ->set_description("The SK path to publish the analog input 3 voltage")
+      ->set_sort_order(120);
+  analog_input3->connect_to(ai3_sk_output);
+
+  // Connect digital input 1 to Signal K output.
+  auto di1_metadata = std::make_shared<SKMetadata>("", "Digital input 1 value");
+  auto di1_sk_output = std::make_shared<SKOutput<bool>>(
+      "sensors.digital_input1.value",    // Signal K path
+      "/Sensors/Digital Input 1/Value",  // configuration path
+      di1_metadata
+  );
+  ConfigItem(di1_sk_output)
+      ->set_title("Digital Input 1 SK Output Path")
+      ->set_sort_order(200);
+
+  digital_input1->connect_to(di1_sk_output);
 
   // Connect digital input 2 to Signal K output.
   auto di2_metadata = std::make_shared<SKMetadata>("", "Digital input 2 value");
@@ -178,62 +217,33 @@ void setup() {
       "/Sensors/Digital Input 2/Value",  // configuration path
       di2_metadata
   );
-
   ConfigItem(di2_sk_output)
       ->set_title("Digital Input 2 SK Output Path")
-      ->set_sort_order(200);
-
+      ->set_sort_order(210);
   digital_input2->connect_to(di2_sk_output);
-
-  debugD("Starting OLED Display Test...");
   
   // Enable Vext power for peripherals (CRITICAL for Heltec V3!)
   pinMode(Vext, OUTPUT);
   digitalWrite(Vext, LOW);  // LOW = enable power to external components
   delay(500);  // Give power time to stabilize
-  debugD("Vext power enabled for display");
-  debugD("OLED Pins - SDA: %d, SCL: %d, RST: %d\n", SDA_OLED, SCL_OLED, RST_OLED);
+  display_working = display.init();
+  debugD("Standard init: %s\n", display_working ? "SUCCESS" : "FAILED");
 
-  // Try multiple initialization approaches
-  debugD("Initializing display...");
+  // Scan for devices after successful init
+  scanI2C();
   
-  // Method 1: Try standard init
-  bool initSuccess = display.init();
-  display_working = initSuccess;
-  debugD("Standard init: %s\n", initSuccess ? "SUCCESS" : "FAILED");
-
-  if (initSuccess) {
-      // Scan for devices after successful init
-      scanI2C();
-      
-      // Test display functionality
-      display.clear();
-      display.setFont(ArialMT_Plain_10);
-      display.setTextAlignment(TEXT_ALIGN_LEFT);
-      display.drawString(0, 0, "Heltec V3");
-      display.drawString(0, 12, "Display Test");
-      display.drawString(0, 24, "Init: OK");
-      display.setFont(ArialMT_Plain_16);
-      display.setTextAlignment(TEXT_ALIGN_CENTER);
-      display.drawString(64, 45, "WORKING!");
-      display.display();
-      Serial.println("Display content updated");
-      
-    } else {
-      Serial.println("Display init failed - trying recovery...");
-      
-      // Try manual I2C setup and scan
-      Wire.begin(SDA_OLED, SCL_OLED);
-      delay(100);
-      scanI2C();
-      
-      // Try different approaches
-      Serial.println("Trying alternative initialization...");
-      display.end();
-      delay(100);
-      initSuccess = display.init();
-      Serial.printf("Retry init: %s\n", initSuccess ? "SUCCESS" : "FAILED");
-    }
+  // Test display functionality
+  display.clear();
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(0, 0, "Heltec V3");
+  display.drawString(0, 12, "Display Test");
+  display.drawString(0, 24, "Init: OK");
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 45, "WORKING!");
+  display.display();
+  Serial.println("Display content updated");
 
   // To avoid garbage collecting all shared pointers created in setup(),
   // loop from here.
@@ -257,35 +267,35 @@ void loop() {
     display.setTextAlignment(TEXT_ALIGN_LEFT);
     
     // Title
-    display.drawString(0, 0, "SensESP Sensor Data");
+    display.drawString(0, 0, "SensESP Engine Reader");
     
-    // Analog input value
-    display.drawString(0, 12, "Analog: " + String(current_analog_value, 2) + "V");
+    // Analog input values with pin numbers
+    display.drawString(0, 10, "A" + String(kAnalogInput1Gpio) + ": " + String(current_analog_value1, 2) + "V");
+    display.drawString(0, 20, "A" + String(kAnalogInput2Gpio) + ": " + String(current_analog_value2, 2) + "V");
+    display.drawString(0, 30, "A" + String(kAnalogInput3Gpio) + ": " + String(current_analog_value3, 2) + "V");
     
-    // Digital input 1 (pin 5)
+    // Digital input values with pin numbers
     String digital1_str = current_digital_input1 ? "HIGH" : "LOW";
-    display.drawString(0, 24, "Digital1: " + digital1_str);
+    display.drawString(0, 40, "D" + String(kDigitalInput1Gpio) + ": " + digital1_str);
     
-    // Digital input 2 (pin 4) 
     String digital2_str = current_digital_input2 ? "HIGH" : "LOW";
-    display.drawString(0, 36, "Digital2: " + digital2_str);
-    
-    // Uptime
-    display.drawString(0, 48, "Up: " + String(millis()/1000) + "s");
-    
-    // Signal K status
-    display.setFont(ArialMT_Plain_10);
+    display.drawString(0, 50, "D" + String(kDigitalInput2Gpio) + ": " + digital2_str);
+
+    // Uptime in bottom right
     display.setTextAlignment(TEXT_ALIGN_RIGHT);
-    display.drawString(128, 54, "SignalK");
+    display.drawString(128, 54, String(millis()/1000) + "s");
     
     display.display();
     
     // Also output to serial for debugging
-    debugD("Display: Analog=%.2fV, D1=%s, D2=%s", 
-           current_analog_value, 
-           current_digital_input1 ? "HIGH" : "LOW",
-           current_digital_input2 ? "HIGH" : "LOW");
+    debugD("Display: A%d=%.2fV, A%d=%.2fV, A%d=%.2fV, D%d=%s, D%d=%s", 
+           kAnalogInput1Gpio, current_analog_value1,
+           kAnalogInput2Gpio, current_analog_value2, 
+           kAnalogInput3Gpio, current_analog_value3,
+           kDigitalInput1Gpio, current_digital_input1 ? "HIGH" : "LOW",
+           kDigitalInput2Gpio, current_digital_input2 ? "HIGH" : "LOW");
   }
   
   delay(100);  // Small delay to prevent excessive CPU usage
 }
+
