@@ -1,4 +1,4 @@
-.PHONY: help server install uninstall test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi check-sensors
+.PHONY: server help install uninstall test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi check-sensors
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-service-logs
 .PHONY: install-magnetic-service uninstall-magnetic-service check-magnetic-service-status magnetic-service-logs
@@ -14,7 +14,113 @@ SENSOR_PORT ?= 3000
 UV_BIN ?= $(shell command -v uv 2>/dev/null || true)
 CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
 
-# Default target - show help when called with no arguments
+# Service definitions (name:description:interval:script:args)
+SERVICES := \
+	website:vessel-tracker:Vessel Tracker Data Updater:600:update_signalk_data.py: \
+	fast-sensors:vessel-sensors-fast:Vessel Fast Sensor Data Publisher (1s):1:i2c_sensor_read_and_publish.py:--disable-sgp30 \
+	slow-sensors:vessel-sensors-slow:Vessel Slow Sensor Data Publisher (60s):60:i2c_sensor_read_and_publish.py: \
+	magnetic:vessel-magnetic-variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
+
+# Service management functions
+define install-service
+	@echo "Installing $(2) systemd service..."
+	@if [ -f "/etc/systemd/system/$(2).service" ]; then \
+		echo "$(2) service already exists. Uninstalling first..."; \
+		sudo systemctl stop $(2) 2>/dev/null || true; \
+		sudo systemctl disable $(2) 2>/dev/null || true; \
+	fi
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		exit 1; \
+	fi
+	@echo "Rendering $(2) service template..."
+	@if [ "$(1)" = "website" ]; then \
+		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+			-e "s|{{USER}}|$$(whoami)|g" \
+			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) $(5)|g" \
+			-e "s|{{RESTART_POLICY}}|always|g" \
+			-e "s|{{RESTART_SEC}}|$(6)|g" \
+			-e "s|{{GIT_BRANCH}}|$(CURRENT_BRANCH)|g" \
+			-e "s|{{GIT_REMOTE}}|origin|g" \
+			-e "s|{{GIT_AMEND}}|false|g" \
+			-e "s|{{GIT_FORCE_PUSH}}|false|g" \
+			-e "s|{{SIGNALK_URL}}|http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self|g" \
+			-e "s|{{OUTPUT_FILE}}|data/telemetry/signalk_latest.json|g" \
+			"$(CURDIR)/services/systemd.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
+	else \
+		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+			-e "s|{{USER}}|$$(whoami)|g" \
+			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
+			-e "s|{{RESTART_SEC}}|$(6)|g" \
+			-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
+			-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
+			"$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
+	fi
+	@echo "Reloading systemd..."
+	@sudo systemctl daemon-reload
+	@echo "Enabling and starting $(2) service..."
+	@sudo systemctl enable $(2)
+	@sudo systemctl start $(2)
+	@echo "$(2) service installed and started successfully!"
+endef
+
+define uninstall-service
+	@echo "Uninstalling $(1) systemd service..."
+	@if [ -f "/etc/systemd/system/$(1).service" ]; then \
+		echo "Stopping and disabling $(1) service..."; \
+		sudo systemctl stop $(1) 2>/dev/null || true; \
+		sudo systemctl disable $(1) 2>/dev/null || true; \
+		echo "Removing $(1) service file..."; \
+		sudo rm -f /etc/systemd/system/$(1).service; \
+		echo "Reloading systemd..."; \
+		sudo systemctl daemon-reload; \
+		echo "$(1) service uninstalled successfully!"; \
+	else \
+		echo "$(1) service file not found. Nothing to uninstall."; \
+	fi
+endef
+
+define check-service-status
+	@echo "Checking status of $(1) service..."
+	@if [ -f "/etc/systemd/system/$(1).service" ]; then \
+		echo "$(1) service file exists at /etc/systemd/system/$(1).service"; \
+		echo ""; \
+		echo "$(1) Service Status:"; \
+		sudo systemctl status $(1) --no-pager -l; \
+	else \
+		echo "$(1) service file not found at /etc/systemd/system/$(1).service"; \
+		echo "$(1) service is not installed. Run 'make install-$(2)-service' to install it."; \
+	fi
+endef
+
+define show-service-logs
+	@echo "Showing logs for $(1) service..."
+	@echo "Press Ctrl+C to exit logs"
+	@sudo journalctl -u $(1) -f
+endef
+
+# Check Linux requirement
+check-linux:
+	@if [ "$(UNAME_S)" != "Linux" ]; then \
+		echo "Error: This command only works on Linux systems"; \
+		echo "Current system: $(UNAME_S)"; \
+		exit 1; \
+	fi
+
+# Check if uv is installed and install if necessary
+check-uv:
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "uv is not installed. Installing uv..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "uv installed successfully!"; \
+		echo "Please restart your shell or run 'source ~/.bashrc' to use uv"; \
+	else \
+		echo "uv is already installed at: $$(command -v uv)"; \
+	fi
+
+# Default target
 help:
 	@echo "Available commands:"
 	@echo "  make server         - Start Python HTTP server on port $(SERVER_PORT)"
@@ -59,25 +165,6 @@ server:
 	else \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
-	fi
-
-# Check Linux requirement
-check-linux:
-	@if [ "$(UNAME_S)" != "Linux" ]; then \
-		echo "Error: This command only works on Linux systems"; \
-		echo "Current system: $(UNAME_S)"; \
-		exit 1; \
-	fi
-
-# Check if uv is installed and install if necessary
-check-uv:
-	@if ! command -v uv >/dev/null 2>&1; then \
-		echo "uv is not installed. Installing uv..."; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-		echo "uv installed successfully!"; \
-		echo "Please restart your shell or run 'source ~/.bashrc' to use uv"; \
-	else \
-		echo "uv is already installed at: $$(command -v uv)"; \
 	fi
 
 # Install all services
