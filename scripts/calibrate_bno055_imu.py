@@ -321,12 +321,8 @@ def calibrate_zero_state_extended(bno055, vessel_info):
         )
 
         print(f"\nZero state established after {len(samples)} samples:")
-        print(
-            f"  Roll: {math.degrees(avg_roll):.2f}deg (std: {math.degrees(roll_std):.2f}deg)"
-        )
-        print(
-            f"  Pitch: {math.degrees(avg_pitch):.2f}deg (std: {math.degrees(pitch_std):.2f}deg)"
-        )
+        print(f"  Roll: {(avg_roll):.2f}rad (std: {(roll_std):.2f}rad)")
+        print(f"  Pitch: {(avg_pitch):.2f}rad (std: {(pitch_std):.2f}rad)")
 
         # Store zero state in vessel info
         if "sensors" not in vessel_info:
