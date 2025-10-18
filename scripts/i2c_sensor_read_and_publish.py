@@ -213,6 +213,36 @@ class SensorReader:
 
         try:
             data = self.bme280_sensor.read_all()
+
+            # Validate temperature, humidity, and pressure readings
+            if (
+                data.temperature is None
+                or data.temperature == 0
+                or data.temperature < -50
+                or data.temperature > 100
+            ):
+                logger.debug(
+                    f"BME280 temperature reading invalid: {data.temperature}°C"
+                )
+                return {}
+            if (
+                data.humidity is None
+                or data.humidity == 0
+                or data.humidity < 0
+                or data.humidity > 100
+            ):
+                logger.debug(f"BME280 humidity reading invalid: {data.humidity}%")
+                return {}
+            if (
+                data.pressure is None
+                or data.pressure == 0
+                or data.pressure < 800
+                or data.pressure > 1200
+            ):
+                logger.debug(f"BME280 pressure reading invalid: {data.pressure} hPa")
+                return {}
+
+            # Return valid readings
             return {
                 "environment.inside.temperature": {
                     "value": data.temperature + 273.15,  # Convert C to K
@@ -332,18 +362,18 @@ class SensorReader:
 
             data = {}
 
-            if gyro and all(x is not None for x in gyro):
+            if gyro and all(x is not None for x in gyro) and gyro[2] != 0.0:
                 # Convert gyroscope from degrees/s to radians/s
                 data["navigation.attitude.rateOfTurn"] = {
-                    "value": (gyro[2] * math.pi / 180) if gyro[2] is not None else 0,
+                    "value": (gyro[2] * math.pi / 180),
                     "units": "rad/s",
                 }
 
-            if euler and all(x is not None for x in euler):
+            if euler and all(x is not None for x in euler) and (0.0 not in euler[:3]):
                 # Convert Euler angles from degrees to radians
-                roll_raw = (euler[0] * math.pi / 180) if euler[0] is not None else 0
-                pitch_raw = (euler[1] * math.pi / 180) if euler[1] is not None else 0
-                yaw_raw = (euler[2] * math.pi / 180) if euler[2] is not None else 0
+                roll_raw = euler[0] * math.pi / 180
+                pitch_raw = euler[1] * math.pi / 180
+                yaw_raw = euler[2] * math.pi / 180
 
                 # Apply zero state calibration for pitch and roll
                 roll_calibrated = roll_raw
@@ -406,6 +436,10 @@ class SensorReader:
                 heading += self.heading_correction_offset
                 if heading < 0:
                     heading += 3.14159 * 2
+
+            if heading is None or heading == 0:
+                logger.debug(f"MMC5603 heading reading invalid: {heading} rad")
+                return {}
 
             return {
                 "navigation.headingMagnetic": {"value": heading, "units": "rad"},
@@ -475,16 +509,7 @@ class SensorReader:
             logger.warning(
                 f"SGP30 still returning baseline values after {max_attempts} seconds - TVOC: {tvoc}, eCO2: {eco2}"
             )
-            return {
-                "environment.inside.airQuality.tvoc": {
-                    "value": tvoc,
-                    "units": "ppb",
-                },
-                "environment.inside.airQuality.eco2": {
-                    "value": eco2,
-                    "units": "ppm",
-                },
-            }
+            return {}
 
         except Exception as e:
             logger.error(f"Error reading SGP30: {e}")
