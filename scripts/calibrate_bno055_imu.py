@@ -66,6 +66,7 @@ def get_heading_true_from_signalk(vessel_info):
             heading_rad = data["value"]
             print(
                 f"Current true heading from SignalK: {math.degrees(heading_rad):.1f}deg"
+                f" ({heading_rad} rad)"
             )
             return heading_rad
         else:
@@ -400,18 +401,23 @@ def calibrate_yaw_to_signalk(bno055, vessel_info):
         # Calculate average BNO055 yaw
         avg_bno055_yaw = sum(samples) / len(samples)
 
-        print(f"BNO055 yaw reading: {math.degrees(avg_bno055_yaw):.1f}deg")
+        print(
+            f"BNO055 yaw reading: {math.degrees(avg_bno055_yaw):.1f}deg ({avg_bno055_yaw} rad)"
+        )
 
         # Calculate yaw offset
         yaw_offset = signalk_heading - avg_bno055_yaw
 
-        # Normalize offset to -π to π range
-        while yaw_offset > math.pi:
-            yaw_offset -= 2 * math.pi
-        while yaw_offset < -math.pi:
-            yaw_offset += 2 * math.pi
-
-        print(f"Calculated yaw offset: {math.degrees(yaw_offset):.1f}deg")
+        print(
+            f"Calculated yaw offset: {math.degrees(yaw_offset):.1f}deg ({yaw_offset} rad)"
+        )
+        print(
+            f"Signalk heading: {math.degrees(signalk_heading):.1f}deg ({signalk_heading} rad)"
+        )
+        corrected_bno055_yaw = avg_bno055_yaw + yaw_offset
+        print(
+            f"BNO055 corrected yaw: {math.degrees(corrected_bno055_yaw):.1f}deg ({corrected_bno055_yaw} rad)"
+        )
 
         # Store yaw offset in vessel info
         if "sensors" not in vessel_info:
