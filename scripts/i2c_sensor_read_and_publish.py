@@ -83,10 +83,14 @@ class SensorReader:
         # Load heading correction offset from vessel info
         if self.vessel_info and "sensors" in self.vessel_info:
             sensors_config = self.vessel_info["sensors"]
-            self.heading_correction_offset = sensors_config.get("heading_correction_offset_rad", 0.0)
+            self.heading_correction_offset = sensors_config.get(
+                "heading_correction_offset_rad", 0.0
+            )
         else:
             self.heading_correction_offset = 0.0
-            logger.warning("No sensors configuration found in vessel info, using default heading correction offset of 0.0")
+            logger.warning(
+                "No sensors configuration found in vessel info, using default heading correction offset of 0.0"
+            )
 
         # Validate required configuration
         if not self.signalk_host:
@@ -214,7 +218,10 @@ class SensorReader:
                     "value": data.temperature + 273.15,  # Convert C to K
                     "units": "K",
                 },
-                "environment.inside.humidity": {"value": data.humidity / 100.0, "units": "ratio"},
+                "environment.inside.humidity": {
+                    "value": data.humidity / 100.0,
+                    "units": "ratio",
+                },
                 "environment.inside.pressure": {
                     "value": data.pressure * 100,  # Convert hPa to Pa
                     "units": "Pa",
@@ -228,8 +235,10 @@ class SensorReader:
         """Load calibration data from vessel info and apply to BNO055."""
         try:
             # Check if calibration data exists in vessel info
-            if ("sensors" not in self.vessel_info or
-                "bno055_calibration" not in self.vessel_info["sensors"]):
+            if (
+                "sensors" not in self.vessel_info
+                or "bno055_calibration" not in self.vessel_info["sensors"]
+            ):
                 logger.info("No saved BNO055 calibration data found in vessel info")
                 return False
 
@@ -257,23 +266,29 @@ class SensorReader:
         """Load calibration data from vessel info and apply to SGP30."""
         try:
             # Check if calibration data exists in vessel info
-            if ("sensors" not in self.vessel_info or
-                "sgp30_calibration" not in self.vessel_info["sensors"]):
+            if (
+                "sensors" not in self.vessel_info
+                or "sgp30_calibration" not in self.vessel_info["sensors"]
+            ):
                 logger.info("No saved SGP30 calibration data found in vessel info")
                 return False
 
             cal_data = self.vessel_info["sensors"]["sgp30_calibration"]
 
             # Set relative humidity for better accuracy
-            if "relative_humidity_percent" in cal_data and "temperature_celsius" in cal_data:
+            if (
+                "relative_humidity_percent" in cal_data
+                and "temperature_celsius" in cal_data
+            ):
                 humidity = cal_data["relative_humidity_percent"]
                 temperature = cal_data["temperature_celsius"]
 
                 self.sgp30_sensor.set_iaq_relative_humidity(
-                    celsius=temperature,
-                    relative_humidity=humidity
+                    celsius=temperature, relative_humidity=humidity
                 )
-                logger.info(f"SGP30 relative humidity set to {humidity}% at {temperature}degC")
+                logger.info(
+                    f"SGP30 relative humidity set to {humidity}% at {temperature}degC"
+                )
 
             # Set baseline values if available
             if "tvoc_baseline_ppb" in cal_data and "eco2_baseline_ppm" in cal_data:
@@ -283,7 +298,9 @@ class SensorReader:
                 # Set baseline values (these are internal to the sensor)
                 # Note: The SGP30 library doesn't expose direct baseline setting,
                 # but the sensor will use the environmental conditions we set above
-                logger.info(f"SGP30 calibration loaded - TVOC baseline: {tvoc_baseline} ppb, eCO2 baseline: {eco2_baseline} ppm")
+                logger.info(
+                    f"SGP30 calibration loaded - TVOC baseline: {tvoc_baseline} ppb, eCO2 baseline: {eco2_baseline} ppm"
+                )
 
             logger.info("SGP30 calibration data loaded successfully")
             return True
@@ -307,8 +324,6 @@ class SensorReader:
                 )
                 self._bno055_calibration_warned = True
 
-            # Read acceleration
-
             # Read gyroscope
             gyro = self.bno055_sensor.gyro
 
@@ -326,16 +341,47 @@ class SensorReader:
 
             if euler and all(x is not None for x in euler):
                 # Convert Euler angles from degrees to radians
+                roll_raw = (euler[0] * math.pi / 180) if euler[0] is not None else 0
+                pitch_raw = (euler[1] * math.pi / 180) if euler[1] is not None else 0
+                yaw_raw = (euler[2] * math.pi / 180) if euler[2] is not None else 0
+
+                # Apply zero state calibration for pitch and roll
+                roll_calibrated = roll_raw
+                pitch_calibrated = pitch_raw
+
+                if (
+                    "sensors" in self.vessel_info
+                    and "bno055_zero_state" in self.vessel_info["sensors"]
+                ):
+                    zero_state = self.vessel_info["sensors"]["bno055_zero_state"]
+                    roll_calibrated = roll_raw - zero_state.get("roll", 0)
+                    pitch_calibrated = pitch_raw - zero_state.get("pitch", 0)
+
+                # Apply yaw offset calibration
+                yaw_calibrated = yaw_raw
+                if (
+                    "sensors" in self.vessel_info
+                    and "bno055_yaw_offset" in self.vessel_info["sensors"]
+                ):
+                    yaw_offset = self.vessel_info["sensors"]["bno055_yaw_offset"]
+                    yaw_calibrated = yaw_raw + yaw_offset.get("offset", 0)
+
+                    # Normalize yaw to 0-2π range
+                    while yaw_calibrated < 0:
+                        yaw_calibrated += 2 * math.pi
+                    while yaw_calibrated >= 2 * math.pi:
+                        yaw_calibrated -= 2 * math.pi
+
                 data["navigation.attitude.roll"] = {
-                    "value": (euler[0] * math.pi / 180) if euler[0] is not None else 0,
+                    "value": roll_calibrated,
                     "units": "rad",
                 }
                 data["navigation.attitude.pitch"] = {
-                    "value": (euler[1] * math.pi / 180) if euler[1] is not None else 0,
+                    "value": pitch_calibrated,
                     "units": "rad",
                 }
                 data["navigation.attitude.yaw"] = {
-                    "value": (euler[2] * math.pi / 180) if euler[2] is not None else 0,
+                    "value": yaw_calibrated,
                     "units": "rad",
                 }
 
@@ -391,16 +437,21 @@ class SensorReader:
 
                 # Check if we have meaningful readings (not just baseline values)
                 # Require TVOC > 0 AND eCO2 > 400 for a "good" reading
-                is_good_reading = (tvoc is not None and eco2 is not None and
-                                 tvoc > 0 and eco2 > 400)
+                is_good_reading = (
+                    tvoc is not None and eco2 is not None and tvoc > 0 and eco2 > 400
+                )
 
                 if is_good_reading:
                     consecutive_good_readings += 1
-                    logger.debug(f"SGP30 good reading {consecutive_good_readings}/{required_good_readings} - TVOC: {tvoc}, eCO2: {eco2}")
+                    logger.debug(
+                        f"SGP30 good reading {consecutive_good_readings}/{required_good_readings} - TVOC: {tvoc}, eCO2: {eco2}"
+                    )
 
                     # If we have enough consecutive good readings, return the latest one
                     if consecutive_good_readings >= required_good_readings:
-                        logger.info(f"SGP30 stabilized after {attempt + 1} seconds with {consecutive_good_readings} good readings - TVOC: {tvoc}, eCO2: {eco2}")
+                        logger.info(
+                            f"SGP30 stabilized after {attempt + 1} seconds with {consecutive_good_readings} good readings - TVOC: {tvoc}, eCO2: {eco2}"
+                        )
                         return {
                             "environment.inside.airQuality.tvoc": {
                                 "value": tvoc,
@@ -414,12 +465,16 @@ class SensorReader:
                 else:
                     # Reset counter if we get a bad reading
                     consecutive_good_readings = 0
-                    logger.debug(f"SGP30 stabilizing... attempt {attempt + 1}/{max_attempts} - TVOC: {tvoc}, eCO2: {eco2} (baseline)")
+                    logger.debug(
+                        f"SGP30 stabilizing... attempt {attempt + 1}/{max_attempts} - TVOC: {tvoc}, eCO2: {eco2} (baseline)"
+                    )
 
                 attempt += 1
 
             # If we've tried for 60 seconds and still getting baseline values, return them anyway
-            logger.warning(f"SGP30 still returning baseline values after {max_attempts} seconds - TVOC: {tvoc}, eCO2: {eco2}")
+            logger.warning(
+                f"SGP30 still returning baseline values after {max_attempts} seconds - TVOC: {tvoc}, eCO2: {eco2}"
+            )
             return {
                 "environment.inside.airQuality.tvoc": {
                     "value": tvoc,
@@ -514,7 +569,9 @@ class SensorReader:
             message_bytes = (json.dumps(delta) + "\n").encode("utf-8")
 
             # Send and capture return value (number of bytes sent)
-            bytes_sent = send_delta_over_udp(self.udp_socket, self.signalk_host, self.udp_port, delta)
+            bytes_sent = send_delta_over_udp(
+                self.udp_socket, self.signalk_host, self.udp_port, delta
+            )
 
             # Check if all bytes were sent
             if bytes_sent == len(message_bytes):
@@ -639,20 +696,22 @@ def main():
         "--test", action="store_true", help="Test SignalK connection only"
     )
     parser.add_argument(
-        "--disable-bme280", action="store_true",
-        help="Disable BME280 sensor (temperature, humidity, pressure)"
+        "--disable-bme280",
+        action="store_true",
+        help="Disable BME280 sensor (temperature, humidity, pressure)",
     )
     parser.add_argument(
-        "--disable-bno055", action="store_true",
-        help="Disable BNO055 sensor (IMU)"
+        "--disable-bno055", action="store_true", help="Disable BNO055 sensor (IMU)"
     )
     parser.add_argument(
-        "--disable-mmc5603", action="store_true",
-        help="Disable MMC5603 sensor (magnetometer)"
+        "--disable-mmc5603",
+        action="store_true",
+        help="Disable MMC5603 sensor (magnetometer)",
     )
     parser.add_argument(
-        "--disable-sgp30", action="store_true",
-        help="Disable SGP30 sensor (air quality)"
+        "--disable-sgp30",
+        action="store_true",
+        help="Disable SGP30 sensor (air quality)",
     )
 
     args = parser.parse_args()

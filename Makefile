@@ -4,6 +4,16 @@
 .PHONY: install-magnetic-service uninstall-magnetic-service check-magnetic-service-status magnetic-service-logs
 .PHONY: calibrate-heading calibrate-imu calibrate-air
 
+# System check
+UNAME_S := $(shell uname -s)
+
+# Core configuration
+SERVER_PORT ?= 8000
+SENSOR_HOST ?= 192.168.8.50
+SENSOR_PORT ?= 3000
+UV_BIN ?= $(shell command -v uv 2>/dev/null || true)
+CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+
 # Default target - show help when called with no arguments
 help:
 	@echo "Available commands:"
@@ -49,6 +59,25 @@ server:
 	else \
 		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
 		exit 1; \
+	fi
+
+# Check Linux requirement
+check-linux:
+	@if [ "$(UNAME_S)" != "Linux" ]; then \
+		echo "Error: This command only works on Linux systems"; \
+		echo "Current system: $(UNAME_S)"; \
+		exit 1; \
+	fi
+
+# Check if uv is installed and install if necessary
+check-uv:
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "uv is not installed. Installing uv..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "uv installed successfully!"; \
+		echo "Please restart your shell or run 'source ~/.bashrc' to use uv"; \
+	else \
+		echo "uv is already installed at: $$(command -v uv)"; \
 	fi
 
 # Install all services
