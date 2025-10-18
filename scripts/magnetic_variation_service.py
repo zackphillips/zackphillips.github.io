@@ -8,20 +8,25 @@ to SignalK server based on the current vessel position.
 
 import json
 import logging
-import os
-import socket
-from datetime import UTC, datetime
 import math
+import socket
 import time
+from datetime import UTC, datetime
+
 import requests
+
+# Import utilities
+from utils import (
+    create_signalk_delta,
+    load_vessel_info,
+    send_delta_over_udp,
+    setup_logging,
+)
 
 # Constants
 DEFAULT_UDP_PORT = 4123
 MAGNETIC_SERVICE_LABEL = "Magnetic Variation Service"
 MAGNETIC_SERVICE_SOURCE = "magnetic-variation"
-
-# Import utilities
-from utils import load_vessel_info, setup_logging, create_signalk_delta, send_delta_over_udp
 
 # Configure logging
 setup_logging(level="INFO")
@@ -154,7 +159,7 @@ class MagneticVariationService:
                 "$source": MAGNETIC_SERVICE_SOURCE,
             }
         ]
-        
+
         return create_signalk_delta(
             values=values,
             source_label=MAGNETIC_SERVICE_LABEL,

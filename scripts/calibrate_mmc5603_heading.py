@@ -20,7 +20,6 @@ import adafruit_mmc56x3
 import board
 import busio
 
-
 # Import vessel info loading from utils
 from utils import load_vessel_info
 

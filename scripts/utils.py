@@ -25,14 +25,14 @@ class SensorConfigError(Exception):
 def setup_logging(level: str = "INFO", format_string: str = None) -> None:
     """
     Set up logging configuration for scripts.
-    
+
     Args:
         level: Logging level (DEBUG, INFO, WARNING, ERROR)
         format_string: Custom format string for log messages
     """
     if format_string is None:
         format_string = "%(asctime)s - %(levelname)s - %(message)s"
-    
+
     logging.basicConfig(
         level=getattr(logging, level.upper()),
         format=format_string
@@ -42,18 +42,17 @@ def setup_logging(level: str = "INFO", format_string: str = None) -> None:
 def create_signalk_delta(values: list[dict], source_label: str, source_type: str, source_src: str) -> dict:
     """
     Create a SignalK delta message.
-    
+
     Args:
         values: List of value dictionaries with 'path' and 'value' keys
         source_label: Human-readable source label
         source_type: Source type identifier
         source_src: Source identifier
-        
     Returns:
         SignalK delta message dictionary
     """
     from datetime import UTC, datetime
-    
+
     return {
         "context": "vessels.self",
         "updates": [

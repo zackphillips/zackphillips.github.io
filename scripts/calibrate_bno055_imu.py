@@ -30,7 +30,6 @@ from bno055_register_io import (
     write_calibration,
 )
 
-
 # Import vessel info loading from utils
 from utils import load_vessel_info
 

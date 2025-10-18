@@ -8,7 +8,6 @@ and publishes to SignalK server.
 import json
 import logging
 import math
-import os
 import socket
 import time
 from datetime import UTC, datetime
@@ -29,13 +28,13 @@ from bno055_register_io import (
     write_calibration,
 )
 
+# Import utilities
+from utils import load_vessel_info, send_delta_over_udp, setup_logging
+
 # Constants
 DEFAULT_UDP_PORT = 4123
 I2C_SENSORS_LABEL = "I2C Sensors"
 I2C_SENSORS_SOURCE = "i2c-sensors"
-
-# Import utilities
-from utils import load_vessel_info, setup_logging, send_delta_over_udp
 
 # Configure logging
 setup_logging(level="DEBUG")
@@ -510,6 +509,9 @@ class SensorReader:
             if not self.udp_socket:
                 if not self.connect_udp():
                     return False
+
+            # Calculate message length for verification
+            message_bytes = (json.dumps(delta) + "\n").encode("utf-8")
 
             # Send and capture return value (number of bytes sent)
             bytes_sent = send_delta_over_udp(self.udp_socket, self.signalk_host, self.udp_port, delta)

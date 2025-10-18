@@ -22,7 +22,6 @@ import busio
 # Import SGP30 air quality sensor
 from adafruit_sgp30 import Adafruit_SGP30
 
-
 # Import vessel info loading from utils
 from utils import load_vessel_info
 
