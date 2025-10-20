@@ -220,8 +220,8 @@ install-website-service: check-linux check-uv check-signalk-token
 	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,update_signalk_data.py,,600)
 
 install-sensor-service: check-linux check-uv check-signalk-token
-	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (1s),i2c_sensor_read_and_publish.py,--disable-sgp30,1)
-	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (60s),i2c_sensor_read_and_publish.py,,60)
+	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (1s),i2c_sensor_read_and_publish.py,--disable-sgp30 --disable-mmc5603,1)
+	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (60s),i2c_sensor_read_and_publish.py,--disable-mmc5603 --disable-bno055 --disable-bme280,60)
 
 install-magnetic-service: check-linux check-uv check-signalk-token
 	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),magnetic_variation_service.py,,86400)
