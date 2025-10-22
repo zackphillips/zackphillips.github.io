@@ -369,7 +369,16 @@ class SensorReader:
                     "units": "rad/s",
                 }
 
-            if euler and all(x is not None for x in euler) and (0.0 not in euler[:3]):
+            if euler and all(x is not None for x in euler):
+                
+                t0 = time.time()
+                while 0 in euler:
+                    time.sleep(0.1)
+                    euler = self.bno055_sensor.euler
+                    if time.time() - t0 > 10:
+                        logger.error("BNO055 Euler angles still 0 after 10 seconds")
+                        raise TimeoutError("BNO055 Euler angles still 0 after 10 seconds")
+
                 # Convert Euler angles from degrees to radians
                 roll_raw = euler[0] * math.pi / 180
                 pitch_raw = euler[1] * math.pi / 180
@@ -414,7 +423,6 @@ class SensorReader:
                     "value": yaw_calibrated,
                     "units": "rad",
                 }
-
             return data
         except Exception as e:
             logger.error(f"Error reading BNO055: {e}")
