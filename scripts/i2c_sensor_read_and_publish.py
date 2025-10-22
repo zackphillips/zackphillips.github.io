@@ -459,7 +459,7 @@ class SensorReader:
             max_attempts = 60  # Maximum 60 attempts (60 seconds)
             attempt = 0
             consecutive_good_readings = 0
-            required_good_readings = 5
+            required_good_readings = 20
 
             while attempt < max_attempts:
                 # Small delay to let sensor update
