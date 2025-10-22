@@ -17,7 +17,7 @@ CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ma
 # Service definitions (name:description:interval:script:args)
 SERVICES := \
 	website:vessel-tracker:Vessel Tracker Data Updater:600:update_signalk_data.py: \
-	fast-sensors:vessel-sensors-fast:Vessel Fast Sensor Data Publisher (1s):1:i2c_sensor_read_and_publish.py:--disable-sgp30 \
+	fast-sensors:vessel-sensors-fast:Vessel Fast Sensor Data Publisher (10s):10:i2c_sensor_read_and_publish.py:--disable-sgp30 \
 	slow-sensors:vessel-sensors-slow:Vessel Slow Sensor Data Publisher (60s):60:i2c_sensor_read_and_publish.py: \
 	magnetic:vessel-magnetic-variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
 
@@ -173,7 +173,7 @@ install: check-linux check-uv check-signalk-token
 	@echo ""
 	@echo "This will install:"
 	@echo "  - Website data updater service (updates telemetry data)"
-	@echo "  - Fast sensor service (1s interval, basic sensors)"
+	@echo "  - Fast sensor service (10s interval, basic sensors)"
 	@echo "  - Slow sensor service (60s interval, includes SGP30)"
 	@echo "  - Magnetic variation service (daily)"
 	@echo ""
@@ -188,7 +188,7 @@ install: check-linux check-uv check-signalk-token
 	@echo ""
 	@echo "Service Summary:"
 	@echo "  - Website service: Updates telemetry data every 600 seconds"
-	@echo "  - Fast sensor service: Publishes basic sensor data every 1 second"
+	@echo "  - Fast sensor service: Publishes basic sensor data every 10 seconds"
 	@echo "  - Slow sensor service: Publishes all sensor data every 60 seconds"
 	@echo "  - Magnetic variation service: Updates magnetic variation daily"
 	@echo ""
@@ -220,7 +220,7 @@ install-website-service: check-linux check-uv check-signalk-token
 	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,update_signalk_data.py,,600)
 
 install-sensor-service: check-linux check-uv check-signalk-token
-	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (1s),i2c_sensor_read_and_publish.py,--disable-sgp30 --disable-mmc5603,1)
+	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (10s),i2c_sensor_read_and_publish.py,--disable-sgp30 --disable-mmc5603,10)
 	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (60s),i2c_sensor_read_and_publish.py,--disable-mmc5603 --disable-bno055 --disable-bme280,60)
 
 install-magnetic-service: check-linux check-uv check-signalk-token
