@@ -152,20 +152,44 @@ class MagneticVariationService:
 
     def create_signalk_delta(self, magnetic_variation):
         """Create SignalK delta message for magnetic variation."""
+        from datetime import UTC, datetime
+        
         values = [
             {
                 "path": "navigation.magneticVariation",
                 "value": magnetic_variation,
+                "units": "rad",  # Include in value entry
                 "$source": MAGNETIC_SERVICE_SOURCE,
             }
         ]
+        
+        # Also include metadata for units (SignalK standard way)
+        meta = [
+            {
+                "path": "navigation.magneticVariation",
+                "value": {
+                    "units": "rad",
+                    "description": "Magnetic variation (declination) in radians",
+                },
+            }
+        ]
 
-        return create_signalk_delta(
-            values=values,
-            source_label=MAGNETIC_SERVICE_LABEL,
-            source_type="Magnetic Variation",
-            source_src=MAGNETIC_SERVICE_SOURCE
-        )
+        return {
+            "context": "vessels.self",
+            "updates": [
+                {
+                    "source": {
+                        "label": MAGNETIC_SERVICE_LABEL,
+                        "type": "Magnetic Variation",
+                        "src": MAGNETIC_SERVICE_SOURCE,
+                        "$source": MAGNETIC_SERVICE_SOURCE,
+                    },
+                    "timestamp": datetime.now(UTC).isoformat(),
+                    "values": values,
+                    "meta": meta,
+                }
+            ],
+        }
 
     def publish_to_signalk(self, magnetic_variation):
         """Publish magnetic variation to SignalK server via UDP."""

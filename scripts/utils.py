@@ -8,13 +8,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
-
-try:
-    import yaml
-    YAML_AVAILABLE = True
-except ImportError:
-    YAML_AVAILABLE = False
-    yaml = None
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -165,11 +159,6 @@ def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]
 
 def _load_yaml_file(file_path: Path) -> dict[str, Any]:
     """Load and parse a YAML file."""
-    if not YAML_AVAILABLE:
-        raise VesselConfigError(
-            "PyYAML is not installed. Install it with: pip install pyyaml"
-        )
-    
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             info = yaml.safe_load(f)
@@ -233,10 +222,6 @@ def save_vessel_info(
         full_path.parent.mkdir(parents=True, exist_ok=True)
 
         if output_format == 'yaml':
-            if not YAML_AVAILABLE:
-                logger.error("PyYAML is not installed. Cannot save YAML format.")
-                return False
-            
             with open(full_path, 'w', encoding='utf-8') as f:
                 yaml.dump(info, f, default_flow_style=False, sort_keys=False, indent=2)
         else:

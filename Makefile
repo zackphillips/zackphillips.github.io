@@ -1,6 +1,10 @@
 .PHONY: server help install uninstall test pre-commit-install lint config sync-dev sync-pi status
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-service-logs
+.PHONY: install-bme280-service install-bno055-service install-mmc5603-service install-sgp30-service
+.PHONY: uninstall-bme280-service uninstall-bno055-service uninstall-mmc5603-service uninstall-sgp30-service
+.PHONY: check-bme280-service-status check-bno055-service-status check-mmc5603-service-status check-sgp30-service-status
+.PHONY: bme280-logs bno055-logs mmc5603-logs sgp30-logs
 .PHONY: install-magnetic-service uninstall-magnetic-service check-magnetic-service-status magnetic-service-logs
 .PHONY: calibrate-heading calibrate-imu calibrate-air
 
@@ -62,6 +66,36 @@ define install-service
 			-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
 			"$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
 	fi
+	@echo "Reloading systemd..."
+	@sudo systemctl daemon-reload
+	@echo "Enabling and starting $(2) service..."
+	@sudo systemctl enable $(2)
+	@sudo systemctl start $(2)
+	@echo "$(2) service installed and started successfully!"
+endef
+
+# Macro for installing individual sensor services using run_sensor.py
+define install-sensor-service
+	@echo "Installing $(2) systemd service..."
+	@if [ -f "/etc/systemd/system/$(2).service" ]; then \
+		echo "$(2) service already exists. Uninstalling first..."; \
+		sudo systemctl stop $(2) 2>/dev/null || true; \
+		sudo systemctl disable $(2) 2>/dev/null || true; \
+	fi
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	@echo "Rendering $(2) service template..."
+	@sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+		-e "s|{{USER}}|$$(whoami)|g" \
+		-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+		-e "s|{{EXEC_START}}|$(UV_BIN) run python3 scripts/$(4) $(5) --host $(SENSOR_HOST) --port $(SENSOR_PORT)|g" \
+		-e "s|{{RESTART_SEC}}|10|g" \
+		-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
+		-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
+		"$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null
 	@echo "Reloading systemd..."
 	@sudo systemctl daemon-reload
 	@echo "Enabling and starting $(2) service..."
@@ -136,13 +170,21 @@ help:
 	@echo ""
 	@echo "Service management:"
 	@echo "  make install-website-service    - Install website data updater service"
-	@echo "  make install-sensor-service     - Install both fast and slow sensor services"
+	@echo "  make install-sensor-service    - Install all individual sensor services"
+	@echo "  make install-bme280-service    - Install BME280 sensor service"
+	@echo "  make install-bno055-service    - Install BNO055 sensor service"
+	@echo "  make install-mmc5603-service   - Install MMC5603 sensor service"
+	@echo "  make install-sgp30-service     - Install SGP30 sensor service"
 	@echo "  make install-magnetic-service   - Install magnetic variation service"
 	@echo "  make check-website-service-status - Check website service status"
-	@echo "  make check-sensor-service-status - Check sensor service status"
+	@echo "  make check-sensor-service-status - Check all sensor service statuses"
 	@echo "  make check-magnetic-service-status - Check magnetic variation service status"
 	@echo "  make website-logs              - Show website service logs"
-	@echo "  make sensor-service-logs       - Show sensor service logs"
+	@echo "  make sensor-service-logs       - Show all sensor service logs"
+	@echo "  make bme280-logs              - Show BME280 sensor logs"
+	@echo "  make bno055-logs              - Show BNO055 sensor logs"
+	@echo "  make mmc5603-logs             - Show MMC5603 sensor logs"
+	@echo "  make sgp30-logs               - Show SGP30 sensor logs"
 	@echo "  make magnetic-service-logs     - Show magnetic variation service logs"
 	@echo "  make run-website-update       - Run one website telemetry update now"
 
@@ -168,10 +210,9 @@ install: check-linux check-signalk-token
 	@echo "Installing all vessel tracker services..."
 	@echo ""
 	@echo "This will install:"
-	@echo "  - Website data updater service (updates telemetry data)"
-	@echo "  - Fast sensor service (10s interval, basic sensors)"
-	@echo "  - Slow sensor service (240s interval, includes SGP30)"
-	@echo "  - Magnetic variation service (daily)"
+	@echo "  - Website data updater service"
+	@echo "  - Individual sensor services (BME280, BNO055, MMC5603, SGP30)"
+	@echo "  - Magnetic variation service"
 	@echo ""
 	@echo ""
 	@$(MAKE) install-website-service
@@ -199,7 +240,7 @@ uninstall: check-linux
 	@echo ""
 	@echo "This will uninstall:"
 	@echo "  - Website data updater service"
-	@echo "  - Fast and slow sensor services"
+	@echo "  - Individual sensor services (BME280, BNO055, MMC5603, SGP30)"
 	@echo "  - Magnetic variation service"
 	@echo ""
 	@echo ""
@@ -226,8 +267,45 @@ install-sensor-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (10s),i2c_sensor_read_and_publish.py,--disable-sgp30 --disable-mmc5603,10)
-	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (240s),i2c_sensor_read_and_publish.py,--disable-mmc5603 --disable-bno055 --disable-bme280,240)
+	@echo "Installing all individual sensor services..."
+	@$(MAKE) install-bme280-service
+	@$(MAKE) install-bno055-service
+	@$(MAKE) install-mmc5603-service
+	@$(MAKE) install-sgp30-service
+	@echo "All sensor services installed successfully!"
+
+# Individual sensor service installation
+install-bme280-service: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	$(call install-sensor-service,bme280,vessel-sensor-bme280,BME280 Sensor Service,run_sensor.py,bme280)
+
+install-bno055-service: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	$(call install-sensor-service,bno055,vessel-sensor-bno055,BNO055 Sensor Service,run_sensor.py,bno055)
+
+install-mmc5603-service: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	$(call install-sensor-service,mmc5603,vessel-sensor-mmc5603,MMC5603 Sensor Service,run_sensor.py,mmc5603)
+
+install-sgp30-service: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	$(call install-sensor-service,sgp30,vessel-sensor-sgp30,SGP30 Sensor Service,run_sensor.py,sgp30)
 
 install-magnetic-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -242,8 +320,25 @@ uninstall-website-service: check-linux
 	$(call uninstall-service,vessel-tracker)
 
 uninstall-sensor-service: check-linux
-	$(call uninstall-service,vessel-sensors-fast)
-	$(call uninstall-service,vessel-sensors-slow)
+	@echo "Uninstalling all individual sensor services..."
+	@$(MAKE) uninstall-bme280-service
+	@$(MAKE) uninstall-bno055-service
+	@$(MAKE) uninstall-mmc5603-service
+	@$(MAKE) uninstall-sgp30-service
+	@echo "All sensor services uninstalled successfully!"
+
+# Individual sensor service uninstallation
+uninstall-bme280-service: check-linux
+	$(call uninstall-service,vessel-sensor-bme280)
+
+uninstall-bno055-service: check-linux
+	$(call uninstall-service,vessel-sensor-bno055)
+
+uninstall-mmc5603-service: check-linux
+	$(call uninstall-service,vessel-sensor-mmc5603)
+
+uninstall-sgp30-service: check-linux
+	$(call uninstall-service,vessel-sensor-sgp30)
 
 uninstall-magnetic-service: check-linux
 	$(call uninstall-service,vessel-magnetic-variation)
@@ -253,8 +348,24 @@ check-website-service-status: check-linux
 	$(call check-service-status,vessel-tracker,website)
 
 check-sensor-service-status: check-linux
-	$(call check-service-status,vessel-sensors-fast,fast-sensor)
-	$(call check-service-status,vessel-sensors-slow,slow-sensor)
+	@echo "Checking status of all sensor services..."
+	@$(MAKE) check-bme280-service-status
+	@$(MAKE) check-bno055-service-status
+	@$(MAKE) check-mmc5603-service-status
+	@$(MAKE) check-sgp30-service-status
+
+# Individual sensor service status checking
+check-bme280-service-status: check-linux
+	$(call check-service-status,vessel-sensor-bme280,bme280)
+
+check-bno055-service-status: check-linux
+	$(call check-service-status,vessel-sensor-bno055,bno055)
+
+check-mmc5603-service-status: check-linux
+	$(call check-service-status,vessel-sensor-mmc5603,mmc5603)
+
+check-sgp30-service-status: check-linux
+	$(call check-service-status,vessel-sensor-sgp30,sgp30)
 
 check-magnetic-service-status: check-linux
 	$(call check-service-status,vessel-magnetic-variation,magnetic)
@@ -275,20 +386,16 @@ status: check-linux
 	fi
 	@echo ""
 	@echo "--- Sensor Services Status ---"
-	@if [ -f "/etc/systemd/system/vessel-sensors-fast.service" ]; then \
-		echo "Service: vessel-sensors-fast"; \
-		sudo systemctl is-active vessel-sensors-fast >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
-		sudo systemctl is-enabled vessel-sensors-fast >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
-	else \
-		echo "vessel-sensors-fast: ✗ Not installed"; \
-	fi
-	@if [ -f "/etc/systemd/system/vessel-sensors-slow.service" ]; then \
-		echo "Service: vessel-sensors-slow"; \
-		sudo systemctl is-active vessel-sensors-slow >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
-		sudo systemctl is-enabled vessel-sensors-slow >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
-	else \
-		echo "vessel-sensors-slow: ✗ Not installed"; \
-	fi
+	@for sensor in bme280 bno055 mmc5603 sgp30; do \
+		service_name="vessel-sensor-$$sensor"; \
+		if [ -f "/etc/systemd/system/$$service_name.service" ]; then \
+			echo "Service: $$service_name"; \
+			sudo systemctl is-active $$service_name >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+			sudo systemctl is-enabled $$service_name >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+		else \
+			echo "$$service_name: ✗ Not installed"; \
+		fi; \
+	done
 	@echo ""
 	@echo "--- Magnetic Variation Service Status ---"
 	@if [ -f "/etc/systemd/system/vessel-magnetic-variation.service" ]; then \
@@ -314,7 +421,7 @@ status: check-linux
 	fi
 	@echo ""
 	@echo "--- SignalK Connection Status ---"
-	@if python3 scripts/signalk_token_management.py --check >/dev/null 2>&1; then \
+	@if [ -n "$(UV_BIN)" ] && "$(UV_BIN)" run python3 scripts/signalk_token_management.py --check >/dev/null 2>&1; then \
 		echo "SignalK Token: ✓ Valid"; \
 		echo "SignalK Server: $(SENSOR_HOST):$(SENSOR_PORT)"; \
 	else \
@@ -329,8 +436,22 @@ website-logs: check-linux
 	$(call show-service-logs,vessel-tracker)
 
 sensor-service-logs: check-linux
-	$(call show-service-logs,vessel-sensors-fast)
-	$(call show-service-logs,vessel-sensors-slow)
+	@echo "Showing logs for all sensor services..."
+	@echo "Press Ctrl+C to exit logs"
+	@sudo journalctl -u vessel-sensor-bme280 -u vessel-sensor-bno055 -u vessel-sensor-mmc5603 -u vessel-sensor-sgp30 -f
+
+# Individual sensor service logs
+bme280-logs: check-linux
+	$(call show-service-logs,vessel-sensor-bme280)
+
+bno055-logs: check-linux
+	$(call show-service-logs,vessel-sensor-bno055)
+
+mmc5603-logs: check-linux
+	$(call show-service-logs,vessel-sensor-mmc5603)
+
+sgp30-logs: check-linux
+	$(call show-service-logs,vessel-sensor-sgp30)
 
 magnetic-service-logs: check-linux
 	$(call show-service-logs,vessel-magnetic-variation)
@@ -477,13 +598,13 @@ check-i2c: check-linux
 # Check SignalK token
 check-signalk-token:
 	@echo "Checking SignalK token..."
-	@python3 scripts/signalk_token_management.py --check || ( \
+	@"$(UV_BIN)" run python3 scripts/signalk_token_management.py --check || ( \
 		echo ""; \
 		echo "SignalK token is missing or invalid."; \
 		echo "To create a token, run one of these commands:"; \
 		echo "  make create-signalk-token      # Create SignalK token"; \
 		echo "  make config                    # Interactive vessel configuration"; \
-		echo "  python3 scripts/signalk_token_management.py  # Direct token request"; \
+		echo "  $(UV_BIN) run python3 scripts/signalk_token_management.py  # Direct token request"; \
 		exit 1 \
 	)
 
@@ -497,7 +618,7 @@ create-signalk-token:
 	@echo ""
 	@read -p "Continue? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo ""
-	@python3 scripts/signalk_token_management.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --timeout 300
+	@"$(UV_BIN)" run python3 scripts/signalk_token_management.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --timeout 300
 	@echo ""
 	@echo "Token creation completed!"
 	@echo "You can now run sensor-related commands:"
@@ -507,7 +628,7 @@ create-signalk-token:
 # Interactive vessel configuration wizard
 config:
 	@echo "Starting Vessel Configuration Wizard..."
-	@python scripts/vessel_config_wizard.py
+	@"$(UV_BIN)" run python3 scripts/vessel_config_wizard.py
 
 # Calibrate magnetic heading sensor offset
 calibrate-heading: check-linux

@@ -555,15 +555,32 @@ class SensorReader:
                     },
                     "timestamp": timestamp,
                     "values": [],
+                    "meta": [],
                 }
             ],
         }
 
         # Add each data point to the delta
-        for path, value in data.items():
-            delta["updates"][0]["values"].append(
-                {"path": path, "value": value["value"], "$source": I2C_SENSORS_SOURCE}
-            )
+        for path, value_dict in data.items():
+            value_entry = {
+                "path": path,
+                "value": value_dict["value"],
+                "$source": I2C_SENSORS_SOURCE,
+            }
+            # Include units if available (some SignalK servers support this)
+            if "units" in value_dict:
+                value_entry["units"] = value_dict["units"]
+            delta["updates"][0]["values"].append(value_entry)
+            
+            # Also add metadata for units (SignalK standard way)
+            if "units" in value_dict:
+                meta_entry = {
+                    "path": path,
+                    "value": {
+                        "units": value_dict["units"],
+                    },
+                }
+                delta["updates"][0]["meta"].append(meta_entry)
 
         return delta
 
