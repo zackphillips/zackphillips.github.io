@@ -24,8 +24,20 @@ import busio
 from utils import load_vessel_info
 
 
-def save_vessel_info(info, info_path="data/vessel/info.json"):
-    """Save vessel information to info.json file."""
+def save_vessel_info(info, info_path="data/vessel/info.yaml"):
+    """Save vessel information to config file (YAML or JSON)."""
+    from utils import save_vessel_info as save_config
+    
+    if save_config(info, info_path):
+        print(f"Saved vessel info to {info_path}")
+        return True
+    else:
+        print(f"Failed to save vessel info to {info_path}")
+        return False
+
+
+def _old_save_vessel_info(info, info_path="data/vessel/info.json"):
+    """Legacy save function - kept for reference."""
     try:
         # Get the absolute path relative to the script location
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -101,7 +113,7 @@ def main():
     # Load current vessel info
     vessel_info = load_vessel_info()
     if not vessel_info:
-        print("Error: Could not load vessel info. Make sure data/vessel/info.json exists.")
+        print("Error: Could not load vessel info. Make sure data/vessel/info.yaml (or info.json) exists.")
         sys.exit(1)
 
     # Get current true heading from user

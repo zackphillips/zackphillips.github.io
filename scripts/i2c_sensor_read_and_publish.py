@@ -47,7 +47,7 @@ class SensorReader:
         signalk_host=None,
         signalk_port=None,
         udp_port=None,
-        info_path="data/vessel/info.json",
+        info_path="data/vessel/info.yaml",
         enable_bme280=True,
         enable_bno055=True,
         enable_mmc5603=True,
@@ -68,7 +68,7 @@ class SensorReader:
             self.signalk_host = signalk_host or signalk_config.get("host")
             self.signalk_port = signalk_port or signalk_config.get("port")
         else:
-            # Use command-line arguments only if info.json not available
+            # Use command-line arguments only if config file not available
             self.signalk_host = signalk_host
             self.signalk_port = signalk_port
             logger.warning(
@@ -95,11 +95,11 @@ class SensorReader:
         # Validate required configuration
         if not self.signalk_host:
             raise ValueError(
-                "SignalK host must be specified via --host argument or info.json"
+                "SignalK host must be specified via --host argument or config file"
             )
         if not self.signalk_port:
             raise ValueError(
-                "SignalK port must be specified via --port argument or info.json"
+                "SignalK port must be specified via --port argument or config file"
             )
         if not self.udp_port:
             raise ValueError(
@@ -715,10 +715,10 @@ def main():
 
     parser = argparse.ArgumentParser(description="I2C Sensors to SignalK Publisher")
     parser.add_argument(
-        "--host", help="SignalK server host (required if not in info.json)"
+        "--host", help="SignalK server host (required if not in config file)"
     )
     parser.add_argument(
-        "--port", type=int, help="SignalK server port (required if not in info.json)"
+        "--port", type=int, help="SignalK server port (required if not in config file)"
     )
     parser.add_argument(
         "--udp-port",

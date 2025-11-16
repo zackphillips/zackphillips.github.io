@@ -14,20 +14,39 @@ import requests
 
 
 class VesselConfigWizard:
-    def __init__(self, config_file: Path = Path("data/vessel/info.json")):
+    def __init__(self, config_file: Path = Path("data/vessel/info.yaml")):
         self.config_file = config_file
         self.config = self.load_config()
 
     def load_config(self) -> dict[str, Any]:
-        """Load vessel configuration from JSON file."""
+        """Load vessel configuration from YAML or JSON file."""
         try:
-            if not self.config_file.exists():
+            from utils import load_vessel_info
+            
+            # Try to load config (will try YAML first, then JSON)
+            try:
+                config = load_vessel_info(str(self.config_file))
+                if config:
+                    return config
+            except Exception:
+                # If loading fails, check if file exists
+                if not self.config_file.exists():
+                    # Try .yaml extension if .json was given, or vice versa
+                    alt_file = self.config_file.with_suffix('.yaml' if self.config_file.suffix == '.json' else '.json')
+                    if alt_file.exists():
+                        config = load_vessel_info(str(alt_file))
+                        if config:
+                            return config
+                
+                # If still no config, create default
                 print(f"Configuration file not found: {self.config_file}")
                 print("Creating default configuration...")
                 return self.create_default_config()
-
-            with open(self.config_file) as f:
-                return json.load(f)
+            
+            # Fallback to default if load_vessel_info returned None
+            print(f"Configuration file not found: {self.config_file}")
+            print("Creating default configuration...")
+            return self.create_default_config()
         except Exception as e:
             print(f"Error loading configuration: {e}")
             sys.exit(1)
@@ -43,14 +62,16 @@ class VesselConfigWizard:
         }
 
     def save_config(self) -> None:
-        """Save vessel configuration to JSON file."""
+        """Save vessel configuration to YAML or JSON file."""
         try:
-            # Ensure directory exists
-            self.config_file.parent.mkdir(parents=True, exist_ok=True)
-
-            with open(self.config_file, "w") as f:
-                json.dump(self.config, f, indent=2)
-            print("Configuration saved successfully!")
+            # Use utils.save_vessel_info for YAML/JSON support
+            from utils import save_vessel_info
+            
+            if save_vessel_info(self.config, str(self.config_file)):
+                print("Configuration saved successfully!")
+            else:
+                print("Error: Failed to save configuration")
+                sys.exit(1)
         except Exception as e:
             print(f"Error saving configuration: {e}")
             sys.exit(1)
@@ -124,7 +145,7 @@ class VesselConfigWizard:
 
             if result.returncode == 0:
                 print("[SUCCESS] Token request completed!")
-                # The token should now be saved to info.json
+                # The token should now be saved to config file
                 # Reload the config to get the new token
                 self.config = self.load_config()
             else:

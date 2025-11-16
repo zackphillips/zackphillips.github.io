@@ -121,7 +121,7 @@ class MagneticVariationService:
         signalk_host=None,
         signalk_port=None,
         udp_port=None,
-        info_path="data/vessel/info.json",
+        info_path="data/vessel/info.yaml",
     ):
         """Initialize magnetic variation service and SignalK connection."""
         # Load vessel info from JSON file
@@ -263,10 +263,10 @@ def main():
 
     parser = argparse.ArgumentParser(description="Magnetic Variation Service")
     parser.add_argument(
-        "--host", help="SignalK server host (required if not in info.json)"
+        "--host", help="SignalK server host (required if not in config file)"
     )
     parser.add_argument(
-        "--port", type=int, help="SignalK server port (required if not in info.json)"
+        "--port", type=int, help="SignalK server port (required if not in config file)"
     )
     parser.add_argument(
         "--udp-port",

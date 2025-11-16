@@ -81,21 +81,15 @@ def get_heading_true_from_signalk(vessel_info):
         return None
 
 
-def save_vessel_info(info, info_path="data/vessel/info.json"):
-    """Save vessel information to info.json file."""
-    try:
-        # Get the absolute path relative to the script location
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        project_root = os.path.dirname(script_dir)
-        full_path = os.path.join(project_root, info_path)
-
-        with open(full_path, "w") as f:
-            json.dump(info, f, indent=2)
-
-        print(f"Saved vessel info to {full_path}")
+def save_vessel_info(info, info_path="data/vessel/info.yaml"):
+    """Save vessel information to config file (YAML or JSON)."""
+    from utils import save_vessel_info as save_config
+    
+    if save_config(info, info_path):
+        print(f"Saved vessel info to {info_path}")
         return True
-    except Exception as e:
-        print(f"Failed to save vessel info to {info_path}: {e}")
+    else:
+        print(f"Failed to save vessel info to {info_path}")
         return False
 
 
@@ -446,7 +440,7 @@ def main():
     vessel_info = load_vessel_info()
     if not vessel_info:
         print(
-            "Error: Could not load vessel info. Make sure data/vessel/info.json exists."
+            "Error: Could not load vessel info. Make sure data/vessel/info.yaml (or info.json) exists."
         )
         sys.exit(1)
 

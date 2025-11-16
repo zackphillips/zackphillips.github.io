@@ -14,12 +14,13 @@ DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
 
 
 def load_vessel_data() -> dict:
-    """Load vessel configuration from JSON file."""
+    """Load vessel configuration from YAML or JSON file."""
     try:
-        vessel_file = Path("data/vessel/info.json")
-        if vessel_file.exists():
-            with open(vessel_file) as f:
-                vessel_data = json.load(f)
+        from utils import load_vessel_info
+        
+        # Try to load config (will try YAML first, then JSON)
+        vessel_data = load_vessel_info("data/vessel/info.yaml")
+        if vessel_data:
 
             # Construct SignalK URL from vessel data
             signalk = vessel_data.get("signalk", {})

@@ -167,14 +167,15 @@ class SignalKTokenRequester:
             print(f"[ERROR] Error saving token: {e}")
             return False
 
-    def save_token_to_info_json(self, token, info_json_path="data/vessel/info.json"):
-        """Save the access token to info.json file."""
+    def save_token_to_info_json(self, token, info_json_path="data/vessel/info.yaml"):
+        """Save the access token to config file (YAML or JSON)."""
         try:
-            # Read existing info.json
-            if os.path.exists(info_json_path):
-                with open(info_json_path) as f:
-                    info_data = json.load(f)
-            else:
+            from utils import load_vessel_info, save_vessel_info
+            
+            # Try to load existing config (will try YAML first, then JSON)
+            try:
+                info_data = load_vessel_info(info_json_path)
+            except Exception:
                 info_data = {}
 
             # Ensure signalk section exists
@@ -184,14 +185,15 @@ class SignalKTokenRequester:
             # Add token
             info_data["signalk"]["token"] = token
 
-            # Write back to file
-            with open(info_json_path, "w") as f:
-                json.dump(info_data, f, indent=2)
-
-            print(f"[OK] Token saved to {info_json_path}")
-            return True
+            # Save back to file (will use YAML if .yaml extension, JSON if .json)
+            if save_vessel_info(info_data, info_json_path):
+                print(f"[OK] Token saved to {info_json_path}")
+                return True
+            else:
+                print(f"[ERROR] Failed to save token to {info_json_path}")
+                return False
         except Exception as e:
-            print(f"[ERROR] Error saving token to info.json: {e}")
+            print(f"[ERROR] Error saving token to config file: {e}")
             return False
 
     def get_token_from_file(self, filename="signalk_token.txt"):
@@ -209,26 +211,24 @@ class SignalKTokenRequester:
             print(f"[ERROR] Error loading token: {e}")
             return None
 
-    def get_token_from_info_json(self, info_json_path="data/vessel/info.json"):
-        """Load access token from info.json file."""
+    def get_token_from_info_json(self, info_json_path="data/vessel/info.yaml"):
+        """Load access token from config file (YAML or JSON)."""
         try:
-            if not os.path.exists(info_json_path):
-                return None
-
-            with open(info_json_path) as f:
-                info_data = json.load(f)
-
+            from utils import load_vessel_info
+            
+            info_data = load_vessel_info(info_json_path)
+            
             token = info_data.get("signalk", {}).get("token")
             if token:
                 print(f"[OK] Token loaded from {info_json_path}")
                 return token
             return None
         except Exception as e:
-            print(f"[ERROR] Error loading token from info.json: {e}")
+            print(f"[ERROR] Error loading token from config file: {e}")
             return None
 
-    def check_token_exists(self, info_json_path="data/vessel/info.json"):
-        """Check if a valid token exists in info.json."""
+    def check_token_exists(self, info_json_path="data/vessel/info.yaml"):
+        """Check if a valid token exists in config file."""
         token = self.get_token_from_info_json(info_json_path)
         if token:
             # Test if token is valid
@@ -240,18 +240,16 @@ class SignalKTokenRequester:
         return None
 
 
-def check_token_exists(info_json_path="data/vessel/info.json"):
-    """Check if a valid token exists in info.json."""
+def check_token_exists(info_json_path="data/vessel/info.yaml"):
+    """Check if a valid token exists in config file."""
     try:
-        if not os.path.exists(info_json_path):
-            return False, "info.json not found"
-
-        with open(info_json_path) as f:
-            info_data = json.load(f)
+        from utils import load_vessel_info
+        
+        info_data = load_vessel_info(info_json_path)
 
         token = info_data.get("signalk", {}).get("token")
         if not token:
-            return False, "No token found in info.json"
+            return False, "No token found in config file"
 
         # Test if token is valid
         host = info_data.get("signalk", {}).get("host", "192.168.8.50")
@@ -278,7 +276,7 @@ def check_token_exists(info_json_path="data/vessel/info.json"):
             return False, f"Error testing token: {e}"
 
     except Exception as e:
-        return False, f"Error reading info.json: {e}"
+        return False, f"Error reading config file: {e}"
 
 
 def main():
@@ -308,7 +306,7 @@ def main():
         "--check", action="store_true", help="Check if token exists and is valid"
     )
     parser.add_argument(
-        "--info-json", default="data/vessel/info.json", help="Path to info.json"
+        "--info-json", default="data/vessel/info.yaml", help="Path to config file (YAML or JSON)"
     )
     parser.add_argument(
         "--quiet", action="store_true", help="Quiet output (exit code only)"
@@ -348,10 +346,10 @@ def main():
             print("[ERROR] No token file found")
             sys.exit(1)
 
-    # Check if we already have a valid token in info.json
+    # Check if we already have a valid token in config file
     existing_token = requester.check_token_exists()
     if existing_token:
-        print("[OK] Using existing valid token from info.json")
+        print("[OK] Using existing valid token from config file")
         print(f"Token: {existing_token}")
         sys.exit(0)
 
@@ -379,9 +377,9 @@ def main():
         print("[ERROR] Token test failed")
         sys.exit(1)
 
-    # Save the token to info.json
-    if requester.save_token_to_info_json(token):
-        print("\n[SUCCESS] Access token obtained and saved to info.json.")
+    # Save the token to config file
+    if requester.save_token_to_info_json(token, args.info_json):
+        print("\n[SUCCESS] Access token obtained and saved to config file.")
         print(f"Token: {token}")
         print("Use this token in your WebSocket connections:")
         print(
@@ -390,7 +388,7 @@ def main():
     else:
         print("\n[SUCCESS] Access token obtained.")
         print(f"Token: {token}")
-        print("(Token not saved to info.json)")
+        print("(Token not saved to config file)")
 
 
 if __name__ == "__main__":

@@ -9,6 +9,13 @@ import logging
 from pathlib import Path
 from typing import Any
 
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    YAML_AVAILABLE = False
+    yaml = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -95,12 +102,15 @@ def get_project_root() -> Path:
     return script_dir.parent
 
 
-def load_vessel_info(info_path: str = "data/vessel/info.json") -> dict[str, Any]:
+def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]:
     """
-    Load vessel information from info.json file.
+    Load vessel information from YAML or JSON file.
+    
+    Tries to load from YAML first (info.yaml), then falls back to JSON (info.json)
+    for backward compatibility.
 
     Args:
-        info_path: Relative path to the vessel info JSON file
+        info_path: Relative path to the vessel info file (YAML or JSON)
 
     Returns:
         Dictionary containing vessel configuration
@@ -110,45 +120,130 @@ def load_vessel_info(info_path: str = "data/vessel/info.json") -> dict[str, Any]
     """
     try:
         project_root = get_project_root()
-        full_path = project_root / info_path
+        
+        # Try YAML first (preferred format)
+        yaml_path = project_root / info_path.replace('.json', '.yaml')
+        json_path = project_root / info_path.replace('.yaml', '.json')
+        
+        # If explicit path given, use it; otherwise try both formats
+        if info_path.endswith('.yaml') or info_path.endswith('.yml'):
+            # Explicit YAML path
+            full_path = project_root / info_path
+            if full_path.exists():
+                return _load_yaml_file(full_path)
+            # Fallback to JSON version
+            json_fallback = full_path.with_suffix('.json')
+            if json_fallback.exists():
+                logger.info(f"YAML file not found, falling back to JSON: {json_fallback}")
+                return _load_json_file(json_fallback)
+        elif info_path.endswith('.json'):
+            # Explicit JSON path
+            full_path = project_root / info_path
+            if full_path.exists():
+                return _load_json_file(full_path)
+        else:
+            # No extension - try YAML first, then JSON
+            yaml_path = project_root / f"{info_path}.yaml"
+            json_path = project_root / f"{info_path}.json"
+            
+            if yaml_path.exists():
+                return _load_yaml_file(yaml_path)
+            elif json_path.exists():
+                logger.info(f"YAML file not found, falling back to JSON: {json_path}")
+                return _load_json_file(json_path)
+        
+        # If we get here, neither file exists
+        raise VesselConfigError(
+            f"Vessel info file not found. Tried: {yaml_path} and {json_path}"
+        )
 
-        if not full_path.exists():
-            raise VesselConfigError(f"Vessel info file not found: {full_path}")
-
-        with open(full_path) as f:
-            info = json.load(f)
-
-        logger.info(f"Loaded vessel info from {full_path}")
-        return info
-
-    except json.JSONDecodeError as e:
-        raise VesselConfigError(f"Invalid JSON in vessel info file: {e}") from e
     except Exception as e:
+        if isinstance(e, VesselConfigError):
+            raise
         raise VesselConfigError(f"Failed to load vessel info from {info_path}: {e}") from e
 
 
-def save_vessel_info(info: dict[str, Any], info_path: str = "data/vessel/info.json") -> bool:
+def _load_yaml_file(file_path: Path) -> dict[str, Any]:
+    """Load and parse a YAML file."""
+    if not YAML_AVAILABLE:
+        raise VesselConfigError(
+            "PyYAML is not installed. Install it with: pip install pyyaml"
+        )
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            info = yaml.safe_load(f)
+        
+        if info is None:
+            info = {}
+        
+        logger.info(f"Loaded vessel info from YAML: {file_path}")
+        return info
+    except yaml.YAMLError as e:
+        raise VesselConfigError(f"Invalid YAML in vessel info file: {e}") from e
+
+
+def _load_json_file(file_path: Path) -> dict[str, Any]:
+    """Load and parse a JSON file."""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            info = json.load(f)
+        
+        logger.info(f"Loaded vessel info from JSON: {file_path}")
+        return info
+    except json.JSONDecodeError as e:
+        raise VesselConfigError(f"Invalid JSON in vessel info file: {e}") from e
+
+
+def save_vessel_info(
+    info: dict[str, Any], 
+    info_path: str = "data/vessel/info.yaml",
+    format: str = "yaml"
+) -> bool:
     """
-    Save vessel information to info.json file.
+    Save vessel information to YAML or JSON file.
 
     Args:
         info: Dictionary containing vessel configuration
-        info_path: Relative path to the vessel info JSON file
+        info_path: Relative path to the vessel info file
+        format: Output format - "yaml" (default) or "json"
 
     Returns:
         True if successful, False otherwise
     """
     try:
         project_root = get_project_root()
-        full_path = project_root / info_path
+        
+        # Determine output format from path extension or format parameter
+        if info_path.endswith('.json'):
+            output_format = 'json'
+            full_path = project_root / info_path
+        elif info_path.endswith('.yaml') or info_path.endswith('.yml'):
+            output_format = 'yaml'
+            full_path = project_root / info_path
+        else:
+            # Use format parameter to determine extension
+            output_format = format.lower()
+            if output_format == 'yaml':
+                full_path = project_root / f"{info_path}.yaml"
+            else:
+                full_path = project_root / f"{info_path}.json"
 
         # Ensure directory exists
         full_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(full_path, 'w') as f:
-            json.dump(info, f, indent=2)
+        if output_format == 'yaml':
+            if not YAML_AVAILABLE:
+                logger.error("PyYAML is not installed. Cannot save YAML format.")
+                return False
+            
+            with open(full_path, 'w', encoding='utf-8') as f:
+                yaml.dump(info, f, default_flow_style=False, sort_keys=False, indent=2)
+        else:
+            with open(full_path, 'w', encoding='utf-8') as f:
+                json.dump(info, f, indent=2)
 
-        logger.info(f"Saved vessel info to {full_path}")
+        logger.info(f"Saved vessel info to {full_path} ({output_format.upper()})")
         return True
 
     except Exception as e:
