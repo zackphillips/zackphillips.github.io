@@ -4,6 +4,8 @@
 import logging
 import math
 
+import board
+import busio
 from adafruit_mmc56x3 import MMC5603
 
 from .base import BaseSensor
@@ -22,27 +24,20 @@ class MMC5603Sensor(BaseSensor):
 
     def initialize(self) -> bool:
         """Initialize MMC5603 sensor hardware."""
-        try:
-            import board
-            import busio
+        i2c = busio.I2C(board.SCL, board.SDA)
+        self.mmc5603_sensor = MMC5603(i2c)
+        logger.info("MMC5603 sensor initialized")
 
-            i2c = busio.I2C(board.SCL, board.SDA)
-            self.mmc5603_sensor = MMC5603(i2c)
-            logger.info("MMC5603 sensor initialized")
+        # Load heading correction offset
+        sensors_config = self.vessel_info.get("sensors", {})
+        self.heading_correction_offset = sensors_config.get(
+            "heading_correction_offset_rad", 0.0
+        )
+        logger.info(
+            f"MMC5603 heading correction offset: {self.heading_correction_offset} rad"
+        )
 
-            # Load heading correction offset
-            sensors_config = self.vessel_info.get("sensors", {})
-            self.heading_correction_offset = sensors_config.get(
-                "heading_correction_offset_rad", 0.0
-            )
-            logger.info(
-                f"MMC5603 heading correction offset: {self.heading_correction_offset} rad"
-            )
-
-            return True
-        except Exception as e:
-            logger.error(f"Failed to initialize MMC5603: {e}")
-            return False
+        return True
 
     def read(self) -> dict[str, dict[str, float | str]]:
         """
@@ -54,28 +49,24 @@ class MMC5603Sensor(BaseSensor):
         if not self.mmc5603_sensor:
             return {}
 
-        try:
-            # Read magnetic field
-            mag_x, mag_y, mag_z = self.mmc5603_sensor.magnetic
+        # Read magnetic field
+        mag_x, mag_y, mag_z = self.mmc5603_sensor.magnetic
 
-            # Calculate magnetic heading (simplified)
-            heading = 0
-            if mag_x != 0 or mag_y != 0:
-                heading = 3.14159 / 2 - math.atan2(mag_y, mag_x)
-                heading += self.heading_correction_offset
-                if heading < 0:
-                    heading += 3.14159 * 2
+        # Calculate magnetic heading (simplified)
+        heading = 0
+        if mag_x != 0 or mag_y != 0:
+            heading = 3.14159 / 2 - math.atan2(mag_y, mag_x)
+            heading += self.heading_correction_offset
+            if heading < 0:
+                heading += 3.14159 * 2
 
-            if heading is None or heading == 0:
-                logger.debug(f"MMC5603 heading reading invalid: {heading} rad")
-                return {}
-
-            return {
-                "navigation.headingMagnetic": {
-                    "value": heading,
-                    "units": "rad",
-                },
-            }
-        except Exception as e:
-            logger.error(f"Error reading MMC5603: {e}")
+        if heading is None or heading == 0:
+            logger.debug(f"MMC5603 heading reading invalid: {heading} rad")
             return {}
+
+        return {
+            "navigation.headingMagnetic": {
+                "value": heading,
+                "units": "rad",
+            },
+        }

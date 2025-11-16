@@ -548,8 +548,11 @@ install-sensors: check-linux check-signalk-token
 	@chmod +x scripts/i2c_sensor_read_and_publish.py
 	@echo "Installation complete!"
 	@echo ""
-	@echo "To run the sensor reader:"
+	@echo "To run all sensors (one-time test):"
 	@echo "  make run-sensors"
+	@echo ""
+	@echo "To run a specific sensor:"
+	@echo "  uv run scripts/i2c_sensor_read_and_publish.py bme280 --host 192.168.8.50 --port 3000 --once"
 	@echo ""
 	@echo "To run with custom settings:"
 	@echo "  make run-sensors SENSOR_HOST=192.168.8.50 SENSOR_PORT=3000"
@@ -559,17 +562,30 @@ install-sensors: check-linux check-signalk-token
 	@echo ""
 
 
-# Run I2C sensors to SignalK publisher
+# Run I2C sensors to SignalK publisher (runs each sensor individually for consistency)
 run-sensors: check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
 		echo "Error: 'uv' is not installed. Please install uv first."; \
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	@echo "Starting I2C sensors to SignalK publisher..."
+	@echo "Starting I2C sensors to SignalK publisher (individual sensor mode)..."
 	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
 	@echo "Running with uv: $(UV_BIN)"
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+	@echo ""
+	@echo "Running BME280 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "BME280 failed"
+	@echo ""
+	@echo "Running BNO055 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "BNO055 failed"
+	@echo ""
+	@echo "Running MMC5603 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "MMC5603 failed"
+	@echo ""
+	@echo "Running SGP30 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "SGP30 failed"
+	@echo ""
+	@echo "All sensors completed."
 
 # Check I2C devices and permissions
 check-i2c: check-linux

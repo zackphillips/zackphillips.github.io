@@ -3,10 +3,7 @@
 
 import logging
 
-import bme280
-import board
-import busio
-import smbus2
+import bme280.bme280 as bme280_module
 
 from .base import BaseSensor
 
@@ -23,27 +20,16 @@ class BME280Sensor(BaseSensor):
 
     def initialize(self) -> bool:
         """Initialize BME280 sensor hardware."""
-        try:
-            # Try using smbus2 first (more reliable on Raspberry Pi)
-            try:
-                bus = smbus2.SMBus(1)
-                self.bme280_sensor = bme280.BME280(i2c_dev=bus)
-                logger.info("BME280 initialized using smbus2")
-            except Exception as e:
-                logger.warning(f"Failed to initialize BME280 with smbus2: {e}, trying busio")
-                # Fallback to busio
-                i2c = busio.I2C(board.SCL, board.SDA)
-                self.bme280_sensor = bme280.BME280(i2c_device=i2c)
-                logger.info("BME280 initialized using busio")
+        # Initialize BME280 with smbus2
+        # bus_number=1, i2c_address=0x77
+        bme280_module.full_setup(1, 0x77)
+        self.bme280_sensor = bme280_module
+        logger.info("BME280 initialized using smbus2")
 
-            # Test read
-            _ = self.bme280_sensor.read_all()
-            logger.info("BME280 sensor initialized successfully")
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to initialize BME280: {e}")
-            return False
+        # Test read
+        _ = self.bme280_sensor.read_all()
+        logger.info("BME280 sensor initialized successfully")
+        return True
 
     def read(self) -> dict[str, dict[str, float | str]]:
         """
@@ -55,40 +41,36 @@ class BME280Sensor(BaseSensor):
         if not self.bme280_sensor:
             return {}
 
-        try:
-            # Read sensor data
-            data = self.bme280_sensor.read_all()
+        # Read sensor data
+        data = self.bme280_sensor.read_all()
 
-            # Validate readings
-            if (
-                data.temperature < -40
-                or data.temperature > 85
-                or data.humidity < 0
-                or data.humidity > 100
-                or data.pressure < 300
-                or data.pressure > 1200
-            ):
-                logger.debug(
-                    f"BME280 reading invalid: temp={data.temperature}°C, "
-                    f"humidity={data.humidity}%, pressure={data.pressure}hPa"
-                )
-                return {}
-
-            # Return valid readings with units
-            return {
-                "environment.inside.temperature": {
-                    "value": data.temperature + 273.15,  # Convert C to K
-                    "units": "K",
-                },
-                "environment.inside.humidity": {
-                    "value": data.humidity / 100.0,  # Convert % to ratio
-                    "units": "ratio",
-                },
-                "environment.inside.pressure": {
-                    "value": data.pressure * 100,  # Convert hPa to Pa
-                    "units": "Pa",
-                },
-            }
-        except Exception as e:
-            logger.error(f"Error reading BME280: {e}")
+        # Validate readings
+        if (
+            data.temperature < -40
+            or data.temperature > 85
+            or data.humidity < 0
+            or data.humidity > 100
+            or data.pressure < 300
+            or data.pressure > 1200
+        ):
+            logger.debug(
+                f"BME280 reading invalid: temp={data.temperature}°C, "
+                f"humidity={data.humidity}%, pressure={data.pressure}hPa"
+            )
             return {}
+
+        # Return valid readings with units
+        return {
+            "environment.inside.temperature": {
+                "value": data.temperature + 273.15,  # Convert C to K
+                "units": "K",
+            },
+            "environment.inside.humidity": {
+                "value": data.humidity / 100.0,  # Convert % to ratio
+                "units": "ratio",
+            },
+            "environment.inside.pressure": {
+                "value": data.pressure * 100,  # Convert hPa to Pa
+                "units": "Pa",
+            },
+        }
