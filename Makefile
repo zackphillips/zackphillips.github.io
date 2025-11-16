@@ -1,8 +1,11 @@
-.PHONY: server help install uninstall test check-uv pre-commit-install pre-commit-run lint config sync-dev sync-pi check-sensors
+.PHONY: server help install uninstall test pre-commit-install lint config sync-dev sync-pi status
 .PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-service-logs
 .PHONY: install-magnetic-service uninstall-magnetic-service check-magnetic-service-status magnetic-service-logs
 .PHONY: calibrate-heading calibrate-imu calibrate-air
+
+# Default target
+.DEFAULT_GOAL := help
 
 # System check
 UNAME_S := $(shell uname -s)
@@ -30,7 +33,8 @@ define install-service
 		sudo systemctl disable $(2) 2>/dev/null || true; \
 	fi
 	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
 	@echo "Rendering $(2) service template..."
@@ -109,16 +113,6 @@ check-linux:
 		exit 1; \
 	fi
 
-# Check if uv is installed and install if necessary
-check-uv:
-	@if ! command -v uv >/dev/null 2>&1; then \
-		echo "uv is not installed. Installing uv..."; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-		echo "uv installed successfully!"; \
-		echo "Please restart your shell or run 'source ~/.bashrc' to use uv"; \
-	else \
-		echo "uv is already installed at: $$(command -v uv)"; \
-	fi
 
 # Default target
 help:
@@ -127,10 +121,8 @@ help:
 	@echo "  make install        - Install all services (website, sensors, magnetic variation)"
 	@echo "  make uninstall      - Uninstall all services (Linux only)"
 	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
-	@echo "  make check-uv       - Check if uv is installed and install if necessary"
+	@echo "  make status         - Reports all sensor and website statuses"
 	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
-	@echo "  make test-sensors   - Test SignalK connection without running sensors"
-	@echo "  make check-sensors  - Run I2C checks and SignalK test together"
 	@echo "  make check-i2c      - Check I2C devices and permissions"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
@@ -138,7 +130,6 @@ help:
 	@echo "  make calibrate-imu   - Calibrate BNO055 IMU sensor"
 	@echo "  make calibrate-air   - Calibrate SGP30 air quality sensor"
 	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
-	@echo "  make pre-commit-run - Run pre-commit on all files (requires uv)"
 	@echo "  make lint          - Run ruff linter and auto-fix issues on all Python files"
 	@echo "  make config        - Interactive vessel configuration wizard"
 	@echo "  make help          - Show this help message"
@@ -159,16 +150,21 @@ help:
 server:
 	@echo "Open http://localhost:$(SERVER_PORT) in your browser"
 	@echo "Press Ctrl+C to stop the server"
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Starting server with uv environment: $(UV_BIN)"; \
-		"$(UV_BIN)" run python -m http.server $(SERVER_PORT); \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
+	@echo "Starting server with uv environment: $(UV_BIN)"
+	@"$(UV_BIN)" run python -m http.server $(SERVER_PORT)
 
 # Install all services
-install: check-linux check-uv check-signalk-token
+install: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Installing all vessel tracker services..."
 	@echo ""
 	@echo "This will install:"
@@ -216,14 +212,29 @@ uninstall: check-linux
 	@echo "All services uninstalled successfully!"
 
 # Individual service installation
-install-website-service: check-linux check-uv check-signalk-token
+install-website-service: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,update_signalk_data.py,,600)
 
-install-sensor-service: check-linux check-uv check-signalk-token
+install-sensor-service: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	$(call install-service,fast-sensors,vessel-sensors-fast,Vessel Fast Sensor Data Publisher (10s),i2c_sensor_read_and_publish.py,--disable-sgp30 --disable-mmc5603,10)
 	$(call install-service,slow-sensors,vessel-sensors-slow,Vessel Slow Sensor Data Publisher (240s),i2c_sensor_read_and_publish.py,--disable-mmc5603 --disable-bno055 --disable-bme280,240)
 
-install-magnetic-service: check-linux check-uv check-signalk-token
+install-magnetic-service: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),magnetic_variation_service.py,,86400)
 
 # Individual service uninstallation
@@ -248,6 +259,71 @@ check-sensor-service-status: check-linux
 check-magnetic-service-status: check-linux
 	$(call check-service-status,vessel-magnetic-variation,magnetic)
 
+# Report all sensor and website statuses
+status: check-linux
+	@echo "=========================================="
+	@echo "Vessel Tracker Status Report"
+	@echo "=========================================="
+	@echo ""
+	@echo "--- Website Service Status ---"
+	@if [ -f "/etc/systemd/system/vessel-tracker.service" ]; then \
+		echo "Service: vessel-tracker"; \
+		sudo systemctl is-active vessel-tracker >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vessel-tracker >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	else \
+		echo "Status: ✗ Not installed"; \
+	fi
+	@echo ""
+	@echo "--- Sensor Services Status ---"
+	@if [ -f "/etc/systemd/system/vessel-sensors-fast.service" ]; then \
+		echo "Service: vessel-sensors-fast"; \
+		sudo systemctl is-active vessel-sensors-fast >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vessel-sensors-fast >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	else \
+		echo "vessel-sensors-fast: ✗ Not installed"; \
+	fi
+	@if [ -f "/etc/systemd/system/vessel-sensors-slow.service" ]; then \
+		echo "Service: vessel-sensors-slow"; \
+		sudo systemctl is-active vessel-sensors-slow >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vessel-sensors-slow >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	else \
+		echo "vessel-sensors-slow: ✗ Not installed"; \
+	fi
+	@echo ""
+	@echo "--- Magnetic Variation Service Status ---"
+	@if [ -f "/etc/systemd/system/vessel-magnetic-variation.service" ]; then \
+		echo "Service: vessel-magnetic-variation"; \
+		sudo systemctl is-active vessel-magnetic-variation >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vessel-magnetic-variation >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	else \
+		echo "Status: ✗ Not installed"; \
+	fi
+	@echo ""
+	@echo "--- I2C Hardware Status ---"
+	@if [ -d /dev/i2c-1 ]; then \
+		echo "I2C Interface: ✓ Available at /dev/i2c-1"; \
+		if groups | grep -q i2c; then \
+			echo "I2C Group: ✓ User is in i2c group"; \
+		else \
+			echo "I2C Group: ✗ User is NOT in i2c group"; \
+		fi; \
+		echo "I2C Devices:"; \
+		sudo i2cdetect -y 1 2>/dev/null || echo "  (Unable to scan I2C bus)"; \
+	else \
+		echo "I2C Interface: ✗ Not available"; \
+	fi
+	@echo ""
+	@echo "--- SignalK Connection Status ---"
+	@if python3 scripts/signalk_token_management.py --check >/dev/null 2>&1; then \
+		echo "SignalK Token: ✓ Valid"; \
+		echo "SignalK Server: $(SENSOR_HOST):$(SENSOR_PORT)"; \
+	else \
+		echo "SignalK Token: ✗ Missing or invalid"; \
+		echo "SignalK Server: $(SENSOR_HOST):$(SENSOR_PORT)"; \
+	fi
+	@echo ""
+	@echo "=========================================="
+
 # Service logs
 website-logs: check-linux
 	$(call show-service-logs,vessel-tracker)
@@ -260,15 +336,15 @@ magnetic-service-logs: check-linux
 	$(call show-service-logs,vessel-magnetic-variation)
 
 # Run one website telemetry update (single execution)
-run-website-update: check-uv
-	@echo "Running one website telemetry update..."
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Fetching from SignalK and writing data..."; \
-		"$(UV_BIN)" run scripts/update_signalk_data.py --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json; \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+run-website-update:
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
+	@echo "Running one website telemetry update..."
+	@echo "Fetching from SignalK and writing data..."; \
+	"$(UV_BIN)" run scripts/update_signalk_data.py --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
 
 # Run tests
 test:
@@ -281,7 +357,12 @@ test:
 	fi
 
 # Install pre-commit hooks
-pre-commit-install: check-uv
+pre-commit-install:
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Installing pre-commit hooks..."
 	@if command -v uvx >/dev/null 2>&1; then \
 		echo "Installing with uvx..."; \
@@ -291,19 +372,14 @@ pre-commit-install: check-uv
 		exit 1; \
 	fi
 
-# Run pre-commit on all files
-pre-commit-run: check-uv
-	@echo "Running pre-commit on all files..."
-	@if command -v uvx >/dev/null 2>&1; then \
-		echo "Running with uvx..."; \
-		uvx pre-commit run --all-files; \
-	else \
-		echo "Error: 'uvx' is not available. Ensure 'uv' is installed and on PATH."; \
-		exit 1; \
-	fi
 
 # Run ruff linter and auto-fix issues on all Python files
-lint: check-uv
+lint:
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Running ruff linter with auto-fix on all Python files (uvx)..."
 	@if command -v uvx >/dev/null 2>&1; then \
 		echo "Running with uvx..."; \
@@ -314,16 +390,31 @@ lint: check-uv
 	fi
 
 # Sync environments using extras
-sync-dev: check-uv
+sync-dev:
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Syncing dev-only dependencies (no Pi deps)..."
 	@"$(UV_BIN)" sync --extra dev
 
-sync-pi: check-uv
+sync-pi:
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Syncing Pi + dev dependencies (on Raspberry Pi)..."
 	@"$(UV_BIN)" sync --extra pi --extra dev
 
 # Install I2C sensors to SignalK dependencies
-install-sensors: check-linux check-uv check-signalk-token
+install-sensors: check-linux check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Installing I2C sensors to SignalK dependencies..."
 	@echo "Updating package list..."
 	@sudo apt update
@@ -332,13 +423,8 @@ install-sensors: check-linux check-uv check-signalk-token
 	@echo "Enabling I2C interface..."
 	@sudo raspi-config nonint do_i2c 0
 	@echo "Installing Python dependencies with uv..."
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Using uv to install sensor dependencies..."; \
-		"$(UV_BIN)" sync; \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
+	@echo "Using uv to install sensor dependencies..."
+	@"$(UV_BIN)" sync
 	@echo "Making sensor script executable..."
 	@chmod +x scripts/i2c_sensor_read_and_publish.py
 	@echo "Installation complete!"
@@ -352,38 +438,19 @@ install-sensors: check-linux check-uv check-signalk-token
 	@echo "To check I2C devices:"
 	@echo "  make check-i2c"
 	@echo ""
-	@echo "To test SignalK connection:"
-	@echo "  make test-sensors"
 
-# Test SignalK connection without running sensors
-test-sensors: check-uv check-signalk-token
-	@echo "Testing SignalK connection..."
-	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Testing with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --test; \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
-
-# Combined sensor checks (I2C devices and SignalK connectivity)
-check-sensors: check-linux
-	@echo "Running combined sensor checks (I2C + SignalK)..."
-	@$(MAKE) check-i2c
-	@$(MAKE) test-sensors
 
 # Run I2C sensors to SignalK publisher
-run-sensors: check-uv check-signalk-token
-	@echo "Starting I2C sensors to SignalK publisher..."
-	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Running with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT); \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
+run-sensors: check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
+	@echo "Starting I2C sensors to SignalK publisher..."
+	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
+	@echo "Running with uv: $(UV_BIN)"
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 # Check I2C devices and permissions
 check-i2c: check-linux
@@ -436,7 +503,6 @@ create-signalk-token:
 	@echo "You can now run sensor-related commands:"
 	@echo "  make install-sensors"
 	@echo "  make run-sensors"
-	@echo "  make test-sensors"
 
 # Interactive vessel configuration wizard
 config:
@@ -444,43 +510,43 @@ config:
 	@python scripts/vessel_config_wizard.py
 
 # Calibrate magnetic heading sensor offset
-calibrate-heading: check-linux check-uv
+calibrate-heading: check-linux
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Calibrating magnetic heading sensor..."
 	@echo "This will help you set the correct heading offset for your vessel."
 	@echo "You'll need to know the current true heading of your vessel."
 	@echo ""
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Running heading calibration with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run python scripts/calibrate_mmc5603_heading.py; \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
+	@echo "Running heading calibration with uv: $(UV_BIN)"
+	@"$(UV_BIN)" run python scripts/calibrate_mmc5603_heading.py
 
 # Calibrate BNO055 IMU sensor
-calibrate-imu: check-linux check-uv
+calibrate-imu: check-linux
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Calibrating BNO055 IMU sensor..."
 	@echo "This will guide you through calibrating the BNO055 IMU sensor."
 	@echo "The sensor requires calibration for accurate orientation and motion data."
 	@echo ""
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Running IMU calibration with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run python scripts/calibrate_bno055_imu.py; \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
+	@echo "Running IMU calibration with uv: $(UV_BIN)"
+	@"$(UV_BIN)" run python scripts/calibrate_bno055_imu.py
 
 # Calibrate SGP30 air quality sensor
-calibrate-air: check-linux check-uv
+calibrate-air: check-linux
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Calibrating SGP30 air quality sensor..."
 	@echo "This will guide you through calibrating the SGP30 air quality sensor."
 	@echo "The sensor measures TVOC and eCO2 and requires baseline calibration."
 	@echo ""
-	@if command -v uv >/dev/null 2>&1; then \
-		echo "Running air quality calibration with uv: $(UV_BIN)"; \
-		"$(UV_BIN)" run python scripts/calibrate_sgp30_air_quality.py; \
-	else \
-		echo "Error: 'uv' is not installed. Run 'make check-uv' to install it."; \
-		exit 1; \
-	fi
+	@echo "Running air quality calibration with uv: $(UV_BIN)"
+	@"$(UV_BIN)" run python scripts/calibrate_sgp30_air_quality.py
