@@ -17,7 +17,7 @@ def load_vessel_data() -> dict:
     """Load vessel configuration from YAML or JSON file."""
     try:
         from utils import load_vessel_info
-        
+
         # Try to load config (will try YAML first, then JSON)
         vessel_data = load_vessel_info("data/vessel/info.yaml")
         if vessel_data:

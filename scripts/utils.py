@@ -8,6 +8,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any
+
 import yaml
 
 logger = logging.getLogger(__name__)
@@ -99,7 +100,7 @@ def get_project_root() -> Path:
 def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]:
     """
     Load vessel information from YAML or JSON file.
-    
+
     Tries to load from YAML first (info.yaml), then falls back to JSON (info.json)
     for backward compatibility.
 
@@ -114,11 +115,11 @@ def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]
     """
     try:
         project_root = get_project_root()
-        
+
         # Try YAML first (preferred format)
         yaml_path = project_root / info_path.replace('.json', '.yaml')
         json_path = project_root / info_path.replace('.yaml', '.json')
-        
+
         # If explicit path given, use it; otherwise try both formats
         if info_path.endswith('.yaml') or info_path.endswith('.yml'):
             # Explicit YAML path
@@ -139,13 +140,13 @@ def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]
             # No extension - try YAML first, then JSON
             yaml_path = project_root / f"{info_path}.yaml"
             json_path = project_root / f"{info_path}.json"
-            
+
             if yaml_path.exists():
                 return _load_yaml_file(yaml_path)
             elif json_path.exists():
                 logger.info(f"YAML file not found, falling back to JSON: {json_path}")
                 return _load_json_file(json_path)
-        
+
         # If we get here, neither file exists
         raise VesselConfigError(
             f"Vessel info file not found. Tried: {yaml_path} and {json_path}"
@@ -160,12 +161,12 @@ def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]
 def _load_yaml_file(file_path: Path) -> dict[str, Any]:
     """Load and parse a YAML file."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             info = yaml.safe_load(f)
-        
+
         if info is None:
             info = {}
-        
+
         logger.info(f"Loaded vessel info from YAML: {file_path}")
         return info
     except yaml.YAMLError as e:
@@ -175,9 +176,9 @@ def _load_yaml_file(file_path: Path) -> dict[str, Any]:
 def _load_json_file(file_path: Path) -> dict[str, Any]:
     """Load and parse a JSON file."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding='utf-8') as f:
             info = json.load(f)
-        
+
         logger.info(f"Loaded vessel info from JSON: {file_path}")
         return info
     except json.JSONDecodeError as e:
@@ -185,7 +186,7 @@ def _load_json_file(file_path: Path) -> dict[str, Any]:
 
 
 def save_vessel_info(
-    info: dict[str, Any], 
+    info: dict[str, Any],
     info_path: str = "data/vessel/info.yaml",
     format: str = "yaml"
 ) -> bool:
@@ -202,7 +203,7 @@ def save_vessel_info(
     """
     try:
         project_root = get_project_root()
-        
+
         # Determine output format from path extension or format parameter
         if info_path.endswith('.json'):
             output_format = 'json'

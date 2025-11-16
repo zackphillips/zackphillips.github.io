@@ -3,10 +3,10 @@
 
 import logging
 
+import bme280
 import board
 import busio
 import smbus2
-import bme280
 
 from .base import BaseSensor
 

@@ -29,7 +29,7 @@ from utils import load_vessel_info
 def save_vessel_info(info, info_path="data/vessel/info.yaml"):
     """Save vessel information to config file (YAML or JSON)."""
     from utils import save_vessel_info as save_config
-    
+
     if save_config(info, info_path):
         print(f"Saved vessel info to {info_path}")
         return True

@@ -7,7 +7,6 @@ This script is the entry point for individual sensor systemd services.
 import argparse
 import logging
 import sys
-from pathlib import Path
 
 from sensors import BME280Sensor, BNO055Sensor, MMC5603Sensor, SGP30Sensor
 from utils import setup_logging

@@ -370,7 +370,7 @@ class SensorReader:
                 }
 
             if euler and all(x is not None for x in euler):
-                
+
                 t0 = time.time()
                 while 0 in euler:
                     time.sleep(0.1)
@@ -571,7 +571,7 @@ class SensorReader:
             if "units" in value_dict:
                 value_entry["units"] = value_dict["units"]
             delta["updates"][0]["values"].append(value_entry)
-            
+
             # Also add metadata for units (SignalK standard way)
             if "units" in value_dict:
                 meta_entry = {

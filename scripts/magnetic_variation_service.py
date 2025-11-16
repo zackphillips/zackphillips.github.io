@@ -17,7 +17,6 @@ import requests
 
 # Import utilities
 from utils import (
-    create_signalk_delta,
     load_vessel_info,
     send_delta_over_udp,
     setup_logging,
@@ -153,7 +152,7 @@ class MagneticVariationService:
     def create_signalk_delta(self, magnetic_variation):
         """Create SignalK delta message for magnetic variation."""
         from datetime import UTC, datetime
-        
+
         values = [
             {
                 "path": "navigation.magneticVariation",
@@ -162,7 +161,7 @@ class MagneticVariationService:
                 "$source": MAGNETIC_SERVICE_SOURCE,
             }
         ]
-        
+
         # Also include metadata for units (SignalK standard way)
         meta = [
             {

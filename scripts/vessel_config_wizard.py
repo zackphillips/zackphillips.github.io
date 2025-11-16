@@ -22,7 +22,7 @@ class VesselConfigWizard:
         """Load vessel configuration from YAML or JSON file."""
         try:
             from utils import load_vessel_info
-            
+
             # Try to load config (will try YAML first, then JSON)
             try:
                 config = load_vessel_info(str(self.config_file))
@@ -37,12 +37,12 @@ class VesselConfigWizard:
                         config = load_vessel_info(str(alt_file))
                         if config:
                             return config
-                
+
                 # If still no config, create default
                 print(f"Configuration file not found: {self.config_file}")
                 print("Creating default configuration...")
                 return self.create_default_config()
-            
+
             # Fallback to default if load_vessel_info returned None
             print(f"Configuration file not found: {self.config_file}")
             print("Creating default configuration...")
@@ -66,7 +66,7 @@ class VesselConfigWizard:
         try:
             # Use utils.save_vessel_info for YAML/JSON support
             from utils import save_vessel_info
-            
+
             if save_vessel_info(self.config, str(self.config_file)):
                 print("Configuration saved successfully!")
             else:

@@ -6,8 +6,6 @@ This script requests an access token from SignalK server using the device access
 The token can then be used to authenticate WebSocket connections and API calls.
 """
 
-import json
-import os
 import sys
 import time
 
@@ -171,7 +169,7 @@ class SignalKTokenRequester:
         """Save the access token to config file (YAML or JSON)."""
         try:
             from utils import load_vessel_info, save_vessel_info
-            
+
             # Try to load existing config (will try YAML first, then JSON)
             try:
                 info_data = load_vessel_info(info_json_path)
@@ -215,9 +213,9 @@ class SignalKTokenRequester:
         """Load access token from config file (YAML or JSON)."""
         try:
             from utils import load_vessel_info
-            
+
             info_data = load_vessel_info(info_json_path)
-            
+
             token = info_data.get("signalk", {}).get("token")
             if token:
                 print(f"[OK] Token loaded from {info_json_path}")
@@ -244,7 +242,7 @@ def check_token_exists(info_json_path="data/vessel/info.yaml"):
     """Check if a valid token exists in config file."""
     try:
         from utils import load_vessel_info
-        
+
         info_data = load_vessel_info(info_json_path)
 
         token = info_data.get("signalk", {}).get("token")

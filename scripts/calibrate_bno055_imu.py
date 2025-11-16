@@ -17,9 +17,7 @@ The script automatically fetches the current true heading from SignalK server
 and calculates the necessary offset to align the BNO055 yaw reading.
 """
 
-import json
 import math
-import os
 import sys
 import time
 
@@ -84,7 +82,7 @@ def get_heading_true_from_signalk(vessel_info):
 def save_vessel_info(info, info_path="data/vessel/info.yaml"):
     """Save vessel information to config file (YAML or JSON)."""
     from utils import save_vessel_info as save_config
-    
+
     if save_config(info, info_path):
         print(f"Saved vessel info to {info_path}")
         return True

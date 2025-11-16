@@ -3,14 +3,13 @@
 
 import logging
 import math
+import sys
 import time
+from pathlib import Path
 
 import board
 import busio
 from adafruit_bno055 import BNO055_I2C
-
-import sys
-from pathlib import Path
 
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
