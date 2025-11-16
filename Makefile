@@ -24,8 +24,6 @@ CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ma
 # Service definitions (name:description:interval:script:args)
 SERVICES := \
 	website:vessel-tracker:Vessel Tracker Data Updater:600:update_signalk_data.py: \
-	fast-sensors:vessel-sensors-fast:Vessel Fast Sensor Data Publisher (10s):10:i2c_sensor_read_and_publish.py:--disable-sgp30 --disable-mmc5603 \
-	slow-sensors:vessel-sensors-slow:Vessel Slow Sensor Data Publisher (240s):240:i2c_sensor_read_and_publish.py:--disable-mmc5603 \
 	magnetic:vessel-magnetic-variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
 
 # Service management functions
@@ -74,7 +72,7 @@ define install-service
 	@echo "$(2) service installed and started successfully!"
 endef
 
-# Macro for installing individual sensor services using run_sensor.py
+# Macro for installing individual sensor services using i2c_sensor_read_and_publish.py
 define install-sensor-service
 	@echo "Installing $(2) systemd service..."
 	@if [ -f "/etc/systemd/system/$(2).service" ]; then \
@@ -281,7 +279,7 @@ install-bme280-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-sensor-service,bme280,vessel-sensor-bme280,BME280 Sensor Service,run_sensor.py,bme280)
+	$(call install-sensor-service,bme280,vessel-sensor-bme280,BME280 Sensor Service,i2c_sensor_read_and_publish.py,bme280)
 
 install-bno055-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -289,7 +287,7 @@ install-bno055-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-sensor-service,bno055,vessel-sensor-bno055,BNO055 Sensor Service,run_sensor.py,bno055)
+	$(call install-sensor-service,bno055,vessel-sensor-bno055,BNO055 Sensor Service,i2c_sensor_read_and_publish.py,bno055)
 
 install-mmc5603-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -297,7 +295,7 @@ install-mmc5603-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-sensor-service,mmc5603,vessel-sensor-mmc5603,MMC5603 Sensor Service,run_sensor.py,mmc5603)
+	$(call install-sensor-service,mmc5603,vessel-sensor-mmc5603,MMC5603 Sensor Service,i2c_sensor_read_and_publish.py,mmc5603)
 
 install-sgp30-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -305,7 +303,7 @@ install-sgp30-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-sensor-service,sgp30,vessel-sensor-sgp30,SGP30 Sensor Service,run_sensor.py,sgp30)
+	$(call install-sensor-service,sgp30,vessel-sensor-sgp30,SGP30 Sensor Service,i2c_sensor_read_and_publish.py,sgp30)
 
 install-magnetic-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
