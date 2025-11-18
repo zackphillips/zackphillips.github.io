@@ -432,6 +432,25 @@ def main():
     print()
     print("This script will guide you through calibrating the BNO055 IMU sensor.")
     print("The BNO055 requires calibration for accurate orientation and motion data.")
+
+    # Ask user about sensor mounting orientation
+    print("\n=== Sensor Mounting Orientation ===")
+    print(
+        "Is the BNO055 sensor mounted horizontally (e.g., flat on deck)?"
+    )
+    print("If mounted horizontally, roll and pitch values will be flipped.")
+    mounting_choice = input("Is the sensor mounted horizontally? (y/n): ").lower().strip()
+    is_mounted_horizontally = mounting_choice in ["y", "yes"]
+
+    # Save mounting orientation to vessel info
+    if "sensors" not in vessel_info:
+        vessel_info["sensors"] = {}
+    if "bno055" not in vessel_info["sensors"]:
+        vessel_info["sensors"]["bno055"] = {}
+    vessel_info["sensors"]["bno055"]["mounted_horizontally"] = is_mounted_horizontally
+    if not save_vessel_info(vessel_info):
+        print("Warning: Failed to save mounting orientation to vessel info.")
+
     print()
 
     # Load current vessel info

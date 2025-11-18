@@ -1,5 +1,5 @@
 .PHONY: server help install uninstall test pre-commit-install lint config sync-dev sync-pi status
-.PHONY: install-sensors run-sensors check-i2c check-signalk-token create-signalk-token
+.PHONY: install-sensors check-i2c check-signalk-token create-signalk-token run-bme280 run-bno055 run-mmc5603 run-sgp30
 .PHONY: install-sensor-service uninstall-sensor-service check-sensor-service-status sensor-service-logs
 .PHONY: install-bme280-service install-bno055-service install-mmc5603-service install-sgp30-service
 .PHONY: uninstall-bme280-service uninstall-bno055-service uninstall-mmc5603-service uninstall-sgp30-service
@@ -154,7 +154,6 @@ help:
 	@echo "  make uninstall      - Uninstall all services (Linux only)"
 	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
 	@echo "  make status         - Reports all sensor and website statuses"
-	@echo "  make run-sensors    - Run I2C sensors to SignalK publisher (one-time)"
 	@echo "  make check-i2c      - Check I2C devices and permissions"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
@@ -548,14 +547,11 @@ install-sensors: check-linux check-signalk-token
 	@chmod +x scripts/i2c_sensor_read_and_publish.py
 	@echo "Installation complete!"
 	@echo ""
-	@echo "To run all sensors (one-time test):"
-	@echo "  make run-sensors"
-	@echo ""
 	@echo "To run a specific sensor:"
-	@echo "  uv run scripts/i2c_sensor_read_and_publish.py bme280 --host 192.168.8.50 --port 3000 --once"
+	@echo "  uv run scripts/i2c_sensor_read_and_publish.py bme280 --host 192.168.8.50 --port 3000"
 	@echo ""
 	@echo "To run with custom settings:"
-	@echo "  make run-sensors SENSOR_HOST=192.168.8.50 SENSOR_PORT=3000"
+	@echo "  make run-bme280 SENSOR_HOST=192.168.8.50 SENSOR_PORT=3000"
 	@echo ""
 	@echo "To check I2C devices:"
 	@echo "  make check-i2c"
@@ -563,29 +559,66 @@ install-sensors: check-linux check-signalk-token
 
 
 # Run I2C sensors to SignalK publisher (runs each sensor individually for consistency)
-run-sensors: check-signalk-token
+# run-sensors: check-signalk-token
+# 	@if [ -z "$(UV_BIN)" ]; then \
+# 		echo "Error: 'uv' is not installed. Please install uv first."; \
+# 		echo "Visit: https://github.com/astral-sh/uv"; \
+# 		exit 1; \
+# 	fi
+# 	@echo "Starting I2C sensors to SignalK publisher (individual sensor mode)..."
+# 	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
+# 	@echo "Running with uv: $(UV_BIN)"
+# 	@echo ""
+# 	@echo "Running BME280 sensor..."
+# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BME280 failed"
+# 	@echo ""
+# 	@echo "Running BNO055 sensor..."
+# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BNO055 failed"
+# 	@echo ""
+# 	@echo "Running MMC5603 sensor..."
+# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "MMC5603 failed"
+# 	@echo ""
+# 	@echo "Running SGP30 sensor..."
+# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "SGP30 failed"
+# 	@echo ""
+# 	@echo "All sensors completed."
+
+# Run individual I2C sensors to SignalK publisher
+run-bme280: check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
 		echo "Error: 'uv' is not installed. Please install uv first."; \
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	@echo "Starting I2C sensors to SignalK publisher (individual sensor mode)..."
-	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
-	@echo "Running with uv: $(UV_BIN)"
-	@echo ""
-	@echo "Running BME280 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "BME280 failed"
-	@echo ""
-	@echo "Running BNO055 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "BNO055 failed"
-	@echo ""
-	@echo "Running MMC5603 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "MMC5603 failed"
-	@echo ""
-	@echo "Running SGP30 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --once || echo "SGP30 failed"
-	@echo ""
-	@echo "All sensors completed."
+	@echo "Starting BME280 sensor read and publish..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+
+run-bno055: check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	@echo "Starting BNO055 sensor read and publish..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+
+run-mmc5603: check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	@echo "Starting MMC5603 sensor read and publish..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+
+run-sgp30: check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	@echo "Starting SGP30 sensor read and publish..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 # Check I2C devices and permissions
 check-i2c: check-linux

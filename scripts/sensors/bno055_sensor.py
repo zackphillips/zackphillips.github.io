@@ -20,6 +20,9 @@ from .base import BaseSensor
 
 logger = logging.getLogger(__name__)
 
+EULER_AVERAGING_COUNT = 10
+EULER_AVERAGING_DELAY = 0.05
+
 
 class BNO055Sensor(BaseSensor):
     """BNO055 IMU sensor for attitude and rate of turn."""
@@ -106,10 +109,26 @@ class BNO055Sensor(BaseSensor):
                     logger.error("BNO055 Euler angles still 0 after 10 seconds")
                     raise TimeoutError("BNO055 Euler angles still 0 after 10 seconds")
 
+            # Perform averaging of euler angles
+            euler_avg = [0, 0, 0]
+            for _ in range(EULER_AVERAGING_COUNT):
+                euler_avg = [euler_avg[i] + euler[i] for i in range(3)]
+                time.sleep(EULER_AVERAGING_DELAY)
+                euler = self.bno055_sensor.euler
+            euler_avg = [e / EULER_AVERAGING_COUNT for e in euler_avg]
+
+            # Load sensor-specific config to check for horizontal mounting
+            sensor_config = self.vessel_info.get("sensors", {}).get("bno055", {})
+            is_mounted_horizontally = sensor_config.get("mounted_horizontally", False)
+
+            # Flip roll and pitch if sensor is mounted horizontally in the vessel
+            if is_mounted_horizontally:
+                euler_avg = [euler_avg[1], euler_avg[0], euler_avg[2]]
+
             # Convert Euler angles from degrees to radians
-            roll_raw = euler[0] * math.pi / 180
-            pitch_raw = euler[1] * math.pi / 180
-            yaw_raw = euler[2] * math.pi / 180
+            roll_raw = euler_avg[0] * math.pi / 180
+            pitch_raw = euler_avg[1] * math.pi / 180
+            yaw_raw = euler_avg[2] * math.pi / 180
 
             # Apply zero state calibration for pitch and roll
             sensors_config = self.vessel_info.get("sensors", {})

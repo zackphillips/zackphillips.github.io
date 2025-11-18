@@ -215,7 +215,7 @@ class BaseSensor(ABC):
             logger.error(f"{self.source_label} UDP send failed: {e}")
             return False
 
-    def run_once(self) -> bool:
+    def run(self) -> bool:
         """
         Read sensor once and publish to SignalK.
 
@@ -228,27 +228,9 @@ class BaseSensor(ABC):
                 return self.publish_to_signalk(data)
             return False
         except Exception as e:
-            logger.error(f"{self.source_label} error in run_once: {e}")
+            logger.error(f"{self.source_label} error in run: {e}")
             return False
-
-    def run_loop(self):
-        """Run sensor in continuous loop with configured update interval."""
-        logger.info(
-            f"{self.source_label} starting continuous operation (interval: {self.update_interval}s)..."
-        )
-
-        try:
-            while True:
-                self.run_once()
-                time.sleep(self.update_interval)
-        except KeyboardInterrupt:
-            logger.info(f"{self.source_label} stopped by user")
-        except Exception as e:
-            logger.error(f"{self.source_label} error in run_loop: {e}")
-            raise
-        finally:
-            self.cleanup()
-
+            
     def cleanup(self):
         """Clean up resources."""
         if self.udp_socket:
