@@ -153,13 +153,29 @@ class MagneticVariationService:
         """Create SignalK delta message for magnetic variation."""
         from datetime import UTC, datetime
 
+        now = datetime.now(UTC) # Capture current time for timestamp
+
+        # Calculate age of service in seconds
+        # For simplicity, using current time as the reference for age.
+        # If magnetic_variation had its own timestamp, we'd use that.
+        age_of_service = 0 # Placeholder, as magnetic_variation doesn't carry its own timestamp.
+                           # The actual age of service will be the difference between `now` and the
+                           # timestamp of when `magnetic_variation` was actually calculated.
+                           # Since this script is determining the variation at runtime, we return 0.
+
         values = [
             {
                 "path": "navigation.magneticVariation",
                 "value": magnetic_variation,
                 "units": "rad",  # Include in value entry
                 "$source": MAGNETIC_SERVICE_SOURCE,
-            }
+            },
+            {
+                "path": "navigation.magneticVariationAgeOfService",
+                "value": age_of_service,
+                "units": "s",
+                "$source": MAGNETIC_SERVICE_SOURCE,
+            },
         ]
 
         # Also include metadata for units (SignalK standard way)
@@ -170,7 +186,14 @@ class MagneticVariationService:
                     "units": "rad",
                     "description": "Magnetic variation (declination) in radians",
                 },
-            }
+            },
+            {
+                "path": "navigation.magneticVariationAgeOfService",
+                "value": {
+                    "units": "s",
+                    "description": "Age of magnetic variation data in seconds",
+                },
+            },
         ]
 
         return {
@@ -183,7 +206,7 @@ class MagneticVariationService:
                         "src": MAGNETIC_SERVICE_SOURCE,
                         "$source": MAGNETIC_SERVICE_SOURCE,
                     },
-                    "timestamp": datetime.now(UTC).isoformat(),
+                    "timestamp": now.isoformat(),
                     "values": values,
                     "meta": meta,
                 }
