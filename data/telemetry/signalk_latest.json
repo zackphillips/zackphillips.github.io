@@ -32,7 +32,7 @@
         "maximum": 2.31
       },
       "$source": "defaults",
-      "timestamp": "2025-11-19T05:33:44.959Z"
+      "timestamp": "2025-11-19T05:40:46.087Z"
     },
     "length": {
       "meta": {
@@ -59,7 +59,7 @@
         "overall": 12.95
       },
       "$source": "defaults",
-      "timestamp": "2025-11-19T05:33:44.959Z"
+      "timestamp": "2025-11-19T05:40:46.087Z"
     },
     "beam": {
       "meta": {
@@ -68,7 +68,7 @@
       },
       "value": 4.11,
       "$source": "defaults",
-      "timestamp": "2025-11-19T05:33:44.959Z"
+      "timestamp": "2025-11-19T05:40:46.087Z"
     },
     "airHeight": {
       "meta": {
@@ -77,7 +77,7 @@
       },
       "value": 18,
       "$source": "defaults",
-      "timestamp": "2025-11-19T05:33:44.959Z"
+      "timestamp": "2025-11-19T05:40:46.087Z"
     },
     "aisShipType": {
       "meta": {
@@ -98,7 +98,7 @@
         "id": 36
       },
       "$source": "defaults",
-      "timestamp": "2025-11-19T05:33:44.959Z"
+      "timestamp": "2025-11-19T05:40:46.087Z"
     }
   },
   "sensors": {
@@ -109,7 +109,7 @@
         },
         "value": 7.95,
         "$source": "defaults",
-        "timestamp": "2025-11-19T05:33:44.959Z"
+        "timestamp": "2025-11-19T05:40:46.087Z"
       },
       "fromCenter": {
         "meta": {
@@ -117,7 +117,7 @@
         },
         "value": 0.45,
         "$source": "defaults",
-        "timestamp": "2025-11-19T05:33:44.959Z"
+        "timestamp": "2025-11-19T05:40:46.087Z"
       }
     },
     "ais": {
@@ -127,65 +127,42 @@
         },
         "value": "B",
         "$source": "ais.AI",
-        "timestamp": "2025-11-19T05:36:49.314Z",
+        "timestamp": "2025-11-19T05:46:51.233Z",
         "sentence": "VDO"
       }
     }
   },
-  "entertainment": {
-    "device": {
-      "fusion1": {
-        "outputAlarms": {
-          "meta": {
-            "supportsPut": true
-          },
-          "value": false,
-          "$source": "fusionstereo",
-          "timestamp": "2025-11-19T05:33:46.186Z"
-        },
-        "state": {
-          "meta": {
-            "supportsPut": true
-          },
-          "value": "off",
-          "$source": "can0.12",
-          "timestamp": "2025-11-19T05:36:25.622Z",
-          "pgn": 130820
-        }
-      }
-    }
-  },
   "navigation": {
-    "rateOfTurn": {
-      "meta": {
-        "units": "rad/s",
-        "description": "Rate of turn (+ve is change to starboard). If the value is AIS RIGHT or LEFT, set to +-0.0206 rads and add warning in notifications"
-      },
-      "value": -0.00278031,
-      "$source": "can0.2",
-      "timestamp": "2025-11-19T05:36:49.340Z",
-      "pgn": 127251
-    },
     "headingMagnetic": {
       "meta": {
         "units": "rad",
         "description": "Current magnetic heading of the vessel, equals 'headingCompass adjusted for magneticDeviation'"
       },
-      "value": 5.9088,
+      "value": 5.9091,
       "$source": "can0.2",
-      "timestamp": "2025-11-19T05:36:49.366Z",
+      "timestamp": "2025-11-19T05:46:51.657Z",
       "pgn": 127250,
       "values": {
         "can0.2": {
-          "value": 5.9088,
+          "value": 5.9091,
           "pgn": 127250,
-          "timestamp": "2025-11-19T05:36:49.366Z"
+          "timestamp": "2025-11-19T05:46:51.657Z"
         },
         "i2c-sensors.sensor-mmc5603": {
-          "value": 5.733930275460441,
-          "timestamp": "2025-11-19T05:36:47.023161+00:00"
+          "value": 5.733867248387079,
+          "timestamp": "2025-11-19T05:46:50.167493+00:00"
         }
       }
+    },
+    "rateOfTurn": {
+      "meta": {
+        "units": "rad/s",
+        "description": "Rate of turn (+ve is change to starboard). If the value is AIS RIGHT or LEFT, set to +-0.0206 rads and add warning in notifications"
+      },
+      "value": -0.00383491,
+      "$source": "can0.2",
+      "timestamp": "2025-11-19T05:46:51.682Z",
+      "pgn": 127251
     },
     "magneticVariation": {
       "meta": {
@@ -194,7 +171,39 @@
       },
       "value": 0.22514747350726852,
       "$source": "derived-data",
-      "timestamp": "2025-11-19T05:36:49.315Z"
+      "timestamp": "2025-11-19T05:46:51.233Z"
+    },
+    "speedOverGround": {
+      "meta": {
+        "units": "m/s",
+        "description": "Vessel speed over ground. If converting from AIS 'HIGH' value, set to 102.2 (Ais max value) and add warning in notifications"
+      },
+      "value": 0.051444457477040344,
+      "$source": "ais.AI",
+      "timestamp": "2025-11-19T05:46:51.233Z",
+      "sentence": "VDO",
+      "values": {
+        "ais.AI": {
+          "value": 0.051444457477040344,
+          "sentence": "VDO",
+          "timestamp": "2025-11-19T05:46:51.233Z"
+        },
+        "ais.GP": {
+          "value": 0.13118336656645288,
+          "timestamp": "2025-11-19T05:46:35.000Z",
+          "sentence": "RMC"
+        }
+      }
+    },
+    "courseOverGroundTrue": {
+      "meta": {
+        "units": "rad",
+        "description": "Course over ground (true)"
+      },
+      "value": 0.7819075050719921,
+      "$source": "ais.AI",
+      "timestamp": "2025-11-19T05:46:51.233Z",
+      "sentence": "VDO"
     },
     "position": {
       "meta": {
@@ -220,90 +229,51 @@
         }
       },
       "value": {
-        "longitude": -122.385505,
-        "latitude": 37.78099666666667
+        "longitude": -122.38547333333334,
+        "latitude": 37.780998333333336,
+        "changedOn": 1763531211285
       },
       "$source": "ais.AI",
-      "timestamp": "2025-11-19T05:36:49.314Z",
-      "sentence": "VDO",
-      "values": {
-        "ais.GP": {
-          "value": {
-            "latitude": 37.780991666666665,
-            "longitude": -122.3854965,
-            "changedOn": 1763530596104
-          },
-          "sentence": "GGA",
-          "timestamp": "2025-11-19T05:36:35.000Z"
-        },
-        "ais.AI": {
-          "value": {
-            "longitude": -122.385505,
-            "latitude": 37.78099666666667
-          },
-          "timestamp": "2025-11-19T05:36:49.314Z",
-          "sentence": "VDO"
-        }
-      }
-    },
-    "courseOverGroundMagnetic": {
-      "meta": {
-        "units": "rad",
-        "description": "Course over ground (magnetic)"
-      },
-      "value": 0.5462880560503668,
-      "$source": "derived-data",
-      "timestamp": "2025-11-19T05:36:49.314Z"
-    },
-    "speedOverGround": {
-      "meta": {
-        "units": "m/s",
-        "description": "Vessel speed over ground. If converting from AIS 'HIGH' value, set to 102.2 (Ais max value) and add warning in notifications"
-      },
-      "value": 0.20577782990816137,
-      "$source": "ais.AI",
-      "timestamp": "2025-11-19T05:36:49.314Z",
+      "timestamp": "2025-11-19T05:46:51.233Z",
       "sentence": "VDO",
       "values": {
         "ais.AI": {
-          "value": 0.20577782990816137,
+          "value": {
+            "longitude": -122.38547333333334,
+            "latitude": 37.780998333333336,
+            "changedOn": 1763531211285
+          },
           "sentence": "VDO",
-          "timestamp": "2025-11-19T05:36:49.314Z"
+          "timestamp": "2025-11-19T05:46:51.233Z"
         },
         "ais.GP": {
-          "value": 0.5391379143593827,
-          "timestamp": "2025-11-19T05:36:26.000Z",
+          "value": {
+            "latitude": 37.78100633333333,
+            "longitude": -122.38547166666666,
+            "changedOn": 1763531196470
+          },
+          "timestamp": "2025-11-19T05:46:35.000Z",
           "sentence": "RMC"
         }
       }
-    },
-    "courseOverGroundTrue": {
-      "meta": {
-        "units": "rad",
-        "description": "Course over ground (true)"
-      },
-      "value": 0.7714355295576353,
-      "$source": "ais.AI",
-      "timestamp": "2025-11-19T05:36:49.314Z",
-      "sentence": "VDO"
     },
     "magneticVariationAgeOfService": {
       "meta": {
         "units": "s",
         "description": "Seconds since the 1st Jan 1970 that the variation calculation was made"
       },
-      "value": 1763530609,
+      "value": 1763531211,
       "$source": "ais.GP",
-      "timestamp": "2025-11-19T05:36:49.000Z",
+      "timestamp": "2025-11-19T05:46:51.000Z",
       "sentence": "RMC"
     },
     "datetime": {
       "meta": {
         "description": "Time and Date from the GNSS Positioning System"
       },
-      "value": "2025-11-19T05:36:49.000Z",
+      "value": "2025-11-19T05:46:51.000Z",
       "$source": "ais.GP",
-      "timestamp": "2025-11-19T05:36:49.000Z",
+      "timestamp": "2025-11-19T05:46:51.000Z",
       "sentence": "RMC"
     },
     "gnss": {
@@ -313,16 +283,16 @@
         },
         "value": "GNSS Fix",
         "$source": "ais.GP",
-        "timestamp": "2025-11-19T05:36:49.000Z",
+        "timestamp": "2025-11-19T05:46:51.000Z",
         "sentence": "GGA"
       },
       "satellites": {
         "meta": {
           "description": "Number of satellites"
         },
-        "value": 8,
+        "value": 9,
         "$source": "ais.GP",
-        "timestamp": "2025-11-19T05:36:49.000Z",
+        "timestamp": "2025-11-19T05:46:51.000Z",
         "sentence": "GGA"
       },
       "antennaAltitude": {
@@ -330,18 +300,18 @@
           "units": "m",
           "description": "Altitude of antenna"
         },
-        "value": -4.1,
+        "value": -2,
         "$source": "ais.GP",
-        "timestamp": "2025-11-19T05:36:49.000Z",
+        "timestamp": "2025-11-19T05:46:51.000Z",
         "sentence": "GGA"
       },
       "horizontalDilution": {
         "meta": {
           "description": "Horizontal Dilution of Precision"
         },
-        "value": 1.37,
+        "value": 1.17,
         "$source": "ais.GP",
-        "timestamp": "2025-11-19T05:36:49.000Z",
+        "timestamp": "2025-11-19T05:46:51.000Z",
         "sentence": "GGA"
       },
       "geoidalSeparation": {
@@ -350,7 +320,7 @@
         },
         "value": -29.7,
         "$source": "ais.GP",
-        "timestamp": "2025-11-19T05:36:49.000Z",
+        "timestamp": "2025-11-19T05:46:51.000Z",
         "sentence": "GGA"
       },
       "differentialAge": {
@@ -360,7 +330,7 @@
         },
         "value": 0,
         "$source": "ais.GP",
-        "timestamp": "2025-11-19T05:36:49.000Z",
+        "timestamp": "2025-11-19T05:46:51.000Z",
         "sentence": "GGA"
       },
       "differentialReference": {
@@ -369,42 +339,51 @@
         },
         "value": 0,
         "$source": "ais.GP",
-        "timestamp": "2025-11-19T05:36:49.000Z",
+        "timestamp": "2025-11-19T05:46:51.000Z",
         "sentence": "GGA"
       }
+    },
+    "courseOverGroundMagnetic": {
+      "meta": {
+        "units": "rad",
+        "description": "Course over ground (magnetic)"
+      },
+      "value": 0.5567600315647236,
+      "$source": "derived-data",
+      "timestamp": "2025-11-19T05:46:51.233Z"
     },
     "attitude": {
       "rateOfTurn": {
         "meta": {
           "units": "rad/s"
         },
-        "value": -7.615435494667716e-05,
+        "value": -9.519294368334644e-05,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-11-19T05:36:46.806487+00:00"
+        "timestamp": "2025-11-19T05:46:45.649017+00:00"
       },
       "roll": {
         "meta": {
           "units": "rad"
         },
-        "value": -0.00545415391248228,
+        "value": -0.004363323129985824,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-11-19T05:36:46.806487+00:00"
+        "timestamp": "2025-11-19T05:46:45.649017+00:00"
       },
       "pitch": {
         "meta": {
           "units": "rad"
         },
-        "value": 1.6492196645934596,
+        "value": 2.2568124104439855,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-11-19T05:36:46.806487+00:00"
+        "timestamp": "2025-11-19T05:46:45.649017+00:00"
       },
       "yaw": {
         "meta": {
           "units": "rad"
         },
-        "value": 6.1302989947334,
+        "value": 6.132480656298394,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-11-19T05:36:46.806487+00:00"
+        "timestamp": "2025-11-19T05:46:45.649017+00:00"
       }
     }
   },
@@ -413,7 +392,7 @@
       "meta": {},
       "value": "night",
       "$source": "derived-data",
-      "timestamp": "2025-11-19T05:36:47.177Z"
+      "timestamp": "2025-11-19T05:46:48.170Z"
     },
     "mode": {
       "meta": {
@@ -421,93 +400,93 @@
       },
       "value": "night",
       "$source": "derived-data",
-      "timestamp": "2025-11-19T05:36:47.177Z"
+      "timestamp": "2025-11-19T05:46:48.170Z"
     },
     "sunlight": {
       "times": {
         "sunrise": {
           "meta": {},
-          "value": "2025-11-18T14:54:42.747Z",
+          "value": "2025-11-18T14:54:42.742Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "sunriseEnd": {
           "meta": {},
-          "value": "2025-11-18T14:57:40.294Z",
+          "value": "2025-11-18T14:57:40.289Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "goldenHourEnd": {
           "meta": {},
-          "value": "2025-11-18T15:33:34.013Z",
+          "value": "2025-11-18T15:33:34.008Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "solarNoon": {
           "meta": {},
-          "value": "2025-11-18T19:56:14.671Z",
+          "value": "2025-11-18T19:56:14.665Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "goldenHour": {
           "meta": {},
-          "value": "2025-11-19T00:18:55.329Z",
+          "value": "2025-11-19T00:18:55.322Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "sunsetStart": {
           "meta": {},
-          "value": "2025-11-19T00:54:49.048Z",
+          "value": "2025-11-19T00:54:49.041Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "sunset": {
           "meta": {},
-          "value": "2025-11-19T00:57:46.595Z",
+          "value": "2025-11-19T00:57:46.588Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "dusk": {
           "meta": {},
-          "value": "2025-11-19T01:25:58.433Z",
+          "value": "2025-11-19T01:25:58.426Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "nauticalDusk": {
           "meta": {},
-          "value": "2025-11-19T01:57:49.823Z",
+          "value": "2025-11-19T01:57:49.817Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "night": {
           "meta": {},
-          "value": "2025-11-19T02:29:00.628Z",
+          "value": "2025-11-19T02:29:00.621Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "nadir": {
           "meta": {},
-          "value": "2025-11-18T07:56:14.671Z",
+          "value": "2025-11-18T07:56:14.665Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "nightEnd": {
           "meta": {},
-          "value": "2025-11-18T13:23:28.714Z",
+          "value": "2025-11-18T13:23:28.709Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "nauticalDawn": {
           "meta": {},
-          "value": "2025-11-18T13:54:39.519Z",
+          "value": "2025-11-18T13:54:39.513Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         },
         "dawn": {
           "meta": {},
-          "value": "2025-11-18T14:26:30.909Z",
+          "value": "2025-11-18T14:26:30.904Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.170Z"
         }
       }
     },
@@ -516,97 +495,50 @@
         "meta": {},
         "value": 0.01,
         "$source": "derived-data",
-        "timestamp": "2025-11-19T05:36:47.177Z"
+        "timestamp": "2025-11-19T05:46:48.169Z"
       },
       "phase": {
         "meta": {},
         "value": 0.97,
         "$source": "derived-data",
-        "timestamp": "2025-11-19T05:36:47.177Z"
+        "timestamp": "2025-11-19T05:46:48.169Z"
       },
       "phaseName": {
         "meta": {},
         "value": "Waning Crescent",
         "$source": "derived-data",
-        "timestamp": "2025-11-19T05:36:47.177Z"
+        "timestamp": "2025-11-19T05:46:48.169Z"
       },
       "angle": {
         "meta": {},
         "value": 1.49,
         "$source": "derived-data",
-        "timestamp": "2025-11-19T05:36:47.177Z"
+        "timestamp": "2025-11-19T05:46:48.169Z"
       },
       "times": {
         "rise": {
           "meta": {},
-          "value": "2025-11-18T13:33:50.265Z",
+          "value": "2025-11-18T13:33:50.259Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.169Z"
         },
         "set": {
           "meta": {},
-          "value": "2025-11-18T23:51:48.940Z",
+          "value": "2025-11-18T23:51:48.933Z",
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.169Z"
         },
         "alwaysUp": {
           "meta": {},
           "value": false,
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
+          "timestamp": "2025-11-19T05:46:48.169Z"
         },
         "alwaysDown": {
           "meta": {},
           "value": false,
           "$source": "derived-data",
-          "timestamp": "2025-11-19T05:36:47.177Z"
-        }
-      }
-    },
-    "inside": {
-      "temperature": {
-        "meta": {
-          "units": "K",
-          "description": "Temperature"
-        },
-        "value": 291.30208455382376,
-        "$source": "i2c-sensors.sensor-bme280",
-        "timestamp": "2025-11-19T05:36:41.292399+00:00"
-      },
-      "humidity": {
-        "meta": {
-          "description": "This regex pattern is used for validation of the identifier for the environmental zone, eg. engineRoom, mainCabin, refrigerator",
-          "units": "ratio"
-        },
-        "value": 0.6539401163786451,
-        "$source": "i2c-sensors.sensor-bme280",
-        "timestamp": "2025-11-19T05:36:41.292399+00:00"
-      },
-      "pressure": {
-        "meta": {
-          "units": "Pa",
-          "description": "Pressure in zone"
-        },
-        "value": 101865.77258029269,
-        "$source": "i2c-sensors.sensor-bme280",
-        "timestamp": "2025-11-19T05:36:41.292399+00:00"
-      },
-      "airQuality": {
-        "tvoc": {
-          "meta": {
-            "units": "ppb"
-          },
-          "value": 4,
-          "$source": "i2c-sensors.sensor-sgp30",
-          "timestamp": "2025-11-19T05:36:39.462676+00:00"
-        },
-        "eco2": {
-          "meta": {
-            "units": "ppm"
-          },
-          "value": 414,
-          "$source": "i2c-sensors.sensor-sgp30",
-          "timestamp": "2025-11-19T05:36:39.462676+00:00"
+          "timestamp": "2025-11-19T05:46:48.169Z"
         }
       }
     },
@@ -615,16 +547,16 @@
         "meta": {},
         "value": "Rincon Point, Pier 22 1/2",
         "$source": "tides",
-        "timestamp": "2025-11-19T05:36:45.899Z"
+        "timestamp": "2025-11-19T05:46:46.536Z"
       },
       "heightNow": {
         "meta": {
           "units": "m",
           "description": "The current tide height  relative to lowest astronomical tide (LAT/Chart Datum)"
         },
-        "value": 1.142,
+        "value": 1.189,
         "$source": "tides",
-        "timestamp": "2025-11-19T05:36:45.899Z"
+        "timestamp": "2025-11-19T05:46:46.536Z"
       },
       "heightHigh": {
         "meta": {
@@ -633,7 +565,7 @@
         },
         "value": 1.467,
         "$source": "tides",
-        "timestamp": "2025-11-19T05:36:45.899Z"
+        "timestamp": "2025-11-19T05:46:46.536Z"
       },
       "timeHigh": {
         "meta": {
@@ -642,7 +574,7 @@
         },
         "value": "2025-11-19T07:42:00.000Z",
         "$source": "tides",
-        "timestamp": "2025-11-19T05:36:45.899Z"
+        "timestamp": "2025-11-19T05:46:46.536Z"
       },
       "heightLow": {
         "meta": {
@@ -651,7 +583,7 @@
         },
         "value": 0.838,
         "$source": "tides",
-        "timestamp": "2025-11-19T05:36:45.899Z"
+        "timestamp": "2025-11-19T05:46:46.536Z"
       },
       "timeLow": {
         "meta": {
@@ -660,7 +592,186 @@
         },
         "value": "2025-11-19T12:21:00.000Z",
         "$source": "tides",
-        "timestamp": "2025-11-19T05:36:45.899Z"
+        "timestamp": "2025-11-19T05:46:46.536Z"
+      }
+    },
+    "inside": {
+      "temperature": {
+        "meta": {
+          "units": "K",
+          "description": "Temperature"
+        },
+        "value": 291.23113111406565,
+        "$source": "i2c-sensors.sensor-bme280",
+        "timestamp": "2025-11-19T05:46:44.140398+00:00"
+      },
+      "humidity": {
+        "meta": {
+          "description": "This regex pattern is used for validation of the identifier for the environmental zone, eg. engineRoom, mainCabin, refrigerator",
+          "units": "ratio"
+        },
+        "value": 0.6490359419305497,
+        "$source": "i2c-sensors.sensor-bme280",
+        "timestamp": "2025-11-19T05:46:44.140398+00:00"
+      },
+      "pressure": {
+        "meta": {
+          "units": "Pa",
+          "description": "Pressure in zone"
+        },
+        "value": 101867.9249607962,
+        "$source": "i2c-sensors.sensor-bme280",
+        "timestamp": "2025-11-19T05:46:44.140398+00:00"
+      },
+      "airQuality": {
+        "tvoc": {
+          "meta": {
+            "units": "ppb"
+          },
+          "value": 8,
+          "$source": "i2c-sensors.sensor-sgp30",
+          "timestamp": "2025-11-19T05:45:13.101600+00:00"
+        },
+        "eco2": {
+          "meta": {
+            "units": "ppm"
+          },
+          "value": 407,
+          "$source": "i2c-sensors.sensor-sgp30",
+          "timestamp": "2025-11-19T05:45:13.101600+00:00"
+        }
+      }
+    }
+  },
+  "electrical": {
+    "batteries": {
+      "house": {
+        "capacity": {
+          "dischargeSinceFull": {
+            "meta": {
+              "units": "C",
+              "description": "Data should be of type number."
+            },
+            "value": -382320,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-11-19T05:46:51.460845Z"
+          },
+          "stateOfCharge": {
+            "meta": {
+              "units": "ratio",
+              "description": "Data should be of type number.",
+              "zones": [
+                {
+                  "upper": 1,
+                  "lower": 0,
+                  "state": "alarm",
+                  "message": "Low House Battery"
+                },
+                {
+                  "upper": 0.4,
+                  "lower": 0.2,
+                  "state": "warn",
+                  "message": "Low House Battery"
+                }
+              ]
+            },
+            "value": 0.7759999999999999,
+            "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+            "timestamp": "2025-11-19T05:46:51.460845Z"
+          }
+        },
+        "current": {
+          "meta": {
+            "units": "A",
+            "description": "Current flowing out (+ve) or in (-ve) to the device",
+            "zones": [
+              {
+                "upper": 0,
+                "lower": -999999999,
+                "state": "alert",
+                "message": "Battery Discharging"
+              }
+            ]
+          },
+          "value": 2.799,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-11-19T05:46:51.460845Z"
+        },
+        "power": {
+          "meta": {},
+          "value": 36.387,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-11-19T05:46:51.460845Z"
+        },
+        "voltage": {
+          "meta": {
+            "units": "V",
+            "description": "Voltage measured at or as close as possible to the device"
+          },
+          "value": 13,
+          "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
+          "timestamp": "2025-11-19T05:46:51.460845Z"
+        }
+      }
+    }
+  },
+  "notifications": {
+    "electrical": {
+      "batteries": {
+        "house": {
+          "capacity": {
+            "stateOfCharge": {
+              "meta": {
+                "units": "ratio",
+                "description": "Data should be of type number.",
+                "zones": [
+                  {
+                    "upper": 0.2,
+                    "lower": 0,
+                    "state": "alarm",
+                    "message": "Charge House Battery Immediately"
+                  },
+                  {
+                    "upper": 0.4,
+                    "lower": 0.2,
+                    "state": "warn",
+                    "message": "Low House Battery"
+                  }
+                ]
+              },
+              "value": {
+                "state": "alarm",
+                "message": "Low House Battery",
+                "method": [
+                  "visual"
+                ]
+              },
+              "$source": "self.notificationhandler",
+              "timestamp": "2025-11-19T05:44:44.646Z"
+            }
+          },
+          "current": {
+            "meta": {
+              "units": "A",
+              "description": "Current flowing out (+ve) or in (-ve) to the device",
+              "zones": [
+                {
+                  "upper": 0,
+                  "lower": -999999999,
+                  "state": "alert",
+                  "message": "Battery Discharging"
+                }
+              ]
+            },
+            "value": {
+              "state": "normal",
+              "message": "Value is within normal range",
+              "method": []
+            },
+            "$source": "self.notificationhandler",
+            "timestamp": "2025-11-19T05:40:47.990Z"
+          }
+        }
       }
     }
   }
