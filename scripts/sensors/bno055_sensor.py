@@ -20,8 +20,27 @@ from .base import BaseSensor
 
 logger = logging.getLogger(__name__)
 
-EULER_AVERAGING_COUNT = 10
+EULER_AVERAGING_COUNT = 5
 EULER_AVERAGING_DELAY = 0.05
+
+def normalize_angle_180(angle_degrees):
+    """
+    Normalize an angle to the range [-180, 180] degrees.
+    
+    Args:
+        angle_degrees: Angle in degrees (can be any value)
+    
+    Returns:
+        Angle normalized to [-180, 180] degrees
+    """
+    # Normalize to [0, 360) range first
+    angle = angle_degrees % 360
+    
+    # Convert to [-180, 180] range
+    if angle > 180:
+        angle -= 360
+    
+    return angle
 
 
 class BNO055Sensor(BaseSensor):
@@ -117,52 +136,39 @@ class BNO055Sensor(BaseSensor):
                 euler = self.bno055_sensor.euler
             euler_avg = [e / EULER_AVERAGING_COUNT for e in euler_avg]
 
-            # Load sensor-specific config to check for horizontal mounting
-            sensor_config = self.vessel_info.get("sensors", {}).get("bno055", {})
-            is_mounted_horizontally = sensor_config.get("mounted_horizontally", False)
-
-            # Flip roll and pitch if sensor is mounted horizontally in the vessel
-            if is_mounted_horizontally:
-                euler_avg = [euler_avg[1], euler_avg[0], euler_avg[2]]
-
             # Convert Euler angles from degrees to radians
-            roll_raw = euler_avg[0] * math.pi / 180
-            pitch_raw = euler_avg[1] * math.pi / 180
-            yaw_raw = euler_avg[2] * math.pi / 180
+            yaw_raw_deg = normalize_angle_180(euler_avg[0])
+            roll_raw_deg = normalize_angle_180(euler_avg[1])
+            pitch_raw_deg = normalize_angle_180(euler_avg[2])
+            print(f"Yaw raw: {yaw_raw_deg}deg, Roll raw: {roll_raw_deg}deg, Pitch raw: {pitch_raw_deg}deg")
+
+            # Convert to radians
+            yaw_rad = yaw_raw_deg * math.pi / 180
+            roll_rad = roll_raw_deg * math.pi / 180
+            pitch_rad = pitch_raw_deg * math.pi / 180
 
             # Apply zero state calibration for pitch and roll
             sensors_config = self.vessel_info.get("sensors", {})
-            roll_calibrated = roll_raw
-            pitch_calibrated = pitch_raw
+            calibration = sensors_config.get("bno055_calibration", {})
+            roll_calibrated_rad = roll_rad - calibration.get("roll", 0)
+            pitch_calibrated_rad = pitch_rad - calibration.get("pitch", 0)
+            yaw_calibrated_rad = yaw_rad - calibration.get("yaw", 0)
 
-            if "bno055_zero_state" in sensors_config:
-                zero_state = sensors_config["bno055_zero_state"]
-                roll_calibrated = roll_raw - zero_state.get("roll", 0)
-                pitch_calibrated = pitch_raw - zero_state.get("pitch", 0)
-
-            # Apply yaw offset calibration
-            yaw_calibrated = yaw_raw
-            if "bno055_yaw_offset" in sensors_config:
-                yaw_offset = sensors_config["bno055_yaw_offset"]
-                yaw_calibrated = yaw_raw + yaw_offset.get("offset", 0)
-
-                # Normalize yaw to 0-2π range
-                while yaw_calibrated < 0:
-                    yaw_calibrated += 2 * math.pi
-                while yaw_calibrated >= 2 * math.pi:
-                    yaw_calibrated -= 2 * math.pi
-
+            # Create data dictionary
             data["navigation.attitude.roll"] = {
-                "value": roll_calibrated,
+                "value": roll_calibrated_rad,
                 "units": "rad",
             }
             data["navigation.attitude.pitch"] = {
-                "value": pitch_calibrated,
+                "value": pitch_calibrated_rad,
                 "units": "rad",
             }
             data["navigation.attitude.yaw"] = {
-                "value": yaw_calibrated,
+                "value": yaw_calibrated_rad,
                 "units": "rad",
             }
+            logger.info("BNO055 Data Readout:")
+            for key, value in data.items():
+                logger.info(f"   {key}: {value["value"] * 180 / math.pi}deg")
 
         return data
