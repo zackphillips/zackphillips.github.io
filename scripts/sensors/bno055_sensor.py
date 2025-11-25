@@ -136,14 +136,10 @@ class BNO055Sensor(BaseSensor):
                 euler = self.bno055_sensor.euler
             euler_avg = [e / EULER_AVERAGING_COUNT for e in euler_avg]
 
-            # Convert Euler angles from degrees to radians
-            yaw_raw_deg = normalize_angle_180(euler_avg[0])
             roll_raw_deg = normalize_angle_180(euler_avg[1])
             pitch_raw_deg = normalize_angle_180(euler_avg[2])
-            print(f"Yaw raw: {yaw_raw_deg}deg, Roll raw: {roll_raw_deg}deg, Pitch raw: {pitch_raw_deg}deg")
 
             # Convert to radians
-            yaw_rad = yaw_raw_deg * math.pi / 180
             roll_rad = roll_raw_deg * math.pi / 180
             pitch_rad = pitch_raw_deg * math.pi / 180
 
@@ -152,7 +148,6 @@ class BNO055Sensor(BaseSensor):
             calibration = sensors_config.get("bno055_calibration", {})
             roll_calibrated_rad = roll_rad - calibration.get("roll", 0)
             pitch_calibrated_rad = pitch_rad - calibration.get("pitch", 0)
-            yaw_calibrated_rad = yaw_rad - calibration.get("yaw", 0)
 
             # Create data dictionary
             data["navigation.attitude.roll"] = {
@@ -161,10 +156,6 @@ class BNO055Sensor(BaseSensor):
             }
             data["navigation.attitude.pitch"] = {
                 "value": pitch_calibrated_rad,
-                "units": "rad",
-            }
-            data["navigation.attitude.yaw"] = {
-                "value": yaw_calibrated_rad,
                 "units": "rad",
             }
             logger.info("BNO055 Data Readout:")
