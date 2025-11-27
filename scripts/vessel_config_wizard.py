@@ -12,6 +12,8 @@ from typing import Any
 
 import requests
 
+from utils import load_vessel_info, save_vessel_info
+
 
 class VesselConfigWizard:
     def __init__(self, config_file: Path = Path("data/vessel/info.yaml")):
@@ -21,8 +23,6 @@ class VesselConfigWizard:
     def load_config(self) -> dict[str, Any]:
         """Load vessel configuration from YAML or JSON file."""
         try:
-            from utils import load_vessel_info
-
             # Try to load config (will try YAML first, then JSON)
             try:
                 config = load_vessel_info(str(self.config_file))
@@ -65,8 +65,6 @@ class VesselConfigWizard:
         """Save vessel configuration to YAML or JSON file."""
         try:
             # Use utils.save_vessel_info for YAML/JSON support
-            from utils import save_vessel_info
-
             if save_vessel_info(self.config, str(self.config_file)):
                 print("Configuration saved successfully!")
             else:

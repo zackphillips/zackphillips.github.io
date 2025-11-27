@@ -6,6 +6,7 @@ Provides common functions for configuration management, error handling, and vali
 
 import json
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -53,8 +54,6 @@ def create_signalk_delta(values: list[dict], source_label: str, source_type: str
     Returns:
         SignalK delta message dictionary
     """
-    from datetime import UTC, datetime
-
     return {
         "context": "vessels.self",
         "updates": [

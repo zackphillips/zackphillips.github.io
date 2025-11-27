@@ -6,9 +6,9 @@ from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
 
-from utils import get_project_root
+import requests
 
-# requests is imported at runtime inside fetch_blob to make unit testing easier
+from utils import get_project_root, load_vessel_info
 
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
 
@@ -16,8 +16,6 @@ DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
 def load_vessel_data() -> dict:
     """Load vessel configuration from YAML or JSON file."""
     try:
-        from utils import load_vessel_info
-
         # Try to load config (will try YAML first, then JSON)
         vessel_data = load_vessel_info("data/vessel/info.yaml")
         if vessel_data:
@@ -93,8 +91,6 @@ def parse_args() -> SimpleNamespace:
 
 
 def fetch_blob(signalk_url: str) -> dict:
-    import requests  # imported here to ease mocking in unit tests
-
     response = requests.get(signalk_url)
     response.raise_for_status()
     return response.json()

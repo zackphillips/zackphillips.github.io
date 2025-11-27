@@ -36,7 +36,7 @@ from bno055_register_io import (
 )
 
 # Import vessel info loading from utils
-from utils import load_vessel_info
+from utils import load_vessel_info, save_vessel_info as save_vessel_info_util
 
 
 def get_heading_true_from_signalk(vessel_info):
@@ -81,9 +81,7 @@ def get_heading_true_from_signalk(vessel_info):
 
 def save_vessel_info(info, info_path="data/vessel/info.yaml"):
     """Save vessel information to config file (YAML or JSON)."""
-    from utils import save_vessel_info as save_config
-
-    if save_config(info, info_path):
+    if save_vessel_info_util(info, info_path):
         print(f"Saved vessel info to {info_path}")
         return True
     else:

@@ -6,6 +6,7 @@ This service calculates and publishes magnetic variation (declination) data
 to SignalK server based on the current vessel position.
 """
 
+import argparse
 import json
 import logging
 import math
@@ -14,6 +15,12 @@ import time
 from datetime import UTC, datetime
 
 import requests
+
+# Try to import geomag (optional dependency)
+try:
+    import geomag
+except ImportError:
+    geomag = None
 
 # Import utilities
 from utils import (
@@ -43,8 +50,8 @@ def calculate_magnetic_declination(
         date = datetime.now(UTC)
 
     try:
-        import geomag  # local import to avoid hard dependency at import time
-
+        if geomag is None:
+            raise ImportError("geomag not available")
         elevation_km = elevation / 1000.0
         date_for_geomag = date.date()
         declination_deg = geomag.declination(latitude, longitude, h=elevation_km, time=date_for_geomag)
@@ -151,8 +158,6 @@ class MagneticVariationService:
 
     def create_signalk_delta(self, magnetic_variation):
         """Create SignalK delta message for magnetic variation."""
-        from datetime import UTC, datetime
-
         now = datetime.now(UTC) # Capture current time for timestamp
 
         # Calculate age of service in seconds
@@ -305,8 +310,6 @@ class MagneticVariationService:
 
 def main():
     """Main function."""
-    import argparse
-
     parser = argparse.ArgumentParser(description="Magnetic Variation Service")
     parser.add_argument(
         "--host", help="SignalK server host (required if not in config file)"

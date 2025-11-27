@@ -10,9 +10,13 @@ Usage:
 """
 
 import argparse
+import json
 import logging
+import math
+import socket
 import sys
 import time
+from datetime import UTC, datetime
 from pathlib import Path
 
 # Add scripts directory to path for imports
@@ -43,6 +47,7 @@ def run_individual_sensor(
     info_path: str = "data/vessel/info.yaml",
     update_interval: float = None,
     log_level: str = "INFO",
+    run_count: float = 1.0,
 ):
     """
     Run a single sensor service (recommended mode).
@@ -55,6 +60,7 @@ def run_individual_sensor(
         info_path: Path to vessel config file
         update_interval: Update interval in seconds (overrides config)
         log_level: Logging level
+        run_count: Number of times to run (default: 1). Use math.inf for infinite runs.
     """
     # Setup logging
     setup_logging(level=log_level)
@@ -66,6 +72,13 @@ def run_individual_sensor(
         sys.exit(1)
 
     sensor_class = SENSOR_CLASSES[sensor_name]
+
+    # Determine if running in infinite mode
+    is_infinite = math.isinf(run_count)
+    if is_infinite:
+        logger.info(f"Running {sensor_name} sensor in continuous mode (infinite runs, no delay)")
+    else:
+        logger.info(f"Running {sensor_name} sensor for {int(run_count)} run(s)")
 
     try:
         # Create sensor instance
@@ -85,16 +98,67 @@ def run_individual_sensor(
         # Connect UDP
         sensor.connect_udp()
 
-        # Run sensor
+        # Run sensor loop
         logger.info(f"Reading {sensor_name} sensor and publishing to SignalK...")
-        success = sensor.run()
-        sys.exit(0 if success else 1)
+        
+        run_number = 0
+        while True:
+            # Check if we've reached the run count (unless infinite)
+            if not is_infinite:
+                if run_number >= run_count:
+                    logger.info(f"Completed {run_number} run(s)")
+                    break
+            
+            run_number += 1
+            if not is_infinite:
+                logger.debug(f"Run {run_number}/{int(run_count)}")
+            else:
+                logger.debug(f"Run {run_number} (continuous mode)")
+
+            # Run sensor once
+            success = sensor.run()
+            
+            if not success:
+                if is_infinite:
+                    # In infinite mode, restart on failure
+                    logger.warning(f"Run {run_number} failed, reinitializing sensor...")
+                    try:
+                        sensor.cleanup()
+                    except Exception as e:
+                        logger.debug(f"Error during cleanup: {e}")
+                    
+                    # Reinitialize
+                    if not sensor.initialize():
+                        logger.error(f"Failed to reinitialize {sensor_name} sensor")
+                        # Wait a bit before retrying initialization
+                        time.sleep(1.0)
+                        continue
+                    
+                    sensor.connect_udp()
+                    logger.info(f"Sensor reinitialized, continuing...")
+                    continue
+                else:
+                    # In finite mode, exit on failure
+                    logger.error(f"Run {run_number} failed")
+                    sys.exit(1)
+            
+            # Delay between runs (skip in infinite mode)
+            if not is_infinite and run_number < run_count:
+                time.sleep(sensor.update_interval)
 
     except KeyboardInterrupt:
-        logger.info(f"{sensor_name} sensor stopped by user")
+        logger.info(f"{sensor_name} sensor stopped by user after {run_number} run(s)")
+        try:
+            sensor.cleanup()
+        except Exception:
+            pass
         sys.exit(0)
     except Exception as e:
         logger.error(f"Error running {sensor_name} sensor: {e}", exc_info=True)
+        try:
+            sensor.cleanup()
+        except Exception:
+            pass
         sys.exit(1)
 
 
@@ -102,10 +166,6 @@ def test_signalk_connection(host=None, port=None, udp_port=None):
     """Test SignalK UDP connection without sensors."""
     setup_logging(level="INFO")
     logger.info("Testing SignalK UDP connection...")
-
-    import json
-    import socket
-    from datetime import UTC, datetime
 
     try:
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -159,8 +219,14 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Run individual sensor service (recommended):
+  # Run individual sensor service once (default):
   python3 i2c_sensor_read_and_publish.py bme280 --host 192.168.8.50
+  
+  # Run sensor 10 times:
+  python3 i2c_sensor_read_and_publish.py bme280 --host 192.168.8.50 --run-count 10
+  
+  # Run sensor continuously with automatic restarts on failure:
+  python3 i2c_sensor_read_and_publish.py bme280 --host 192.168.8.50 --run-count inf
         """,
     )
 
@@ -204,6 +270,12 @@ Examples:
         help="Update interval in seconds (overrides config, individual sensor mode only)",
     )
     parser.add_argument(
+        "--run-count",
+        type=str,
+        default="1",
+        help="Number of times to run the sensor (default: 1). Use 'inf' for infinite runs with automatic restarts on failure.",
+    )
+    parser.add_argument(
         "--test",
         action="store_true",
         help="Test SignalK connection only",
@@ -223,6 +295,20 @@ Examples:
         success = test_signalk_connection(args.host, args.port, args.udp_port)
         sys.exit(0 if success else 1)
 
+    # Parse run_count argument
+    run_count = 1.0
+    if args.run_count.lower() in ["inf", "infinite", "infinity"]:
+        run_count = math.inf
+    else:
+        try:
+            run_count = float(args.run_count)
+            if run_count <= 0:
+                parser.error("--run-count must be positive or 'inf'")
+            if not math.isinf(run_count) and run_count != int(run_count):
+                parser.error("--run-count must be an integer or 'inf'")
+        except ValueError:
+            parser.error(f"Invalid --run-count value: {args.run_count}. Must be a number or 'inf'")
+
     # Individual sensor mode (recommended)
     if args.sensor:
         run_individual_sensor(
@@ -233,6 +319,7 @@ Examples:
             info_path=args.config,
             update_interval=args.interval,
             log_level=args.log_level,
+            run_count=run_count,
         )
     else:
         # No sensor specified, raise an error
