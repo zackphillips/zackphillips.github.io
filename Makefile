@@ -92,7 +92,17 @@ define install-all-sensor-services
 			sensor_config = config.get('sensors', {}).get('$(5)', {}); \
 			run_count = sensor_config.get('run_count'); \
 			if run_count is None: \
-				print('1'); \
+				# Check if update_interval is inf (legacy way to enable continuous mode) \
+				update_interval = sensor_config.get('update_interval'); \
+				if update_interval is not None: \
+					if isinstance(update_interval, str) and update_interval.lower() in ['inf', 'infinite', 'infinity']: \
+						print('inf'); \
+					elif isinstance(update_interval, (int, float)) and float(update_interval) == float('inf'): \
+						print('inf'); \
+					else: \
+						print('1'); \
+				else: \
+					print('1'); \
 			elif isinstance(run_count, str) and run_count.lower() in ['inf', 'infinite', 'infinity']: \
 				print('inf'); \
 			elif isinstance(run_count, (int, float)): \

@@ -334,8 +334,21 @@ Examples:
                         logger.warning(f"Invalid run_count type in config: {type(config_run_count)}. Using default: 1.0")
                         run_count = 1.0
                 else:
-                    # Default to 1.0 if not in config (legacy one-shot mode)
-                    run_count = 1.0
+                    # If run_count not set, check if update_interval is inf (legacy way to enable continuous mode)
+                    config_update_interval = sensor_config.get("update_interval")
+                    if config_update_interval is not None:
+                        if isinstance(config_update_interval, str) and config_update_interval.lower() in ["inf", "infinite", "infinity"]:
+                            logger.info(f"Interpreting update_interval: inf as run_count: inf (continuous mode)")
+                            run_count = math.inf
+                        elif isinstance(config_update_interval, (int, float)) and math.isinf(float(config_update_interval)):
+                            logger.info(f"Interpreting update_interval: inf as run_count: inf (continuous mode)")
+                            run_count = math.inf
+                        else:
+                            # Default to 1.0 if not in config (legacy one-shot mode)
+                            run_count = 1.0
+                    else:
+                        # Default to 1.0 if not in config (legacy one-shot mode)
+                        run_count = 1.0
             except Exception as e:
                 logger.warning(f"Could not read run_count from config: {e}. Using default: 1.0")
                 run_count = 1.0
