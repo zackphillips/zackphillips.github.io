@@ -7,7 +7,7 @@ Type=simple
 User={{USER}}
 WorkingDirectory={{WORKING_DIRECTORY}}
 ExecStart={{EXEC_START}}
-Restart=always
+Restart={{RESTART_POLICY}}
 RestartSec={{RESTART_SEC}}
 Environment=SENSOR_HOST={{SENSOR_HOST}}
 Environment=SENSOR_PORT={{SENSOR_PORT}}

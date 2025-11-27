@@ -272,8 +272,8 @@ Examples:
     parser.add_argument(
         "--run-count",
         type=str,
-        default="1",
-        help="Number of times to run the sensor (default: 1). Use 'inf' for infinite runs with automatic restarts on failure.",
+        default=None,
+        help="Number of times to run the sensor (default: read from config, or 1). Use 'inf' for infinite runs with automatic restarts on failure.",
     )
     parser.add_argument(
         "--test",
@@ -295,22 +295,50 @@ Examples:
         success = test_signalk_connection(args.host, args.port, args.udp_port)
         sys.exit(0 if success else 1)
 
-    # Parse run_count argument
-    run_count = 1.0
-    if args.run_count.lower() in ["inf", "infinite", "infinity"]:
-        run_count = math.inf
-    else:
-        try:
-            run_count = float(args.run_count)
-            if run_count <= 0:
-                parser.error("--run-count must be positive or 'inf'")
-            if not math.isinf(run_count) and run_count != int(run_count):
-                parser.error("--run-count must be an integer or 'inf'")
-        except ValueError:
-            parser.error(f"Invalid --run-count value: {args.run_count}. Must be a number or 'inf'")
-
     # Individual sensor mode (recommended)
     if args.sensor:
+        # Parse run_count argument (default to 1.0, or read from config if not specified)
+        run_count = None
+        if args.run_count:
+            # Parse explicit run_count argument
+            if args.run_count.lower() in ["inf", "infinite", "infinity"]:
+                run_count = math.inf
+            else:
+                try:
+                    run_count = float(args.run_count)
+                    if run_count <= 0:
+                        parser.error("--run-count must be positive or 'inf'")
+                    if not math.isinf(run_count) and run_count != int(run_count):
+                        parser.error("--run-count must be an integer or 'inf'")
+                except ValueError:
+                    parser.error(f"Invalid --run-count value: {args.run_count}. Must be a number or 'inf'")
+        else:
+            # Read from config if not explicitly provided
+            try:
+                vessel_info = load_vessel_info(args.config)
+                sensor_config = vessel_info.get("sensors", {}).get(args.sensor, {})
+                config_run_count = sensor_config.get("run_count")
+                
+                if config_run_count is not None:
+                    if isinstance(config_run_count, str) and config_run_count.lower() in ["inf", "infinite", "infinity"]:
+                        run_count = math.inf
+                    elif isinstance(config_run_count, (int, float)):
+                        run_count = float(config_run_count)
+                        if math.isinf(run_count):
+                            # Handle numpy.inf or math.inf
+                            run_count = math.inf
+                        elif run_count <= 0:
+                            logger.warning(f"Invalid run_count in config: {config_run_count}. Using default: 1.0")
+                            run_count = 1.0
+                    else:
+                        logger.warning(f"Invalid run_count type in config: {type(config_run_count)}. Using default: 1.0")
+                        run_count = 1.0
+                else:
+                    # Default to 1.0 if not in config (legacy one-shot mode)
+                    run_count = 1.0
+            except Exception as e:
+                logger.warning(f"Could not read run_count from config: {e}. Using default: 1.0")
+                run_count = 1.0
         run_individual_sensor(
             sensor_name=args.sensor,
             signalk_host=args.host,

@@ -1,5 +1,5 @@
 .PHONY: server help install uninstall test pre-commit-install lint config sync-dev sync-pi status
-.PHONY: install-sensors check-i2c check-signalk-token create-signalk-token run-bme280 run-bno055 run-mmc5603 run-sgp30 run-magnetic-service
+.PHONY: install-sensors check-i2c check-signalk-token create-signalk-token run-sensors run-bme280 run-bno055 run-mmc5603 run-sgp30 run-magnetic-service
 .PHONY: install-all-sensor-services uninstall-all-sensor-services check-service-status-all-sensors show-logs-all-sensors
 .PHONY: install-bme280-service install-bno055-service install-mmc5603-service install-sgp30-service
 .PHONY: uninstall-bme280-service uninstall-bno055-service uninstall-mmc5603-service uninstall-sgp30-service
@@ -85,12 +85,45 @@ define install-all-sensor-services
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	@echo "Rendering $(2) service template..."
-	@sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+	@echo "Reading run_count from config for $(5)..."
+	@RUN_COUNT=$$(python3 -c "import yaml; \
+		try: \
+			config = yaml.safe_load(open('$(CURDIR)/data/vessel/info.yaml')); \
+			sensor_config = config.get('sensors', {}).get('$(5)', {}); \
+			run_count = sensor_config.get('run_count'); \
+			if run_count is None: \
+				print('1'); \
+			elif isinstance(run_count, str) and run_count.lower() in ['inf', 'infinite', 'infinity']: \
+				print('inf'); \
+			elif isinstance(run_count, (int, float)): \
+				if run_count == float('inf'): \
+					print('inf'); \
+				elif run_count > 0: \
+					print(str(int(run_count))); \
+				else: \
+					print('1'); \
+			else: \
+				print('1'); \
+		except: \
+			print('1');" 2>/dev/null || echo "1"); \
+	if [ "$$RUN_COUNT" = "inf" ]; then \
+		echo "  Configuring $(5) for infinite mode (continuous with systemd restart)"; \
+		RESTART_POLICY="always"; \
+		RESTART_SEC="10"; \
+		RUN_COUNT_ARG="--run-count inf"; \
+	else \
+		echo "  Configuring $(5) for one-shot mode (run_count=$$RUN_COUNT, legacy mode if update_interval set)"; \
+		RESTART_POLICY="on-failure"; \
+		RESTART_SEC="10"; \
+		RUN_COUNT_ARG=""; \
+	fi; \
+	echo "Rendering $(2) service template..."; \
+	sed -e "s|{{DESCRIPTION}}|$(3)|g" \
 		-e "s|{{USER}}|$$(whoami)|g" \
 		-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-		-e "s|{{EXEC_START}}|$(UV_BIN) run python3 scripts/$(4) $(5) --host $(SENSOR_HOST) --port $(SENSOR_PORT)|g" \
-		-e "s|{{RESTART_SEC}}|10|g" \
+		-e "s|{{EXEC_START}}|$(UV_BIN) run python3 scripts/$(4) $(5) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $$RUN_COUNT_ARG|g" \
+		-e "s|{{RESTART_POLICY}}|$$RESTART_POLICY|g" \
+		-e "s|{{RESTART_SEC}}|$$RESTART_SEC|g" \
 		-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
 		-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
 		"$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null
@@ -569,30 +602,31 @@ install-sensors: check-linux check-signalk-token
 	@echo ""
 
 
-# Run I2C sensors to SignalK publisher (runs each sensor individually for consistency)
-# run-sensors: check-signalk-token
-# 	@if [ -z "$(UV_BIN)" ]; then \
-# 		echo "Error: 'uv' is not installed. Please install uv first."; \
-# 		echo "Visit: https://github.com/astral-sh/uv"; \
-# 		exit 1; \
-# 	fi
-# 	@echo "Starting I2C sensors to SignalK publisher (individual sensor mode)..."
-# 	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
-# 	@echo "Running with uv: $(UV_BIN)"
-# 	@echo ""
-# 	@echo "Running BME280 sensor..."
-# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BME280 failed"
-# 	@echo ""
-# 	@echo "Running BNO055 sensor..."
-# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BNO055 failed"
-# 	@echo ""
-# 	@echo "Running MMC5603 sensor..."
-# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "MMC5603 failed"
-# 	@echo ""
-# 	@echo "Running SGP30 sensor..."
-# 	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "SGP30 failed"
-# 	@echo ""
-# 	@echo "All sensors completed."
+# Run I2C sensors to SignalK publisher (runs each sensor individually, reading run_count from config)
+run-sensors: check-signalk-token
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	@echo "Starting I2C sensors to SignalK publisher (individual sensor mode)..."
+	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
+	@echo "Running with uv: $(UV_BIN)"
+	@echo "Reading run_count from data/vessel/info.yaml for each sensor..."
+	@echo ""
+	@echo "Running BME280 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BME280 failed"
+	@echo ""
+	@echo "Running BNO055 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BNO055 failed"
+	@echo ""
+	@echo "Running MMC5603 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "MMC5603 failed"
+	@echo ""
+	@echo "Running SGP30 sensor..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "SGP30 failed"
+	@echo ""
+	@echo "All sensors completed."
 
 # Run individual I2C sensors to SignalK publisher
 run-bme280: check-signalk-token
