@@ -151,11 +151,12 @@ def save_calibration_data(bno055, vessel_info):
             if "sensors" not in vessel_info:
                 vessel_info["sensors"] = {}
 
-            if "bno055_calibration" not in vessel_info["sensors"]:
-                vessel_info["sensors"]["bno055_calibration"] = {}
+            # Ensure bno055 section exists
+            if "bno055" not in vessel_info["sensors"]:
+                vessel_info["sensors"]["bno055"] = {}
 
-            # Store calibration data (cal_data is already a dictionary with named fields)
-            vessel_info["sensors"]["bno055_calibration"] = cal_data
+            # Store calibration data under bno055.calibration
+            vessel_info["sensors"]["bno055"]["calibration"] = cal_data
 
             print("Calibration data saved to vessel info")
             return True
@@ -172,14 +173,13 @@ def load_calibration_data(bno055, vessel_info):
     """Load calibration data from vessel info and apply to BNO055."""
     try:
         # Check if calibration data exists in vessel info
-        if (
-            "sensors" not in vessel_info
-            or "bno055_calibration" not in vessel_info["sensors"]
-        ):
+        sensors_config = vessel_info.get("sensors", {})
+        bno055_config = sensors_config.get("bno055", {})
+        cal_data = bno055_config.get("calibration")
+        
+        if cal_data is None:
             print("No saved calibration data found in vessel info")
             return False
-
-        cal_data = vessel_info["sensors"]["bno055_calibration"]
 
         # Validate the calibration data
         is_valid, message = validate_calibration_data(cal_data)
@@ -237,15 +237,20 @@ def calibrate_zero_state(bno055, vessel_info):
         print(f"  Roll: {math.degrees(avg_roll):.1f}deg")
         print(f"  Pitch: {math.degrees(avg_pitch):.1f}deg")
 
-        # Store zero state in vessel info
+        # Store zero state in vessel info under bno055.calibration
         if "sensors" not in vessel_info:
             vessel_info["sensors"] = {}
-
-        vessel_info["sensors"]["bno055_zero_state"] = {
-            "roll": avg_roll,
-            "pitch": avg_pitch,
-            "timestamp": time.time(),
-        }
+        
+        if "bno055" not in vessel_info["sensors"]:
+            vessel_info["sensors"]["bno055"] = {}
+        
+        if "calibration" not in vessel_info["sensors"]["bno055"]:
+            vessel_info["sensors"]["bno055"]["calibration"] = {}
+        
+        # Merge zero state into calibration data
+        vessel_info["sensors"]["bno055"]["calibration"]["roll"] = avg_roll
+        vessel_info["sensors"]["bno055"]["calibration"]["pitch"] = avg_pitch
+        vessel_info["sensors"]["bno055"]["calibration"]["zero_state_timestamp"] = time.time()
 
         print("Zero state saved to vessel info")
         return True
@@ -429,23 +434,13 @@ def main():
     print("=== BNO055 IMU Calibration ===")
     print()
     print("This script will guide you through calibrating the BNO055 IMU sensor.")
-    print("The BNO055 requires calibration for accurate orientation and motion data.")
-
-    # Ask user about sensor mounting orientation
-    print("\n=== Sensor Mounting Orientation ===")
-    print(
-        "Is the BNO055 sensor mounted horizontally (e.g., flat on deck)?"
-    )
-    print("If mounted horizontally, roll and pitch values will be flipped.")
-    mounting_choice = input("Is the sensor mounted horizontally? (y/n): ").lower().strip()
-    is_mounted_horizontally = mounting_choice in ["y", "yes"]
+    print("The BNO055 requires calibration for motion data.")
 
     # Save mounting orientation to vessel info
     if "sensors" not in vessel_info:
         vessel_info["sensors"] = {}
     if "bno055" not in vessel_info["sensors"]:
         vessel_info["sensors"]["bno055"] = {}
-    vessel_info["sensors"]["bno055"]["mounted_horizontally"] = is_mounted_horizontally
     if not save_vessel_info(vessel_info):
         print("Warning: Failed to save mounting orientation to vessel info.")
 

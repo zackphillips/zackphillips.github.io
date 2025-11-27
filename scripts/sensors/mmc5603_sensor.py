@@ -30,7 +30,9 @@ class MMC5603Sensor(BaseSensor):
 
         # Load heading correction offset
         sensors_config = self.vessel_info.get("sensors", {})
-        self.heading_correction_offset = sensors_config.get(
+        mmc5603_config = sensors_config.get("mmc5603", {})
+        calibration = mmc5603_config.get("calibration", {})
+        self.heading_correction_offset = calibration.get(
             "heading_correction_offset_rad", 0.0
         )
         logger.info(

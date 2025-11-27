@@ -330,9 +330,11 @@ def validate_sensor_config(sensor_config: dict[str, Any]) -> None:
     Raises:
         SensorConfigError: If sensor configuration is invalid
     """
-    # Validate heading correction offset if present
-    if "heading_correction_offset_rad" in sensor_config:
-        offset = sensor_config["heading_correction_offset_rad"]
+    # Validate heading correction offset if present (under mmc5603.calibration)
+    mmc5603_config = sensor_config.get("mmc5603", {})
+    calibration = mmc5603_config.get("calibration", {})
+    if "heading_correction_offset_rad" in calibration:
+        offset = calibration["heading_correction_offset_rad"]
         if not isinstance(offset, (int, float)):
             raise SensorConfigError(f"Invalid heading correction offset: {offset} (must be numeric)")
 
@@ -359,7 +361,11 @@ def create_default_vessel_config() -> dict[str, Any]:
             "protocol": "https"
         },
         "sensors": {
-            "heading_correction_offset_rad": 0.0
+            "mmc5603": {
+                "calibration": {
+                    "heading_correction_offset_rad": 0.0
+                }
+            }
         }
     }
 

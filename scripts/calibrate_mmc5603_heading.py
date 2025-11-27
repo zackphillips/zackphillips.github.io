@@ -159,11 +159,17 @@ def main():
 
     print(f"Calculated correction offset: {radians_to_degrees(correction_offset):.1f} deg ({correction_offset:.4f} rad)")
 
-    # Update vessel info
+    # Update vessel info under mmc5603.calibration
     if "sensors" not in vessel_info:
         vessel_info["sensors"] = {}
-
-    vessel_info["sensors"]["heading_correction_offset_rad"] = correction_offset
+    
+    if "mmc5603" not in vessel_info["sensors"]:
+        vessel_info["sensors"]["mmc5603"] = {}
+    
+    if "calibration" not in vessel_info["sensors"]["mmc5603"]:
+        vessel_info["sensors"]["mmc5603"]["calibration"] = {}
+    
+    vessel_info["sensors"]["mmc5603"]["calibration"]["heading_correction_offset_rad"] = correction_offset
 
     # Save updated info
     if save_vessel_info(vessel_info):

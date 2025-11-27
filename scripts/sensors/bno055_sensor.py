@@ -66,11 +66,12 @@ class BNO055Sensor(BaseSensor):
     def _load_calibration(self):
         """Load calibration data from vessel info and apply to BNO055."""
         sensors_config = self.vessel_info.get("sensors", {})
-        if "bno055_calibration" not in sensors_config:
+        bno055_config = sensors_config.get("bno055", {})
+        cal_data = bno055_config.get("calibration")
+        
+        if cal_data is None:
             logger.info("No saved BNO055 calibration data found")
             return False
-
-        cal_data = sensors_config["bno055_calibration"]
 
         # Validate the calibration data
         is_valid, message = validate_calibration_data(cal_data)
@@ -145,7 +146,8 @@ class BNO055Sensor(BaseSensor):
 
             # Apply zero state calibration for pitch and roll
             sensors_config = self.vessel_info.get("sensors", {})
-            calibration = sensors_config.get("bno055_calibration", {})
+            bno055_config = sensors_config.get("bno055", {})
+            calibration = bno055_config.get("calibration", {})
             roll_calibrated_rad = roll_rad - calibration.get("roll", 0)
             pitch_calibrated_rad = pitch_rad - calibration.get("pitch", 0)
 

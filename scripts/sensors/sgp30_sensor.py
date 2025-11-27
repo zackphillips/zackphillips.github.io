@@ -59,12 +59,14 @@ class SGP30Sensor(BaseSensor):
         """Load calibration data from vessel info and apply to SGP30."""
         logger.debug("SGP30: Checking for calibration data in vessel config...")
         sensors_config = self.vessel_info.get("sensors", {})
-        if "sgp30_calibration" not in sensors_config:
+        sgp30_config = sensors_config.get("sgp30", {})
+        cal_data = sgp30_config.get("calibration")
+        
+        if cal_data is None:
             logger.info("SGP30: No saved calibration data found in vessel config")
             return False
 
         logger.info("SGP30: Calibration data found, loading...")
-        cal_data = sensors_config["sgp30_calibration"]
 
         # Set relative humidity for better accuracy
         if (

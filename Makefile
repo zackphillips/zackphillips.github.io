@@ -74,7 +74,27 @@ endef
 
 # Macro for installing individual sensor services using i2c_sensor_read_and_publish.py
 define install-all-sensor-services
-	@echo "Installing $(2) systemd service..."
+	@echo "Checking config for $(5) sensor..."
+	@SENSOR_EXISTS=$$(python3 -c "import yaml; \
+		try: \
+			config = yaml.safe_load(open('$(CURDIR)/data/vessel/info.yaml')); \
+			sensors = config.get('sensors', {}); \
+			if '$(5)' not in sensors: \
+				print('no'); \
+			else: \
+				sensor_config = sensors.get('$(5)', {}); \
+				update_interval = sensor_config.get('update_interval'); \
+				if update_interval is None: \
+					print('no'); \
+				else: \
+					print('yes'); \
+		except: \
+			print('no');" 2>/dev/null || echo "no"); \
+	if [ "$$SENSOR_EXISTS" = "no" ]; then \
+		echo "  Skipping $(5) service installation: sensor key '$(5)' not found in config or update_interval is null/missing"; \
+		exit 0; \
+	fi; \
+	echo "Installing $(2) systemd service..."
 	@if [ -f "/etc/systemd/system/$(2).service" ]; then \
 		echo "$(2) service already exists. Uninstalling first..."; \
 		sudo systemctl stop $(2) 2>/dev/null || true; \
@@ -619,24 +639,24 @@ run-sensors: check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	@echo "Starting I2C sensors to SignalK publisher (individual sensor mode)..."
+	@echo "Starting I2C sensors to SignalK publisher (one-shot mode, one run per sensor)..."
 	@echo "Host: $(SENSOR_HOST), Port: $(SENSOR_PORT)"
 	@echo "Running with uv: $(UV_BIN)"
-	@echo "Reading run_count from data/vessel/info.yaml for each sensor..."
+	@echo "Note: Each sensor will run once, regardless of run_count in config"
 	@echo ""
-	@echo "Running BME280 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BME280 failed"
+	@echo "Running BME280 sensor (one run)..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "BME280 failed"
 	@echo ""
-	@echo "Running BNO055 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "BNO055 failed"
+	@echo "Running BNO055 sensor (one run)..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "BNO055 failed"
 	@echo ""
-	@echo "Running MMC5603 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "MMC5603 failed"
+	@echo "Running MMC5603 sensor (one run)..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "MMC5603 failed"
 	@echo ""
-	@echo "Running SGP30 sensor..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) || echo "SGP30 failed"
+	@echo "Running SGP30 sensor (one run)..."
+	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "SGP30 failed"
 	@echo ""
-	@echo "All sensors completed."
+	@echo "All sensors completed (one run each)."
 
 # Run individual I2C sensors to SignalK publisher
 run-bme280: check-signalk-token

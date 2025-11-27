@@ -140,9 +140,13 @@ def save_sgp30_calibration(temperature, humidity, tvoc_baseline, eco2_baseline, 
         # Ensure sensors section exists
         if "sensors" not in vessel_info:
             vessel_info["sensors"] = {}
+        
+        # Ensure sgp30 section exists
+        if "sgp30" not in vessel_info["sensors"]:
+            vessel_info["sensors"]["sgp30"] = {}
 
-        # Store SGP30 calibration data
-        vessel_info["sensors"]["sgp30_calibration"] = {
+        # Store SGP30 calibration data under sgp30.calibration
+        vessel_info["sensors"]["sgp30"]["calibration"] = {
             "temperature_celsius": temperature,
             "relative_humidity_percent": humidity,
             "tvoc_baseline_ppb": tvoc_baseline,
