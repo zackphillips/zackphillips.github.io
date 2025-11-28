@@ -75,94 +75,51 @@ endef
 # Macro for installing individual sensor services using i2c_sensor_read_and_publish.py
 define install-all-sensor-services
 	@echo "Checking config for $(5) sensor..."
-	@SENSOR_EXISTS=$$(python3 -c "import yaml; \
-		try: \
-			config = yaml.safe_load(open('$(CURDIR)/data/vessel/info.yaml')); \
-			sensors = config.get('sensors', {}); \
-			if '$(5)' not in sensors: \
-				print('no'); \
-			else: \
-				sensor_config = sensors.get('$(5)', {}); \
-				update_interval = sensor_config.get('update_interval'); \
-				if update_interval is None: \
-					print('no'); \
-				else: \
-					print('yes'); \
-		except: \
-			print('no');" 2>/dev/null || echo "no"); \
-	if [ "$$SENSOR_EXISTS" = "no" ]; then \
-		echo "  Skipping $(5) service installation: sensor key '$(5)' not found in config or update_interval is null/missing"; \
-		exit 0; \
-	fi; \
-	echo "Installing $(2) systemd service..."
-	@if [ -f "/etc/systemd/system/$(2).service" ]; then \
-		echo "$(2) service already exists. Uninstalling first..."; \
-		sudo systemctl stop $(2) 2>/dev/null || true; \
-		sudo systemctl disable $(2) 2>/dev/null || true; \
-	fi
 	@if [ -z "$(UV_BIN)" ]; then \
 		echo "Error: 'uv' is not installed. Please install uv first."; \
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	@echo "Reading run_count from config for $(5)..."
-	@RUN_COUNT=$$(python3 -c "import yaml; \
-		try: \
-			config = yaml.safe_load(open('$(CURDIR)/data/vessel/info.yaml')); \
-			sensor_config = config.get('sensors', {}).get('$(5)', {}); \
-			run_count = sensor_config.get('run_count'); \
-			if run_count is None: \
-				# Check if update_interval is inf (legacy way to enable continuous mode) \
-				update_interval = sensor_config.get('update_interval'); \
-				if update_interval is not None: \
-					if isinstance(update_interval, str) and update_interval.lower() in ['inf', 'infinite', 'infinity']: \
-						print('inf'); \
-					elif isinstance(update_interval, (int, float)) and float(update_interval) == float('inf'): \
-						print('inf'); \
-					else: \
-						print('1'); \
-				else: \
-					print('1'); \
-			elif isinstance(run_count, str) and run_count.lower() in ['inf', 'infinite', 'infinity']: \
-				print('inf'); \
-			elif isinstance(run_count, (int, float)): \
-				if run_count == float('inf'): \
-					print('inf'); \
-				elif run_count > 0: \
-					print(str(int(run_count))); \
-				else: \
-					print('1'); \
-			else: \
-				print('1'); \
-		except: \
-			print('1');" 2>/dev/null || echo "1"); \
-	if [ "$$RUN_COUNT" = "inf" ]; then \
-		echo "  Configuring $(5) for infinite mode (continuous with systemd restart)"; \
-		RESTART_POLICY="always"; \
-		RESTART_SEC="10"; \
-		RUN_COUNT_ARG="--run-count inf"; \
+	@SENSOR_EXISTS=$$("$(UV_BIN)" run python3 -c "import yaml; config = yaml.safe_load(open('$(CURDIR)/data/vessel/info.yaml')); sensors = config.get('sensors', {}); sensor_config = sensors.get('$(5)', {}); update_interval = sensor_config.get('update_interval') if sensor_config else None; print('yes' if update_interval is not None else 'no')" 2>/dev/null || echo "error"); \
+	if [ "$$SENSOR_EXISTS" != "yes" ]; then \
+		echo "  Skipping $(5) service installation: sensor key '$(5)' not found in config or update_interval is null/missing: $$SENSOR_EXISTS"; \
 	else \
-		echo "  Configuring $(5) for one-shot mode (run_count=$$RUN_COUNT, legacy mode if update_interval set)"; \
-		RESTART_POLICY="on-failure"; \
-		RESTART_SEC="10"; \
-		RUN_COUNT_ARG=""; \
-	fi; \
-	echo "Rendering $(2) service template..."; \
-	sed -e "s|{{DESCRIPTION}}|$(3)|g" \
-		-e "s|{{USER}}|$$(whoami)|g" \
-		-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-		-e "s|{{EXEC_START}}|$(UV_BIN) run python3 scripts/$(4) $(5) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $$RUN_COUNT_ARG|g" \
-		-e "s|{{RESTART_POLICY}}|$$RESTART_POLICY|g" \
-		-e "s|{{RESTART_SEC}}|$$RESTART_SEC|g" \
-		-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
-		-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
-		"$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null
-	@echo "Reloading systemd..."
-	@sudo systemctl daemon-reload
-	@echo "Enabling and starting $(2) service..."
-	@sudo systemctl enable $(2)
-	@sudo systemctl start $(2)
-	@echo "$(2) service installed and started successfully!"
+		echo "Installing $(2) systemd service..."; \
+		if [ -f "/etc/systemd/system/$(2).service" ]; then \
+			echo "$(2) service already exists. Uninstalling first..."; \
+			sudo systemctl stop $(2) 2>/dev/null || true; \
+			sudo systemctl disable $(2) 2>/dev/null || true; \
+		fi; \
+		echo "Reading run_count from config for $(5)..."; \
+		RUN_COUNT=$$("$(UV_BIN)" run python3 -c "import yaml; config = yaml.safe_load(open('$(CURDIR)/data/vessel/info.yaml')); sensor_config = config.get('sensors', {}).get('$(5)', {}); run_count = sensor_config.get('run_count') if sensor_config else None; update_interval = sensor_config.get('update_interval') if sensor_config else None; result = 'inf' if (isinstance(run_count, str) and run_count.lower() in ['inf', 'infinite', 'infinity']) or (isinstance(run_count, (int, float)) and run_count == float('inf')) else (str(int(run_count)) if isinstance(run_count, (int, float)) and run_count > 0 else ('inf' if update_interval is not None and ((isinstance(update_interval, str) and update_interval.lower() in ['inf', 'infinite', 'infinity']) or (isinstance(update_interval, (int, float)) and float(update_interval) == float('inf'))) else '1')); print(result)" 2>/dev/null || echo "1"); \
+		if [ "$$RUN_COUNT" = "inf" ]; then \
+			echo "  Configuring $(5) for infinite mode (continuous with systemd restart)"; \
+			RESTART_POLICY="always"; \
+			RESTART_SEC="10"; \
+			RUN_COUNT_ARG="--run-count inf"; \
+		else \
+			echo "  Configuring $(5) for one-shot mode (run_count=$$RUN_COUNT, legacy mode if update_interval set)"; \
+			RESTART_POLICY="on-failure"; \
+			RESTART_SEC="10"; \
+			RUN_COUNT_ARG=""; \
+		fi; \
+		echo "Rendering $(2) service template..."; \
+		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
+			-e "s|{{USER}}|$$(whoami)|g" \
+			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run python3 scripts/$(4) $(5) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $$RUN_COUNT_ARG|g" \
+			-e "s|{{RESTART_POLICY}}|$$RESTART_POLICY|g" \
+			-e "s|{{RESTART_SEC}}|$$RESTART_SEC|g" \
+			-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
+			-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
+			"$(CURDIR)/services/sensor.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
+		echo "Reloading systemd..."; \
+		sudo systemctl daemon-reload; \
+		echo "Enabling and starting $(2) service..."; \
+		sudo systemctl enable $(2); \
+		sudo systemctl start $(2); \
+		echo "$(2) service installed and started successfully!"; \
+	fi
 endef
 
 define uninstall-service
