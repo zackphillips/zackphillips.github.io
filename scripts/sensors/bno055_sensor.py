@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from bno055_register_io import validate_calibration_data, write_calibration
 
 from .base import BaseSensor
+from .swell_analyzer import SwellAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,31 @@ class BNO055Sensor(BaseSensor):
         super().__init__("bno055", *args, **kwargs)
         self.bno055_sensor = None
         self._calibration_warned = False
+        # Initialize swell analyzer
+        # Use update_interval as sample rate (inverse of interval)
+        # Handle inf or very large intervals
+        try:
+            # Convert to float, handling string "inf"
+            if isinstance(self.update_interval, str):
+                if self.update_interval.lower() == "inf":
+                    update_interval_float = float("inf")
+                else:
+                    update_interval_float = float(self.update_interval)
+            else:
+                update_interval_float = float(self.update_interval)
+
+            if (
+                update_interval_float == float("inf")
+                or update_interval_float <= 0
+                or update_interval_float > 60
+            ):
+                sample_rate = 1.0  # Default to 1 Hz
+            else:
+                sample_rate = 1.0 / update_interval_float
+        except (ValueError, TypeError):
+            # Fallback to default if conversion fails
+            sample_rate = 1.0
+        self.swell_analyzer = SwellAnalyzer(sample_rate=sample_rate)
 
     def initialize(self) -> bool:
         """Initialize BNO055 sensor hardware."""
@@ -160,8 +186,35 @@ class BNO055Sensor(BaseSensor):
                 "value": pitch_calibrated_rad,
                 "units": "rad",
             }
+
+            # Add sample to swell analyzer
+            self.swell_analyzer.add_sample(pitch_calibrated_rad, roll_calibrated_rad)
+
+            # Calculate swell characteristics
+            swell_data = self.swell_analyzer.analyze()
+
+            # Add swell data to output if available
+            if swell_data["period"] is not None:
+                data["environment.waves.swell.period"] = {
+                    "value": swell_data["period"],
+                    "units": "s",
+                }
+            if swell_data["direction"] is not None:
+                data["environment.waves.swell.direction"] = {
+                    "value": swell_data["direction"],
+                    "units": "rad",
+                }
+            if swell_data["height"] is not None:
+                data["environment.waves.swell.height"] = {
+                    "value": swell_data["height"],
+                    "units": "m",
+                }
+
             logger.info("BNO055 Data Readout:")
             for key, value in data.items():
-                logger.info(f"   {key}: {value["value"] * 180 / math.pi}deg")
+                if "swell" in key:
+                    logger.info(f"   {key}: {value['value']}")
+                else:
+                    logger.info(f"   {key}: {value['value'] * 180 / math.pi}deg")
 
         return data
