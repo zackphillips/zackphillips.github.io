@@ -295,6 +295,8 @@ install-all-sensor-services: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
+	@echo "Uninstalling all sensor services first (to ensure clean state)..."
+	@$(MAKE) uninstall-all-sensor-services
 	@echo "Installing all individual sensor services..."
 	@$(MAKE) install-bme280-service
 	@$(MAKE) install-bno055-service
