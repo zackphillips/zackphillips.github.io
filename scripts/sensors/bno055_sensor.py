@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from bno055_register_io import validate_calibration_data, write_calibration
 
 from .base import BaseSensor
-from .swell_analyzer import SwellAnalyzer
+from .swell_analyzer import MIN_HEIGHT_METERS, SwellAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -193,22 +193,37 @@ class BNO055Sensor(BaseSensor):
             # Calculate swell characteristics
             swell_data = self.swell_analyzer.analyze()
 
-            # Add swell data to output if available
-            if swell_data["period"] is not None:
-                data["environment.waves.swell.period"] = {
-                    "value": swell_data["period"],
-                    "units": "s",
-                }
-            if swell_data["direction"] is not None:
-                data["environment.waves.swell.direction"] = {
-                    "value": swell_data["direction"],
-                    "units": "rad",
-                }
-            if swell_data["height"] is not None:
-                data["environment.waves.swell.height"] = {
-                    "value": swell_data["height"],
-                    "units": "m",
-                }
+            def add_swell_value(path: str, value: float | None, units: str):
+                """Attach a swell measurement (even if None) so SignalK can clear stale data."""
+                data[path] = {"value": value, "units": units}
+
+            swell_height = swell_data.get("height")
+            height_below_threshold = (
+                swell_height is not None and swell_height < MIN_HEIGHT_METERS
+            )
+
+            if swell_data.get("period") is not None or height_below_threshold:
+                period_value = None if height_below_threshold else swell_data.get("period")
+                add_swell_value(
+                    "environment.waves.swell.period",
+                    period_value,
+                    "s",
+                )
+            if swell_data.get("direction") is not None or height_below_threshold:
+                direction_value = (
+                    None if height_below_threshold else swell_data.get("direction")
+                )
+                add_swell_value(
+                    "environment.waves.swell.direction",
+                    direction_value,
+                    "rad",
+                )
+            if swell_height is not None:
+                add_swell_value(
+                    "environment.waves.swell.height",
+                    swell_height,
+                    "m",
+                )
 
             logger.info("BNO055 Data Readout:")
             for key, value in data.items():
