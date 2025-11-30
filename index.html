@@ -1289,6 +1289,21 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           <div class="info-item" title="US Coast Guard vessel registration number"><div class="label">USCG #</div><div class="value">${vesselData?.uscg_number || 'N/A'}</div></div>
         `;
 
+        const isNumericValue = (val) => typeof val === 'number' && Number.isFinite(val);
+        const swell = env.waves?.swell ?? {};
+        const toTrueDegrees = (radians) => {
+          const degrees = (radians * 180) / Math.PI;
+          return ((degrees % 360) + 360) % 360;
+        };
+        const swellHeightDisplay = isNumericValue(swell.height?.value)
+          ? `${(swell.height.value * 3.28084).toFixed(1)} ft`
+          : 'N/A';
+        const swellPeriodDisplay = isNumericValue(swell.period?.value)
+          ? `${swell.period.value.toFixed(1)} s`
+          : 'N/A';
+        const swellDirectionDisplay = isNumericValue(swell.direction?.value)
+          ? `${toTrueDegrees(swell.direction.value).toFixed(0)}°`
+          : 'N/A';
         // Update the environment with environmental data
         document.getElementById('environment-grid').innerHTML = `
           <div class="info-item" title="Water temperature at the surface"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
@@ -1300,6 +1315,9 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           <div class="info-item" title="Magnetic variation at current position - difference between true and magnetic north"><div class="label">Magnetic Variation</div><div class="value">${data.navigation?.magneticVariation?.value ? (data.navigation.magneticVariation.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
           <div class="info-item" title="Sunrise time today"><div class="label">Sunrise</div><div class="value">${data.environment?.sunlight?.times?.sunrise?.value ? new Date(data.environment.sunlight.times.sunrise.value).toLocaleTimeString() : 'N/A'}</div></div>
           <div class="info-item" title="Sunset time today"><div class="label">Sunset</div><div class="value">${data.environment?.sunlight?.times?.sunset?.value ? new Date(data.environment.sunlight.times.sunset.value).toLocaleTimeString() : 'N/A'}</div></div>
+          <div class="info-item" title="Dominant swell height from onboard IMU"><div class="label">Swell Height</div><div class="value">${swellHeightDisplay}</div></div>
+          <div class="info-item" title="Dominant swell period from onboard IMU"><div class="label">Swell Period</div><div class="value">${swellPeriodDisplay}</div></div>
+          <div class="info-item" title="Direction the swell is coming from (true)"><div class="label">Swell Direction</div><div class="value">${swellDirectionDisplay}</div></div>
         `;
       } catch (err) {
         console.error("Failed to load data:", err);
