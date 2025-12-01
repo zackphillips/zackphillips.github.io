@@ -1296,15 +1296,37 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           return ((degrees % 360) + 360) % 360;
         };
         const motion = env.motion ?? {};
-        const swellHeightDisplay = isNumericValue(swell.height?.value)
-          ? `${(swell.height.value * 3.28084).toFixed(1)} ft`
+        const fallbackRoll = data.navigation?.attitude?.roll?.value;
+        const fallbackPitch = data.navigation?.attitude?.pitch?.value;
+        let heelValue = isNumericValue(motion.heel?.value) ? motion.heel.value : null;
+        if (heelValue === null && isNumericValue(fallbackRoll)) {
+          heelValue = Math.abs(fallbackRoll) * 180 / Math.PI;
+        }
+        let comfortValue = isNumericValue(motion.comfortIndex?.value)
+          ? motion.comfortIndex.value
+          : null;
+        if (comfortValue === null && isNumericValue(fallbackRoll) && isNumericValue(fallbackPitch)) {
+          const combinedAngle = Math.sqrt(fallbackRoll ** 2 + fallbackPitch ** 2);
+          const combinedDeg = combinedAngle * 180 / Math.PI;
+          const severityRatio = Math.min(combinedDeg / 30, 1);
+          comfortValue = parseFloat((10 - severityRatio * 9).toFixed(1));
+        }
+        const swellHeightValue = swell.height?.value;
+        const swellHeightDisplay = isNumericValue(swellHeightValue)
+          ? `${(swellHeightValue * 3.28084).toFixed(1)} ft`
           : 'N/A';
-        const swellPeriodDisplay = isNumericValue(swell.period?.value)
-          ? `${swell.period.value.toFixed(1)} s`
-          : 'null';
-        const swellDirectionDisplay = isNumericValue(swell.direction?.value)
-          ? `${toTrueDegrees(swell.direction.value).toFixed(0)}°`
-          : 'null';
+        const swellHeightNegative =
+          isNumericValue(swellHeightValue) && swellHeightValue < 0;
+        const swellPeriodDisplay = swellHeightNegative
+          ? 'N/A'
+          : isNumericValue(swell.period?.value)
+            ? `${swell.period.value.toFixed(1)} s`
+            : 'null';
+        const swellDirectionDisplay = swellHeightNegative
+          ? 'N/A'
+          : isNumericValue(swell.direction?.value)
+            ? `${toTrueDegrees(swell.direction.value).toFixed(0)}°`
+            : 'null';
         // Update the environment with environmental data
         document.getElementById('environment-grid').innerHTML = `
           <div class="info-item" title="Water temperature at the surface"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
@@ -1316,8 +1338,8 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           <div class="info-item" title="Magnetic variation at current position - difference between true and magnetic north"><div class="label">Magnetic Variation</div><div class="value">${data.navigation?.magneticVariation?.value ? (data.navigation.magneticVariation.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
           <div class="info-item" title="Sunrise time today"><div class="label">Sunrise</div><div class="value">${data.environment?.sunlight?.times?.sunrise?.value ? new Date(data.environment.sunlight.times.sunrise.value).toLocaleTimeString() : 'N/A'}</div></div>
           <div class="info-item" title="Sunset time today"><div class="label">Sunset</div><div class="value">${data.environment?.sunlight?.times?.sunset?.value ? new Date(data.environment.sunlight.times.sunset.value).toLocaleTimeString() : 'N/A'}</div></div>
-          <div class="info-item" title="Heel angle (absolute roll) from IMU"><div class="label">Heel</div><div class="value">${isNumericValue(motion.heel?.value) ? motion.heel.value.toFixed(1) + '°' : 'N/A'}</div></div>
-          <div class="info-item" title="Motion comfort index (10=calm, 1=rough)"><div class="label">Comfort Index</div><div class="value">${isNumericValue(motion.comfortIndex?.value) ? motion.comfortIndex.value.toFixed(1) + ' / 10' : 'N/A'}</div></div>
+          <div class="info-item" title="Heel angle (absolute roll) from IMU"><div class="label">Heel</div><div class="value">${heelValue !== null ? heelValue.toFixed(1) + '°' : 'N/A'}</div></div>
+          <div class="info-item" title="Motion comfort index (10=calm, 1=rough)"><div class="label">Comfort Index</div><div class="value">${comfortValue !== null ? comfortValue.toFixed(1) + ' / 10' : 'N/A'}</div></div>
           <div class="info-item" title="Dominant swell height from onboard IMU"><div class="label">Swell Height</div><div class="value">${swellHeightDisplay}</div></div>
           <div class="info-item" title="Dominant swell period from onboard IMU"><div class="label">Swell Period</div><div class="value">${swellPeriodDisplay}</div></div>
           <div class="info-item" title="Direction the swell is coming from (true)"><div class="label">Swell Direction</div><div class="value">${swellDirectionDisplay}</div></div>
