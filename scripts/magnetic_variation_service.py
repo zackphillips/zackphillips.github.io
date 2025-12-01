@@ -23,7 +23,7 @@ except ImportError:
     geomag = None
 
 # Import utilities
-from utils import (
+from .utils import (
     load_vessel_info,
     send_delta_over_udp,
     setup_logging,

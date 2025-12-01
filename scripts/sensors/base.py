@@ -17,7 +17,7 @@ from typing import Any
 # Add scripts directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from utils import load_vessel_info, send_delta_over_udp
+from ..utils import load_vessel_info, send_delta_over_udp
 
 logger = logging.getLogger(__name__)
 

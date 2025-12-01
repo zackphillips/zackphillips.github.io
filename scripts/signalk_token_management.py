@@ -14,7 +14,7 @@ import uuid
 import requests
 
 # Import utilities (used in multiple methods)
-from utils import load_vessel_info, save_vessel_info
+from .utils import load_vessel_info, save_vessel_info
 
 
 class SignalKTokenRequester:

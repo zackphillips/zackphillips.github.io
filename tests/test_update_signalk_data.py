@@ -1,15 +1,10 @@
 import json
 import os
 import subprocess
-import sys
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 import scripts.update_signalk_data as usd
 
