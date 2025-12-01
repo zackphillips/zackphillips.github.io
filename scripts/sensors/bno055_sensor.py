@@ -44,6 +44,9 @@ def normalize_angle_180(angle_degrees):
     return angle
 
 
+MAX_COMFORT_ANGLE_DEG = 30.0  # Angle at which comfort bottoms out
+
+
 class BNO055Sensor(BaseSensor):
     """BNO055 IMU sensor for attitude and rate of turn."""
 
@@ -187,6 +190,20 @@ class BNO055Sensor(BaseSensor):
                 "units": "rad",
             }
 
+            # Derived comfort metrics
+            heel_deg = abs(roll_calibrated_rad) * 180 / math.pi
+            data["environment.motion.heel"] = {
+                "value": heel_deg,
+                "units": "deg",
+            }
+            comfort_index = self._calculate_comfort_index(
+                roll_calibrated_rad, pitch_calibrated_rad
+            )
+            data["environment.motion.comfortIndex"] = {
+                "value": comfort_index,
+                "units": "index",
+            }
+
             # Add sample to swell analyzer
             self.swell_analyzer.add_sample(pitch_calibrated_rad, roll_calibrated_rad)
 
@@ -233,3 +250,15 @@ class BNO055Sensor(BaseSensor):
                     logger.info(f"   {key}: {value['value'] * 180 / math.pi}deg")
 
         return data
+
+    def _calculate_comfort_index(self, roll_rad: float, pitch_rad: float) -> float:
+        """
+        Compute a simple 1-10 comfort score based on instantaneous roll/pitch magnitude.
+
+        10 = perfectly level, 1 = severe motion (>= MAX_COMFORT_ANGLE_DEG RMS).
+        """
+        combined_angle_rad = math.sqrt(roll_rad**2 + pitch_rad**2)
+        combined_angle_deg = combined_angle_rad * 180 / math.pi
+        severity_ratio = min(combined_angle_deg / MAX_COMFORT_ANGLE_DEG, 1.0)
+        score = 10.0 - severity_ratio * 9.0
+        return round(max(1.0, min(score, 10.0)), 1)
