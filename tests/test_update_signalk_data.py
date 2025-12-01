@@ -7,6 +7,10 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import scripts.update_signalk_data as usd
 
 
@@ -87,24 +91,12 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
 
     # Patch both requests module and subprocess.run
     with (
-        patch.dict(sys.modules, {"requests": FakeRequests}),
-        patch("subprocess.run", side_effect=fake_run),
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
     ):
-        # Prepare module under test
-        import importlib
-        from pathlib import Path
-
-        # Add the project root to Python path using the test file location as reference
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
-        # Use a path inside tmp
         out = tmp_path / "signalk_latest.json"
 
-        mod.run_update(
+        usd.run_update(
             branch=test_branch,
             remote="origin",
             signalk_url="http://example",  # mocked
@@ -153,20 +145,12 @@ def test_https_conversion(tmp_path, test_branch):
         return R()
 
     with (
-        patch.dict(sys.modules, {"requests": FakeRequests}),
-        patch("subprocess.run", side_effect=fake_run),
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
     ):
-        import importlib
-
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
         out = tmp_path / "signalk_latest.json"
 
-        mod.run_update(
+        usd.run_update(
             branch=test_branch,
             remote="origin",
             signalk_url="http://example.com:3000/api",
@@ -208,20 +192,12 @@ def test_no_reset_mode(tmp_path, test_branch):
         return R()
 
     with (
-        patch.dict(sys.modules, {"requests": FakeRequests}),
-        patch("subprocess.run", side_effect=fake_run),
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
     ):
-        import importlib
-
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
         out = tmp_path / "signalk_latest.json"
 
-        mod.run_update(
+        usd.run_update(
             branch=test_branch,
             remote="origin",
             signalk_url="http://example.com/api",
@@ -265,20 +241,12 @@ def test_amend_commit(tmp_path, test_branch):
         return R()
 
     with (
-        patch.dict(sys.modules, {"requests": FakeRequests}),
-        patch("subprocess.run", side_effect=fake_run),
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
     ):
-        import importlib
-
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
         out = tmp_path / "signalk_latest.json"
 
-        mod.run_update(
+        usd.run_update(
             branch=test_branch,
             remote="origin",
             signalk_url="http://example.com/api",
@@ -323,20 +291,12 @@ def test_force_push(tmp_path, test_branch):
         return R()
 
     with (
-        patch.dict(sys.modules, {"requests": FakeRequests}),
-        patch("subprocess.run", side_effect=fake_run),
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
     ):
-        import importlib
-
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
         out = tmp_path / "signalk_latest.json"
 
-        mod.run_update(
+        usd.run_update(
             branch=test_branch,
             remote="origin",
             signalk_url="http://example.com/api",
@@ -381,20 +341,12 @@ def test_no_push_mode(tmp_path, test_branch):
         return R()
 
     with (
-        patch.dict(sys.modules, {"requests": FakeRequests}),
-        patch("subprocess.run", side_effect=fake_run),
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
     ):
-        import importlib
-
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
         out = tmp_path / "signalk_latest.json"
 
-        mod.run_update(
+        usd.run_update(
             branch=test_branch,
             remote="origin",
             signalk_url="http://example.com/api",
@@ -431,22 +383,14 @@ def test_requests_error_handling(tmp_path, test_branch):
         return R()
 
     with (
-        patch.dict(sys.modules, {"requests": FakeRequests}),
-        patch("subprocess.run", side_effect=fake_run),
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
     ):
-        import importlib
-
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
         out = tmp_path / "signalk_latest.json"
 
         # Should raise an exception when requests fails
         try:
-            mod.run_update(
+            usd.run_update(
                 branch=test_branch,
                 remote="origin",
                 signalk_url="http://example.com/api",
@@ -464,7 +408,6 @@ def test_requests_error_handling(tmp_path, test_branch):
             assert not out.exists()
 
 
-@patch.dict(sys.modules, {"requests": None})
 def test_integration_updates_test_branch(tmp_path, test_branch):
     def run(cmd, cwd=None):
         subprocess.run(cmd, check=True, cwd=cwd)
@@ -523,23 +466,14 @@ def test_integration_updates_test_branch(tmp_path, test_branch):
             return FakeResp()
 
     # Patch the requests module with our fake implementation
-    with patch.dict(sys.modules, {"requests": FakeRequests}):
-        # Import the script module from the project under test
-        test_file_dir = Path(__file__).parent
-        project_root = test_file_dir.parent
-        sys.path.insert(0, str(project_root))
-        import importlib
-
-        mod = importlib.import_module("scripts.update_signalk_data")
-
-        # Run from within the working repo
+    with patch("scripts.update_signalk_data.requests", FakeRequests):
         out = work / "signalk_latest.json"
 
         # Change to the working directory before running the script
         original_cwd = os.getcwd()
         try:
             os.chdir(work)
-            mod.run_update(
+            usd.run_update(
                 branch=test_branch,
                 remote="origin",
                 signalk_url="http://example",
