@@ -1301,10 +1301,10 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
           : 'N/A';
         const swellPeriodDisplay = isNumericValue(swell.period?.value)
           ? `${swell.period.value.toFixed(1)} s`
-          : 'N/A';
+          : 'null';
         const swellDirectionDisplay = isNumericValue(swell.direction?.value)
           ? `${toTrueDegrees(swell.direction.value).toFixed(0)}°`
-          : 'N/A';
+          : 'null';
         // Update the environment with environmental data
         document.getElementById('environment-grid').innerHTML = `
           <div class="info-item" title="Water temperature at the surface"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
