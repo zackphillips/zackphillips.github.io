@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from sensors import BME280Sensor, BNO055Sensor, MMC5603Sensor, SGP30Sensor
-from utils import load_vessel_info, send_delta_over_udp, setup_logging
+from .utils import load_vessel_info, send_delta_over_udp, setup_logging
 
 # Constants
 DEFAULT_UDP_PORT = 4123

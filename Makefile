@@ -44,7 +44,7 @@ define install-service
 		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
 			-e "s|{{USER}}|$$(whoami)|g" \
 			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-			-e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) $(5)|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run python -m $(4) $(5)|g" \
 			-e "s|{{RESTART_POLICY}}|always|g" \
 			-e "s|{{RESTART_SEC}}|$(6)|g" \
 			-e "s|{{GIT_BRANCH}}|$(CURRENT_BRANCH)|g" \
@@ -58,7 +58,7 @@ define install-service
 		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
 			-e "s|{{USER}}|$$(whoami)|g" \
 			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-			-e "s|{{EXEC_START}}|$(UV_BIN) run scripts/$(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run python -m $(4) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $(5)|g" \
 			-e "s|{{RESTART_SEC}}|$(6)|g" \
 			-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
 			-e "s|{{SENSOR_PORT}}|$(SENSOR_PORT)|g" \
@@ -107,7 +107,7 @@ define install-all-sensor-services
 		sed -e "s|{{DESCRIPTION}}|$(3)|g" \
 			-e "s|{{USER}}|$$(whoami)|g" \
 			-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
-			-e "s|{{EXEC_START}}|$(UV_BIN) run python3 scripts/$(4) $(5) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $$RUN_COUNT_ARG|g" \
+			-e "s|{{EXEC_START}}|$(UV_BIN) run python -m $(4) $(5) --host $(SENSOR_HOST) --port $(SENSOR_PORT) $$RUN_COUNT_ARG|g" \
 			-e "s|{{RESTART_POLICY}}|$$RESTART_POLICY|g" \
 			-e "s|{{RESTART_SEC}}|$$RESTART_SEC|g" \
 			-e "s|{{SENSOR_HOST}}|$(SENSOR_HOST)|g" \
@@ -287,7 +287,7 @@ install-website-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,update_signalk_data.py,,600)
+	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,scripts.update_signalk_data,,600)
 
 install-all-sensor-services: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -311,7 +311,7 @@ install-bme280-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,bme280,vessel-sensor-bme280,BME280 Sensor Service,i2c_sensor_read_and_publish.py,bme280)
+	$(call install-all-sensor-services,bme280,vessel-sensor-bme280,BME280 Sensor Service,scripts.i2c_sensor_read_and_publish,bme280)
 
 install-bno055-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -319,7 +319,7 @@ install-bno055-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,bno055,vessel-sensor-bno055,BNO055 Sensor Service,i2c_sensor_read_and_publish.py,bno055)
+	$(call install-all-sensor-services,bno055,vessel-sensor-bno055,BNO055 Sensor Service,scripts.i2c_sensor_read_and_publish,bno055)
 
 install-mmc5603-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -327,7 +327,7 @@ install-mmc5603-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,mmc5603,vessel-sensor-mmc5603,MMC5603 Sensor Service,i2c_sensor_read_and_publish.py,mmc5603)
+	$(call install-all-sensor-services,mmc5603,vessel-sensor-mmc5603,MMC5603 Sensor Service,scripts.i2c_sensor_read_and_publish,mmc5603)
 
 install-sgp30-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -335,7 +335,7 @@ install-sgp30-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,sgp30,vessel-sensor-sgp30,SGP30 Sensor Service,i2c_sensor_read_and_publish.py,sgp30)
+	$(call install-all-sensor-services,sgp30,vessel-sensor-sgp30,SGP30 Sensor Service,scripts.i2c_sensor_read_and_publish,sgp30)
 
 install-magnetic-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -343,7 +343,7 @@ install-magnetic-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),magnetic_variation_service.py,,86400)
+	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),scripts.magnetic_variation_service,,86400)
 
 # Individual service uninstallation
 uninstall-website-service: check-linux
@@ -451,7 +451,7 @@ status: check-linux
 	fi
 	@echo ""
 	@echo "--- SignalK Connection Status ---"
-	@if [ -n "$(UV_BIN)" ] && "$(UV_BIN)" run python3 scripts/signalk_token_management.py --check >/dev/null 2>&1; then \
+	@if [ -n "$(UV_BIN)" ] && "$(UV_BIN)" run python -m scripts.signalk_token_management --check >/dev/null 2>&1; then \
 		echo "SignalK Token: ✓ Valid"; \
 		echo "SignalK Server: $(SENSOR_HOST):$(SENSOR_PORT)"; \
 	else \
@@ -495,17 +495,17 @@ run-website-update:
 	fi
 	@echo "Running one website telemetry update..."
 	@echo "Fetching from SignalK and writing data..."; \
-	"$(UV_BIN)" run scripts/update_signalk_data.py --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
+	"$(UV_BIN)" run python -m scripts.update_signalk_data --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
 
 # Run tests
 test:
-	@if command -v uvx >/dev/null 2>&1; then \
-		echo "Running tests with uvx (no project sync required)..."; \
-		uvx pytest -q; \
-	else \
-		echo "Error: 'uvx' is not available. Ensure 'uv' is installed and on PATH."; \
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
+	@echo "Running tests with uv environment..."
+	@"$(UV_BIN)" run pytest $(PYTEST_ARGS)
 
 # Install pre-commit hooks
 pre-commit-install:
@@ -581,7 +581,7 @@ install-sensors: check-linux check-signalk-token
 	@echo "Installation complete!"
 	@echo ""
 	@echo "To run a specific sensor:"
-	@echo "  uv run scripts/i2c_sensor_read_and_publish.py bme280 --host 192.168.8.50 --port 3000"
+	@echo "  uv run python -m scripts.i2c_sensor_read_and_publish bme280 --host 192.168.8.50 --port 3000"
 	@echo ""
 	@echo "To run with custom settings:"
 	@echo "  make run-bme280 SENSOR_HOST=192.168.8.50 SENSOR_PORT=3000"
@@ -604,16 +604,16 @@ run-sensors: check-signalk-token
 	@echo "Note: Each sensor will run once, regardless of run_count in config"
 	@echo ""
 	@echo "Running BME280 sensor (one run)..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "BME280 failed"
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "BME280 failed"
 	@echo ""
 	@echo "Running BNO055 sensor (one run)..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "BNO055 failed"
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "BNO055 failed"
 	@echo ""
 	@echo "Running MMC5603 sensor (one run)..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "MMC5603 failed"
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "MMC5603 failed"
 	@echo ""
 	@echo "Running SGP30 sensor (one run)..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "SGP30 failed"
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT) --run-count 1 || echo "SGP30 failed"
 	@echo ""
 	@echo "All sensors completed (one run each)."
 
@@ -625,7 +625,7 @@ run-bme280: check-signalk-token
 		exit 1; \
 	fi
 	@echo "Starting BME280 sensor read and publish..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish bme280 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 run-bno055: check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -634,7 +634,7 @@ run-bno055: check-signalk-token
 		exit 1; \
 	fi
 	@echo "Starting BNO055 sensor read and publish..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish bno055 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 run-mmc5603: check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -643,7 +643,7 @@ run-mmc5603: check-signalk-token
 		exit 1; \
 	fi
 	@echo "Starting MMC5603 sensor read and publish..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish mmc5603 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 run-sgp30: check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -652,7 +652,7 @@ run-sgp30: check-signalk-token
 		exit 1; \
 	fi
 	@echo "Starting SGP30 sensor read and publish..."
-	@"$(UV_BIN)" run scripts/i2c_sensor_read_and_publish.py sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
+	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
 
 run-magnetic-service: check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -662,7 +662,7 @@ run-magnetic-service: check-signalk-token
 	fi
 	@echo "Starting magnetic variation service (one-time run)..."
 	@echo "Service will calculate and publish magnetic variation once, then exit."
-	@timeout 30 "$(UV_BIN)" run scripts/magnetic_variation_service.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --interval 86400 || [ $$? -eq 124 ] && echo "Magnetic variation service completed (timeout expected)"
+	@timeout 30 "$(UV_BIN)" run python -m scripts.magnetic_variation_service --host $(SENSOR_HOST) --port $(SENSOR_PORT) --interval 86400 || [ $$? -eq 124 ] && echo "Magnetic variation service completed (timeout expected)"
 
 # Check I2C devices and permissions
 check-i2c: check-linux
@@ -689,13 +689,13 @@ check-i2c: check-linux
 # Check SignalK token
 check-signalk-token:
 	@echo "Checking SignalK token..."
-	@"$(UV_BIN)" run python3 scripts/signalk_token_management.py --check || ( \
+	@"$(UV_BIN)" run python -m scripts.signalk_token_management --check || ( \
 		echo ""; \
 		echo "SignalK token is missing or invalid."; \
 		echo "To create a token, run one of these commands:"; \
 		echo "  make create-signalk-token      # Create SignalK token"; \
 		echo "  make config                    # Interactive vessel configuration"; \
-		echo "  $(UV_BIN) run python3 scripts/signalk_token_management.py  # Direct token request"; \
+		echo "  $(UV_BIN) run python -m scripts.signalk_token_management  # Direct token request"; \
 		exit 1 \
 	)
 
@@ -709,7 +709,7 @@ create-signalk-token:
 	@echo ""
 	@read -p "Continue? (y/N): " confirm && [ "$$confirm" = "y" ] || exit 1
 	@echo ""
-	@"$(UV_BIN)" run python3 scripts/signalk_token_management.py --host $(SENSOR_HOST) --port $(SENSOR_PORT) --timeout 300
+	@"$(UV_BIN)" run python -m scripts.signalk_token_management --host $(SENSOR_HOST) --port $(SENSOR_PORT) --timeout 300
 	@echo ""
 	@echo "Token creation completed!"
 	@echo "You can now run sensor-related commands:"
@@ -719,7 +719,7 @@ create-signalk-token:
 # Interactive vessel configuration wizard
 config:
 	@echo "Starting Vessel Configuration Wizard..."
-	@"$(UV_BIN)" run python3 scripts/vessel_config_wizard.py
+	@"$(UV_BIN)" run python -m scripts.vessel_config_wizard
 
 # Calibrate magnetic heading sensor offset
 calibrate-mmc5603: check-linux
@@ -733,7 +733,7 @@ calibrate-mmc5603: check-linux
 	@echo "You'll need to know the current true heading of your vessel."
 	@echo ""
 	@echo "Running heading calibration with uv: $(UV_BIN)"
-	@"$(UV_BIN)" run python scripts/calibrate_mmc5603_heading.py
+	@"$(UV_BIN)" run python -m scripts.calibrate_mmc5603_heading
 
 # Calibrate BNO055 IMU sensor
 calibrate-bno055: check-linux
@@ -747,7 +747,7 @@ calibrate-bno055: check-linux
 	@echo "The sensor requires calibration for accurate orientation and motion data."
 	@echo ""
 	@echo "Running IMU calibration with uv: $(UV_BIN)"
-	@"$(UV_BIN)" run python scripts/calibrate_bno055_imu.py
+	@"$(UV_BIN)" run python -m scripts.calibrate_bno055_imu
 
 # Calibrate SGP30 air quality sensor
 calibrate-sgp30: check-linux
@@ -761,4 +761,4 @@ calibrate-sgp30: check-linux
 	@echo "The sensor measures TVOC and eCO2 and requires baseline calibration."
 	@echo ""
 	@echo "Running air quality calibration with uv: $(UV_BIN)"
-	@"$(UV_BIN)" run python scripts/calibrate_sgp30_air_quality.py
+	@"$(UV_BIN)" run python -m scripts.calibrate_sgp30_air_quality

@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 import subprocess
 import tempfile
@@ -8,12 +9,21 @@ import pytest
 import requests
 
 
+SIGNALK_CHECK_ENV = os.getenv("SIGNALK_VERIFY_FOR_TESTS", "").lower() in {
+    "1",
+    "true",
+    "yes",
+}
+
+
 @pytest.fixture(autouse=True)
 def check_signalk_running():
     """
     Autouse fixture that checks if SignalK is running on the specified port and URL
     from info.json before each test. This ensures tests only run when SignalK is available.
     """
+    if not SIGNALK_CHECK_ENV:
+        return
     # Read SignalK configuration from info.json
     info_path = Path(__file__).parent.parent / "data" / "vessel" / "info.json"
 

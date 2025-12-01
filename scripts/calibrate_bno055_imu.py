@@ -36,7 +36,7 @@ from bno055_register_io import (
 )
 
 # Import vessel info loading from utils
-from utils import load_vessel_info, save_vessel_info as save_vessel_info_util
+from .utils import load_vessel_info, save_vessel_info as save_vessel_info_util
 
 
 def get_heading_true_from_signalk(vessel_info):
