@@ -16,8 +16,6 @@ SWELL_MAX_FREQ = 0.5  # Hz (2 second period)
 MIN_SAMPLES = 128  # Minimum samples for analysis (about 2 minutes at 1 Hz)
 MAX_SAMPLES = 512  # Maximum samples to keep in buffer
 SAMPLE_RATE = 1.0  # Hz (assumes 1 sample per second)
-MIN_HEIGHT_METERS = 0.05 # Minimum height to consider a valid swell. Values less than this are set 
-                        # to 0.0. This is to avoid reporting small waves as swells.
 
 
 class SwellAnalyzer:
@@ -191,20 +189,11 @@ class SwellAnalyzer:
             # This is a simplified model - actual conversion would be more complex
             height = rms_motion * 2.0  # Rough scaling factor
 
-            # If the height is less than 0.1 meters, set all other fields to None but return the 
-            # height as 0.0
-            if height < MIN_HEIGHT_METERS:
-                return {
-                    "period": None,
-                    "direction": None,
-                    "height": 0.0,
-                }
-            else:
-                return {
-                    "period": period,
-                    "direction": direction,
-                    "height": height,
-                }
+            return {
+                "period": period,
+                "direction": direction,
+                "height": height,
+            }
 
         except Exception as e:
             logger.error(f"Error in swell analysis: {e}", exc_info=True)

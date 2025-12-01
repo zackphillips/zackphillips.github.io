@@ -17,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from bno055_register_io import validate_calibration_data, write_calibration
 
 from .base import BaseSensor
-from .swell_analyzer import MIN_HEIGHT_METERS, SwellAnalyzer
+from .swell_analyzer import SwellAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -215,24 +215,16 @@ class BNO055Sensor(BaseSensor):
                 data[path] = {"value": value, "units": units}
 
             swell_height = swell_data.get("height")
-            height_below_threshold = (
-                swell_height is not None and swell_height < MIN_HEIGHT_METERS
-            )
-
-            if swell_data.get("period") is not None or height_below_threshold:
-                period_value = None if height_below_threshold else swell_data.get("period")
+            if swell_data.get("period") is not None:
                 add_swell_value(
                     "environment.waves.swell.period",
-                    period_value,
+                    swell_data.get("period"),
                     "s",
                 )
-            if swell_data.get("direction") is not None or height_below_threshold:
-                direction_value = (
-                    None if height_below_threshold else swell_data.get("direction")
-                )
+            if swell_data.get("direction") is not None:
                 add_swell_value(
                     "environment.waves.swell.direction",
-                    direction_value,
+                    swell_data.get("direction"),
                     "rad",
                 )
             if swell_height is not None:

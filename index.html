@@ -1315,14 +1315,14 @@ let isThemeChanging = false; // Flag to prevent multiple theme changes
         const swellHeightDisplay = isNumericValue(swellHeightValue)
           ? `${(swellHeightValue * 3.28084).toFixed(1)} ft`
           : 'N/A';
-        const swellHeightNegative =
-          isNumericValue(swellHeightValue) && swellHeightValue < 0;
-        const swellPeriodDisplay = swellHeightNegative
+        const swellHeightBelowThreshold =
+          isNumericValue(swellHeightValue) && swellHeightValue < 0.05;
+        const swellPeriodDisplay = swellHeightBelowThreshold
           ? 'N/A'
           : isNumericValue(swell.period?.value)
             ? `${swell.period.value.toFixed(1)} s`
             : 'null';
-        const swellDirectionDisplay = swellHeightNegative
+        const swellDirectionDisplay = swellHeightBelowThreshold
           ? 'N/A'
           : isNumericValue(swell.direction?.value)
             ? `${toTrueDegrees(swell.direction.value).toFixed(0)}°`
