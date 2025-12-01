@@ -2,15 +2,18 @@ import argparse
 import json
 import os
 import subprocess
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import requests
 
 from utils import get_project_root, load_vessel_info
 
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
+STALE_MAX_AGE_MINUTES = 60
+STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
 
 
 def load_vessel_data() -> dict:
@@ -96,6 +99,68 @@ def fetch_blob(signalk_url: str) -> dict:
     return response.json()
 
 
+def filter_stale_data(
+    blob: dict[str, Any],
+    *,
+    max_age_minutes: int = STALE_MAX_AGE_MINUTES,
+    target_keys: tuple[str, ...] = STALE_FILTER_KEYS,
+    reference_time: datetime | None = None,
+) -> dict[str, Any]:
+    """
+    Remove stale measurements from selected top-level sections so the UI shows them as unavailable.
+    """
+
+    if not isinstance(blob, dict) or max_age_minutes <= 0:
+        return blob
+
+    cutoff = (reference_time or datetime.now(UTC)) - timedelta(minutes=max_age_minutes)
+
+    def parse_timestamp(ts: Any) -> datetime | None:
+        if not isinstance(ts, str):
+            return None
+        normalized = ts.replace("Z", "+00:00")
+        try:
+            return datetime.fromisoformat(normalized)
+        except ValueError:
+            return None
+
+    def prune(node: Any) -> Any:
+        if isinstance(node, dict):
+            timestamp = node.get("timestamp")
+            ts = parse_timestamp(timestamp)
+            if ts is not None and ts < cutoff:
+                node = {k: v for k, v in node.items() if k not in {"value", "timestamp"}}
+
+            cleaned: dict[str, Any] = {}
+            for key, value in node.items():
+                pruned_value = prune(value)
+                if pruned_value is not None:
+                    cleaned[key] = pruned_value
+
+            if not cleaned:
+                return None
+            return cleaned
+
+        if isinstance(node, list):
+            cleaned_list = []
+            for item in node:
+                pruned_item = prune(item)
+                if pruned_item is not None:
+                    cleaned_list.append(pruned_item)
+            return cleaned_list or None
+
+        return node
+
+    for key in target_keys:
+        if key in blob:
+            pruned = prune(blob[key])
+            if pruned is None:
+                blob.pop(key)
+            else:
+                blob[key] = pruned
+    return blob
+
+
 def git_reset(remote: str, branch: str) -> None:
     subprocess.run(["git", "fetch", "--all"], check=True)
     subprocess.run(["git", "reset", "--hard", f"{remote}/{branch}"], check=True)
@@ -144,7 +209,8 @@ def run_update(
     if not no_reset:
         git_reset(remote=remote, branch=branch)
     blob = fetch_blob(signalk_url=signalk_url)
-    output_file.write_text(json.dumps(blob, indent=2))
+    filtered_blob = filter_stale_data(blob)
+    output_file.write_text(json.dumps(filtered_blob, indent=2))
     print(f"Wrote SignalK blob to {output_file}")
     git_commit_and_push(
         file_path=output_file, amend=amend, no_push=no_push, force_push=force_push

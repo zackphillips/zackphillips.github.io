@@ -2,8 +2,62 @@ import json
 import os
 import subprocess
 import sys
+from copy import deepcopy
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
+
+import scripts.update_signalk_data as usd
+
+
+def test_filter_stale_data_removes_old_values():
+    now = datetime.now(UTC)
+    stale_ts = (now - timedelta(minutes=61)).isoformat()
+    blob = {
+        "environment": {
+            "wind": {
+                "speedTrue": {
+                    "value": 5,
+                    "timestamp": stale_ts,
+                    "meta": {"units": "m/s"},
+                }
+            }
+        },
+        "design": {
+            "length": {"value": {"overall": 12}},
+        },
+    }
+    filtered = usd.filter_stale_data(
+        deepcopy(blob),
+        max_age_minutes=60,
+        reference_time=now,
+    )
+    wind_data = filtered["environment"]["wind"]["speedTrue"]
+    assert "value" not in wind_data
+    assert "timestamp" not in wind_data
+    # Design section should remain untouched
+    assert filtered["design"]["length"]["value"]["overall"] == 12
+
+
+def test_filter_stale_data_keeps_recent_values():
+    now = datetime.now(UTC)
+    recent_ts = (now - timedelta(minutes=10)).isoformat()
+    blob = {
+        "navigation": {
+            "speedOverGround": {
+                "value": 2.5,
+                "timestamp": recent_ts,
+            }
+        }
+    }
+    filtered = usd.filter_stale_data(
+        deepcopy(blob),
+        max_age_minutes=60,
+        reference_time=now,
+    )
+    sog = filtered["navigation"]["speedOverGround"]
+    assert sog["value"] == 2.5
+    assert sog["timestamp"] == recent_ts
 
 
 def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
