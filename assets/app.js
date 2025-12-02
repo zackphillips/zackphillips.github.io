@@ -8,6 +8,11 @@ let map, marker;
 let lat, lon; // Global variables for coordinates
 let vesselData = null; // Global vessel information
 let tideStations = null; // Global tide stations data
+const DEFAULT_TIDE_LOCATION = {
+  lat: 37.806,
+  lon: -122.465,
+  label: 'San Francisco Bay',
+};
 
 async function updateMapLocation(lat, lon) {
   try {
@@ -51,6 +56,39 @@ let currentEnv = null; // Global environment data
 let currentNav = null; // Global navigation data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
+
+const hasValidCoordinates = (latitude, longitude) =>
+  Number.isFinite(latitude) && Number.isFinite(longitude);
+
+function resolveTidePosition(currentLat, currentLon) {
+  if (hasValidCoordinates(currentLat, currentLon)) {
+    return {
+      lat: currentLat,
+      lon: currentLon,
+      usingFallback: false,
+      label: 'current position',
+    };
+  }
+
+  const fallbackFromVessel = vesselData?.default_location;
+  if (
+    fallbackFromVessel &&
+    hasValidCoordinates(fallbackFromVessel.lat, fallbackFromVessel.lon)
+  ) {
+    return {
+      lat: fallbackFromVessel.lat,
+      lon: fallbackFromVessel.lon,
+      usingFallback: true,
+      label: fallbackFromVessel.label || 'default vessel location',
+    };
+  }
+
+  return {
+    ...DEFAULT_TIDE_LOCATION,
+    usingFallback: true,
+    label: DEFAULT_TIDE_LOCATION.label,
+  };
+}
 
 // Load vessel information from JSON file
 async function loadVesselData() {
@@ -171,7 +209,11 @@ function updateVesselLinks() {
 let themeChangeTimeout = null; // Timeout for theme change debouncing
 let isThemeChanging = false; // Flag to prevent multiple theme changes
 
-async function drawTideGraph(lat, lon) {
+async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
+  const {
+    usingFallback = false,
+    label: fallbackLabel = 'default location',
+  } = tidePositionMeta;
   const stations = getAllStations();
   if (!stations || stations.length === 0) {
     const tideHeader = document.getElementById("tideHeader");
@@ -187,8 +229,10 @@ async function drawTideGraph(lat, lon) {
   const distNm = (distKm / 1.852).toFixed(1);
 
   // Update title element above the chart
+  const locationDescriptor = usingFallback ? fallbackLabel : 'current position';
+  const fallbackSuffix = usingFallback ? ' — waiting for live GPS data' : '';
   document.getElementById("tideHeader").textContent =
-    `Tides in ${nearest.name} (Station #${nearest.id} - ${distNm} NM from Current Position)`;
+    `Tides near ${nearest.name} (Station #${nearest.id} - ${distNm} NM from ${locationDescriptor})${fallbackSuffix}`;
 
 
   const now = new Date();
@@ -531,8 +575,9 @@ async function loadData() {
 
     lat = nav.position?.value?.latitude;
     lon = nav.position?.value?.longitude;
+    const hasGpsFix = hasValidCoordinates(lat, lon);
 
-    if (lat && lon) {
+    if (hasGpsFix) {
       if (!map) {
         map = L.map('map').setView([lat, lon], 13);
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -550,7 +595,6 @@ async function loadData() {
         marker.setLatLng([lat, lon]);
       }
 
-      drawTideGraph(lat, lon);
       // Load wind forecast asynchronously without blocking main data load
       loadWindForecast().catch(err => console.error('Wind forecast error:', err));
       // Load wave forecast asynchronously without blocking main data load
@@ -559,7 +603,12 @@ async function loadData() {
       updateMapLocation(lat, lon).catch(err => console.error('Location fetch error:', err));
       // Update polar performance
       updatePolarPerformance();
+    } else {
+      document.getElementById('mapTitle').textContent = 'Waiting for GPS position...';
     }
+
+    const tidePosition = resolveTidePosition(lat, lon);
+    drawTideGraph(tidePosition.lat, tidePosition.lon, tidePosition);
 
     // Update the Now Playing section
     updateNowPlaying(entertainment);
@@ -1100,7 +1149,7 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
 
 async function loadWaveForecast() {
   try {
-    if (!lat || !lon) {
+    if (!hasValidCoordinates(lat, lon)) {
       document.getElementById('wave-forecast-grid').innerHTML = `
         <div class="wave-forecast-item">
           <div class="wave-time">Waiting</div>
@@ -1223,7 +1272,7 @@ async function loadWaveForecast() {
 
 async function loadWindForecast() {
   try {
-    if (!lat || !lon) {
+    if (!hasValidCoordinates(lat, lon)) {
       document.getElementById('wind-forecast-grid').innerHTML = `
         <div class="wind-forecast-item">
           <div class="wind-time">Waiting</div>
