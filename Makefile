@@ -1,4 +1,4 @@
-.PHONY: server help install uninstall test pre-commit-install lint config sync-dev sync-pi status
+.PHONY: server help install uninstall test test-py test-js js-install pre-commit-install lint config sync-dev sync-pi status
 .PHONY: install-sensors check-i2c check-signalk-token create-signalk-token run-sensors run-bme280 run-bno055 run-mmc5603 run-sgp30 run-magnetic-service
 .PHONY: install-all-sensor-services uninstall-all-sensor-services check-service-status-all-sensors show-logs-all-sensors
 .PHONY: install-bme280-service install-bno055-service install-mmc5603-service install-sgp30-service
@@ -177,7 +177,9 @@ help:
 	@echo ""
 	@echo "Development Commands:"
 	@echo "  make server         - Start Python HTTP server on port $(SERVER_PORT)"
-	@echo "  make test           - Run unit/integration tests (requires git; uses uv if available)"
+	@echo "  make test           - Run Python and JavaScript test suites"
+	@echo "  make test-js        - Run JavaScript unit tests (vitest)"
+	@echo "  make js-install     - Install JavaScript dependencies (npm)"
 	@echo "  make check-i2c      - Check I2C devices and permissions"
 	@echo "  make check-signalk-token - Check if SignalK token exists and is valid"
 	@echo "  make create-signalk-token - Create a new SignalK access token"
@@ -498,14 +500,34 @@ run-website-update:
 	"$(UV_BIN)" run python -m scripts.update_signalk_data --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
 
 # Run tests
-test:
+test: test-py test-js
+
+test-py:
 	@if [ -z "$(UV_BIN)" ]; then \
 		echo "Error: 'uv' is not installed. Please install uv first."; \
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	@echo "Running tests with uv environment..."
-	@"$(UV_BIN)" run pytest $(PYTEST_ARGS)
+	@echo "Running Python tests inside uv-managed virtualenv..."
+	@PYTHONPATH="$(CURDIR):$(CURDIR)/scripts" "$(UV_BIN)" run pytest -q
+
+test-js:
+	@if ! command -v npm >/dev/null 2>&1; then \
+		echo "Error: 'npm' is not installed. Please install Node.js first."; \
+		exit 1; \
+	fi
+	@if [ ! -d node_modules ]; then \
+		echo "Installing JavaScript dependencies..."; \
+		npm install; \
+	fi
+	@npm test
+
+js-install:
+	@if ! command -v npm >/dev/null 2>&1; then \
+		echo "Error: 'npm' is not installed. Please install Node.js first."; \
+		exit 1; \
+	fi
+	@npm install
 
 # Install pre-commit hooks
 pre-commit-install:

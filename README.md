@@ -266,6 +266,9 @@ make check-uv
 # Install pre-commit hooks
 make pre-commit-install
 
+# Install JavaScript test dependencies (once per clone)
+make js-install
+
 # Run tests
 make test
 ```
@@ -283,6 +286,7 @@ make test
 4. Run tests and linting:
    ```bash
    make test
+   make test-js   # optional JS-only loop
    make pre-commit-run
    ```
 5. Submit a pull request

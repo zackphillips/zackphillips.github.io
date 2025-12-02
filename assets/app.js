@@ -1,3 +1,9 @@
+const vesselUtils = window.vesselUtils;
+if (!vesselUtils) {
+  throw new Error('vesselUtils must be loaded before app.js');
+}
+const { haversine, getAnchorDistanceColor, getWindDirection } = vesselUtils;
+
 let map, marker;
 let lat, lon; // Global variables for coordinates
 let vesselData = null; // Global vessel information
@@ -38,14 +44,6 @@ function getAllStations() {
   return tideStations.stations || [];
 }
 
-function haversine(lat1, lon1, lat2, lon2) {
-  const toRad = deg => deg * Math.PI / 180;
-  const R = 6371;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 let tideChartInstance = null;
 let polarChartInstance = null;
 let polarData = null;
@@ -172,16 +170,6 @@ function updateVesselLinks() {
 }
 let themeChangeTimeout = null; // Timeout for theme change debouncing
 let isThemeChanging = false; // Flag to prevent multiple theme changes
-
-// Helper function to get theme-aware anchor distance colors
-function getAnchorDistanceColor(isOutsideSafeRadius) {
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  if (isOutsideSafeRadius) {
-    return isDark ? '#ff6b6b' : '#e74c3c'; // Red for outside safe radius
-  } else {
-    return isDark ? '#51cf66' : '#27ae60'; // Green for inside safe radius
-  }
-}
 
 async function drawTideGraph(lat, lon) {
   const stations = getAllStations();
@@ -577,6 +565,7 @@ async function loadData() {
     updateNowPlaying(entertainment);
 
     // Update the instrument dashboard with sailing instruments
+    const currentTheme = document.documentElement.getAttribute('data-theme');
     document.getElementById('instrument-grid').innerHTML = `
       <div class="info-item" title="Current vessel latitude position"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
       <div class="info-item" title="Current vessel longitude position"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
@@ -596,7 +585,7 @@ async function loadData() {
       <div class="info-item" title="Distance to next waypoint on current route"><div class="label">Distance to WP</div><div class="value">${data.navigation?.courseRhumbline?.nextPoint?.distance?.value ? (data.navigation.courseRhumbline.nextPoint.distance.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
       <div class="info-item" title="Bearing of the current route track line"><div class="label">Course Bearing</div><div class="value">${data.navigation?.courseRhumbline?.bearingTrackTrue?.value ? (data.navigation.courseRhumbline.bearingTrackTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
       <div class="info-item" title="Bearing to final destination from current position"><div class="label">Bearing to Dest</div><div class="value">${data.navigation?.courseRhumbline?.bearingToDestinationTrue?.value ? (data.navigation.courseRhumbline.bearingToDestinationTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Distance from anchor position - red if outside safe radius"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" title="Distance from anchor position - red if outside safe radius"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value, currentTheme) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
       <div class="info-item" title="Bearing to anchor position from current location"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
       <div class="info-item" title="House battery bank voltage"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
       <div class="info-item" title="House battery bank current - positive is charging, negative is discharging"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
@@ -1421,14 +1410,6 @@ async function loadWindForecast() {
   }
 }
 
-function getWindDirection(degrees) {
-  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  const index = Math.round(degrees / 22.5) % 16;
-  return directions[index];
-}
-
-
-
 // Dark mode functionality
 function initDarkMode() {
   const darkModeToggle = document.getElementById('darkModeToggle');
@@ -1599,6 +1580,7 @@ function updateChartsForTheme(theme) {
   // Update anchor distance colors in the data grid
   const anchorDistanceElement = document.querySelector('.info-item .value[style*="color"]');
   if (anchorDistanceElement && anchorDistanceElement.textContent.includes('ft')) {
+    const theme = document.documentElement.getAttribute('data-theme');
     // Find the anchor distance element and update its color
     const anchorItems = document.querySelectorAll('.info-item');
     anchorItems.forEach(item => {
@@ -1609,10 +1591,10 @@ function updateChartsForTheme(theme) {
         // Check if it's currently red or green and update accordingly
         if (currentColor.includes('#e74c3c') || currentColor.includes('#ff6b6b')) {
           // Currently red (outside safe radius)
-          value.style.color = getAnchorDistanceColor(true);
+          value.style.color = getAnchorDistanceColor(true, theme);
         } else if (currentColor.includes('#27ae60') || currentColor.includes('#51cf66')) {
           // Currently green (inside safe radius)
-          value.style.color = getAnchorDistanceColor(false);
+          value.style.color = getAnchorDistanceColor(false, theme);
         }
       }
     });
