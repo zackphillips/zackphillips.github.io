@@ -90,14 +90,30 @@ function resolveTidePosition(currentLat, currentLon) {
   };
 }
 
-// Load vessel information from JSON file
+// Load vessel information from YAML file
 async function loadVesselData() {
   try {
-    const response = await fetch('data/vessel/info.json');
+    const response = await fetch('data/vessel/info.yaml');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    vesselData = await response.json();
+    const yamlText = await response.text();
+    
+    // Parse YAML using js-yaml library
+    if (typeof jsyaml === 'undefined') {
+      throw new Error('js-yaml library not loaded');
+    }
+    vesselData = jsyaml.load(yamlText);
+    
+    // Add default_location if not present
+    if (!vesselData.default_location) {
+      vesselData.default_location = {
+        lat: 37.806,
+        lon: -122.465,
+        label: 'San Francisco Bay'
+      };
+    }
+    
     console.log('Vessel data loaded:', vesselData);
     updateVesselLinks();
   } catch (error) {
@@ -107,7 +123,12 @@ async function loadVesselData() {
       name: "S.V.Mermug",
       mmsi: "338543654",
       uscg_number: "1024168",
-      hull_number: "BEY57004E494"
+      hull_number: "BEY57004E494",
+      default_location: {
+        lat: 37.806,
+        lon: -122.465,
+        label: 'San Francisco Bay'
+      }
     };
     updateVesselLinks();
   }
@@ -209,20 +230,50 @@ function updateVesselLinks() {
 let themeChangeTimeout = null; // Timeout for theme change debouncing
 let isThemeChanging = false; // Flag to prevent multiple theme changes
 
+// Find nearest NOAA tide station from lat/lon
+// Uses local lookup table (fast and reliable)
+// Prioritizes known-working stations for certain areas
+async function findNearestNOAAStation(lat, lon) {
+  const stations = getAllStations();
+  if (!stations || stations.length === 0) {
+    throw new Error('No tide stations available in lookup table');
+  }
+  
+  // For San Francisco Bay area, prefer San Francisco station (9414290) which reliably supports predictions
+  // South Beach Harbor and most SF locations should use SF station
+  const isSFBayArea = lat >= 37.7 && lat <= 37.9 && lon >= -122.5 && lon <= -122.3;
+  if (isSFBayArea) {
+    const sfStation = stations.find(s => s.id === '9414290');
+    if (sfStation) {
+      console.debug('SF Bay area detected, preferring San Francisco station');
+      return sfStation;
+    }
+  }
+  
+  // For other areas, find nearest station using haversine distance
+  const nearest = stations.reduce((a, b) =>
+    haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
+  );
+  
+  return nearest;
+}
+
 async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
   const {
     usingFallback = false,
     label: fallbackLabel = 'default location',
   } = tidePositionMeta;
-  const stations = getAllStations();
-  if (!stations || stations.length === 0) {
+  
+  // Find nearest station using NOAA Metadata API
+  let nearest;
+  try {
+    nearest = await findNearestNOAAStation(lat, lon);
+  } catch (error) {
+    console.error('Error finding nearest station:', error);
     const tideHeader = document.getElementById("tideHeader");
-    if (tideHeader) tideHeader.textContent = "Tides unavailable (no stations)";
+    if (tideHeader) tideHeader.textContent = "Tides unavailable (error finding station)";
     return;
   }
-  const nearest = stations.reduce((a, b) =>
-    haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
-  );
 
   // Calculate distance in nautical miles
   const distKm = haversine(lat, lon, nearest.lat, nearest.lon);
@@ -236,8 +287,9 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
 
 
   const now = new Date();
-  const startTime = new Date(now.getTime() - 6 * 60 * 60 * 1000); // 6 hours ago
-  const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours forward
+  // NOAA predictions are future-only, so start from current time
+  const startTime = new Date(now.getTime());
+  const endTime = new Date(now.getTime() + 30 * 60 * 60 * 1000); // 30 hours forward
 
 
   // NOAA expects YYYYMMDD for begin_date/end_date
@@ -250,10 +302,28 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
   const begin = fmtYYYYMMDD(startTime);
   const end = fmtYYYYMMDD(endTime);
 
-  const buildUrl = (stationId) =>
-    `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=vessel-tracker&begin_date=${begin}&end_date=${end}&datum=MLLW&station=${stationId}&time_zone=GMT&units=english&interval=h&format=json`;
+  // Build NOAA API URL according to official documentation
+  // https://api.tidesandcurrents.noaa.gov/api/prod/
+  const buildUrl = (stationId) => {
+    const params = new URLSearchParams({
+      product: 'predictions',
+      application: 'vessel-tracker',
+      begin_date: begin,
+      end_date: end,
+      datum: 'MLLW',
+      station: stationId,
+      time_zone: 'gmt',
+      units: 'english',
+      interval: 'h',
+      format: 'json'
+    });
+    return `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${params.toString()}`;
+  };
+  
   let targetStation = nearest;
   let url = buildUrl(targetStation.id);
+  const fallbackStation = { id: '9414290', name: 'San Francisco', lat: 37.806, lon: -122.465 };
+  let attemptedFallback = false;
 
   try {
     console.debug('Tide fetch: attempting station', {
@@ -261,38 +331,87 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
       name: targetStation.name,
       lat: targetStation.lat,
       lon: targetStation.lon,
-      url
+      url,
+      begin_date: begin,
+      end_date: end
     });
-    const res = await fetch(url);
-    if (!res.ok) {
-      // Retry with known-good fallback station (San Francisco 9414290)
-      console.error('NOAA tide fetch failed for station', {
-        id: targetStation.id,
-        name: targetStation.name,
-        lat: targetStation.lat,
-        lon: targetStation.lon,
-        url,
-        status: res.status,
-        statusText: res.statusText
-      });
-      console.warn('Primary station failed, retrying with fallback 9414290');
-      const fallbackStation = { id: '9414290', name: 'San Francisco' };
-      targetStation = fallbackStation;
-      url = buildUrl(fallbackStation.id);
-      console.debug('Tide fetch: attempting fallback station', {
-        id: targetStation.id,
-        name: targetStation.name,
-        lat: targetStation.lat,
-        lon: targetStation.lon,
-        url
-      });
-      const retryRes = await fetch(url);
-      if (!retryRes.ok) {
-        throw new Error(`NOAA API ${retryRes.status} ${retryRes.statusText}`);
+    
+    let res;
+    let json;
+    
+    // Try primary station
+    try {
+      res = await fetch(url);
+      if (res.ok) {
+        json = await res.json();
+        // Check for NOAA API error in response (they sometimes return 200 with error object)
+        if (json.error) {
+          throw new Error(json.error.message || JSON.stringify(json.error));
+        }
+      } else {
+        // Try to get error details from response body
+        let errorDetails = res.statusText;
+        try {
+          const errorBody = await res.text();
+          if (errorBody) {
+            try {
+              const errorJson = JSON.parse(errorBody);
+              errorDetails = errorJson.error?.message || errorJson.message || errorBody;
+            } catch {
+              errorDetails = errorBody;
+            }
+          }
+        } catch {
+          // Ignore errors parsing error response
+        }
+        throw new Error(`HTTP ${res.status}: ${errorDetails}`);
       }
-      var json = await retryRes.json();
-    } else {
-      var json = await res.json();
+    } catch (error) {
+      // If primary station fails, try fallback (San Francisco is known to work)
+      if (!attemptedFallback && targetStation.id !== fallbackStation.id) {
+        console.warn('Primary station failed, retrying with fallback 9414290 (San Francisco)', error);
+        attemptedFallback = true;
+        targetStation = fallbackStation;
+        url = buildUrl(fallbackStation.id);
+        console.debug('Tide fetch: attempting fallback station', {
+          id: targetStation.id,
+          name: targetStation.name,
+          url
+        });
+        
+        try {
+          res = await fetch(url);
+          if (res.ok) {
+            json = await res.json();
+            // Check for NOAA API error in response
+            if (json.error) {
+              throw new Error(json.error.message || JSON.stringify(json.error));
+            }
+          } else {
+            // Try to get error details from response body
+            let errorDetails = res.statusText;
+            try {
+              const errorBody = await res.text();
+              if (errorBody) {
+                try {
+                  const errorJson = JSON.parse(errorBody);
+                  errorDetails = errorJson.error?.message || errorJson.message || errorBody;
+                } catch {
+                  errorDetails = errorBody;
+                }
+              }
+            } catch {
+              // Ignore errors parsing error response
+            }
+            throw new Error(`NOAA API ${res.status}: ${errorDetails}`);
+          }
+        } catch (retryError) {
+          throw new Error(`Failed to fetch tide data: ${retryError.message || 'Network error'}`);
+        }
+      } else {
+        // Already tried fallback or it was the fallback, re-throw
+        throw error;
+      }
     }
     const rawData = Array.isArray(json?.predictions) ? json.predictions : [];
     if (rawData.length === 0) {
