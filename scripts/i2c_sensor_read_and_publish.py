@@ -19,11 +19,17 @@ import time
 from datetime import UTC, datetime
 from pathlib import Path
 
-# Add scripts directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent))
-
-from sensors import BME280Sensor, BNO055Sensor, MMC5603Sensor, SGP30Sensor
-from .utils import load_vessel_info, send_delta_over_udp, setup_logging
+# Ensure imports work both when executed as a module (`python -m scripts...`)
+# and when executed as a file (`python scripts/...py`).
+if __package__ in (None, ""):
+    # Running as a script: add project root so `import scripts.*` works.
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from scripts.sensors import BME280Sensor, BNO055Sensor, MMC5603Sensor, SGP30Sensor
+    from scripts.utils import load_vessel_info, send_delta_over_udp, setup_logging
+else:
+    # Running as a module inside the `scripts` package.
+    from .sensors import BME280Sensor, BNO055Sensor, MMC5603Sensor, SGP30Sensor
+    from .utils import load_vessel_info, send_delta_over_udp, setup_logging
 
 # Constants
 DEFAULT_UDP_PORT = 4123
