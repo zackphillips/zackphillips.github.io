@@ -124,11 +124,12 @@
       "reserve-D3-D4-D2-7D-A9-EC": {
         "RSSI": {
           "meta": {
-            "units": "db"
+            "units": "db",
+            "zones": null
           },
-          "value": -67,
+          "value": -66,
           "$source": "fuel.reserve",
-          "timestamp": "2025-12-26T06:24:20.142Z"
+          "timestamp": "2025-12-26T06:34:21.624Z"
         },
         "battery": {
           "voltage": {
@@ -137,7 +138,7 @@
             },
             "value": 2.9375,
             "$source": "fuel.reserve",
-            "timestamp": "2025-12-26T06:24:16.240Z"
+            "timestamp": "2025-12-26T06:34:17.716Z"
           },
           "strength": {
             "meta": {
@@ -163,14 +164,14 @@
             },
             "value": 1,
             "$source": "fuel.reserve",
-            "timestamp": "2025-12-26T06:24:16.240Z"
+            "timestamp": "2025-12-26T06:34:17.716Z"
           }
         },
         "readingQuality": {
           "meta": {},
           "value": 3,
           "$source": "fuel.reserve",
-          "timestamp": "2025-12-26T06:24:16.240Z"
+          "timestamp": "2025-12-26T06:34:17.717Z"
         }
       }
     },
@@ -180,9 +181,9 @@
           "meta": {
             "units": "db"
           },
-          "value": -67,
+          "value": -73,
           "$source": "propane.b",
-          "timestamp": "2025-12-26T06:24:20.330Z"
+          "timestamp": "2025-12-26T06:34:21.690Z"
         },
         "battery": {
           "voltage": {
@@ -191,7 +192,7 @@
             },
             "value": 2.9375,
             "$source": "propane.b",
-            "timestamp": "2025-12-26T06:24:20.330Z"
+            "timestamp": "2025-12-26T06:34:13.889Z"
           },
           "strength": {
             "meta": {
@@ -217,14 +218,14 @@
             },
             "value": 1,
             "$source": "propane.b",
-            "timestamp": "2025-12-26T06:24:20.330Z"
+            "timestamp": "2025-12-26T06:34:13.889Z"
           }
         },
         "readingQuality": {
           "meta": {},
           "value": 3,
           "$source": "propane.b",
-          "timestamp": "2025-12-26T06:24:20.331Z"
+          "timestamp": "2025-12-26T06:34:13.889Z"
         }
       },
       "a-E9-5D-A9-2D-FD-A5": {
@@ -232,9 +233,9 @@
           "meta": {
             "units": "db"
           },
-          "value": -75,
+          "value": -73,
           "$source": "propane.a",
-          "timestamp": "2025-12-26T06:24:08.875Z"
+          "timestamp": "2025-12-26T06:34:21.922Z"
         },
         "battery": {
           "voltage": {
@@ -243,7 +244,7 @@
             },
             "value": 2.96875,
             "$source": "propane.a",
-            "timestamp": "2025-12-26T06:24:08.875Z"
+            "timestamp": "2025-12-26T06:34:18.019Z"
           },
           "strength": {
             "meta": {
@@ -269,14 +270,14 @@
             },
             "value": 1,
             "$source": "propane.a",
-            "timestamp": "2025-12-26T06:24:08.875Z"
+            "timestamp": "2025-12-26T06:34:18.019Z"
           }
         },
         "readingQuality": {
           "meta": {},
           "value": 3,
           "$source": "propane.a",
-          "timestamp": "2025-12-26T06:24:08.875Z"
+          "timestamp": "2025-12-26T06:34:18.019Z"
         }
       }
     }
@@ -408,7 +409,26 @@
             "method": []
           },
           "$source": "fuel.reserve",
-          "timestamp": "2025-12-26T06:24:10.819Z"
+          "timestamp": "2025-12-26T06:34:10.819Z",
+          "RSSI": {
+            "meta": {
+              "units": "db",
+              "zones": [
+                {
+                  "upper": 1,
+                  "lower": 0,
+                  "state": "nominal",
+                  "message": ""
+                }
+              ]
+            },
+            "value": {
+              "state": "normal",
+              "method": []
+            },
+            "$source": "self.notificationhandler",
+            "timestamp": "2025-12-26T06:29:08.616Z"
+          }
         }
       },
       "propane": {
@@ -454,7 +474,7 @@
             "method": []
           },
           "$source": "propane.b",
-          "timestamp": "2025-12-26T06:24:10.819Z"
+          "timestamp": "2025-12-26T06:34:10.819Z"
         },
         "a-E9-5D-A9-2D-FD-A5": {
           "battery": {
@@ -496,7 +516,160 @@
             "method": []
           },
           "$source": "propane.a",
-          "timestamp": "2025-12-26T06:24:10.819Z"
+          "timestamp": "2025-12-26T06:34:10.820Z"
+        }
+      }
+    },
+    "environment": {
+      "inside": {
+        "freezer": {
+          "temperature": {
+            "meta": {
+              "units": "K",
+              "description": "Temperature",
+              "zones": [
+                {
+                  "upper": 2901,
+                  "lower": 274,
+                  "state": "alert",
+                  "message": "Freezer is acting as a Refridgerator"
+                },
+                {
+                  "upper": 3501,
+                  "lower": 2900,
+                  "state": "warn",
+                  "message": "Freezer is Off"
+                }
+              ]
+            },
+            "value": {
+              "state": "normal",
+              "message": "Value is within normal range",
+              "method": []
+            },
+            "$source": "self.notificationhandler",
+            "timestamp": "2025-12-26T06:26:37.013Z"
+          }
+        },
+        "refridgerator": {
+          "temperature": {
+            "meta": {
+              "units": "K",
+              "description": "Temperature",
+              "zones": [
+                {
+                  "upper": 2731,
+                  "lower": 200,
+                  "state": "warn",
+                  "message": "Refrigerator is Below Freezing"
+                },
+                {
+                  "upper": 1350,
+                  "lower": 3000,
+                  "state": "warn",
+                  "message": "Refridgerator is Off"
+                }
+              ]
+            },
+            "value": {
+              "state": "warn",
+              "message": "Refrigerator is Below Freezing",
+              "method": [
+                "visual"
+              ]
+            },
+            "$source": "self.notificationhandler",
+            "timestamp": "2025-12-26T06:27:49.318Z"
+          }
+        }
+      }
+    },
+    "tanks": {
+      "fuel": {
+        "reserve": {
+          "currentLevel": {
+            "meta": {
+              "units": "ratio",
+              "description": "Data should be of type number.",
+              "zones": [
+                {
+                  "upper": 0.2,
+                  "lower": 0,
+                  "state": "warn",
+                  "message": "Reserve Tank Low"
+                }
+              ]
+            },
+            "value": {
+              "state": "normal",
+              "message": "Value is within normal range",
+              "method": []
+            },
+            "$source": "self.notificationhandler",
+            "timestamp": "2025-12-26T06:30:23.366Z"
+          }
+        }
+      },
+      "propane": {
+        "a": {
+          "currentLevel": {
+            "meta": {
+              "units": "ratio",
+              "zones": [
+                {
+                  "upper": 10.1,
+                  "lower": 0,
+                  "state": "warn",
+                  "message": "Propane A Empty"
+                },
+                {
+                  "upper": 10.25,
+                  "lower": 0.1,
+                  "state": "alert",
+                  "message": "Propane A Low"
+                }
+              ]
+            },
+            "value": {
+              "state": "warn",
+              "message": "Propane A Empty",
+              "method": [
+                "visual"
+              ]
+            },
+            "$source": "self.notificationhandler",
+            "timestamp": "2025-12-26T06:31:22.319Z"
+          }
+        },
+        "b": {
+          "currentLevel": {
+            "meta": {
+              "units": "ratio",
+              "zones": [
+                {
+                  "upper": 10.1,
+                  "lower": 0,
+                  "state": "warn",
+                  "message": "Propane B Empty"
+                },
+                {
+                  "upper": 0.251,
+                  "lower": 0.1,
+                  "state": "nominal",
+                  "message": "Propane B Low"
+                }
+              ]
+            },
+            "value": {
+              "state": "warn",
+              "message": "Propane B Empty",
+              "method": [
+                "visual"
+              ]
+            },
+            "$source": "self.notificationhandler",
+            "timestamp": "2025-12-26T06:32:12.834Z"
+          }
         }
       }
     }
@@ -520,17 +693,17 @@
           "units": "K",
           "description": "Temperature"
         },
-        "value": 289.32301178955385,
+        "value": 289.328713279868,
         "$source": "i2c-sensors.sensor-bme280",
-        "timestamp": "2025-12-26T06:24:20.553707+00:00",
+        "timestamp": "2025-12-26T06:34:25.479088+00:00",
         "values": {
           "i2c-sensors.sensor-bme280": {
-            "value": 289.32301178955385,
-            "timestamp": "2025-12-26T06:24:20.553707+00:00"
+            "value": 289.328713279868,
+            "timestamp": "2025-12-26T06:34:25.479088+00:00"
           },
           "OpenPlotter.GPIO.1W.000000b94a30": {
             "value": 287.7125,
-            "timestamp": "2025-12-26T06:24:20.245Z"
+            "timestamp": "2025-12-26T06:34:23.925Z"
           }
         }
       },
@@ -539,39 +712,67 @@
           "description": "This regex pattern is used for validation of the identifier for the environmental zone, eg. engineRoom, mainCabin, refrigerator",
           "units": "ratio"
         },
-        "value": 0.6685822845898072,
+        "value": 0.6735369883377595,
         "$source": "i2c-sensors.sensor-bme280",
-        "timestamp": "2025-12-26T06:24:20.553707+00:00"
+        "timestamp": "2025-12-26T06:34:25.479088+00:00"
       },
       "pressure": {
         "meta": {
           "units": "Pa",
           "description": "Pressure in zone"
         },
-        "value": 101286.15915475093,
+        "value": 101285.54781283179,
         "$source": "i2c-sensors.sensor-bme280",
-        "timestamp": "2025-12-26T06:24:20.553707+00:00"
+        "timestamp": "2025-12-26T06:34:25.479088+00:00"
       },
       "refridgerator": {
         "temperature": {
           "meta": {
             "units": "K",
-            "description": "Temperature"
+            "description": "Temperature",
+            "zones": [
+              {
+                "upper": 2731,
+                "lower": 200,
+                "state": "warn",
+                "message": "Refrigerator is Below Freezing"
+              },
+              {
+                "upper": 1350,
+                "lower": 3000,
+                "state": "warn",
+                "message": "Refridgerator is Off"
+              }
+            ]
           },
-          "value": 280.65,
+          "value": 281.15,
           "$source": "OpenPlotter.GPIO.1W.000000ba9635",
-          "timestamp": "2025-12-26T06:24:19.297Z"
+          "timestamp": "2025-12-26T06:34:22.976Z"
         }
       },
       "freezer": {
         "temperature": {
           "meta": {
             "units": "K",
-            "description": "Temperature"
+            "description": "Temperature",
+            "zones": [
+              {
+                "upper": 2901,
+                "lower": 274,
+                "state": "alert",
+                "message": "Freezer is acting as a Refridgerator"
+              },
+              {
+                "upper": 3501,
+                "lower": 2900,
+                "state": "warn",
+                "message": "Freezer is Off"
+              }
+            ]
           },
-          "value": 269.9625,
+          "value": 270.3375,
           "$source": "OpenPlotter.GPIO.1W.000000b22db7",
-          "timestamp": "2025-12-26T06:24:19.060Z"
+          "timestamp": "2025-12-26T06:34:22.740Z"
         }
       },
       "airQuality": {
@@ -579,17 +780,17 @@
           "meta": {
             "units": "ppb"
           },
-          "value": 30,
+          "value": 31,
           "$source": "i2c-sensors.sensor-sgp30",
-          "timestamp": "2025-12-26T06:24:20.501098+00:00"
+          "timestamp": "2025-12-26T06:34:25.475684+00:00"
         },
         "eco2": {
           "meta": {
             "units": "ppm"
           },
-          "value": 418,
+          "value": 416,
           "$source": "i2c-sensors.sensor-sgp30",
-          "timestamp": "2025-12-26T06:24:20.501098+00:00"
+          "timestamp": "2025-12-26T06:34:25.475684+00:00"
         }
       }
     },
@@ -598,9 +799,9 @@
         "meta": {
           "units": "deg"
         },
-        "value": 0.39056330730376515,
+        "value": 0.8280633073037652,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-12-26T06:24:20.411294+00:00"
+        "timestamp": "2025-12-26T06:34:25.294646+00:00"
       },
       "comfortIndex": {
         "meta": {
@@ -608,7 +809,7 @@
         },
         "value": 1,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-12-26T06:24:20.411294+00:00"
+        "timestamp": "2025-12-26T06:34:25.294646+00:00"
       }
     },
     "outside": {
@@ -619,23 +820,23 @@
         },
         "value": 286.15,
         "$source": "OpenPlotter.GPIO.1W.000000b94d14",
-        "timestamp": "2025-12-26T06:24:19.451Z"
+        "timestamp": "2025-12-26T06:34:23.109Z"
       }
     },
     "tide": {
       "stationName": {
         "value": "Rincon Point, Pier 22 1/2",
         "$source": "tides",
-        "timestamp": "2025-12-26T06:24:10.582Z"
+        "timestamp": "2025-12-26T06:34:10.585Z"
       },
       "heightNow": {
         "meta": {
           "units": "m",
           "description": "The current tide height  relative to lowest astronomical tide (LAT/Chart Datum)"
         },
-        "value": 0.131,
+        "value": 0.162,
         "$source": "tides",
-        "timestamp": "2025-12-26T06:24:10.582Z"
+        "timestamp": "2025-12-26T06:34:10.585Z"
       },
       "heightHigh": {
         "meta": {
@@ -644,7 +845,7 @@
         },
         "value": 1.716,
         "$source": "tides",
-        "timestamp": "2025-12-26T06:24:10.582Z"
+        "timestamp": "2025-12-26T06:34:10.585Z"
       },
       "timeHigh": {
         "meta": {
@@ -653,7 +854,7 @@
         },
         "value": "2025-12-26T12:35:00.000Z",
         "$source": "tides",
-        "timestamp": "2025-12-26T06:24:10.582Z"
+        "timestamp": "2025-12-26T06:34:10.585Z"
       },
       "heightLow": {
         "meta": {
@@ -662,7 +863,7 @@
         },
         "value": 0.801,
         "$source": "tides",
-        "timestamp": "2025-12-26T06:24:10.582Z"
+        "timestamp": "2025-12-26T06:34:10.585Z"
       },
       "timeLow": {
         "meta": {
@@ -671,7 +872,7 @@
         },
         "value": "2025-12-26T18:20:00.000Z",
         "$source": "tides",
-        "timestamp": "2025-12-26T06:24:10.582Z"
+        "timestamp": "2025-12-26T06:34:10.585Z"
       }
     },
     "waves": {
@@ -680,25 +881,25 @@
           "meta": {
             "units": "s"
           },
-          "value": 14.222222222222221,
+          "value": 13.473684210526315,
           "$source": "i2c-sensors.sensor-bno055",
-          "timestamp": "2025-12-26T06:24:20.411294+00:00"
+          "timestamp": "2025-12-26T06:34:25.294646+00:00"
         },
         "direction": {
           "meta": {
             "units": "rad"
           },
-          "value": 3.1396843098290432,
+          "value": 3.2052914123553893,
           "$source": "i2c-sensors.sensor-bno055",
-          "timestamp": "2025-12-26T06:24:20.411294+00:00"
+          "timestamp": "2025-12-26T06:34:25.294646+00:00"
         },
         "height": {
           "meta": {
             "units": "m"
           },
-          "value": 1.5125061407941653,
+          "value": 0.9726935196768324,
           "$source": "i2c-sensors.sensor-bno055",
-          "timestamp": "2025-12-26T06:24:20.411294+00:00"
+          "timestamp": "2025-12-26T06:34:25.294646+00:00"
         }
       }
     }
@@ -731,25 +932,25 @@
         "meta": {
           "units": "rad/s"
         },
-        "value": -1.903858873666929e-05,
+        "value": 1.903858873666929e-05,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-12-26T06:24:20.411294+00:00"
+        "timestamp": "2025-12-26T06:34:25.294646+00:00"
       },
       "roll": {
         "meta": {
           "units": "rad"
         },
-        "value": -0.006816615649929119,
+        "value": -0.014452431127404311,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-12-26T06:24:20.411294+00:00"
+        "timestamp": "2025-12-26T06:34:25.294646+00:00"
       },
       "pitch": {
         "meta": {
           "units": "rad"
         },
-        "value": 6.2674118534173395,
+        "value": 6.277229330459807,
         "$source": "i2c-sensors.sensor-bno055",
-        "timestamp": "2025-12-26T06:24:20.411294+00:00"
+        "timestamp": "2025-12-26T06:34:25.294646+00:00"
       }
     }
   },
@@ -764,7 +965,7 @@
             },
             "value": 0,
             "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
-            "timestamp": "2025-12-26T06:24:19.788050Z"
+            "timestamp": "2025-12-26T06:34:24.814874Z"
           },
           "stateOfCharge": {
             "meta": {
@@ -805,7 +1006,7 @@
             },
             "value": 1,
             "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
-            "timestamp": "2025-12-26T06:24:19.788050Z"
+            "timestamp": "2025-12-26T06:34:24.814874Z"
           },
           "timeRemaining": {
             "meta": {
@@ -825,13 +1026,13 @@
           },
           "value": 0,
           "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
-          "timestamp": "2025-12-26T06:24:19.788050Z"
+          "timestamp": "2025-12-26T06:34:24.814874Z"
         },
         "power": {
           "meta": {},
           "value": 0,
           "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
-          "timestamp": "2025-12-26T06:24:19.788050Z"
+          "timestamp": "2025-12-26T06:34:24.814874Z"
         },
         "voltage": {
           "meta": {
@@ -840,7 +1041,7 @@
           },
           "value": 13.21,
           "$source": "signalk-victron-ble.D0:5B:3A:98:8A:90",
-          "timestamp": "2025-12-26T06:24:19.788050Z"
+          "timestamp": "2025-12-26T06:34:24.814874Z"
         }
       }
     }
@@ -855,16 +1056,24 @@
           },
           "value": 287.15,
           "$source": "fuel.reserve",
-          "timestamp": "2025-12-26T06:24:16.240Z"
+          "timestamp": "2025-12-26T06:34:17.716Z"
         },
         "currentLevel": {
           "meta": {
             "units": "ratio",
-            "description": "Data should be of type number."
+            "description": "Data should be of type number.",
+            "zones": [
+              {
+                "upper": 0.2,
+                "lower": 0,
+                "state": "warn",
+                "message": "Reserve Tank Low"
+              }
+            ]
           },
-          "value": 0.8180653320699167,
+          "value": 0.8198170779630001,
           "$source": "fuel.reserve",
-          "timestamp": "2025-12-26T06:24:16.240Z"
+          "timestamp": "2025-12-26T06:34:17.716Z"
         }
       }
     },
@@ -876,15 +1085,29 @@
           },
           "value": 283.15,
           "$source": "propane.b",
-          "timestamp": "2025-12-26T06:24:20.330Z"
+          "timestamp": "2025-12-26T06:34:13.889Z"
         },
         "currentLevel": {
           "meta": {
-            "units": "ratio"
+            "units": "ratio",
+            "zones": [
+              {
+                "upper": 10.1,
+                "lower": 0,
+                "state": "warn",
+                "message": "Propane B Empty"
+              },
+              {
+                "upper": 0.251,
+                "lower": 0.1,
+                "state": "nominal",
+                "message": "Propane B Low"
+              }
+            ]
           },
           "value": 6.834809041666669,
           "$source": "propane.b",
-          "timestamp": "2025-12-26T06:24:20.331Z"
+          "timestamp": "2025-12-26T06:34:13.889Z"
         }
       },
       "a": {
@@ -894,15 +1117,29 @@
           },
           "value": 286.15,
           "$source": "propane.a",
-          "timestamp": "2025-12-26T06:24:08.875Z"
+          "timestamp": "2025-12-26T06:34:18.019Z"
         },
         "currentLevel": {
           "meta": {
-            "units": "ratio"
+            "units": "ratio",
+            "zones": [
+              {
+                "upper": 10.1,
+                "lower": 0,
+                "state": "warn",
+                "message": "Propane A Empty"
+              },
+              {
+                "upper": 10.25,
+                "lower": 0.1,
+                "state": "alert",
+                "message": "Propane A Low"
+              }
+            ]
           },
-          "value": 0.3018756046666668,
+          "value": 0.30328623833333346,
           "$source": "propane.a",
-          "timestamp": "2025-12-26T06:24:08.875Z"
+          "timestamp": "2025-12-26T06:34:18.019Z"
         }
       }
     }
