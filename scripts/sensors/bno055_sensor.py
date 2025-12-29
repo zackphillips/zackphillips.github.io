@@ -141,13 +141,6 @@ class BNO055Sensor(BaseSensor):
 
         data = {}
 
-        if gyro and all(x is not None for x in gyro) and gyro[2] != 0.0:
-            # Convert gyroscope from degrees/s to radians/s
-            data["navigation.attitude.rateOfTurn"] = {
-                "value": (gyro[2] * math.pi / 180),
-                "units": "rad/s",
-            }
-
         if euler and all(x is not None for x in euler):
             # Wait for non-zero euler angles
             t0 = time.time()
