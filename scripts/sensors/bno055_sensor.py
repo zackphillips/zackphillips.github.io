@@ -168,10 +168,12 @@ class BNO055Sensor(BaseSensor):
 
             roll_raw_deg = normalize_angle_180(euler_avg[1])
             pitch_raw_deg = normalize_angle_180(euler_avg[2])
+            yaw_raw_deg = normalize_angle_180(euler_avg[0])
 
             # Convert to radians
             roll_rad = roll_raw_deg * math.pi / 180
             pitch_rad = pitch_raw_deg * math.pi / 180
+            yaw_rad = yaw_raw_deg * math.pi / 180
 
             # Apply zero state calibration for pitch and roll
             sensors_config = self.vessel_info.get("sensors", {})
@@ -179,6 +181,7 @@ class BNO055Sensor(BaseSensor):
             calibration = bno055_config.get("calibration", {})
             roll_calibrated_rad = roll_rad - calibration.get("roll", 0)
             pitch_calibrated_rad = pitch_rad - calibration.get("pitch", 0)
+            yaw_calibrated_rad = yaw_rad - calibration.get("yaw", 0)
 
             # Create data dictionary
             data["navigation.attitude.roll"] = {
@@ -189,19 +192,16 @@ class BNO055Sensor(BaseSensor):
                 "value": pitch_calibrated_rad,
                 "units": "rad",
             }
+            data["navigation.attitude.yaw"] = {
+                "value": yaw_calibrated_rad,
+                "units": "rad",
+            }
 
             # Derived comfort metrics
             heel_deg = abs(roll_calibrated_rad) * 180 / math.pi
             data["environment.motion.heel"] = {
                 "value": heel_deg,
                 "units": "deg",
-            }
-            comfort_index = self._calculate_comfort_index(
-                roll_calibrated_rad, pitch_calibrated_rad
-            )
-            data["environment.motion.comfortIndex"] = {
-                "value": comfort_index,
-                "units": "index",
             }
 
             # Add sample to swell analyzer
