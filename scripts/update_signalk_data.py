@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import subprocess
+import time
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -58,6 +59,13 @@ def parse_args() -> SimpleNamespace:
     )
     parser.add_argument(
         "--output", dest="output", default=os.getenv("OUTPUT_FILE", DEFAULT_OUTPUT_FILE)
+    )
+    parser.add_argument(
+        "--interval",
+        dest="interval",
+        type=int,
+        default=int(os.getenv("INTERVAL", "0")),
+        help="Update interval in seconds (0 for one-shot)",
     )
     parser.add_argument(
         "--use-https",
@@ -221,17 +229,21 @@ def run_update(
 def main() -> int:
     try:
         args = parse_args()
-        run_update(
-            branch=args.branch,
-            remote=args.remote,
-            signalk_url=args.signalk_url,
-            output_path=args.output,
-            use_https=args.use_https,
-            no_reset=args.no_reset,
-            amend=args.amend,
-            no_push=args.no_push,
-            force_push=args.force_push,
-        )
+        while True:
+            run_update(
+                branch=args.branch,
+                remote=args.remote,
+                signalk_url=args.signalk_url,
+                output_path=args.output,
+                use_https=args.use_https,
+                no_reset=args.no_reset,
+                amend=args.amend,
+                no_push=args.no_push,
+                force_push=args.force_push,
+            )
+            if args.interval == 0:
+                break
+            time.sleep(args.interval)
         return 0
     except Exception as exc:  # noqa: BLE001 - top-level safety
         print(f"Error: {exc}")
