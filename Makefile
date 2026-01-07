@@ -23,7 +23,7 @@ CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ma
 
 # Service definitions (name:description:interval:script:args)
 SERVICES := \
-	website:vessel_tracker:Vessel Tracker Data Updater:600:update_signalk_data.py: \
+	website:vesselwebsite:Vessel Tracker Data Updater:600:update_signalk_data.py: \
 	magnetic:vessel_magnetic_variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
 
 # Service management functions
@@ -289,7 +289,7 @@ install-website-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-service,website,vessel_tracker,Vessel Tracker Data Updater,scripts.update_signalk_data,,600)
+	$(call install-service,website,vesselwebsite,Vessel Tracker Data Updater,scripts.update_signalk_data,--interval 600,600)
 
 install-all-sensor-services: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -349,7 +349,7 @@ install-magnetic-service: check-linux check-signalk-token
 
 # Individual service uninstallation
 uninstall-website-service: check-linux
-	$(call uninstall-service,vessel_tracker)
+	$(call uninstall-service,vesselwebsite)
 
 uninstall-all-sensor-services: check-linux
 	@echo "Uninstalling all individual sensor services..."
@@ -377,7 +377,7 @@ uninstall-magnetic-service: check-linux
 
 # Service status checking
 check-service-status-website: check-linux
-	$(call check-service-status,vessel_tracker,website)
+	$(call check-service-status,vesselwebsite,website)
 
 check-service-status-all-sensors: check-linux
 	@echo "Checking status of all sensor services..."
@@ -409,10 +409,10 @@ status: check-linux
 	@echo "=========================================="
 	@echo ""
 	@echo "--- Website Service Status ---"
-	@if [ -f "/etc/systemd/system/vessel_tracker.service" ]; then \
-		echo "Service: vessel_tracker"; \
-		sudo systemctl is-active vessel_tracker >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
-		sudo systemctl is-enabled vessel_tracker >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	@if [ -f "/etc/systemd/system/vesselwebsite.service" ]; then \
+		echo "Service: vesselwebsite"; \
+		sudo systemctl is-active vesselwebsite >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vesselwebsite >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
 	else \
 		echo "Status: ✗ Not installed"; \
 	fi
@@ -465,7 +465,7 @@ status: check-linux
 
 # Service logs
 show-logs-website: check-linux
-	$(call show-service-logs,vessel_tracker)
+	$(call show-service-logs,vesselwebsite)
 
 show-logs-all-sensors: check-linux
 	@echo "Showing logs for all sensor services..."
