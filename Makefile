@@ -23,8 +23,8 @@ CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ma
 
 # Service definitions (name:description:interval:script:args)
 SERVICES := \
-	website:vessel-tracker:Vessel Tracker Data Updater:600:update_signalk_data.py: \
-	magnetic:vessel-magnetic-variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
+	website:vessel_tracker:Vessel Tracker Data Updater:600:update_signalk_data.py: \
+	magnetic:vessel_magnetic_variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
 
 # Service management functions
 define install-service
@@ -289,7 +289,7 @@ install-website-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-service,website,vessel-tracker,Vessel Tracker Data Updater,scripts.update_signalk_data,,600)
+	$(call install-service,website,vessel_tracker,Vessel Tracker Data Updater,scripts.update_signalk_data,,600)
 
 install-all-sensor-services: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -313,7 +313,7 @@ install-bme280-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,bme280,vessel-sensor-bme280,BME280 Sensor Service,scripts.i2c_sensor_read_and_publish,bme280)
+	$(call install-all-sensor-services,bme280,vessel_sensor_bme280,BME280 Sensor Service,scripts.i2c_sensor_read_and_publish,bme280)
 
 install-bno055-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -321,7 +321,7 @@ install-bno055-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,bno055,vessel-sensor-bno055,BNO055 Sensor Service,scripts.i2c_sensor_read_and_publish,bno055)
+	$(call install-all-sensor-services,bno055,vessel_sensor_bno055,BNO055 Sensor Service,scripts.i2c_sensor_read_and_publish,bno055)
 
 install-mmc5603-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -329,7 +329,7 @@ install-mmc5603-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,mmc5603,vessel-sensor-mmc5603,MMC5603 Sensor Service,scripts.i2c_sensor_read_and_publish,mmc5603)
+	$(call install-all-sensor-services,mmc5603,vessel_sensor_mmc5603,MMC5603 Sensor Service,scripts.i2c_sensor_read_and_publish,mmc5603)
 
 install-sgp30-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -337,7 +337,7 @@ install-sgp30-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-all-sensor-services,sgp30,vessel-sensor-sgp30,SGP30 Sensor Service,scripts.i2c_sensor_read_and_publish,sgp30)
+	$(call install-all-sensor-services,sgp30,vessel_sensor_sgp30,SGP30 Sensor Service,scripts.i2c_sensor_read_and_publish,sgp30)
 
 install-magnetic-service: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -345,11 +345,11 @@ install-magnetic-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-service,magnetic,vessel-magnetic-variation,Vessel Magnetic Variation Service (daily),scripts.magnetic_variation_service,,86400)
+	$(call install-service,magnetic,vessel_magnetic_variation,Vessel Magnetic Variation Service (daily),scripts.magnetic_variation_service,,86400)
 
 # Individual service uninstallation
 uninstall-website-service: check-linux
-	$(call uninstall-service,vessel-tracker)
+	$(call uninstall-service,vessel_tracker)
 
 uninstall-all-sensor-services: check-linux
 	@echo "Uninstalling all individual sensor services..."
@@ -361,23 +361,23 @@ uninstall-all-sensor-services: check-linux
 
 # Individual sensor service uninstallation
 uninstall-bme280-service: check-linux
-	$(call uninstall-service,vessel-sensor-bme280)
+	$(call uninstall-service,vessel_sensor_bme280)
 
 uninstall-bno055-service: check-linux
-	$(call uninstall-service,vessel-sensor-bno055)
+	$(call uninstall-service,vessel_sensor_bno055)
 
 uninstall-mmc5603-service: check-linux
-	$(call uninstall-service,vessel-sensor-mmc5603)
+	$(call uninstall-service,vessel_sensor_mmc5603)
 
 uninstall-sgp30-service: check-linux
-	$(call uninstall-service,vessel-sensor-sgp30)
+	$(call uninstall-service,vessel_sensor_sgp30)
 
 uninstall-magnetic-service: check-linux
-	$(call uninstall-service,vessel-magnetic-variation)
+	$(call uninstall-service,vessel_magnetic_variation)
 
 # Service status checking
 check-service-status-website: check-linux
-	$(call check-service-status,vessel-tracker,website)
+	$(call check-service-status,vessel_tracker,website)
 
 check-service-status-all-sensors: check-linux
 	@echo "Checking status of all sensor services..."
@@ -388,19 +388,19 @@ check-service-status-all-sensors: check-linux
 
 # Individual sensor service status checking
 check-bme280-service-status: check-linux
-	$(call check-service-status,vessel-sensor-bme280,bme280)
+	$(call check-service-status,vessel_sensor_bme280,bme280)
 
 check-bno055-service-status: check-linux
-	$(call check-service-status,vessel-sensor-bno055,bno055)
+	$(call check-service-status,vessel_sensor_bno055,bno055)
 
 check-mmc5603-service-status: check-linux
-	$(call check-service-status,vessel-sensor-mmc5603,mmc5603)
+	$(call check-service-status,vessel_sensor_mmc5603,mmc5603)
 
 check-sgp30-service-status: check-linux
-	$(call check-service-status,vessel-sensor-sgp30,sgp30)
+	$(call check-service-status,vessel_sensor_sgp30,sgp30)
 
 check-service-status-magnetic-variation: check-linux
-	$(call check-service-status,vessel-magnetic-variation,magnetic)
+	$(call check-service-status,vessel_magnetic_variation,magnetic)
 
 # Report all sensor and website statuses
 status: check-linux
@@ -409,17 +409,17 @@ status: check-linux
 	@echo "=========================================="
 	@echo ""
 	@echo "--- Website Service Status ---"
-	@if [ -f "/etc/systemd/system/vessel-tracker.service" ]; then \
-		echo "Service: vessel-tracker"; \
-		sudo systemctl is-active vessel-tracker >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
-		sudo systemctl is-enabled vessel-tracker >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	@if [ -f "/etc/systemd/system/vessel_tracker.service" ]; then \
+		echo "Service: vessel_tracker"; \
+		sudo systemctl is-active vessel_tracker >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vessel_tracker >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
 	else \
 		echo "Status: ✗ Not installed"; \
 	fi
 	@echo ""
 	@echo "--- Sensor Services Status ---"
 	@for sensor in bme280 bno055 mmc5603 sgp30; do \
-		service_name="vessel-sensor-$$sensor"; \
+		service_name="vessel_sensor_$$sensor"; \
 		if [ -f "/etc/systemd/system/$$service_name.service" ]; then \
 			echo "Service: $$service_name"; \
 			sudo systemctl is-active $$service_name >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
@@ -430,10 +430,10 @@ status: check-linux
 	done
 	@echo ""
 	@echo "--- Magnetic Variation Service Status ---"
-	@if [ -f "/etc/systemd/system/vessel-magnetic-variation.service" ]; then \
-		echo "Service: vessel-magnetic-variation"; \
-		sudo systemctl is-active vessel-magnetic-variation >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
-		sudo systemctl is-enabled vessel-magnetic-variation >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	@if [ -f "/etc/systemd/system/vessel_magnetic_variation.service" ]; then \
+		echo "Service: vessel_magnetic_variation"; \
+		sudo systemctl is-active vessel_magnetic_variation >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vessel_magnetic_variation >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
 	else \
 		echo "Status: ✗ Not installed"; \
 	fi
@@ -465,28 +465,28 @@ status: check-linux
 
 # Service logs
 show-logs-website: check-linux
-	$(call show-service-logs,vessel-tracker)
+	$(call show-service-logs,vessel_tracker)
 
 show-logs-all-sensors: check-linux
 	@echo "Showing logs for all sensor services..."
 	@echo "Press Ctrl+C to exit logs"
-	@sudo journalctl -u vessel-sensor-bme280 -u vessel-sensor-bno055 -u vessel-sensor-mmc5603 -u vessel-sensor-sgp30 -f
+	@sudo journalctl -u vessel_sensor_bme280 -u vessel_sensor_bno055 -u vessel_sensor_mmc5603 -u vessel_sensor_sgp30 -f
 
 # Individual sensor service logs
 show-logs-bme280: check-linux
-	$(call show-service-logs,vessel-sensor-bme280)
+	$(call show-service-logs,vessel_sensor_bme280)
 
 show-logs-bno055: check-linux
-	$(call show-service-logs,vessel-sensor-bno055)
+	$(call show-service-logs,vessel_sensor_bno055)
 
 show-logs-mmc5603: check-linux
-	$(call show-service-logs,vessel-sensor-mmc5603)
+	$(call show-service-logs,vessel_sensor_mmc5603)
 
 show-logs-sgp30: check-linux
-	$(call show-service-logs,vessel-sensor-sgp30)
+	$(call show-service-logs,vessel_sensor_sgp30)
 
 show-logs-magnetic-service: check-linux
-	$(call show-service-logs,vessel-magnetic-variation)
+	$(call show-service-logs,vessel_magnetic_variation)
 
 # Run one website telemetry update (single execution)
 run-website-update:
