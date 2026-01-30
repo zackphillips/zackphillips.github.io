@@ -15,6 +15,8 @@ from .utils import get_project_root, load_vessel_info
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
 STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
+POSITION_RETENTION_HOURS = 24
+POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
 
 
 def load_vessel_data() -> dict:
@@ -177,7 +179,7 @@ def git_reset(remote: str, branch: str) -> None:
 def git_commit_and_push(
     file_path: Path, amend: bool, no_push: bool, force_push: bool
 ) -> None:
-    subprocess.run(["git", "add", str(file_path)], check=True)
+    subprocess.run(["git", "add", "data/telemetry"], check=True)
     commit_cmd = ["git", "commit", "-m", f"Auto update {datetime.now().isoformat()}"]
     if amend:
         commit_cmd.insert(2, "--amend")
@@ -189,6 +191,93 @@ def git_commit_and_push(
         if force_push:
             push_cmd.append("--force")
         subprocess.run(push_cmd, check=True)
+
+
+def _parse_timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    normalized = value.replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        return None
+
+
+def _format_position_filename(timestamp: datetime) -> str:
+    return f"{timestamp.strftime('%Y-%m-%dT%H-%M-%S.%f')}Z.json"
+
+
+def _parse_position_filename(name: str) -> datetime | None:
+    if not name.endswith("Z.json"):
+        return None
+    stem = name[:-5]
+    try:
+        return datetime.strptime(stem, "%Y-%m-%dT%H-%M-%S.%f")
+    except ValueError:
+        return None
+
+
+def _load_position_index(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    try:
+        payload = json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return []
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if isinstance(payload, dict) and isinstance(payload.get("positions"), list):
+        return [item for item in payload["positions"] if isinstance(item, dict)]
+    return []
+
+
+def _write_position_index(path: Path, entries: list[dict[str, Any]]) -> None:
+    payload = {"positions": entries}
+    path.write_text(json.dumps(payload, indent=2))
+
+
+def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
+    position = blob.get("navigation", {}).get("position") if isinstance(blob, dict) else None
+    if not isinstance(position, dict):
+        return
+    value = position.get("value")
+    if not isinstance(value, dict):
+        return
+    lat = value.get("latitude")
+    lon = value.get("longitude")
+    if not isinstance(lat, (int, float)) or not isinstance(lon, (int, float)):
+        return
+
+    timestamp = _parse_timestamp(position.get("timestamp")) or datetime.now(UTC)
+    output_dir = output_path.parent
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = _format_position_filename(timestamp)
+    position_file = output_dir / filename
+    position_payload = {"timestamp": timestamp.isoformat(), "latitude": lat, "longitude": lon}
+    position_file.write_text(json.dumps(position_payload, indent=2))
+
+    index_path = output_dir / Path(POSITION_INDEX_FILE).name
+    entries = _load_position_index(index_path)
+    cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
+
+    def keep_entry(entry: dict[str, Any]) -> bool:
+        entry_ts = _parse_timestamp(entry.get("timestamp"))
+        return entry_ts is not None and entry_ts >= cutoff
+
+    entries = [entry for entry in entries if keep_entry(entry)]
+    entries.append(position_payload)
+    entries.sort(key=lambda item: item.get("timestamp") or "")
+    _write_position_index(index_path, entries)
+
+    for file_path in output_dir.iterdir():
+        if not file_path.is_file():
+            continue
+        ts = _parse_position_filename(file_path.name)
+        if ts is None:
+            continue
+        if ts.replace(tzinfo=UTC) < cutoff:
+            file_path.unlink(missing_ok=True)
 
 
 def run_update(
@@ -220,6 +309,7 @@ def run_update(
     filtered_blob = filter_stale_data(blob)
     output_file.write_text(json.dumps(filtered_blob, indent=2))
     print(f"Wrote SignalK blob to {output_file}")
+    update_position_cache(filtered_blob, output_file)
     git_commit_and_push(
         file_path=output_file, amend=amend, no_push=no_push, force_push=force_push
     )

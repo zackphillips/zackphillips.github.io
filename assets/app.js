@@ -4,7 +4,7 @@ if (!vesselUtils) {
 }
 const { haversine, getAnchorDistanceColor, getWindDirection } = vesselUtils;
 
-let map, marker;
+let map, marker, trackLine;
 let lat, lon; // Global variables for coordinates
 let vesselData = null; // Global vessel information
 let tideStations = null; // Global tide stations data
@@ -38,6 +38,46 @@ async function updateMapLocation(lat, lon) {
   } catch (error) {
     console.error('Error fetching location:', error);
     document.getElementById('mapTitle').textContent = 'Location unavailable';
+  }
+}
+
+async function loadTrack() {
+  try {
+    const response = await fetch(`data/telemetry/positions_index.json?ts=${Date.now()}`);
+    if (!response.ok) {
+      throw new Error(`Positions index not found: ${response.status}`);
+    }
+    const payload = await response.json();
+    const positions = Array.isArray(payload) ? payload : payload.positions;
+    if (!Array.isArray(positions)) {
+      return;
+    }
+    const latlngs = positions
+      .map((point) => {
+        const latitude = Number(point.latitude);
+        const longitude = Number(point.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return null;
+        }
+        return [latitude, longitude];
+      })
+      .filter(Boolean);
+
+    if (!latlngs.length || !map) {
+      return;
+    }
+
+    if (!trackLine) {
+      trackLine = L.polyline(latlngs, {
+        color: '#3498db',
+        weight: 3,
+        opacity: 0.8,
+      }).addTo(map);
+    } else {
+      trackLine.setLatLngs(latlngs);
+    }
+  } catch (error) {
+    console.warn('Unable to load track data:', error);
   }
 }
 
@@ -715,7 +755,7 @@ async function loadData() {
             })
           : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '© OpenStreetMap contributors'
-            });
+          });
         tileLayer.addTo(map);
         marker = L.marker([lat, lon]).addTo(map);
       } else {
@@ -729,6 +769,8 @@ async function loadData() {
       loadWaveForecast().catch(err => console.error('Wave forecast error:', err));
       // Update map location title
       updateMapLocation(lat, lon).catch(err => console.error('Location fetch error:', err));
+      // Load track for last 24 hours
+      loadTrack().catch(err => console.error('Track load error:', err));
       // Update polar performance
       updatePolarPerformance();
     } else {
