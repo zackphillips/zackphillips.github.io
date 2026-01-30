@@ -4,7 +4,7 @@ if (!vesselUtils) {
 }
 const { haversine, getAnchorDistanceColor, getWindDirection } = vesselUtils;
 
-let map, marker, trackLine;
+let map, marker, trackLine, trackMarkers;
 let lat, lon; // Global variables for coordinates
 let vesselData = null; // Global vessel information
 let tideStations = null; // Global tide stations data
@@ -67,6 +67,12 @@ async function loadTrack() {
       return;
     }
 
+    if (!trackMarkers) {
+      trackMarkers = L.layerGroup().addTo(map);
+    } else {
+      trackMarkers.clearLayers();
+    }
+
     if (!trackLine) {
       trackLine = L.polyline(latlngs, {
         color: '#3498db',
@@ -76,6 +82,31 @@ async function loadTrack() {
     } else {
       trackLine.setLatLngs(latlngs);
     }
+
+    positions.forEach((point) => {
+      const latitude = Number(point.latitude);
+      const longitude = Number(point.longitude);
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return;
+      }
+      const timeLabel = point.timestamp ? new Date(point.timestamp).toLocaleString() : 'N/A';
+      const speedValue = Number(point.speedOverGround);
+      const speedLabel = Number.isFinite(speedValue)
+        ? `${(speedValue * 1.94384).toFixed(1)} kts`
+        : 'N/A';
+      const courseValue = Number(point.courseOverGroundTrue);
+      const courseLabel = Number.isFinite(courseValue)
+        ? `${(courseValue * 180 / Math.PI).toFixed(0)}°`
+        : 'N/A';
+      const tooltip = `<strong>Time:</strong> ${timeLabel}<br/><strong>Speed:</strong> ${speedLabel}<br/><strong>Course:</strong> ${courseLabel}`;
+      L.circleMarker([latitude, longitude], {
+        radius: 3,
+        color: '#1f6fb2',
+        fillColor: '#3498db',
+        fillOpacity: 0.7,
+        weight: 1,
+      }).bindTooltip(tooltip, { direction: 'top', opacity: 0.9 }).addTo(trackMarkers);
+    });
   } catch (error) {
     console.warn('Unable to load track data:', error);
   }
