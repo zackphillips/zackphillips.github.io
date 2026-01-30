@@ -1,11 +1,10 @@
 .PHONY: server help install uninstall test test-py test-js js-install pre-commit-install lint config sync-dev sync-pi status
-.PHONY: install-sensors check-i2c check-signalk-token create-signalk-token run-sensors run-bme280 run-bno055 run-mmc5603 run-sgp30 run-magnetic-service
+.PHONY: install-sensors check-i2c check-signalk-token create-signalk-token run-sensors run-bme280 run-bno055 run-mmc5603 run-sgp30
 .PHONY: install-all-sensor-services uninstall-all-sensor-services check-service-status-all-sensors show-logs-all-sensors
 .PHONY: install-bme280-service install-bno055-service install-mmc5603-service install-sgp30-service
 .PHONY: uninstall-bme280-service uninstall-bno055-service uninstall-mmc5603-service uninstall-sgp30-service
 .PHONY: check-bme280-service-status check-bno055-service-status check-mmc5603-service-status check-sgp30-service-status
 .PHONY: show-logs-website show-logs-bme280 show-logs-bno055 show-logs-mmc5603 show-logs-sgp30
-.PHONY: install-magnetic-service uninstall-magnetic-service check-service-status-magnetic-variation show-logs-magnetic-service
 .PHONY: calibrate-mmc5603 calibrate-bno055 calibrate-sgp30
 
 # Default target
@@ -23,8 +22,7 @@ CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ma
 
 # Service definitions (name:description:interval:script:args)
 SERVICES := \
-	website:vesselwebsite:Vessel Tracker Data Updater:600:update_signalk_data.py: \
-	magnetic:vessel_magnetic_variation:Vessel Magnetic Variation Service (daily):86400:magnetic_variation_service.py:
+	website:vesselwebsite:Vessel Tracker Data Updater:600:update_signalk_data.py:
 
 # Service management functions
 define install-service
@@ -169,7 +167,7 @@ check-linux:
 # Default target
 help:
 	@echo "Installation and General Usage:"
-	@echo "  make install        - Install all services (website, sensors, magnetic variation)"
+	@echo "  make install        - Install all services (website, sensors)"
 	@echo "  make uninstall      - Uninstall all services (Linux only)"
 	@echo "  make status         - Reports all sensor and website statuses"
 	@echo "  make config        - Interactive vessel configuration wizard"
@@ -190,7 +188,6 @@ help:
 	@echo "  make run-bno055        - Run BNO055 sensor read and publish"
 	@echo "  make run-mmc5603      - Run MMC5603 sensor read and publish"
 	@echo "  make run-sgp30        - Run SGP30 sensor read and publish"
-	@echo "  make run-magnetic-service        - Run magnetic variation service"
 	@echo ""
 	@echo "Sensor Calibration:"
 	@echo "  make calibrate-mmc5603 - Calibrate MMC5603 magnetic heading sensor offset"
@@ -204,10 +201,8 @@ help:
 	@echo "  make install-bno055-service    - Install BNO055 sensor service"
 	@echo "  make install-mmc5603-service   - Install MMC5603 sensor service"
 	@echo "  make install-sgp30-service     - Install SGP30 sensor service"
-	@echo "  make install-magnetic-service   - Install magnetic variation service"
 	@echo "  make check-service-status-website - Check website service status"
 	@echo "  make check-service-status-all-sensors - Check all sensor service statuses"
-	@echo "  make check-service-status-magnetic-variation - Check magnetic variation service status"
 	@echo ""
 	@echo "Logs:"
 	@echo "  make show-logs-website             - Show website service logs"
@@ -216,7 +211,6 @@ help:
 	@echo "  make show-logs-bno055          - Show BNO055 sensor logs"
 	@echo "  make show-logs-mmc5603         - Show MMC5603 sensor logs"
 	@echo "  make show-logs-sgp30           - Show SGP30 sensor logs"
-	@echo "  make show-logs-magnetic-service - Show magnetic variation service logs"
 
 # Start Python HTTP server
 server:
@@ -242,14 +236,11 @@ install: check-linux check-signalk-token
 	@echo "This will install:"
 	@echo "  - Website data updater service"
 	@echo "  - Individual sensor services (BME280, BNO055, MMC5603, SGP30)"
-	@echo "  - Magnetic variation service"
 	@echo ""
 	@echo ""
 	@$(MAKE) install-website-service
 	@echo ""
 	@$(MAKE) install-all-sensor-services
-	@echo ""
-	@$(MAKE) install-magnetic-service
 	@echo ""
 	@echo "All services installed successfully!"
 	@echo ""
@@ -257,12 +248,10 @@ install: check-linux check-signalk-token
 	@echo "  - Website service: Updates telemetry data every 600 seconds"
 	@echo "  - Fast sensor service: Publishes basic sensor data every 10 seconds"
 	@echo "  - Slow sensor service: Publishes all sensor data every 240 seconds"
-	@echo "  - Magnetic variation service: Updates magnetic variation daily"
 	@echo ""
 	@echo "Check status of all services:"
 	@echo "  make check-service-status-website"
 	@echo "  make check-service-status-all-sensors"
-	@echo "  make check-service-status-magnetic-variation"
 
 # Uninstall all services
 uninstall: check-linux
@@ -271,14 +260,11 @@ uninstall: check-linux
 	@echo "This will uninstall:"
 	@echo "  - Website data updater service"
 	@echo "  - Individual sensor services (BME280, BNO055, MMC5603, SGP30)"
-	@echo "  - Magnetic variation service"
 	@echo ""
 	@echo ""
 	@$(MAKE) uninstall-website-service
 	@echo ""
 	@$(MAKE) uninstall-all-sensor-services
-	@echo ""
-	@$(MAKE) uninstall-magnetic-service
 	@echo ""
 	@echo "All services uninstalled successfully!"
 
@@ -339,14 +325,6 @@ install-sgp30-service: check-linux check-signalk-token
 	fi
 	$(call install-all-sensor-services,sgp30,vessel_sensor_sgp30,SGP30 Sensor Service,scripts.i2c_sensor_read_and_publish,sgp30)
 
-install-magnetic-service: check-linux check-signalk-token
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
-	$(call install-service,magnetic,vessel_magnetic_variation,Vessel Magnetic Variation Service (daily),scripts.magnetic_variation_service,,86400)
-
 # Individual service uninstallation
 uninstall-website-service: check-linux
 	$(call uninstall-service,vesselwebsite)
@@ -372,9 +350,6 @@ uninstall-mmc5603-service: check-linux
 uninstall-sgp30-service: check-linux
 	$(call uninstall-service,vessel_sensor_sgp30)
 
-uninstall-magnetic-service: check-linux
-	$(call uninstall-service,vessel_magnetic_variation)
-
 # Service status checking
 check-service-status-website: check-linux
 	$(call check-service-status,vesselwebsite,website)
@@ -398,9 +373,6 @@ check-mmc5603-service-status: check-linux
 
 check-sgp30-service-status: check-linux
 	$(call check-service-status,vessel_sensor_sgp30,sgp30)
-
-check-service-status-magnetic-variation: check-linux
-	$(call check-service-status,vessel_magnetic_variation,magnetic)
 
 # Report all sensor and website statuses
 status: check-linux
@@ -428,15 +400,6 @@ status: check-linux
 			echo "$$service_name: ✗ Not installed"; \
 		fi; \
 	done
-	@echo ""
-	@echo "--- Magnetic Variation Service Status ---"
-	@if [ -f "/etc/systemd/system/vessel_magnetic_variation.service" ]; then \
-		echo "Service: vessel_magnetic_variation"; \
-		sudo systemctl is-active vessel_magnetic_variation >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
-		sudo systemctl is-enabled vessel_magnetic_variation >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
-	else \
-		echo "Status: ✗ Not installed"; \
-	fi
 	@echo ""
 	@echo "--- I2C Hardware Status ---"
 	@if [ -d /dev/i2c-1 ]; then \
@@ -484,9 +447,6 @@ show-logs-mmc5603: check-linux
 
 show-logs-sgp30: check-linux
 	$(call show-service-logs,vessel_sensor_sgp30)
-
-show-logs-magnetic-service: check-linux
-	$(call show-service-logs,vessel_magnetic_variation)
 
 # Run one website telemetry update (single execution)
 run-website-update:
@@ -675,16 +635,6 @@ run-sgp30: check-signalk-token
 	fi
 	@echo "Starting SGP30 sensor read and publish..."
 	@"$(UV_BIN)" run python -m scripts.i2c_sensor_read_and_publish sgp30 --host $(SENSOR_HOST) --port $(SENSOR_PORT)
-
-run-magnetic-service: check-signalk-token
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
-	@echo "Starting magnetic variation service (one-time run)..."
-	@echo "Service will calculate and publish magnetic variation once, then exit."
-	@timeout 30 "$(UV_BIN)" run python -m scripts.magnetic_variation_service --host $(SENSOR_HOST) --port $(SENSOR_PORT) --interval 86400 || [ $$? -eq 124 ] && echo "Magnetic variation service completed (timeout expected)"
 
 # Check I2C devices and permissions
 check-i2c: check-linux
