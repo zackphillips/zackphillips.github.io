@@ -22,7 +22,7 @@ CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo ma
 
 # Service definitions (name:description:interval:script:args)
 SERVICES := \
-	website:vesselwebsite:Vessel Tracker Data Updater:600:update_signalk_data.py:
+	website:vesselwebsite:Vessel Tracker Data Updater:150:update_signalk_data.py:
 
 # Service management functions
 define install-service
@@ -245,7 +245,7 @@ install: check-linux check-signalk-token
 	@echo "All services installed successfully!"
 	@echo ""
 	@echo "Service Summary:"
-	@echo "  - Website service: Updates telemetry data every 600 seconds"
+	@echo "  - Website service: Updates telemetry data every 150 seconds"
 	@echo "  - Fast sensor service: Publishes basic sensor data every 10 seconds"
 	@echo "  - Slow sensor service: Publishes all sensor data every 240 seconds"
 	@echo ""
@@ -275,7 +275,7 @@ install-website-service: check-linux check-signalk-token
 		echo "Visit: https://github.com/astral-sh/uv"; \
 		exit 1; \
 	fi
-	$(call install-service,website,vesselwebsite,Vessel Tracker Data Updater,scripts.update_signalk_data,--interval 600,600)
+	$(call install-service,website,vesselwebsite,Vessel Tracker Data Updater,scripts.update_signalk_data,--interval 150,150)
 
 install-all-sensor-services: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
