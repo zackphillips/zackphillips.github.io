@@ -127,7 +127,7 @@ let currentEnv = null; // Global environment data
 let currentNav = null; // Global navigation data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
-const SERIES_URL = 'data/telemetry/signalk_series.ndjson';
+const SNAPSHOT_INDEX_URL = 'data/telemetry/positions_index.json';
 const SPARKLINE_POINTS = 60;
 let seriesByPath = null;
 let seriesPromise = null;
@@ -701,24 +701,29 @@ async function loadData() {
     return sparklineTooltip;
   };
 
-  const parseSeries = (text) => {
+  const toSnapshotFilename = (timestamp) => {
+    if (!timestamp) return null;
+    const normalized = timestamp.replace('Z', '+00:00');
+    const datePart = normalized.split('+')[0];
+    if (!datePart) return null;
+    return `${datePart.replace(/:/g, '-')}Z.json`;
+  };
+
+  const buildSeriesFromSnapshots = (snapshots) => {
     const map = new Map();
-    const lines = text.split('\n');
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      let entry;
-      try {
-        entry = JSON.parse(line);
-      } catch (err) {
-        continue;
-      }
-      if (!entry || typeof entry.path !== 'string') continue;
-      if (typeof entry.value !== 'number' || !Number.isFinite(entry.value)) continue;
-      const date = new Date(entry.timestamp);
-      if (Number.isNaN(date.getTime())) continue;
-      const list = map.get(entry.path) || [];
-      list.push({ t: date, v: entry.value });
-      map.set(entry.path, list);
+    for (const snapshot of snapshots) {
+      if (!snapshot || typeof snapshot !== 'object') continue;
+      const timestamp = snapshot.timestamp || snapshot.time || null;
+      const date = timestamp ? new Date(timestamp) : null;
+      if (!date || Number.isNaN(date.getTime())) continue;
+      const values = snapshot.numericValues;
+      if (!values || typeof values !== 'object') continue;
+      Object.entries(values).forEach(([path, value]) => {
+        if (typeof value !== 'number' || !Number.isFinite(value)) return;
+        const list = map.get(path) || [];
+        list.push({ t: date, v: value });
+        map.set(path, list);
+      });
     }
     for (const list of map.values()) {
       list.sort((a, b) => a.t - b.t);
@@ -729,10 +734,26 @@ async function loadData() {
   const loadSeries = async () => {
     if (seriesByPath) return seriesByPath;
     if (seriesPromise) return seriesPromise;
-    seriesPromise = fetch(`${SERIES_URL}?ts=${Date.now()}`)
-      .then((res) => (res.ok ? res.text() : ''))
-      .then((text) => {
-        seriesByPath = parseSeries(text);
+    seriesPromise = fetch(`${SNAPSHOT_INDEX_URL}?ts=${Date.now()}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then(async (payload) => {
+        const positions = Array.isArray(payload) ? payload : payload?.positions;
+        if (!Array.isArray(positions) || !positions.length) {
+          seriesByPath = new Map();
+          return seriesByPath;
+        }
+        const recent = positions.slice(-SPARKLINE_POINTS);
+        const files = recent
+          .map((entry) => entry?.file || toSnapshotFilename(entry?.timestamp))
+          .filter(Boolean);
+        const snapshots = await Promise.all(
+          files.map((file) =>
+            fetch(`data/telemetry/${file}?ts=${Date.now()}`)
+              .then((res) => (res.ok ? res.json() : null))
+              .catch(() => null)
+          )
+        );
+        seriesByPath = buildSeriesFromSnapshots(snapshots);
         return seriesByPath;
       })
       .catch(() => {

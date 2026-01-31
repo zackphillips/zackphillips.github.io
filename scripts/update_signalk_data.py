@@ -17,7 +17,6 @@ STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
 POSITION_RETENTION_HOURS = 24
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
-SERIES_FILE = "./data/telemetry/signalk_series.ndjson"
 
 
 def load_vessel_data() -> dict:
@@ -237,6 +236,33 @@ def _write_position_index(path: Path, entries: list[dict[str, Any]]) -> None:
     path.write_text(json.dumps(payload, indent=2))
 
 
+def _collect_numeric_values(
+    node: Any,
+    path: str,
+    *,
+    values: dict[str, float],
+) -> None:
+    if not isinstance(node, dict):
+        return
+
+    value = node.get("value")
+    if isinstance(value, (int, float)):
+        if path:
+            values[path] = float(value)
+    elif isinstance(value, dict):
+        for key, subvalue in value.items():
+            if isinstance(subvalue, (int, float)):
+                subpath = f"{path}.{key}" if path else key
+                values[subpath] = float(subvalue)
+
+    for key, child in node.items():
+        if key in {"value", "meta", "values", "pgn", "$source", "source"}:
+            continue
+        if isinstance(child, dict):
+            child_path = f"{path}.{key}" if path else key
+            _collect_numeric_values(child, child_path, values=values)
+
+
 def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     navigation = blob.get("navigation", {}) if isinstance(blob, dict) else {}
     position = navigation.get("position") if isinstance(navigation, dict) else None
@@ -269,7 +295,16 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
 
     filename = _format_position_filename(timestamp)
     position_file = output_dir / filename
-    position_payload = {"timestamp": timestamp.isoformat(), "latitude": lat, "longitude": lon}
+    numeric_values: dict[str, float] = {}
+    _collect_numeric_values(blob, "", values=numeric_values)
+
+    position_payload = {
+        "timestamp": timestamp.isoformat(),
+        "latitude": lat,
+        "longitude": lon,
+        "file": filename,
+        "numericValues": numeric_values,
+    }
     if speed_over_ground is not None:
         position_payload["speedOverGround"] = speed_over_ground
     if course_over_ground_true is not None:
@@ -297,59 +332,6 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
             continue
         if ts.replace(tzinfo=UTC) < cutoff:
             file_path.unlink(missing_ok=True)
-
-
-def _collect_series_entries(
-    node: Any,
-    path: str,
-    *,
-    fallback_timestamp: str,
-    entries: list[dict[str, Any]],
-) -> None:
-    if not isinstance(node, dict):
-        return
-
-    node_timestamp = node.get("timestamp") if isinstance(node.get("timestamp"), str) else None
-    timestamp = node_timestamp or fallback_timestamp
-    value = node.get("value")
-    if isinstance(value, (int, float)):
-        entries.append({"path": path, "timestamp": timestamp, "value": value})
-    elif isinstance(value, dict):
-        for key, subvalue in value.items():
-            if isinstance(subvalue, (int, float)):
-                subpath = f"{path}.{key}" if path else key
-                entries.append({"path": subpath, "timestamp": timestamp, "value": subvalue})
-
-    for key, child in node.items():
-        if key in {"value", "meta", "values", "pgn", "$source", "source"}:
-            continue
-        if isinstance(child, dict):
-            child_path = f"{path}.{key}" if path else key
-            _collect_series_entries(
-                child, child_path, fallback_timestamp=fallback_timestamp, entries=entries
-            )
-
-
-def update_series_cache(blob: dict[str, Any], output_path: Path) -> None:
-    if not isinstance(blob, dict):
-        return
-    timestamp = None
-    if isinstance(blob.get("timestamp"), str):
-        timestamp = blob["timestamp"]
-    if not timestamp:
-        timestamp = datetime.now(UTC).isoformat()
-
-    entries: list[dict[str, Any]] = []
-    _collect_series_entries(blob, "", fallback_timestamp=timestamp, entries=entries)
-    if not entries:
-        return
-
-    output_dir = output_path.parent
-    output_dir.mkdir(parents=True, exist_ok=True)
-    series_path = output_dir / Path(SERIES_FILE).name
-    with series_path.open("a", encoding="utf-8") as handle:
-        for entry in entries:
-            handle.write(json.dumps(entry) + "\n")
 
 
 def run_update(
@@ -381,7 +363,6 @@ def run_update(
     output_file.write_text(json.dumps(blob, indent=2))
     print(f"Wrote SignalK blob to {output_file}")
     update_position_cache(blob, output_file)
-    update_series_cache(blob, output_file)
     git_commit_and_push(
         file_path=output_file, amend=amend, no_push=no_push, force_push=force_push
     )
