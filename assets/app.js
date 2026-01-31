@@ -656,6 +656,27 @@ async function loadData() {
     search(obj);
     return latest;
   }
+  const formatTimestamp = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString();
+  };
+
+  const withUpdated = (description, node) => {
+    const formatted = formatTimestamp(node?.timestamp);
+    return formatted ? `${description}\nLast updated: ${formatted}` : description;
+  };
+
+  const withUpdatedNodes = (description, ...nodes) => {
+    for (const node of nodes) {
+      const formatted = formatTimestamp(node?.timestamp);
+      if (formatted) {
+        return `${description}\nLast updated: ${formatted}`;
+      }
+    }
+    return description;
+  };
 
   try {
     console.log('Starting to load data...');
@@ -817,41 +838,41 @@ async function loadData() {
     // Update the instrument dashboard with sailing instruments
     const currentTheme = document.documentElement.getAttribute('data-theme');
     document.getElementById('instrument-grid').innerHTML = `
-      <div class="info-item" title="Current vessel latitude position"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
-      <div class="info-item" title="Current vessel longitude position"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
-      <div class="info-item" title="Speed Over Ground - actual speed relative to the seabed"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="Speed Through Water - speed relative to the water"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="Trip distance - distance traveled on current trip"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-      <div class="info-item" title="Total log distance - cumulative distance traveled"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-      <div class="info-item" title="True wind speed - actual wind speed in the atmosphere"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="True wind direction - actual wind direction relative to true north"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Apparent wind angle - wind direction relative to vessel heading"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Apparent wind speed - wind speed as felt on the vessel"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="Vessel roll angle from BNO055 IMU"><div class="label">Roll</div><div class="value">${data.navigation?.attitude?.value?.roll ? (data.navigation.attitude.value.roll * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Vessel pitch angle from BNO055 IMU"><div class="label">Pitch</div><div class="value">${data.navigation?.attitude?.value?.pitch ? (data.navigation.attitude.value.pitch * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Course Over Ground - true direction the vessel is moving"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Magnetic heading from MMC5603 magnetometer"><div class="label">Mag Heading</div><div class="value">${data.navigation?.headingMagnetic?.value ? (data.navigation.headingMagnetic.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Current rudder angle - positive is starboard, negative is port"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Distance from anchor position - red if outside safe radius"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value, currentTheme) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="Bearing to anchor position from current location"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="House battery bank voltage"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
-      <div class="info-item" title="House battery bank current - positive is charging, negative is discharging"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
-      <div class="info-item" title="House battery bank power consumption or generation"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
-      <div class="info-item" title="State of Charge - percentage of battery capacity remaining"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
-      <div class="info-item" title="Estimated time remaining until battery depletion"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Current vessel latitude position', nav.position)}"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Current vessel longitude position', nav.position)}"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Speed Over Ground - actual speed relative to the seabed', nav.speedOverGround)}"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Speed Through Water - speed relative to the water', nav.speedThroughWater)}"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Trip distance - distance traveled on current trip', nav.trip?.log)}"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Total log distance - cumulative distance traveled', nav.log)}"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('True wind speed - actual wind speed in the atmosphere', env.wind?.speedTrue)}"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('True wind direction - actual wind direction relative to true north', env.wind?.angleTrue)}"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Apparent wind angle - wind direction relative to vessel heading', data.environment?.wind?.angleApparent)}"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Apparent wind speed - wind speed as felt on the vessel', data.environment?.wind?.speedApparent)}"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Vessel roll angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Roll</div><div class="value">${data.navigation?.attitude?.value?.roll ? (data.navigation.attitude.value.roll * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Vessel pitch angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Pitch</div><div class="value">${data.navigation?.attitude?.value?.pitch ? (data.navigation.attitude.value.pitch * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Course Over Ground - true direction the vessel is moving', nav.courseOverGroundTrue)}"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Magnetic heading from MMC5603 magnetometer', data.navigation?.headingMagnetic)}"><div class="label">Mag Heading</div><div class="value">${data.navigation?.headingMagnetic?.value ? (data.navigation.headingMagnetic.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Current rudder angle - positive is starboard, negative is port', data.steering?.rudderAngle)}"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Distance from anchor position - red if outside safe radius', nav.anchor?.currentRadius)}"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value, currentTheme) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Bearing to anchor position from current location', nav.anchor?.bearingTrue)}"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('House battery bank voltage', elec.batteries?.house?.voltage)}"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
+      <div class="info-item" title="${withUpdated('House battery bank current - positive is charging, negative is discharging', elec.batteries?.house?.current)}"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
+      <div class="info-item" title="${withUpdated('House battery bank power consumption or generation', elec.batteries?.house?.power)}"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
+      <div class="info-item" title="${withUpdated('State of Charge - percentage of battery capacity remaining', elec.batteries?.house?.capacity?.stateOfCharge)}"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Estimated time remaining until battery depletion', elec.batteries?.house?.capacity?.timeRemaining)}"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
     `;
 
     // Update the vessel information with static vessel data
     document.getElementById('vessel-grid').innerHTML = `
-      <div class="info-item" title="Overall vessel length from bow to stern"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="Vessel beam - maximum width of the vessel"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="Maximum vessel draft - depth below waterline"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="Vessel air height - height above waterline"><div class="label">Air Height</div><div class="value">${data.design?.airHeight?.value ? (data.design.airHeight.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="Vessel name from SignalK"><div class="label">Vessel Name</div><div class="value">${data.name || 'N/A'}</div></div>
-      <div class="info-item" title="Maritime Mobile Service Identity - unique vessel identifier"><div class="label">MMSI</div><div class="value">${data.mmsi || vesselData?.mmsi || 'N/A'}</div></div>
-      <div class="info-item" title="VHF radio callsign"><div class="label">Callsign</div><div class="value">${data.communication?.callsignVhf || 'N/A'}</div></div>
-      <div class="info-item" title="Hull Number (Assigned by Beneteau)"><div class="label">Hull #</div><div class="value">${vesselData?.hull_number || 'N/A'}</div></div>
-      <div class="info-item" title="US Coast Guard vessel registration number"><div class="label">USCG #</div><div class="value">${vesselData?.uscg_number || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Overall vessel length from bow to stern', data.design?.length)}"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Vessel beam - maximum width of the vessel', data.design?.beam)}"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Maximum vessel draft - depth below waterline', data.design?.draft)}"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Vessel air height - height above waterline', data.design?.airHeight)}"><div class="label">Air Height</div><div class="value">${data.design?.airHeight?.value ? (data.design.airHeight.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Vessel name from SignalK', data)}"><div class="label">Vessel Name</div><div class="value">${data.name || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Maritime Mobile Service Identity - unique vessel identifier', data)}"><div class="label">MMSI</div><div class="value">${data.mmsi || vesselData?.mmsi || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('VHF radio callsign', data.communication)}"><div class="label">Callsign</div><div class="value">${data.communication?.callsignVhf || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Hull Number (Assigned by Beneteau)', vesselData)}"><div class="label">Hull #</div><div class="value">${vesselData?.hull_number || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('US Coast Guard vessel registration number', vesselData)}"><div class="label">USCG #</div><div class="value">${vesselData?.uscg_number || 'N/A'}</div></div>
     `;
 
     const isNumericValue = (val) => typeof val === 'number' && Number.isFinite(val);
@@ -873,15 +894,15 @@ async function loadData() {
     };
     // Update the environment with environmental data
     document.getElementById('environment-grid').innerHTML = `
-      <div class="info-item" title="Water temperature at the surface"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
-      <div class="info-item" title="Inside air temperature from BME280 sensor"><div class="label">Inside Temp</div><div class="value">${data.environment?.inside?.temperature?.value ? ((data.environment.inside.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
-      <div class="info-item" title="Inside humidity from BME280 sensor"><div class="label">Inside Humidity</div><div class="value">${data.environment?.inside?.humidity?.value ? (data.environment.inside.humidity.value * 100).toFixed(1) + '%' : 'N/A'}</div></div>
-      <div class="info-item" title="Inside barometric pressure from BME280 sensor"><div class="label">Barometric Pressure</div><div class="value">${data.environment?.inside?.pressure?.value ? (data.environment.inside.pressure.value * 0.0002953).toFixed(2) + ' inHg' : 'N/A'}</div></div>
-      <div class="info-item" title="Indoor air quality - Total Volatile Organic Compounds"><div class="label">TVOC</div><div class="value">${data.environment?.inside?.airQuality?.tvoc?.value ? data.environment.inside.airQuality.tvoc.value.toFixed(0) + ' ppb' : 'N/A'}</div></div>
-      <div class="info-item" title="Indoor air quality - Carbon Dioxide equivalent"><div class="label">CO₂</div><div class="value">${data.environment?.inside?.airQuality?.eco2?.value ? data.environment.inside.airQuality.eco2.value.toFixed(0) + ' ppm' : 'N/A'}</div></div>
-      <div class="info-item" title="Magnetic variation at current position - difference between true and magnetic north"><div class="label">Magnetic Variation</div><div class="value">${data.navigation?.magneticVariation?.value ? (data.navigation.magneticVariation.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="Sunrise time today"><div class="label">Sunrise</div><div class="value">${data.environment?.sunlight?.times?.sunrise?.value ? new Date(data.environment.sunlight.times.sunrise.value).toLocaleTimeString() : 'N/A'}</div></div>
-      <div class="info-item" title="Sunset time today"><div class="label">Sunset</div><div class="value">${data.environment?.sunlight?.times?.sunset?.value ? new Date(data.environment.sunlight.times.sunset.value).toLocaleTimeString() : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Water temperature at the surface', env.water?.temperature)}"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Inside Temp</div><div class="value">${data.environment?.inside?.temperature?.value ? ((data.environment.inside.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Inside humidity from BME280 sensor', data.environment?.inside?.humidity)}"><div class="label">Inside Humidity</div><div class="value">${data.environment?.inside?.humidity?.value ? (data.environment.inside.humidity.value * 100).toFixed(1) + '%' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Inside barometric pressure from BME280 sensor', data.environment?.inside?.pressure)}"><div class="label">Barometric Pressure</div><div class="value">${data.environment?.inside?.pressure?.value ? (data.environment.inside.pressure.value * 0.0002953).toFixed(2) + ' inHg' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Indoor air quality - Total Volatile Organic Compounds', data.environment?.inside?.airQuality?.tvoc)}"><div class="label">TVOC</div><div class="value">${data.environment?.inside?.airQuality?.tvoc?.value ? data.environment.inside.airQuality.tvoc.value.toFixed(0) + ' ppb' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Indoor air quality - Carbon Dioxide equivalent', data.environment?.inside?.airQuality?.eco2)}"><div class="label">CO₂</div><div class="value">${data.environment?.inside?.airQuality?.eco2?.value ? data.environment.inside.airQuality.eco2.value.toFixed(0) + ' ppm' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Magnetic variation at current position - difference between true and magnetic north', data.navigation?.magneticVariation)}"><div class="label">Magnetic Variation</div><div class="value">${data.navigation?.magneticVariation?.value ? (data.navigation.magneticVariation.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Sunrise time today', data.environment?.sunlight?.times?.sunrise)}"><div class="label">Sunrise</div><div class="value">${data.environment?.sunlight?.times?.sunrise?.value ? new Date(data.environment.sunlight.times.sunrise.value).toLocaleTimeString() : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Sunset time today', data.environment?.sunlight?.times?.sunset)}"><div class="label">Sunset</div><div class="value">${data.environment?.sunlight?.times?.sunset?.value ? new Date(data.environment.sunlight.times.sunset.value).toLocaleTimeString() : 'N/A'}</div></div>
     `;
 
     const internet = data.internet || {};
@@ -890,19 +911,19 @@ async function loadData() {
       ? `${(packetLossValue <= 1 ? packetLossValue * 100 : packetLossValue).toFixed(1)}%`
       : 'N/A';
     document.getElementById('internet-grid').innerHTML = `
-      <div class="info-item" title="Internet service provider"><div class="label">ISP</div><div class="value">${internet.ISP?.value || 'N/A'}</div></div>
-      <div class="info-item" title="Download speed"><div class="label">Download</div><div class="value">${isNumericValue(internet.speed?.download?.value) ? internet.speed.download.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
-      <div class="info-item" title="Upload speed"><div class="label">Upload</div><div class="value">${isNumericValue(internet.speed?.upload?.value) ? internet.speed.upload.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
-      <div class="info-item" title="Ping latency"><div class="label">Latency</div><div class="value">${isNumericValue(internet.ping?.latency?.value) ? internet.ping.latency.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
-      <div class="info-item" title="Ping jitter"><div class="label">Jitter</div><div class="value">${isNumericValue(internet.ping?.jitter?.value) ? internet.ping.jitter.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
-      <div class="info-item" title="Packet loss percentage"><div class="label">Packet Loss</div><div class="value">${packetLossDisplay}</div></div>
+      <div class="info-item" title="${withUpdated('Internet service provider', internet.ISP)}"><div class="label">ISP</div><div class="value">${internet.ISP?.value || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Download speed', internet.speed?.download)}"><div class="label">Download</div><div class="value">${isNumericValue(internet.speed?.download?.value) ? internet.speed.download.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Upload speed', internet.speed?.upload)}"><div class="label">Upload</div><div class="value">${isNumericValue(internet.speed?.upload?.value) ? internet.speed.upload.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Ping latency', internet.ping?.latency)}"><div class="label">Latency</div><div class="value">${isNumericValue(internet.ping?.latency?.value) ? internet.ping.latency.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Ping jitter', internet.ping?.jitter)}"><div class="label">Jitter</div><div class="value">${isNumericValue(internet.ping?.jitter?.value) ? internet.ping.jitter.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Packet loss percentage', internet.packetLoss)}"><div class="label">Packet Loss</div><div class="value">${packetLossDisplay}</div></div>
     `;
 
     const propulsion = data.propulsion?.port || {};
     const rpmValue = propulsion.revolutions?.value;
     document.getElementById('propulsion-grid').innerHTML = `
-      <div class="info-item" title="Engine state"><div class="label">State</div><div class="value">${propulsion.state?.value || 'N/A'}</div></div>
-      <div class="info-item" title="Engine revolutions per minute"><div class="label">RPM</div><div class="value">${isNumericValue(rpmValue) ? (rpmValue * 60).toFixed(0) + ' RPM' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Engine state', propulsion.state)}"><div class="label">State</div><div class="value">${propulsion.state?.value || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Engine revolutions per minute', propulsion.revolutions)}"><div class="label">RPM</div><div class="value">${isNumericValue(rpmValue) ? (rpmValue * 60).toFixed(0) + ' RPM' : 'N/A'}</div></div>
     `;
 
     const tanks = data.tanks || {};
@@ -915,14 +936,14 @@ async function loadData() {
     const blackwaterBow = tanks.blackwater?.bow || {};
     const liveWell0 = tanks.liveWell?.['0'] || {};
     document.getElementById('tanks-grid').innerHTML = `
-      <div class="info-item" title="Main fuel tank level, volume, and temperature (if available)"><div class="label">Fuel (Main)</div><div class="value">${formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value, fuelMain.temperature?.value)}</div></div>
-      <div class="info-item" title="Reserve fuel tank level, volume, and temperature (if available)"><div class="label">Fuel (Reserve)</div><div class="value">${formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value, fuelReserve.temperature?.value)}</div></div>
-      <div class="info-item" title="Fresh water tank 1 level and volume"><div class="label">Fresh Water 1</div><div class="value">${formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value, null)}</div></div>
-      <div class="info-item" title="Fresh water tank 2 level and volume"><div class="label">Fresh Water 2</div><div class="value">${formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value, null)}</div></div>
-      <div class="info-item" title="Propane tank A level and temperature"><div class="label">Propane A</div><div class="value">${formatTankDisplay(propaneA.currentLevel?.value, null, propaneA.temperature?.value)}</div></div>
-      <div class="info-item" title="Propane tank B level and temperature"><div class="label">Propane B</div><div class="value">${formatTankDisplay(propaneB.currentLevel?.value, null, propaneB.temperature?.value)}</div></div>
-      <div class="info-item" title="Blackwater tank level and temperature"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null, blackwaterBow.temperature?.value)}</div></div>
-      <div class="info-item" title="Bilge level"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null, null)}</div></div>
+      <div class="info-item" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div><div class="value">${formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value, fuelMain.temperature?.value)}</div></div>
+      <div class="info-item" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div><div class="value">${formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value, fuelReserve.temperature?.value)}</div></div>
+      <div class="info-item" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div><div class="value">${formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value, null)}</div></div>
+      <div class="info-item" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div><div class="value">${formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value, null)}</div></div>
+      <div class="info-item" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div><div class="value">${formatTankDisplay(propaneA.currentLevel?.value, null, propaneA.temperature?.value)}</div></div>
+      <div class="info-item" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div><div class="value">${formatTankDisplay(propaneB.currentLevel?.value, null, propaneB.temperature?.value)}</div></div>
+      <div class="info-item" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null, blackwaterBow.temperature?.value)}</div></div>
+      <div class="info-item" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null, null)}</div></div>
     `;
   } catch (err) {
     console.error("Failed to load data:", err);
