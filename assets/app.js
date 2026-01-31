@@ -927,7 +927,7 @@ async function loadData() {
       <div class="info-item" title="Propane tank A level and temperature"><div class="label">Propane A</div><div class="value">${formatTankDisplay(propaneA.currentLevel?.value, null, propaneA.temperature?.value)}</div></div>
       <div class="info-item" title="Propane tank B level and temperature"><div class="label">Propane B</div><div class="value">${formatTankDisplay(propaneB.currentLevel?.value, null, propaneB.temperature?.value)}</div></div>
       <div class="info-item" title="Blackwater tank level and temperature"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null, blackwaterBow.temperature?.value)}</div></div>
-      <div class="info-item" title="Live well level"><div class="label">Live Well</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null, null)}</div></div>
+      <div class="info-item" title="Bilge level"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null, null)}</div></div>
     `;
   } catch (err) {
     console.error("Failed to load data:", err);

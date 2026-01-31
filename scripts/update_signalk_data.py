@@ -237,7 +237,8 @@ def _write_position_index(path: Path, entries: list[dict[str, Any]]) -> None:
 
 
 def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
-    position = blob.get("navigation", {}).get("position") if isinstance(blob, dict) else None
+    navigation = blob.get("navigation", {}) if isinstance(blob, dict) else {}
+    position = navigation.get("position") if isinstance(navigation, dict) else None
     if not isinstance(position, dict):
         return
     value = position.get("value")
@@ -249,12 +250,29 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
         return
 
     timestamp = _parse_timestamp(position.get("timestamp")) or datetime.now(UTC)
+    speed_over_ground = None
+    course_over_ground_true = None
+    if isinstance(navigation, dict):
+        speed = navigation.get("speedOverGround")
+        if isinstance(speed, dict):
+            speed_value = speed.get("value")
+            if isinstance(speed_value, (int, float)):
+                speed_over_ground = speed_value
+        course = navigation.get("courseOverGroundTrue")
+        if isinstance(course, dict):
+            course_value = course.get("value")
+            if isinstance(course_value, (int, float)):
+                course_over_ground_true = course_value
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
 
     filename = _format_position_filename(timestamp)
     position_file = output_dir / filename
     position_payload = {"timestamp": timestamp.isoformat(), "latitude": lat, "longitude": lon}
+    if speed_over_ground is not None:
+        position_payload["speedOverGround"] = speed_over_ground
+    if course_over_ground_true is not None:
+        position_payload["courseOverGroundTrue"] = course_over_ground_true
     position_file.write_text(json.dumps(position_payload, indent=2))
 
     index_path = output_dir / Path(POSITION_INDEX_FILE).name
