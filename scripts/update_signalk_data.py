@@ -258,11 +258,11 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
             speed_value = speed.get("value")
             if isinstance(speed_value, (int, float)):
                 speed_over_ground = speed_value
-        course = navigation.get("courseOverGroundTrue")
-        if isinstance(course, dict):
-            course_value = course.get("value")
-            if isinstance(course_value, (int, float)):
-                course_over_ground_true = course_value
+        heading = navigation.get("headingTrue")
+        if isinstance(heading, dict):
+            heading_value = heading.get("value")
+            if isinstance(heading_value, (int, float)):
+                course_over_ground_true = heading_value
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -324,10 +324,9 @@ def run_update(
     if not no_reset:
         git_reset(remote=remote, branch=branch)
     blob = fetch_blob(signalk_url=signalk_url)
-    filtered_blob = filter_stale_data(blob)
-    output_file.write_text(json.dumps(filtered_blob, indent=2))
+    output_file.write_text(json.dumps(blob, indent=2))
     print(f"Wrote SignalK blob to {output_file}")
-    update_position_cache(filtered_blob, output_file)
+    update_position_cache(blob, output_file)
     git_commit_and_push(
         file_path=output_file, amend=amend, no_push=no_push, force_push=force_push
     )
