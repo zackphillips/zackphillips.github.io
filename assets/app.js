@@ -900,14 +900,9 @@ async function loadData() {
 
     const propulsion = data.propulsion?.port || {};
     const rpmValue = propulsion.revolutions?.value;
-    const trimValue = propulsion.drive?.trimState?.value;
-    const trimDisplay = isNumericValue(trimValue) && trimValue >= 0
-      ? `${(trimValue * 100).toFixed(0)}%`
-      : 'N/A';
     document.getElementById('propulsion-grid').innerHTML = `
       <div class="info-item" title="Engine state"><div class="label">State</div><div class="value">${propulsion.state?.value || 'N/A'}</div></div>
       <div class="info-item" title="Engine revolutions per minute"><div class="label">RPM</div><div class="value">${isNumericValue(rpmValue) ? (rpmValue * 60).toFixed(0) + ' RPM' : 'N/A'}</div></div>
-      <div class="info-item" title="Trim/tilt state"><div class="label">Trim</div><div class="value">${trimDisplay}</div></div>
     `;
 
     const tanks = data.tanks || {};
