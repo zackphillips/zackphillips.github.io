@@ -127,6 +127,13 @@ let currentEnv = null; // Global environment data
 let currentNav = null; // Global navigation data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
+const SERIES_URL = 'data/telemetry/signalk_series.ndjson';
+const SPARKLINE_POINTS = 60;
+let seriesByPath = null;
+let seriesPromise = null;
+let sparklineTooltip = null;
+let sparklineCanvas = null;
+let sparklineLabel = null;
 
 const hasValidCoordinates = (latitude, longitude) =>
   Number.isFinite(latitude) && Number.isFinite(longitude);
@@ -678,8 +685,141 @@ async function loadData() {
     return description;
   };
 
+  const ensureSparklineTooltip = () => {
+    if (sparklineTooltip) return sparklineTooltip;
+    sparklineTooltip = document.createElement('div');
+    sparklineTooltip.className = 'sparkline-tooltip';
+    sparklineTooltip.style.display = 'none';
+    sparklineTooltip.innerHTML = `
+      <div class="sparkline-tooltip__label"></div>
+      <canvas class="sparkline-tooltip__canvas" width="180" height="60"></canvas>
+      <div class="sparkline-tooltip__status"></div>
+    `;
+    document.body.appendChild(sparklineTooltip);
+    sparklineCanvas = sparklineTooltip.querySelector('canvas');
+    sparklineLabel = sparklineTooltip.querySelector('.sparkline-tooltip__label');
+    return sparklineTooltip;
+  };
+
+  const parseSeries = (text) => {
+    const map = new Map();
+    const lines = text.split('\n');
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      let entry;
+      try {
+        entry = JSON.parse(line);
+      } catch (err) {
+        continue;
+      }
+      if (!entry || typeof entry.path !== 'string') continue;
+      if (typeof entry.value !== 'number' || !Number.isFinite(entry.value)) continue;
+      const date = new Date(entry.timestamp);
+      if (Number.isNaN(date.getTime())) continue;
+      const list = map.get(entry.path) || [];
+      list.push({ t: date, v: entry.value });
+      map.set(entry.path, list);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => a.t - b.t);
+    }
+    return map;
+  };
+
+  const loadSeries = async () => {
+    if (seriesByPath) return seriesByPath;
+    if (seriesPromise) return seriesPromise;
+    seriesPromise = fetch(`${SERIES_URL}?ts=${Date.now()}`)
+      .then((res) => (res.ok ? res.text() : ''))
+      .then((text) => {
+        seriesByPath = parseSeries(text);
+        return seriesByPath;
+      })
+      .catch(() => {
+        seriesByPath = new Map();
+        return seriesByPath;
+      });
+    return seriesPromise;
+  };
+
+  const renderSparkline = (canvas, points) => {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!points || points.length < 2) {
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('No recent data', 6, 30);
+      return;
+    }
+    const values = points.map((p) => p.v);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const padding = 6;
+    const w = canvas.width - padding * 2;
+    const h = canvas.height - padding * 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      const x = padding + (index / (points.length - 1)) * w;
+      const y = padding + (1 - (point.v - min) / range) * h;
+      if (index === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    });
+    ctx.stroke();
+  };
+
+  const setupSparklineEvents = () => {
+    if (document.body.dataset.sparklineReady === 'true') return;
+    document.body.dataset.sparklineReady = 'true';
+    const tooltip = ensureSparklineTooltip();
+
+    const hideTooltip = () => {
+      tooltip.style.display = 'none';
+    };
+
+    document.addEventListener('mousemove', (event) => {
+      if (tooltip.style.display !== 'none') {
+        tooltip.style.left = `${event.pageX + 12}px`;
+        tooltip.style.top = `${event.pageY + 12}px`;
+      }
+    });
+
+    document.addEventListener('mouseout', (event) => {
+      const item = event.target.closest?.('.info-item');
+      if (item && tooltip.style.display !== 'none') {
+        hideTooltip();
+      }
+    });
+
+    document.addEventListener('mouseover', async (event) => {
+      const item = event.target.closest?.('.info-item');
+      if (!item || !item.dataset.path) return;
+      const path = item.dataset.path;
+      const label = item.dataset.label || item.querySelector('.label')?.textContent || path;
+      const map = await loadSeries();
+      const list = map.get(path);
+      if (!list || !list.length) {
+        hideTooltip();
+        return;
+      }
+      const points = list.slice(-SPARKLINE_POINTS);
+      sparklineLabel.textContent = label;
+      renderSparkline(sparklineCanvas, points);
+      tooltip.querySelector('.sparkline-tooltip__status').textContent = `${points.length} points`;
+      tooltip.style.display = 'block';
+      tooltip.style.left = `${event.pageX + 12}px`;
+      tooltip.style.top = `${event.pageY + 12}px`;
+    });
+  };
+
   try {
     console.log('Starting to load data...');
+    setupSparklineEvents();
 
     // Load data from local file
     let res;
@@ -840,26 +980,26 @@ async function loadData() {
     document.getElementById('instrument-grid').innerHTML = `
       <div class="info-item" title="${withUpdated('Current vessel latitude position', nav.position)}"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('Current vessel longitude position', nav.position)}"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Speed Over Ground - actual speed relative to the seabed', nav.speedOverGround)}"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Speed Through Water - speed relative to the water', nav.speedThroughWater)}"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Trip distance - distance traveled on current trip', nav.trip?.log)}"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Total log distance - cumulative distance traveled', nav.log)}"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('True wind speed - actual wind speed in the atmosphere', env.wind?.speedTrue)}"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('True wind direction - actual wind direction relative to true north', env.wind?.angleTrue)}"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Apparent wind angle - wind direction relative to vessel heading', data.environment?.wind?.angleApparent)}"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Apparent wind speed - wind speed as felt on the vessel', data.environment?.wind?.speedApparent)}"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Vessel roll angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Roll</div><div class="value">${data.navigation?.attitude?.value?.roll ? (data.navigation.attitude.value.roll * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Vessel pitch angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Pitch</div><div class="value">${data.navigation?.attitude?.value?.pitch ? (data.navigation.attitude.value.pitch * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Course Over Ground - true direction the vessel is moving', nav.courseOverGroundTrue)}"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Magnetic heading from MMC5603 magnetometer', data.navigation?.headingMagnetic)}"><div class="label">Mag Heading</div><div class="value">${data.navigation?.headingMagnetic?.value ? (data.navigation.headingMagnetic.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Current rudder angle - positive is starboard, negative is port', data.steering?.rudderAngle)}"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Distance from anchor position - red if outside safe radius', nav.anchor?.currentRadius)}"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value, currentTheme) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Bearing to anchor position from current location', nav.anchor?.bearingTrue)}"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('House battery bank voltage', elec.batteries?.house?.voltage)}"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
-      <div class="info-item" title="${withUpdated('House battery bank current - positive is charging, negative is discharging', elec.batteries?.house?.current)}"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
-      <div class="info-item" title="${withUpdated('House battery bank power consumption or generation', elec.batteries?.house?.power)}"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
-      <div class="info-item" title="${withUpdated('State of Charge - percentage of battery capacity remaining', elec.batteries?.house?.capacity?.stateOfCharge)}"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Estimated time remaining until battery depletion', elec.batteries?.house?.capacity?.timeRemaining)}"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.speedOverGround" data-label="SOG" title="${withUpdated('Speed Over Ground - actual speed relative to the seabed', nav.speedOverGround)}"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.speedThroughWater" data-label="STW" title="${withUpdated('Speed Through Water - speed relative to the water', nav.speedThroughWater)}"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.trip.log" data-label="Trip" title="${withUpdated('Trip distance - distance traveled on current trip', nav.trip?.log)}"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.log" data-label="Log" title="${withUpdated('Total log distance - cumulative distance traveled', nav.log)}"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.wind.speedTrue" data-label="Wind Speed" title="${withUpdated('True wind speed - actual wind speed in the atmosphere', env.wind?.speedTrue)}"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.wind.angleTrue" data-label="Wind Dir" title="${withUpdated('True wind direction - actual wind direction relative to true north', env.wind?.angleTrue)}"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.wind.angleApparent" data-label="Apparent Wind Angle" title="${withUpdated('Apparent wind angle - wind direction relative to vessel heading', data.environment?.wind?.angleApparent)}"><div class="label">Apparent Wind Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.wind.speedApparent" data-label="Apparent Wind Speed" title="${withUpdated('Apparent wind speed - wind speed as felt on the vessel', data.environment?.wind?.speedApparent)}"><div class="label">Apparent Wind Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.attitude.roll" data-label="Roll" title="${withUpdated('Vessel roll angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Roll</div><div class="value">${data.navigation?.attitude?.value?.roll ? (data.navigation.attitude.value.roll * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.attitude.pitch" data-label="Pitch" title="${withUpdated('Vessel pitch angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Pitch</div><div class="value">${data.navigation?.attitude?.value?.pitch ? (data.navigation.attitude.value.pitch * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.courseOverGroundTrue" data-label="COG" title="${withUpdated('Course Over Ground - true direction the vessel is moving', nav.courseOverGroundTrue)}"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.headingMagnetic" data-label="Mag Heading" title="${withUpdated('Magnetic heading from MMC5603 magnetometer', data.navigation?.headingMagnetic)}"><div class="label">Mag Heading</div><div class="value">${data.navigation?.headingMagnetic?.value ? (data.navigation.headingMagnetic.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="steering.rudderAngle" data-label="Rudder Angle" title="${withUpdated('Current rudder angle - positive is starboard, negative is port', data.steering?.rudderAngle)}"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.anchor.currentRadius" data-label="Anchor Distance" title="${withUpdated('Distance from anchor position - red if outside safe radius', nav.anchor?.currentRadius)}"><div class="label">Anchor Distance</div><div class="value" style="color: ${nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value, currentTheme) : 'var(--text-primary)'}">${nav.anchor?.currentRadius?.value ? (nav.anchor.currentRadius.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.anchor.bearingTrue" data-label="Anchor Bearing" title="${withUpdated('Bearing to anchor position from current location', nav.anchor?.bearingTrue)}"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="electrical.batteries.house.voltage" data-label="Battery Voltage" title="${withUpdated('House battery bank voltage', elec.batteries?.house?.voltage)}"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
+      <div class="info-item" data-path="electrical.batteries.house.current" data-label="Battery Current" title="${withUpdated('House battery bank current - positive is charging, negative is discharging', elec.batteries?.house?.current)}"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
+      <div class="info-item" data-path="electrical.batteries.house.power" data-label="Battery Power" title="${withUpdated('House battery bank power consumption or generation', elec.batteries?.house?.power)}"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
+      <div class="info-item" data-path="electrical.batteries.house.capacity.stateOfCharge" data-label="SOC" title="${withUpdated('State of Charge - percentage of battery capacity remaining', elec.batteries?.house?.capacity?.stateOfCharge)}"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
+      <div class="info-item" data-path="electrical.batteries.house.capacity.timeRemaining" data-label="Battery Time Remaining" title="${withUpdated('Estimated time remaining until battery depletion', elec.batteries?.house?.capacity?.timeRemaining)}"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
     `;
 
     // Update the vessel information with static vessel data
@@ -894,13 +1034,13 @@ async function loadData() {
     };
     // Update the environment with environmental data
     document.getElementById('environment-grid').innerHTML = `
-      <div class="info-item" title="${withUpdated('Water temperature at the surface', env.water?.temperature)}"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Inside Temp</div><div class="value">${data.environment?.inside?.temperature?.value ? ((data.environment.inside.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Inside humidity from BME280 sensor', data.environment?.inside?.humidity)}"><div class="label">Inside Humidity</div><div class="value">${data.environment?.inside?.humidity?.value ? (data.environment.inside.humidity.value * 100).toFixed(1) + '%' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Inside barometric pressure from BME280 sensor', data.environment?.inside?.pressure)}"><div class="label">Barometric Pressure</div><div class="value">${data.environment?.inside?.pressure?.value ? (data.environment.inside.pressure.value * 0.0002953).toFixed(2) + ' inHg' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Indoor air quality - Total Volatile Organic Compounds', data.environment?.inside?.airQuality?.tvoc)}"><div class="label">TVOC</div><div class="value">${data.environment?.inside?.airQuality?.tvoc?.value ? data.environment.inside.airQuality.tvoc.value.toFixed(0) + ' ppb' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Indoor air quality - Carbon Dioxide equivalent', data.environment?.inside?.airQuality?.eco2)}"><div class="label">CO₂</div><div class="value">${data.environment?.inside?.airQuality?.eco2?.value ? data.environment.inside.airQuality.eco2.value.toFixed(0) + ' ppm' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Magnetic variation at current position - difference between true and magnetic north', data.navigation?.magneticVariation)}"><div class="label">Magnetic Variation</div><div class="value">${data.navigation?.magneticVariation?.value ? (data.navigation.magneticVariation.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.water.temperature" data-label="Water Temp" title="${withUpdated('Water temperature at the surface', env.water?.temperature)}"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.inside.temperature" data-label="Inside Temp" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Inside Temp</div><div class="value">${data.environment?.inside?.temperature?.value ? ((data.environment.inside.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.inside.humidity" data-label="Inside Humidity" title="${withUpdated('Inside humidity from BME280 sensor', data.environment?.inside?.humidity)}"><div class="label">Inside Humidity</div><div class="value">${data.environment?.inside?.humidity?.value ? (data.environment.inside.humidity.value * 100).toFixed(1) + '%' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.inside.pressure" data-label="Barometric Pressure" title="${withUpdated('Inside barometric pressure from BME280 sensor', data.environment?.inside?.pressure)}"><div class="label">Barometric Pressure</div><div class="value">${data.environment?.inside?.pressure?.value ? (data.environment.inside.pressure.value * 0.0002953).toFixed(2) + ' inHg' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.inside.airQuality.tvoc" data-label="TVOC" title="${withUpdated('Indoor air quality - Total Volatile Organic Compounds', data.environment?.inside?.airQuality?.tvoc)}"><div class="label">TVOC</div><div class="value">${data.environment?.inside?.airQuality?.tvoc?.value ? data.environment.inside.airQuality.tvoc.value.toFixed(0) + ' ppb' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.inside.airQuality.eco2" data-label="CO₂" title="${withUpdated('Indoor air quality - Carbon Dioxide equivalent', data.environment?.inside?.airQuality?.eco2)}"><div class="label">CO₂</div><div class="value">${data.environment?.inside?.airQuality?.eco2?.value ? data.environment.inside.airQuality.eco2.value.toFixed(0) + ' ppm' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.magneticVariation" data-label="Magnetic Variation" title="${withUpdated('Magnetic variation at current position - difference between true and magnetic north', data.navigation?.magneticVariation)}"><div class="label">Magnetic Variation</div><div class="value">${data.navigation?.magneticVariation?.value ? (data.navigation.magneticVariation.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('Sunrise time today', data.environment?.sunlight?.times?.sunrise)}"><div class="label">Sunrise</div><div class="value">${data.environment?.sunlight?.times?.sunrise?.value ? new Date(data.environment.sunlight.times.sunrise.value).toLocaleTimeString() : 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('Sunset time today', data.environment?.sunlight?.times?.sunset)}"><div class="label">Sunset</div><div class="value">${data.environment?.sunlight?.times?.sunset?.value ? new Date(data.environment.sunlight.times.sunset.value).toLocaleTimeString() : 'N/A'}</div></div>
     `;
@@ -912,18 +1052,18 @@ async function loadData() {
       : 'N/A';
     document.getElementById('internet-grid').innerHTML = `
       <div class="info-item" title="${withUpdated('Internet service provider', internet.ISP)}"><div class="label">ISP</div><div class="value">${internet.ISP?.value || 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Download speed', internet.speed?.download)}"><div class="label">Download</div><div class="value">${isNumericValue(internet.speed?.download?.value) ? internet.speed.download.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Upload speed', internet.speed?.upload)}"><div class="label">Upload</div><div class="value">${isNumericValue(internet.speed?.upload?.value) ? internet.speed.upload.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Ping latency', internet.ping?.latency)}"><div class="label">Latency</div><div class="value">${isNumericValue(internet.ping?.latency?.value) ? internet.ping.latency.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Ping jitter', internet.ping?.jitter)}"><div class="label">Jitter</div><div class="value">${isNumericValue(internet.ping?.jitter?.value) ? internet.ping.jitter.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Packet loss percentage', internet.packetLoss)}"><div class="label">Packet Loss</div><div class="value">${packetLossDisplay}</div></div>
+      <div class="info-item" data-path="internet.speed.download" data-label="Download" title="${withUpdated('Download speed', internet.speed?.download)}"><div class="label">Download</div><div class="value">${isNumericValue(internet.speed?.download?.value) ? internet.speed.download.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
+      <div class="info-item" data-path="internet.speed.upload" data-label="Upload" title="${withUpdated('Upload speed', internet.speed?.upload)}"><div class="label">Upload</div><div class="value">${isNumericValue(internet.speed?.upload?.value) ? internet.speed.upload.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
+      <div class="info-item" data-path="internet.ping.latency" data-label="Latency" title="${withUpdated('Ping latency', internet.ping?.latency)}"><div class="label">Latency</div><div class="value">${isNumericValue(internet.ping?.latency?.value) ? internet.ping.latency.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
+      <div class="info-item" data-path="internet.ping.jitter" data-label="Jitter" title="${withUpdated('Ping jitter', internet.ping?.jitter)}"><div class="label">Jitter</div><div class="value">${isNumericValue(internet.ping?.jitter?.value) ? internet.ping.jitter.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
+      <div class="info-item" data-path="internet.packetLoss" data-label="Packet Loss" title="${withUpdated('Packet loss percentage', internet.packetLoss)}"><div class="label">Packet Loss</div><div class="value">${packetLossDisplay}</div></div>
     `;
 
     const propulsion = data.propulsion?.port || {};
     const rpmValue = propulsion.revolutions?.value;
     document.getElementById('propulsion-grid').innerHTML = `
       <div class="info-item" title="${withUpdated('Engine state', propulsion.state)}"><div class="label">State</div><div class="value">${propulsion.state?.value || 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Engine revolutions per minute', propulsion.revolutions)}"><div class="label">RPM</div><div class="value">${isNumericValue(rpmValue) ? (rpmValue * 60).toFixed(0) + ' RPM' : 'N/A'}</div></div>
+      <div class="info-item" data-path="propulsion.port.revolutions" data-label="RPM" title="${withUpdated('Engine revolutions per minute', propulsion.revolutions)}"><div class="label">RPM</div><div class="value">${isNumericValue(rpmValue) ? (rpmValue * 60).toFixed(0) + ' RPM' : 'N/A'}</div></div>
     `;
 
     const tanks = data.tanks || {};
@@ -936,14 +1076,14 @@ async function loadData() {
     const blackwaterBow = tanks.blackwater?.bow || {};
     const liveWell0 = tanks.liveWell?.['0'] || {};
     document.getElementById('tanks-grid').innerHTML = `
-      <div class="info-item" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div><div class="value">${formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value, fuelMain.temperature?.value)}</div></div>
-      <div class="info-item" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div><div class="value">${formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value, fuelReserve.temperature?.value)}</div></div>
-      <div class="info-item" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div><div class="value">${formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value, null)}</div></div>
-      <div class="info-item" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div><div class="value">${formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value, null)}</div></div>
-      <div class="info-item" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div><div class="value">${formatTankDisplay(propaneA.currentLevel?.value, null, propaneA.temperature?.value)}</div></div>
-      <div class="info-item" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div><div class="value">${formatTankDisplay(propaneB.currentLevel?.value, null, propaneB.temperature?.value)}</div></div>
-      <div class="info-item" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null, blackwaterBow.temperature?.value)}</div></div>
-      <div class="info-item" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null, null)}</div></div>
+      <div class="info-item" data-path="tanks.fuel.0.currentLevel" data-label="Fuel (Main)" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div><div class="value">${formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value, fuelMain.temperature?.value)}</div></div>
+      <div class="info-item" data-path="tanks.fuel.reserve.currentLevel" data-label="Fuel (Reserve)" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div><div class="value">${formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value, fuelReserve.temperature?.value)}</div></div>
+      <div class="info-item" data-path="tanks.freshWater.0.currentLevel" data-label="Fresh Water 1" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div><div class="value">${formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value, null)}</div></div>
+      <div class="info-item" data-path="tanks.freshWater.1.currentLevel" data-label="Fresh Water 2" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div><div class="value">${formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value, null)}</div></div>
+      <div class="info-item" data-path="tanks.propane.a.currentLevel" data-label="Propane A" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div><div class="value">${formatTankDisplay(propaneA.currentLevel?.value, null, propaneA.temperature?.value)}</div></div>
+      <div class="info-item" data-path="tanks.propane.b.currentLevel" data-label="Propane B" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div><div class="value">${formatTankDisplay(propaneB.currentLevel?.value, null, propaneB.temperature?.value)}</div></div>
+      <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null, blackwaterBow.temperature?.value)}</div></div>
+      <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null, null)}</div></div>
     `;
   } catch (err) {
     console.error("Failed to load data:", err);
