@@ -15,7 +15,7 @@ from .utils import get_project_root, load_vessel_info
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
 STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
-POSITION_RETENTION_HOURS = 24
+POSITION_RETENTION_HOURS = (24 * 14)
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
 
 
