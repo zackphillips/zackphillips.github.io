@@ -555,6 +555,11 @@ install-sensors: check-linux check-signalk-token
 	@sudo apt install -y i2c-tools
 	@echo "Enabling I2C interface..."
 	@sudo raspi-config nonint do_i2c 0
+	# Only install lgpio if running on Linux
+	@if [ "$(UNAME_S)" == "Linux" ]; then \
+		@echo "Installing lgpio..."; \
+		sudo apt install -y lgpio;
+	fi;
 	@echo "Installing Python dependencies with uv..."
 	@echo "Using uv to install sensor dependencies..."
 	@"$(UV_BIN)" sync
