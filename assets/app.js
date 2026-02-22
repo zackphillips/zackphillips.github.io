@@ -5,6 +5,8 @@ if (!vesselUtils) {
 const { haversine, getAnchorDistanceColor, getWindDirection } = vesselUtils;
 
 let map, marker, trackLine, trackMarkers;
+let anchorLayer = null;   // Leaflet circle for anchor swing radius
+let trackLegend = null;   // Leaflet control for day-colour legend
 let lat, lon; // Global variables for coordinates
 let vesselData = null; // Global vessel information
 let tideStations = null; // Global tide stations data
@@ -106,12 +108,14 @@ async function loadTrack() {
 
     if (!positions.length) return;
 
-    // Group by UTC calendar day (YYYY-MM-DD).
+    // Group by LOCAL calendar day (YYYY-MM-DD) so one day's track is one color.
     const byDay = new Map();
     for (const p of positions) {
-      const dayKey = p.timestamp
-        ? new Date(p.timestamp).toISOString().slice(0, 10)
-        : 'unknown';
+      let dayKey = 'unknown';
+      if (p.timestamp) {
+        const dt = new Date(p.timestamp);
+        dayKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+      }
       if (!byDay.has(dayKey)) byDay.set(dayKey, []);
       byDay.get(dayKey).push(p);
     }
@@ -155,6 +159,25 @@ async function loadTrack() {
     });
 
     trackLine = lines;
+
+    // Build / rebuild the day-colour legend.
+    if (trackLegend) { trackLegend.remove(); trackLegend = null; }
+    if (days.length && map) {
+      trackLegend = L.control({ position: 'bottomright' });
+      trackLegend.onAdd = () => {
+        const div = L.DomUtil.create('div', 'track-legend');
+        div.innerHTML = days.map((day, idx) => {
+          const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
+          const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
+          return `<div class="track-legend-item">
+            <span class="track-legend-swatch" style="background:${color}"></span>
+            <span>${label}</span>
+          </div>`;
+        }).join('');
+        return div;
+      };
+      trackLegend.addTo(map);
+    }
   } catch (error) {
     console.warn('Unable to load track data:', error);
   }
@@ -1124,10 +1147,24 @@ async function loadData() {
     let timestampStr = data.navigation?.position?.timestamp;
     let modifiedDate = timestampStr ? new Date(timestampStr) : findLatestTimestamp(data);
 
+    const formatAge = (ms) => {
+      const s = Math.floor(ms / 1000);
+      if (s < 60)  return 'just now';
+      const m = Math.floor(s / 60);
+      if (m < 60)  return `${m} min ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24)  return `${h} hr${h === 1 ? '' : 's'} ago`;
+      const d = Math.floor(h / 24);
+      return `${d} day${d === 1 ? '' : 's'} ago`;
+    };
+
     if (modifiedDate && !isNaN(modifiedDate.getTime())) {
       const now = new Date();
-      const diffHours = (now - modifiedDate) / (1000 * 60 * 60);
-      timeElement.textContent = `Last Updated: ${modifiedDate.toLocaleString()}`;
+      const diffMs    = now - modifiedDate;
+      const diffHours = diffMs / (1000 * 60 * 60);
+      const ageDot    = diffHours < 1 ? '🟢' : diffHours < 6 ? '🟡' : diffHours < 24 ? '🟠' : '🔴';
+      const ageLabel  = formatAge(diffMs);
+      timeElement.textContent = `${ageDot} ${ageLabel} · ${modifiedDate.toLocaleString()}`;
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       if (diffHours > 3) {
         banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
@@ -1137,7 +1174,7 @@ async function loadData() {
         banner.style.color = isDark ? "#d4edda" : '#2c3e50';
       }
     } else {
-      timeElement.textContent = "Timestamp not found";
+      timeElement.textContent = '🔴 Timestamp not found';
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
       banner.style.color = isDark ? "#f8d7da" : "#721c24";
@@ -1160,9 +1197,49 @@ async function loadData() {
           });
         tileLayer.addTo(map);
         marker = L.marker([lat, lon]).addTo(map);
+
+        // Privacy exclusion zone indicator — mirrors PRIVACY_EXCLUSION_ZONES in Python.
+        // Positions inside this ring are redacted from all stored data.
+        L.circle([37.7802069, -122.3858040], {
+          radius: 200,
+          color: '#e74c3c',
+          fillColor: '#e74c3c',
+          fillOpacity: 0.05,
+          opacity: 0.5,
+          weight: 1.5,
+          dashArray: '5 5',
+          interactive: false,
+        }).bindTooltip('📍 Privacy zone — position not recorded inside this area', {
+          sticky: true, opacity: 0.85,
+        }).addTo(map);
       } else {
         map.setView([lat, lon]);
         marker.setLatLng([lat, lon]);
+      }
+
+      // Anchor swing-radius circle.
+      const anchorPos = nav.anchor?.position?.value;
+      const anchorRadius = nav.anchor?.maxRadius?.value;
+      if (anchorPos?.latitude && anchorPos?.longitude && anchorRadius > 0) {
+        const anchorLatLng = [anchorPos.latitude, anchorPos.longitude];
+        if (anchorLayer) {
+          anchorLayer.setLatLng(anchorLatLng).setRadius(anchorRadius);
+        } else {
+          anchorLayer = L.circle(anchorLatLng, {
+            radius: anchorRadius,
+            color: '#f39c12',
+            fillColor: '#f39c12',
+            fillOpacity: 0.08,
+            opacity: 0.7,
+            weight: 2,
+            dashArray: '6 4',
+          }).bindTooltip(`⚓ Anchor radius: ${(anchorRadius * 3.28084).toFixed(0)} ft`, {
+            sticky: true, opacity: 0.85,
+          }).addTo(map);
+        }
+      } else if (anchorLayer) {
+        anchorLayer.remove();
+        anchorLayer = null;
       }
 
       // Load wind forecast asynchronously without blocking main data load
