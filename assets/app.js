@@ -4,6 +4,9 @@ if (!vesselUtils) {
 }
 const { haversine, getAnchorDistanceColor, getWindDirection } = vesselUtils;
 
+Chart.defaults.font.family = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+Chart.defaults.font.size = 12;
+
 let map, marker, trackLine, trackMarkers;
 let anchorLayer = null;   // Leaflet circle for anchor swing radius
 let trackLegend = null;   // Leaflet control for day-colour legend
@@ -93,6 +96,32 @@ function colorValue(display, status) {
   if (display === 'N/A') return `<div class="value"><span class="value-na">N/A</span></div>`;
   const cls = status?.level ? ` value-${status.level}` : '';
   return `<div class="value${cls}">${display}</div>`;
+}
+
+function renderAlertSummary() {
+  const el = document.getElementById('alert-summary');
+  if (!el) return;
+  const items = [];
+  document.querySelectorAll('.info-item').forEach(item => {
+    const valueEl = item.querySelector('.value-alert, .value-warn');
+    if (!valueEl) return;
+    const labelEl = item.querySelector('.label');
+    if (!labelEl) return;
+    const level = valueEl.classList.contains('value-alert') ? 'alert' : 'warn';
+    items.push({ label: labelEl.textContent.trim(), value: valueEl.textContent.trim(), level });
+  });
+  items.sort((a, b) => (a.level === 'alert' ? -1 : 1));
+  if (!items.length) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  el.innerHTML = `
+    <div class="panel-title">System Alerts</div>
+    <div class="alert-chips">
+      ${items.map(i => `
+        <div class="alert-chip alert-chip--${i.level}">
+          <span class="alert-chip__label">${i.label}</span>
+          <span class="alert-chip__value">${i.value}</span>
+        </div>`).join('')}
+    </div>`;
 }
 
 function renderSkeletonGrid(containerId, count = 6) {
@@ -748,8 +777,8 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
           {
             label: `Tide Height (${targetStation.name})`,
             data: heights,
-            borderColor: '#3498db',
-            backgroundColor: 'rgba(52,152,219,0.1)',
+            borderColor: isDark ? '#60a5fa' : '#2563eb',
+            backgroundColor: isDark ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.1)',
             fill: true,
             tension: 0.4,
             pointRadius: 0
@@ -785,12 +814,11 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
               xValue: labels[p.i],
               yValue: p.value,
               content: `${p.value.toFixed(1)} ft @ ${p.time}`,
-              backgroundColor: isDark ? 'rgba(52, 152, 219, 0.9)' : 'rgba(0,0,0,0.7)',
-              color: isDark ? '#ffffff' : '#fff',
-              font: { size: 10 },
+              backgroundColor: isDark ? 'rgba(96,165,250,0.9)' : 'rgba(37,99,235,0.85)',
+              color: '#ffffff',
               yAdjust: -20,
               position: 'center',
-              borderColor: isDark ? 'rgba(52, 152, 219, 1)' : 'rgba(0,0,0,0.8)',
+              borderColor: isDark ? '#60a5fa' : '#2563eb',
               borderWidth: 1
             }))
           }
@@ -798,7 +826,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
         scales: {
           x: {
             grid: {
-              color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+              color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'
             },
             ticks: {
               color: isDark ? '#ffffff' : '#2c3e50'
@@ -811,7 +839,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
           },
           y: {
             grid: {
-              color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
+              color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'
             },
             ticks: {
               color: isDark ? '#ffffff' : '#2c3e50'
@@ -1016,7 +1044,7 @@ async function loadData() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!points || points.length < 2) {
       ctx.fillStyle = noDataColor;
-      ctx.font = '10px sans-serif';
+      ctx.font = '10px system-ui,-apple-system,sans-serif';
       ctx.fillText('No data', 6, canvas.height / 2 + 4);
       return;
     }
@@ -1056,7 +1084,7 @@ async function loadData() {
 
     // Y-axis labels (right-aligned into left padding, no unit to save space)
     ctx.fillStyle = labelColor;
-    ctx.font = '9px sans-serif';
+    ctx.font = '9px system-ui,-apple-system,sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     ctx.fillText(`${formatValue(max)}${unit}`, axisY - 2, padding.top);
@@ -1067,7 +1095,7 @@ async function loadData() {
     const tFirst = points[0].t.getTime();
     const tLast  = points[points.length - 1].t.getTime();
     const numTicks = 3;
-    ctx.font = '9px sans-serif';
+    ctx.font = '9px system-ui,-apple-system,sans-serif';
     ctx.textBaseline = 'top';
     for (let i = 0; i <= numTicks; i++) {
       const ratio = i / numTicks;
@@ -1107,7 +1135,7 @@ async function loadData() {
   const initInlineSparklines = async () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const colors = {
-      line:   isDark ? 'rgba(100, 160, 255, 0.9)'  : 'rgba(26, 80, 200, 0.75)',
+      line:   isDark ? 'rgba(96, 165, 250, 0.95)'  : 'rgba(37, 99, 235, 0.85)',
       axis:   isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
       label:  isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.4)',
       noData: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)',
@@ -1391,11 +1419,9 @@ async function loadData() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
 
     const anchorFeet = nav.anchor?.currentRadius?.value ? nav.anchor.currentRadius.value * 3.28084 : null;
-    const anchorColor = nav.anchor?.currentRadius?.value && nav.anchor?.maxRadius?.value
-      ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value, currentTheme)
-      : 'var(--text-primary)';
-    const anchorDisplay = anchorFeet != null ? `<span style="color:${anchorColor};">${anchorFeet.toFixed(1)} ft</span>` : 'N/A';
-    const anchorValueHtml = `<div class="value">${anchorDisplay}</div>`;
+    const anchorStatus = classifyAnchorStatus(nav.anchor?.currentRadius?.value, nav.anchor?.maxRadius?.value);
+    const anchorDisplay = anchorFeet != null ? `${anchorFeet.toFixed(1)} ft` : 'N/A';
+    const anchorValueHtml = colorValue(anchorDisplay, anchorStatus);
 
     const socRaw = elec.batteries?.house?.capacity?.stateOfCharge?.value;
     const socZones = elec.batteries?.house?.capacity?.stateOfCharge?.meta?.zones;
@@ -1526,7 +1552,8 @@ async function loadData() {
       <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div>${tankValueWithBadge(liveWell0.currentLevel?.value, formatTankDisplay(liveWell0.currentLevel?.value, null), true, liveWell0.currentLevel?.meta?.zones)}</div>
     `;
 
-    // Render inline sparklines now that all info-item cards are in the DOM.
+    // Render alert summary and inline sparklines now that all info-item cards are in the DOM.
+    renderAlertSummary();
     initInlineSparklines();
   } catch (err) {
     console.error("Failed to load data:", err);
@@ -1853,8 +1880,8 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
       polarDatasets.push({
         label: `${tws} kts${isClosestWindSpeed ? ' (Current)' : ''}`,
         data: speeds,
-        borderColor: isClosestWindSpeed ? (isDark ? '#ffffff' : '#000000') : `hsla(${hue}, 70%, 50%, 0.50)`, // 50% alpha for non-current lines
-        backgroundColor: isClosestWindSpeed ? (isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)') : `hsla(${hue}, 70%, 50%, 0.025)`, // Reduced alpha for background too
+        borderColor: isClosestWindSpeed ? (isDark ? '#60a5fa' : '#2563eb') : `hsla(${hue}, 70%, 50%, 0.50)`, // 50% alpha for non-current lines
+        backgroundColor: isClosestWindSpeed ? (isDark ? 'rgba(96,165,250,0.2)' : 'rgba(37,99,235,0.2)') : `hsla(${hue}, 70%, 50%, 0.025)`, // Reduced alpha for background too
         borderWidth: isClosestWindSpeed ? 4 : 2, // Thicker line for current wind speed
         fill: false,
         tension: 0.4,
@@ -1884,8 +1911,8 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
   polarDatasets.push({
     label: 'Current',
     data: currentData,
-    borderColor: isDark ? '#ffffff' : '#000000',
-    backgroundColor: isDark ? '#ffffff' : '#000000',
+    borderColor: isDark ? '#60a5fa' : '#2563eb',
+    backgroundColor: isDark ? '#60a5fa' : '#2563eb',
     borderWidth: 0, // No line
     pointRadius: 12,
     pointHoverRadius: 16,
@@ -1930,7 +1957,7 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
         r: {
             beginAtZero: true,
             grid: {
-              color: isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.1)'
+              color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'
             },
             ticks: {
               stepSize: 2,
@@ -2345,20 +2372,22 @@ function updateChartsForTheme(theme) {
   // Update tide chart
   if (tideChartInstance) {
     const isDark = theme === 'dark';
-    tideChartInstance.options.scales.x.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
-    tideChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+    tideChartInstance.options.scales.x.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)';
+    tideChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)';
     tideChartInstance.options.scales.x.ticks.color = isDark ? '#ffffff' : '#2c3e50';
     tideChartInstance.options.scales.y.ticks.color = isDark ? '#ffffff' : '#2c3e50';
     tideChartInstance.options.scales.x.title.color = isDark ? '#ffffff' : '#2c3e50';
     tideChartInstance.options.scales.y.title.color = isDark ? '#ffffff' : '#2c3e50';
+    tideChartInstance.data.datasets[0].borderColor = isDark ? '#60a5fa' : '#2563eb';
+    tideChartInstance.data.datasets[0].backgroundColor = isDark ? 'rgba(96,165,250,0.12)' : 'rgba(37,99,235,0.1)';
 
     // Update annotations if they exist
     if (tideChartInstance.options.plugins.annotation && tideChartInstance.options.plugins.annotation.annotations) {
       tideChartInstance.options.plugins.annotation.annotations.forEach(annotation => {
         if (annotation.type === 'label') {
-          annotation.backgroundColor = isDark ? 'rgba(52, 152, 219, 0.9)' : 'rgba(0,0,0,0.7)';
-          annotation.color = isDark ? '#ffffff' : '#fff';
-          annotation.borderColor = isDark ? 'rgba(52, 152, 219, 1)' : 'rgba(0,0,0,0.8)';
+          annotation.backgroundColor = isDark ? 'rgba(96,165,250,0.9)' : 'rgba(37,99,235,0.85)';
+          annotation.color = '#ffffff';
+          annotation.borderColor = isDark ? '#60a5fa' : '#2563eb';
         }
       });
     }
