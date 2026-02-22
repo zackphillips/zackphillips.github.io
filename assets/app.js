@@ -175,13 +175,11 @@ let currentEnv = null; // Global environment data
 let currentNav = null; // Global navigation data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
-const SNAPSHOT_INDEX_URL = 'data/telemetry/positions_index.json';
+const SNAPSHOT_INDEX_URL = 'data/telemetry/snapshots_index.json';
 const SPARKLINE_POINTS = 60;
 let seriesByPath = null;
 let seriesPromise = null;
-let sparklineTooltip = null;
-let sparklineCanvas = null;
-let sparklineLabel = null;
+let refreshSparklines = null; // set once initInlineSparklines is ready
 
 const hasValidCoordinates = (latitude, longitude) =>
   Number.isFinite(latitude) && Number.isFinite(longitude);
@@ -733,22 +731,6 @@ async function loadData() {
     return description;
   };
 
-  const ensureSparklineTooltip = () => {
-    if (sparklineTooltip) return sparklineTooltip;
-    sparklineTooltip = document.createElement('div');
-    sparklineTooltip.className = 'sparkline-tooltip';
-    sparklineTooltip.style.display = 'none';
-    sparklineTooltip.innerHTML = `
-      <div class="sparkline-tooltip__label"></div>
-      <canvas class="sparkline-tooltip__canvas" width="180" height="60"></canvas>
-      <div class="sparkline-tooltip__status"></div>
-    `;
-    document.body.appendChild(sparklineTooltip);
-    sparklineCanvas = sparklineTooltip.querySelector('canvas');
-    sparklineLabel = sparklineTooltip.querySelector('.sparkline-tooltip__label');
-    return sparklineTooltip;
-  };
-
   const toSnapshotFilename = (timestamp) => {
     if (!timestamp) return null;
     const normalized = timestamp.replace('Z', '+00:00');
@@ -875,14 +857,20 @@ async function loadData() {
     'tanks.liveWell.0.currentLevel':                     { transform: v => v * 100,                        unit: '%'     },
   };
 
-  const renderSparkline = (canvas, points, displayConfig = {}) => {
+  const renderSparkline = (canvas, points, displayConfig = {}, colors = {}) => {
     const { transform = v => v, unit = '' } = displayConfig;
+    const {
+      line: lineColor     = 'rgba(255, 255, 255, 0.85)',
+      axis: axisColor     = 'rgba(255, 255, 255, 0.25)',
+      label: labelColor   = 'rgba(255, 255, 255, 0.6)',
+      noData: noDataColor = 'rgba(255, 255, 255, 0.5)',
+    } = colors;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!points || points.length < 2) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      ctx.font = '12px sans-serif';
-      ctx.fillText('No recent data', 6, 30);
+      ctx.fillStyle = noDataColor;
+      ctx.font = '10px sans-serif';
+      ctx.fillText('No data', 6, canvas.height / 2 + 4);
       return;
     }
     const formatValue = (value) => {
@@ -910,7 +898,7 @@ async function loadData() {
     const axisX = canvas.height - padding.bottom;
     const axisY = padding.left;
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.strokeStyle = axisColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(axisY, padding.top);
@@ -918,7 +906,7 @@ async function loadData() {
     ctx.lineTo(canvas.width - padding.right, axisX);
     ctx.stroke();
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.fillStyle = labelColor;
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
@@ -926,7 +914,7 @@ async function loadData() {
     ctx.textBaseline = 'bottom';
     ctx.fillText(`${formatValue(min)}${unit}`, 2, axisX + 2);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
     points.forEach((point, index) => {
@@ -941,55 +929,52 @@ async function loadData() {
     ctx.stroke();
   };
 
-  const setupSparklineEvents = () => {
-    if (document.body.dataset.sparklineReady === 'true') return;
-    document.body.dataset.sparklineReady = 'true';
-    const tooltip = ensureSparklineTooltip();
-
-    const hideTooltip = () => {
-      tooltip.style.display = 'none';
+  /**
+   * Render small inline sparkline charts directly inside each .info-item card.
+   * Safe to call multiple times — re-renders existing canvases in place.
+   * Also exposed as module-level refreshSparklines for the theme toggle.
+   */
+  const initInlineSparklines = async () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const colors = {
+      line:   isDark ? 'rgba(100, 160, 255, 0.9)'  : 'rgba(26, 80, 200, 0.75)',
+      axis:   isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
+      label:  isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.4)',
+      noData: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)',
     };
 
-    document.addEventListener('mousemove', (event) => {
-      if (tooltip.style.display !== 'none') {
-        tooltip.style.left = `${event.pageX + 12}px`;
-        tooltip.style.top = `${event.pageY + 12}px`;
-      }
-    });
+    const seriesMap = await loadSeries();
+    if (!seriesMap || !seriesMap.size) return;
 
-    document.addEventListener('mouseout', (event) => {
-      const item = event.target.closest?.('.info-item');
-      if (item && tooltip.style.display !== 'none') {
-        hideTooltip();
-      }
-    });
-
-    document.addEventListener('mouseover', async (event) => {
-      const item = event.target.closest?.('.info-item');
-      if (!item || !item.dataset.path) return;
+    document.querySelectorAll('.info-item[data-path]').forEach((item) => {
       const path = item.dataset.path;
-      const label = item.dataset.label || item.querySelector('.label')?.textContent || path;
-      const map = await loadSeries();
-      const list = map.get(path);
-      if (!list || !list.length) {
-        hideTooltip();
-        return;
+      const list = seriesMap.get(path);
+      if (!list || !list.length) return;
+
+      // Re-use existing canvas or create a new one.
+      let canvas = item.querySelector('.sparkline-inline');
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.className = 'sparkline-inline';
+        canvas.height = 36;
+        item.appendChild(canvas);
       }
+      // Match canvas pixel width to card width (important for crisp rendering).
+      const w = item.clientWidth || 120;
+      canvas.width = w;
+
       const points = list.slice(-SPARKLINE_POINTS);
       const displayConfig = PATH_DISPLAY_CONFIG[path] || {};
-      sparklineLabel.textContent = label;
-      renderSparkline(sparklineCanvas, points, displayConfig);
-      const unitLabel = displayConfig.unit ? ` · ${displayConfig.unit}` : '';
-      tooltip.querySelector('.sparkline-tooltip__status').textContent = `${points.length} points${unitLabel}`;
-      tooltip.style.display = 'block';
-      tooltip.style.left = `${event.pageX + 12}px`;
-      tooltip.style.top = `${event.pageY + 12}px`;
+      renderSparkline(canvas, points, displayConfig, colors);
     });
   };
 
+  // Expose so theme toggle can re-render sparklines with updated colors.
+  refreshSparklines = initInlineSparklines;
+
   try {
     console.log('Starting to load data...');
-    // setupSparklineEvents(); // disabled: sparkline popups overlapped with charts
+    initInlineSparklines(); // kick off async — renders once series data loads
 
     // Load data from local file
     let res;
@@ -1259,6 +1244,9 @@ async function loadData() {
       <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null)}</div></div>
       <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null)}</div></div>
     `;
+
+    // Render inline sparklines now that all info-item cards are in the DOM.
+    initInlineSparklines();
   } catch (err) {
     console.error("Failed to load data:", err);
     console.error("Error details:", err.message);
@@ -2044,6 +2032,9 @@ function initDarkMode() {
 
         // Update charts
         updateChartsForTheme(newTheme);
+
+        // Re-render inline sparklines with updated theme colors
+        refreshSparklines?.();
 
         // Re-enable theme changes after chart update completes
         setTimeout(() => {

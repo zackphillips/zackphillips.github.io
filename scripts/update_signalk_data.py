@@ -18,6 +18,9 @@ STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
 POSITION_RETENTION_HOURS = (24 * 24)  # 24 days
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
+# All snapshot files (timestamp + filename only, no position — safe to publish).
+# Used by the frontend sparkline feature to load historical telemetry for all paths.
+SNAPSHOT_INDEX_FILE = "./data/telemetry/snapshots_index.json"
 
 # Top-level SignalK keys to include in compressed position archives.
 # Excludes static design data, raw sensor hardware keys, and AIS bounding boxes.
@@ -341,6 +344,31 @@ def _collect_numeric_values(
             _collect_numeric_values(child, child_path, values=values)
 
 
+def _update_snapshot_index(output_dir: Path, filename: str, timestamp: datetime) -> None:
+    """Add a new entry to snapshots_index.json and prune expired entries.
+
+    The snapshot index contains {timestamp, file} pairs for every saved
+    telemetry snapshot — including privacy-redacted ones — so the frontend
+    sparkline feature can load historical data for all SignalK paths.
+    """
+    index_path = output_dir / Path(SNAPSHOT_INDEX_FILE).name
+    try:
+        existing = json.loads(index_path.read_text()) if index_path.exists() else []
+        if not isinstance(existing, list):
+            existing = []
+    except json.JSONDecodeError:
+        existing = []
+
+    cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
+    existing = [
+        e for e in existing
+        if isinstance(e, dict) and (_parse_timestamp(e.get("timestamp")) or datetime.min.replace(tzinfo=UTC)) >= cutoff
+    ]
+    existing.append({"timestamp": timestamp.isoformat(), "file": filename})
+    existing.sort(key=lambda e: e.get("timestamp") or "")
+    index_path.write_text(json.dumps(existing, indent=2))
+
+
 def _prune_old_position_files(output_dir: Path) -> None:
     """Delete timestamped position snapshot files older than the retention window."""
     cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
@@ -410,6 +438,9 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
         }],
     }
     position_file.write_text(json.dumps(snapshot_payload, indent=2))
+
+    # Always update the all-snapshots index (no position data — privacy safe).
+    _update_snapshot_index(output_dir, filename, timestamp)
 
     # --- Index entry: only written when position is not private ---
     if position_private:
