@@ -103,6 +103,57 @@ body {
   transition: color 0.3s ease;
 }
 
+.value-with-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.status-chip {
+  font-size: 0.68em;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.status-ok {
+  background: rgba(46, 204, 113, 0.15);
+  color: #1e8f58;
+  border-color: rgba(46, 204, 113, 0.35);
+}
+
+.status-warn {
+  background: rgba(243, 156, 18, 0.18);
+  color: #b66b00;
+  border-color: rgba(243, 156, 18, 0.35);
+}
+
+.status-alert {
+  background: rgba(231, 76, 60, 0.18);
+  color: #b62323;
+  border-color: rgba(231, 76, 60, 0.35);
+}
+
+[data-theme="dark"] .status-ok {
+  background: rgba(46, 204, 113, 0.18);
+  color: #8ef4b8;
+}
+
+[data-theme="dark"] .status-warn {
+  background: rgba(243, 189, 18, 0.18);
+  color: #ffd27f;
+}
+
+[data-theme="dark"] .status-alert {
+  background: rgba(231, 76, 60, 0.18);
+  color: #ff9f9f;
+}
+
 .track-legend {
   background: var(--bg-primary, rgba(255,255,255,0.92));
   border: 1px solid var(--border-color, #ccc);
@@ -657,4 +708,58 @@ body {
   .wave-forecast-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Skeleton & empty states */
+.skeleton-card {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  min-height: 70px;
+}
+
+.skeleton-bar {
+  height: 12px;
+  width: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.4), rgba(255,255,255,0.2));
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+.skeleton-label {
+  width: 60%;
+  margin: 0 auto 10px;
+  height: 10px;
+}
+
+.skeleton-value {
+  width: 80%;
+  margin: 0 auto;
+  height: 16px;
+}
+
+[data-theme="dark"] .skeleton-bar {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05), rgba(255,255,255,0.15), rgba(255,255,255,0.05));
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.empty-state {
+  padding: 30px;
+  text-align: center;
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  background: var(--bg-quaternary);
+}
+
+.empty-state strong {
+  display: block;
+  font-size: 1.05em;
+  margin-bottom: 6px;
 }
