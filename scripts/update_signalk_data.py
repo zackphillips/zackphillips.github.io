@@ -1,5 +1,6 @@
 import argparse
 import json
+import math
 import os
 import subprocess
 import time
@@ -23,6 +24,31 @@ POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
 SNAPSHOT_PATH_WHITELIST: frozenset[str] = frozenset({
     "navigation", "environment", "electrical", "tanks", "propulsion", "internet"
 })
+
+# Privacy exclusion zones: (lat, lon, radius_metres).
+# Positions inside these circles are redacted from all stored/published data.
+# All other telemetry for those samples is retained as normal.
+PRIVACY_EXCLUSION_ZONES: list[tuple[float, float, float]] = [
+    (37.7802069, -122.3858040, 200.0),  # South Beach Harbor, San Francisco
+]
+
+
+def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance in metres between two WGS-84 points."""
+    R = 6_371_000.0
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlam = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2) ** 2
+    return R * 2 * math.asin(math.sqrt(a))
+
+
+def _is_position_private(lat: float, lon: float) -> bool:
+    """Return True if the position falls inside any privacy exclusion zone."""
+    return any(
+        _haversine_m(lat, lon, zone_lat, zone_lon) <= radius
+        for zone_lat, zone_lon, radius in PRIVACY_EXCLUSION_ZONES
+    )
 
 
 def load_vessel_data() -> dict:
@@ -315,6 +341,19 @@ def _collect_numeric_values(
             _collect_numeric_values(child, child_path, values=values)
 
 
+def _prune_old_position_files(output_dir: Path) -> None:
+    """Delete timestamped position snapshot files older than the retention window."""
+    cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
+    for file_path in output_dir.iterdir():
+        if not file_path.is_file():
+            continue
+        ts = _parse_position_filename(file_path.name)
+        if ts is None:
+            continue
+        if ts.replace(tzinfo=UTC) < cutoff:
+            file_path.unlink(missing_ok=True)
+
+
 def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     navigation = blob.get("navigation", {}) if isinstance(blob, dict) else {}
     position = navigation.get("position") if isinstance(navigation, dict) else None
@@ -342,6 +381,11 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
             heading_value = heading.get("value")
             if isinstance(heading_value, (int, float)):
                 course_over_ground_true = heading_value
+    # Check privacy: redact position if inside an exclusion zone.
+    position_private = _is_position_private(lat, lon)
+    if position_private:
+        print(f"Privacy: position redacted — within exclusion zone ({lat:.6f}, {lon:.6f})")
+
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -351,10 +395,12 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     # --- Snapshot file: full SignalK delta format, whitelisted paths only ---
     signalk_values: list[dict[str, Any]] = []
     _collect_signalk_values(blob, "", values=signalk_values, whitelist=SNAPSHOT_PATH_WHITELIST)
-    # Ensure navigation.position is present and is the first entry.
-    pos_entry = {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}
+    # Always strip any auto-collected navigation.position (may be redacted).
     signalk_values = [v for v in signalk_values if v["path"] != "navigation.position"]
-    signalk_values.insert(0, pos_entry)
+    if not position_private:
+        # Prepend position only when it is safe to store.
+        pos_entry = {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}
+        signalk_values.insert(0, pos_entry)
 
     snapshot_payload = {
         "context": "vessels.self",
@@ -365,7 +411,17 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     }
     position_file.write_text(json.dumps(snapshot_payload, indent=2))
 
-    # --- Index entry: compact SignalK values (position + key nav fields only) ---
+    # --- Index entry: only written when position is not private ---
+    if position_private:
+        # Update the index (pruning old entries) without adding a new one.
+        index_path = output_dir / Path(POSITION_INDEX_FILE).name
+        entries = _load_position_index(index_path)
+        cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
+        entries = [e for e in entries if (_parse_timestamp(e.get("timestamp")) or datetime.min.replace(tzinfo=UTC)) >= cutoff]
+        _write_position_index(index_path, entries)
+        _prune_old_position_files(output_dir)
+        return
+
     index_values: list[dict[str, Any]] = [
         {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}},
     ]
@@ -393,14 +449,7 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     entries.sort(key=lambda item: item.get("timestamp") or "")
     _write_position_index(index_path, entries)
 
-    for file_path in output_dir.iterdir():
-        if not file_path.is_file():
-            continue
-        ts = _parse_position_filename(file_path.name)
-        if ts is None:
-            continue
-        if ts.replace(tzinfo=UTC) < cutoff:
-            file_path.unlink(missing_ok=True)
+    _prune_old_position_files(output_dir)
 
 
 def run_update(
@@ -429,6 +478,21 @@ def run_update(
     if not no_reset:
         git_reset(remote=remote, branch=branch)
     blob = fetch_blob(signalk_url=signalk_url)
+
+    # Redact navigation.position from the live blob if inside a privacy zone,
+    # so the position is never committed to the public repository.
+    nav = blob.get("navigation") if isinstance(blob, dict) else None
+    if isinstance(nav, dict):
+        pos = nav.get("position")
+        if isinstance(pos, dict):
+            pos_val = pos.get("value", {})
+            lat = pos_val.get("latitude")
+            lon = pos_val.get("longitude")
+            if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
+                if _is_position_private(lat, lon):
+                    print(f"Privacy: position redacted from {output_file.name} — within exclusion zone")
+                    nav.pop("position", None)
+
     output_file.write_text(json.dumps(blob, indent=2))
     print(f"Wrote SignalK blob to {output_file}")
     update_position_cache(blob, output_file)
