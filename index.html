@@ -3,575 +3,182 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>S.V. Mermug Tracker</title>
+  <title id="page-title">Vessel Tracker</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="icon" href="/assets/favicon.ico" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f0f0f0;
-    }
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      background-color: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-    }
-    .info-logo-row {
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
-      gap: 20px;
-      padding: 20px 20px 0 20px;
-    }
-    .logo-side {
-      max-width: 220px;
-      height: auto;
-      display: block;
-      flex-shrink: 0;
-    }
-    .info-panel {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background-color: #ecf0f1;
-      padding: 20px;
-      border-radius: 8px;
-    }
-    .data-grid {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    .info-item {
-      text-align: center;
-    }
-    .label {
-      font-weight: bold;
-      color: #34495e;
-      font-size: 0.85em;
-    }
-    .value {
-      font-size: 1.1em;
-      color: #2c3e50;
-      margin-top: 5px;
-      font-weight: 600;
-    }
-    .button-row {
-      display: flex;
-      gap: 16px;
-      margin-top: auto;
-      justify-content: space-between;
-    }
-    .action-btn {
-      flex: 1;
-      padding: 12px 18px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 1.1em;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      color: #fff;
-    }
-    .signal-btn {
-      background-color: #2c3e50;
-    }
-    .signal-btn:hover {
-      background-color: #1a232c;
-    }
-    .plotter-btn {
-      background-color: #16a085;
-    }
-    .plotter-btn:hover {
-      background-color: #12876d;
-    }
-    .wifi-note {
-      font-size: 0.9em;
-      font-style: italic;
-      text-align: center;
-      color: #7f8c8d;
-      margin-top: 10px;
-    }
-    .map-container {
-      padding: 20px;
-    }
-    #map {
-      height: 500px;
-      width: 100%;
-    }
-    #tideChart {
-      width: 100%;
-      height: 250px !important;
-    }
-    @media (max-width: 1100px) {
-      .data-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-    @media (max-width: 700px) {
-      .info-logo-row {
-        flex-direction: column;
-        gap: 10px;
-        padding: 10px;
-      }
-      .logo-side {
-        max-width: 120px;
-        margin: 0 auto;
-      }
-      .data-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .button-row {
-        flex-direction: column;
-        gap: 10px;
-      }
-      .info-panel {
-        padding: 10px;
-      }
-    }
-    .button-row {
-      display: flex;
-      flex-direction: row;
-      gap: 16px;
-      margin-top: 18px;
-      justify-content: space-between;
-    }
-    .action-btn {
-      flex: 1;
-      padding: 12px 18px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 1.1em;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      color: #fff;
-    }
-    .signal-btn {
-      background-color: #2c3e50;
-    }
-    .signal-btn:hover {
-      background-color: #1a232c;
-    }
-    .plotter-btn {
-      background-color: #16a085;
-    }
-    .plotter-btn:hover {
-      background-color: #12876d;
-    }
-    .wifi-note {
-      font-size: 0.9em;
-      font-style: italic;
-      text-align: center;
-      color: #7f8c8d;
-      margin-top: 10px;
-    }
-    @media (max-width: 700px) {
-      .button-row {
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-    .info-logo-row {
-      display: flex;
-      flex-direction: row;
-      align-items: stretch;
-      gap: 20px;
-      padding: 20px 20px 0 20px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .logo-side {
-      max-width: 220px;
-      width: auto;
-      height: auto;
-      display: block;
-      flex-shrink: 0;
-    }
-    .info-panel {
-      flex: 1 1 0%;
-      display: flex;
-      flex-direction: column;
-      background-color: #ecf0f1;
-      padding: 20px;
-      border-radius: 8px;
-      min-width: 0;
-    }
-    .data-grid {
-      margin-bottom: 20px;
-    }
-    .button-row {
-      display: flex;
-      flex-direction: row;
-      gap: 16px;
-      margin-top: auto;
-      justify-content: space-between;
-    }
-    .action-btn {
-      flex: 1;
-      padding: 12px 18px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 1.1em;
-      font-weight: 600;
-      text-align: center;
-      cursor: pointer;
-      color: #fff;
-    }
-    .signal-btn {
-      background-color: #2c3e50;
-    }
-    .signal-btn:hover {
-      background-color: #1a232c;
-    }
-    .plotter-btn {
-      background-color: #16a085;
-    }
-    .plotter-btn:hover {
-      background-color: #12876d;
-    }
-    .wifi-note {
-      font-size: 0.9em;
-      font-style: italic;
-      text-align: center;
-      color: #7f8c8d;
-      margin-top: 10px;
-    }
-    @media (max-width: 700px) {
-      .info-logo-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-        padding: 10px 10px 0 10px;
-      }
-      .logo-side {
-        max-width: 120px;
-        width: auto;
-        margin: 0 auto;
-      }
-      .info-panel {
-        padding: 10px;
-      }
-      .button-row {
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-    .footer {
-      text-align: center;
-      padding: 10px;
-      font-size: 0.8em;
-      font-style: italic;
-      color: #7f8c8d;
-    }
-    .footer a {
-      color: #7f8c8d;
-      text-decoration: none;
-    }
-    .footer a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <link rel="stylesheet" href="assets/styles.css" />
 </head>
 <body>
-  <div id="updateBanner" style="text-align:center; padding:10px; font-weight:bold; background:#dff0d8; color:#2c3e50;">
-  Loading data update time...
-</div>
+  <div id="updateBanner">
+    <div style="display: flex; justify-content: center; align-items: center;">
+      <div style="text-align: center;">
+        <span id="dataStatus">Loading data...</span> | <span id="updateTime">--</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Dark Mode Button -->
+  <button id="darkModeToggle" class="floating-dark-mode-btn">🌙 Dark Mode</button>
   <div class="container">
     <div class="info-logo-row">
-      <img src="mermug.png" alt="Mermug Logo" class="logo-side" />
-      <div class="info-panel" id="info-panel">
-        <div class="data-grid" id="data-grid"></div>
-        <div class="button-row">
-          <a href="http://192.168.8.50:3000/admin/#/webapps" target="_blank" class="action-btn signal-btn">Open SignalK</a>
-          <a href="http://192.168.8.50:3000/@signalk/freeboard-sk" target="_blank" class="action-btn plotter-btn">Open Freeboard-SK</a>
-        </div>
-        <p class="wifi-note">*Only works on Mermug WiFi</p>
+      <img src="data/vessel/logo.png" alt="Vessel Logo" class="logo-side" />
+      <div class="map-container" style="flex: 1; margin: 0;">
+        <div id="mapTitle" style="font-weight: bold; font-size: 1.1em; text-align: center; margin-bottom: 10px; color: var(--text-primary);">Loading location...</div>
+        <div id="map"></div>
       </div>
     </div>
 
-    <div class="map-container">
-      <div id="tideHeader" style="text-align:center; padding-top: 10px; font-weight: bold; font-size: 1.1em;"></div>
+    <!-- LINKS -->
+    <div style="margin: 20px;">
+      <div class="button-row" style="justify-content: space-between; gap: 10px;">
+        <a href="#" id="signalk-admin-link" target="_blank" class="action-btn signal-btn">Open SignalK*</a>
+        <a href="#" id="signalk-freeboard-link" target="_blank" class="action-btn plotter-btn">Open Freeboard-SK*</a>
+        <a href="#" id="signalk-anchor-alarm-link" target="_blank" class="action-btn anchor-btn">Anchor Alarm*</a>
+        <a href="#" id="marinetraffic-link" target="_blank" class="action-btn ais-btn">MarineTraffic</a>
+        <a href="#" id="myshiptracking-link" target="_blank" class="action-btn ais-btn">MyShipTracking</a>
+      </div>
+      <p class="wifi-note">*Only works on vessel WiFi</p>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="info-panel" id="navigation-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Navigation</div>
+      <div class="data-grid" id="navigation-grid"></div>
+    </div>
+
+    <!-- WIND -->
+    <div class="info-panel" id="wind-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Wind</div>
+      <div class="data-grid" id="wind-grid"></div>
+    </div>
+
+    <!-- POWER -->
+    <div class="info-panel" id="power-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Power</div>
+      <div class="data-grid" id="power-grid"></div>
+    </div>
+
+    <!-- VESSEL INFORMATION -->
+    <div class="info-panel" id="vessel-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Vessel Information</div>
+      <div class="data-grid" id="vessel-grid"></div>
+    </div>
+
+    <!-- ENVIRONMENT -->
+    <div class="info-panel" id="environment-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Environment</div>
+      <div class="data-grid" id="environment-grid"></div>
+    </div>
+
+    <!-- INTERNET -->
+    <div class="info-panel" id="internet-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Internet</div>
+      <div class="data-grid" id="internet-grid"></div>
+    </div>
+
+    <!-- PROPULSION -->
+    <div class="info-panel" id="propulsion-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Propulsion</div>
+      <div class="data-grid" id="propulsion-grid"></div>
+    </div>
+
+    <!-- TANKS -->
+    <div class="info-panel" id="tanks-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Tanks</div>
+      <div class="data-grid" id="tanks-grid"></div>
+    </div>
+
+    <!-- NOW PLAYING SECTION -->
+    <div class="info-panel" id="now-playing-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">🎵 Now Playing</div>
+      <div id="now-playing-content" style="display: flex; align-items: center; gap: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
+        <div style="flex: 1;">
+          <div id="track-name" style="font-size: 1.2em; font-weight: bold; color: var(--text-primary); margin-bottom: 5px;">No track playing</div>
+          <div id="artist-album" style="color: var(--text-secondary); font-size: 0.9em;">No artist information</div>
+        </div>
+        <div id="track-info" style="flex: 1; text-align: right;">
+          <div id="playback-source" style="color: var(--text-secondary); font-size: 0.9em;">No source</div>
+          <div id="track-number" style="color: var(--text-secondary); font-size: 0.8em;">Track -- of --</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel" style="margin: 20px;">
+      <div id="tideHeader" style="text-align:left; padding-top: 10px; font-weight: bold; font-size: 1.1em;"></div>
       <canvas id="tideChart"></canvas>
     </div>
 
+    <!-- WIND FORECAST SECTION -->
+    <div class="info-panel" style="margin: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div id="windHeader" style="font-weight: bold; font-size: 1.1em; text-align: left; flex: 1; color: var(--text-primary);">Wind Forecast at Current Location</div>
+        <select id="forecast-model" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9em; cursor: pointer;">
+          <option value="wttr">wttr.in</option>
+          <option value="ecmwf">ECMWF</option>
+        </select>
+      </div>
+      <div class="wind-forecast-grid" id="wind-forecast-grid">
+        <div class="wind-forecast-item">
+          <div class="wind-time">Loading...</div>
+          <div class="wind-speed">--</div>
+          <div class="wind-direction">--</div>
+        </div>
+      </div>
+    </div>
 
-    <div class="map-container">
-      <div id="map"></div>
+    <!-- WAVE FORECAST SECTION -->
+    <div class="info-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Swell Forecast (Dominant) at Current Location</div>
+      <div class="wave-forecast-grid" id="wave-forecast-grid">
+        <div class="wave-forecast-item">
+          <div class="wave-time">Loading...</div>
+          <div class="wave-height">--</div>
+          <div class="wave-period">--</div>
+          <div class="wave-direction">--</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POLAR PERFORMANCE SECTION -->
+    <div class="info-panel" style="margin: 20px;">
+      <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 15px; text-align: left; color: var(--text-primary);">Polar Performance</div>
+      <div class="polar-performance-grid" id="polar-performance-grid">
+        <!-- Left Column: Performance Data -->
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <!-- Current Performance -->
+          <div style="background: var(--bg-quaternary); padding: 15px; border-radius: 8px;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">Current Performance</div>
+            <div id="polar-performance" style="font-size: 0.9em;">
+              <div>Loading polar data...</div>
+            </div>
+          </div>
+          <!-- VMG Analysis -->
+          <div style="background: var(--bg-quaternary); padding: 15px; border-radius: 8px;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">VMG Analysis</div>
+            <div id="vmg-analysis" style="font-size: 0.9em;">
+              <div>Calculating VMG...</div>
+            </div>
+          </div>
+        </div>
+        <!-- Right Column: Polar Chart -->
+        <div style="background: var(--bg-quaternary); padding: 15px; border-radius: 8px;">
+          <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">Polar Chart</div>
+          <div class="polar-chart-container" style="position: relative; height: 600px; width: 100%;">
+            <canvas id="polarChart"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    let map, marker;
+  <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+  <script src="assets/utils.js"></script>
+  <script src="assets/app.js"></script>
 
-    const stations = [
-      { id: "9414290", name: "San Francisco", lat: 37.806, lon: -122.465 },
-      { id: "9414523", name: "Alameda", lat: 37.771, lon: -122.298 },
-      { id: "9414863", name: "Richmond", lat: 37.925, lon: -122.42 },
-      { id: "9413450", name: "Monterey", lat: 36.605, lon: -121.888 }
-    ];
-
-    function haversine(lat1, lon1, lat2, lon2) {
-      const toRad = deg => deg * Math.PI / 180;
-      const R = 6371;
-      const dLat = toRad(lat2 - lat1);
-      const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-    let tideChartInstance = null;
-    async function drawTideGraph(lat, lon) {
-      const nearest = stations.reduce((a, b) =>
-        haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
-      );
-
-      // Calculate distance in nautical miles
-      const distKm = haversine(lat, lon, nearest.lat, nearest.lon);
-      const distNm = (distKm / 1.852).toFixed(1);
-
-      // Update title element above the chart
-      document.getElementById("tideHeader").textContent =
-        `${nearest.name} (Station #${nearest.id}) - ${distNm} NM from Mermug's Position`;
-
-
-      const now = new Date();
-      const startTime = new Date(now.getTime() - 6 * 60 * 60 * 1000); // 6 hours ago
-      const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours forward
-
-
-      const begin = startTime.toISOString().split("T")[0];
-      const end = endTime.toISOString().split("T")[0];
-
-      const url = `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=web&begin_date=${begin}&end_date=${end}&datum=MLLW&station=${nearest.id}&time_zone=gmt&units=english&interval=h&format=json`;
-
-      try {
-        const res = await fetch(url);
-        const json = await res.json();
-        const rawData = json.predictions;
-
-        const data = rawData
-          .map(d => ({ t: new Date(d.t), v: parseFloat(d.v) }))
-          .filter(d => d.t >= startTime && d.t <= endTime);
-
-
-        const labels = data.map(d => 
-        new Date(d.t.getTime() - d.t.getTimezoneOffset() * 60000)
-          .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
-      );
-        const heights = data.map(d => d.v);
-
-        const peaks = [];
-        for (let i = 1; i < heights.length - 1; i++) {
-          if ((heights[i] > heights[i - 1] && heights[i] > heights[i + 1]) ||
-              (heights[i] < heights[i - 1] && heights[i] < heights[i + 1])) {
-            peaks.push({ i, value: heights[i], time: labels[i] });
-          }
-        }
-
-        // Find the current tide height (closest time to now)
-        const nowUTC = new Date(Date.now() + new Date().getTimezoneOffset() * 60000);
-
-        let currentIndex = 0;
-        let minDiff = Infinity;
-        data.forEach((d, i) => {
-          const diff = Math.abs(d.t - nowUTC);
-          if (diff < minDiff) {
-            minDiff = diff;
-            currentIndex = i;
-          }
-        });
-
-        const canvas = document.getElementById('tideChart');
-        canvas.height = 250;
-        const ctx = canvas.getContext('2d');
-
-        if (tideChartInstance) {
-          tideChartInstance.destroy();
-        }
-
-        tideChartInstance = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [
-              {
-                label: `Tide Height (${nearest.name})`,
-                data: heights,
-                borderColor: '#3498db',
-                backgroundColor: 'rgba(52,152,219,0.1)',
-                fill: true,
-                tension: 0.4,
-                pointRadius: 0
-              },
-              {
-                label: 'Now',
-                data: heights.map((v, i) => (i === currentIndex ? v : null)),
-                borderColor: 'transparent',
-                backgroundColor: '#e74c3c',
-                pointRadius: 5,
-                pointHoverRadius: 6,
-                type: 'line',
-                fill: false
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              tooltip: {
-                mode: 'index',
-                intersect: false,
-                callbacks: {
-                  title: ctx => `Time: ${ctx[0].label}`,
-                  label: ctx => `Height: ${ctx.raw} ft`
-                }
-              },
-              legend: { display: false },
-              annotation: {
-                annotations: peaks.map(p => ({
-                  type: 'label',
-                  xValue: labels[p.i],
-                  yValue: p.value,
-                  content: `${p.value.toFixed(1)} ft @ ${p.time}`,
-                  backgroundColor: 'rgba(0,0,0,0.7)',
-                  color: '#fff',
-                  font: { size: 10 },
-                  yAdjust: -20,
-                  position: 'center'
-                }))
-              }
-            },
-            scales: {
-              x: {
-                title: {
-                  display: true,
-                  text: `Tides as of ${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`
-                }
-              },
-              y: {
-                title: { display: true, text: "Tide Height (ft)" }
-              }
-            }
-          },
-          plugins: [Chart.registry.getPlugin('annotation')]
-        });
-      } catch (err) {
-        console.error("Tide data fetch error:", err);
-      }
-    }
-
-    async function loadData() {
-
-      function findLatestTimestamp(obj) {
-        let latest = null;
-
-        function search(o) {
-          if (o && typeof o === "object") {
-            for (const key in o) {
-              if (key === "timestamp" && typeof o[key] === "string") {
-                const t = new Date(o[key]);
-                if (!isNaN(t.getTime()) && (!latest || t > latest)) {
-                  latest = t;
-                }
-              } else if (typeof o[key] === "object") {
-                search(o[key]);
-              }
-            }
-          }
-        }
-
-        search(obj);
-        return latest;
-      }
-
-      try {
-        const res = await fetch('signalk_latest.json');
-        const lastModified = res.headers.get('last-modified');
-        const data = await res.json();
-        const nav = data.navigation || {};
-        const elec = data.electrical || {};
-        const env = data.environment || {};
-
-        // Update banner with last modified time
-        const banner = document.getElementById('updateBanner');
-
-        // Try specific field first, fall back to recursive scan
-        let timestampStr = data.navigation?.position?.timestamp;
-        let modifiedDate = timestampStr ? new Date(timestampStr) : findLatestTimestamp(data);
-
-        if (modifiedDate && !isNaN(modifiedDate.getTime())) {
-          const now = new Date();
-          const diffHours = (now - modifiedDate) / (1000 * 60 * 60);
-          banner.textContent = `Data Last Updated: ${modifiedDate.toLocaleString()}`;
-          if (diffHours > 3) {
-            banner.style.background = "#f8d7da";
-            banner.style.color = "#721c24";
-          } else {
-            banner.style.background = '#dff0d8';
-            banner.style.color = '#2c3e50';
-          }
-        } else {
-          banner.textContent = "Timestamp not found in JSON data";
-          banner.style.background = "#f8d7da";
-          banner.style.color = "#721c24";
-        }
-
-        const lat = nav.position?.value?.latitude;
-        const lon = nav.position?.value?.longitude;
-
-        if (lat && lon) {
-          if (!map) {
-            map = L.map('map').setView([lat, lon], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-            }).addTo(map);
-            marker = L.marker([lat, lon]).addTo(map);
-          } else {
-            map.setView([lat, lon]);
-            marker.setLatLng([lat, lon]);
-          }
-
-          drawTideGraph(lat, lon);
-        }
-
-        document.getElementById('data-grid').innerHTML = `
-          <div class="info-item"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
-          <div class="info-item"><div class="label">HDG</div><div class="value">${nav.headingMagnetic?.value ? (nav.headingMagnetic.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Battery Voltage</div><div class="value">${elec.batteries?.house?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
-          <div class="info-item"><div class="label">Battery Current</div><div class="value">${elec.batteries?.house?.current?.value?.toFixed(1) ?? 'N/A'} A</div></div>
-          <div class="info-item"><div class="label">SOC</div><div class="value">${elec.batteries?.house?.capacity?.stateOfCharge?.value ? (elec.batteries.house.capacity.stateOfCharge.value * 100).toFixed(0) + '%' : 'N/A'}</div></div>
-          <div class="info-item"><div class="label">Battery Time Remaining</div><div class="value">${elec.batteries?.house?.capacity?.timeRemaining?.value ? (elec.batteries.house.capacity.timeRemaining.value / 3600).toFixed(1) + ' hrs' : 'N/A'}</div></div>
-        `;
-      } catch (err) {
-        console.error("Failed to load data:", err);
-        const banner = document.getElementById('updateBanner');
-        banner.textContent = "Error loading update time";
-        banner.style.background = "#f8d7da";
-        banner.style.color = "#721c24";
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", loadData);
-  </script>
   <div class="footer">
     Created by <a href="https://zackphillips.com" target="_blank">Zack Phillips</a>
   </div>
