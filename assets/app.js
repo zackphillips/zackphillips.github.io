@@ -763,7 +763,54 @@ async function loadData() {
     return seriesPromise;
   };
 
-  const renderSparkline = (canvas, points) => {
+  // Unit conversion config keyed by SignalK path.
+  // transform: converts raw SI value to display value; unit: label shown next to min/max.
+  const PATH_DISPLAY_CONFIG = {
+    'navigation.speedOverGround':                        { transform: v => v * 1.94384,                    unit: 'kts'   },
+    'navigation.speedThroughWater':                      { transform: v => v * 1.94384,                    unit: 'kts'   },
+    'navigation.trip.log':                               { transform: v => v / 1852,                       unit: 'nm'    },
+    'navigation.log':                                    { transform: v => v / 1852,                       unit: 'nm'    },
+    'navigation.attitude.roll':                          { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'navigation.attitude.pitch':                         { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'navigation.courseOverGroundTrue':                   { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'navigation.headingMagnetic':                        { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'navigation.magneticVariation':                      { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'navigation.anchor.currentRadius':                   { transform: v => v * 3.28084,                    unit: 'ft'    },
+    'navigation.anchor.bearingTrue':                     { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'steering.rudderAngle':                              { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'environment.wind.speedTrue':                        { transform: v => v * 1.94384,                    unit: 'kts'   },
+    'environment.wind.angleTrue':                        { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'environment.wind.angleApparent':                    { transform: v => v * 180 / Math.PI,              unit: '°'     },
+    'environment.wind.speedApparent':                    { transform: v => v * 1.94384,                    unit: 'kts'   },
+    'electrical.batteries.house.voltage':                { transform: v => v,                              unit: 'V'     },
+    'electrical.batteries.house.current':                { transform: v => v,                              unit: 'A'     },
+    'electrical.batteries.house.power':                  { transform: v => v,                              unit: 'W'     },
+    'electrical.batteries.house.capacity.stateOfCharge': { transform: v => v * 100,                        unit: '%'     },
+    'electrical.batteries.house.capacity.timeRemaining': { transform: v => v / 3600,                       unit: 'hrs'   },
+    'environment.water.temperature':                     { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
+    'environment.inside.temperature':                    { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
+    'environment.inside.humidity':                       { transform: v => v * 100,                        unit: '%'     },
+    'environment.inside.pressure':                       { transform: v => v * 0.0002953,                  unit: 'inHg'  },
+    'environment.inside.airQuality.tvoc':                { transform: v => v,                              unit: 'ppb'   },
+    'environment.inside.airQuality.eco2':                { transform: v => v,                              unit: 'ppm'   },
+    'internet.speed.download':                           { transform: v => v,                              unit: 'Mbps'  },
+    'internet.speed.upload':                             { transform: v => v,                              unit: 'Mbps'  },
+    'internet.ping.latency':                             { transform: v => v,                              unit: 'ms'    },
+    'internet.ping.jitter':                              { transform: v => v,                              unit: 'ms'    },
+    'internet.packetLoss':                               { transform: v => v <= 1 ? v * 100 : v,          unit: '%'     },
+    'propulsion.port.revolutions':                       { transform: v => v * 60,                         unit: 'RPM'   },
+    'tanks.fuel.0.currentLevel':                         { transform: v => v * 100,                        unit: '%'     },
+    'tanks.fuel.reserve.currentLevel':                   { transform: v => v * 100,                        unit: '%'     },
+    'tanks.freshWater.0.currentLevel':                   { transform: v => v * 100,                        unit: '%'     },
+    'tanks.freshWater.1.currentLevel':                   { transform: v => v * 100,                        unit: '%'     },
+    'tanks.propane.a.currentLevel':                      { transform: v => v * 100,                        unit: '%'     },
+    'tanks.propane.b.currentLevel':                      { transform: v => v * 100,                        unit: '%'     },
+    'tanks.blackwater.bow.currentLevel':                 { transform: v => v * 100,                        unit: '%'     },
+    'tanks.liveWell.0.currentLevel':                     { transform: v => v * 100,                        unit: '%'     },
+  };
+
+  const renderSparkline = (canvas, points, displayConfig = {}) => {
+    const { transform = v => v, unit = '' } = displayConfig;
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!points || points.length < 2) {
@@ -779,10 +826,13 @@ async function loadData() {
       if (abs >= 10) return value.toFixed(1);
       return value.toFixed(2);
     };
-    const values = points.map((p) => p.v);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = max - min || 1;
+    const rawValues = points.map((p) => p.v);
+    const displayValues = rawValues.map(transform);
+    const min = Math.min(...displayValues);
+    const max = Math.max(...displayValues);
+    const rawMin = Math.min(...rawValues);
+    const rawMax = Math.max(...rawValues);
+    const rawRange = rawMax - rawMin || 1;
     const padding = {
       top: 6,
       right: 6,
@@ -806,16 +856,16 @@ async function loadData() {
     ctx.font = '10px sans-serif';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText(formatValue(max), 2, padding.top - 2);
+    ctx.fillText(`${formatValue(max)}${unit}`, 2, padding.top - 2);
     ctx.textBaseline = 'bottom';
-    ctx.fillText(formatValue(min), 2, axisX + 2);
+    ctx.fillText(`${formatValue(min)}${unit}`, 2, axisX + 2);
 
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.lineWidth = 2;
     ctx.beginPath();
     points.forEach((point, index) => {
       const x = padding.left + (index / (points.length - 1)) * w;
-      const y = padding.top + (1 - (point.v - min) / range) * h;
+      const y = padding.top + (1 - (point.v - rawMin) / rawRange) * h;
       if (index === 0) {
         ctx.moveTo(x, y);
       } else {
@@ -860,9 +910,11 @@ async function loadData() {
         return;
       }
       const points = list.slice(-SPARKLINE_POINTS);
+      const displayConfig = PATH_DISPLAY_CONFIG[path] || {};
       sparklineLabel.textContent = label;
-      renderSparkline(sparklineCanvas, points);
-      tooltip.querySelector('.sparkline-tooltip__status').textContent = `${points.length} points`;
+      renderSparkline(sparklineCanvas, points, displayConfig);
+      const unitLabel = displayConfig.unit ? ` · ${displayConfig.unit}` : '';
+      tooltip.querySelector('.sparkline-tooltip__status').textContent = `${points.length} points${unitLabel}`;
       tooltip.style.display = 'block';
       tooltip.style.left = `${event.pageX + 12}px`;
       tooltip.style.top = `${event.pageY + 12}px`;
