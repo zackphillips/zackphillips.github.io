@@ -82,9 +82,18 @@ class VesselConfigWizard:
         else:
             return input(f"{prompt}: ").strip()
 
+    TOKEN_FILE = "data/vessel/signalk_token.txt"
+
+    def _read_token(self) -> str | None:
+        """Read the SignalK token from the gitignored token file."""
+        try:
+            return Path(self.TOKEN_FILE).read_text().strip() or None
+        except FileNotFoundError:
+            return None
+
     def test_existing_token(self) -> bool:
         """Test if the existing token is valid."""
-        token = self.config["signalk"].get("token")
+        token = self._read_token()
         if not token:
             print("No token to test.")
             return False
@@ -218,7 +227,7 @@ class VesselConfigWizard:
         print("\n--- SignalK Token Management ---")
 
         # Check if token exists
-        existing_token = self.config["signalk"].get("token")
+        existing_token = self._read_token()
         if existing_token:
             print(f"Existing token found: {existing_token[:20]}...")
             token_action = self.get_input(
