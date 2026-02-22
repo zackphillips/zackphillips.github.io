@@ -1198,16 +1198,12 @@ async function loadData() {
       isNumericValue(val) ? `${(val * 100).toFixed(digits)}%` : 'N/A';
     const toGallons = (val) =>
       isNumericValue(val) ? `${(val * 264.172).toFixed(1)} gal` : null;
-    const toFahrenheit = (val) =>
-      isNumericValue(val) ? `${((val - 273.15) * 9/5 + 32).toFixed(1)}°F` : null;
-    const formatTankDisplay = (level, volume, temp) => {
+    const formatTankDisplay = (level, volume) => {
       const parts = [];
       const levelDisplay = toPercent(level);
       if (levelDisplay !== 'N/A') parts.push(levelDisplay);
       const volumeDisplay = toGallons(volume);
       if (volumeDisplay) parts.push(volumeDisplay);
-      const tempDisplay = toFahrenheit(temp);
-      if (tempDisplay) parts.push(tempDisplay);
       return parts.length ? parts.join(' | ') : 'N/A';
     };
     // Update the environment with environmental data
@@ -1254,14 +1250,14 @@ async function loadData() {
     const blackwaterBow = tanks.blackwater?.bow || {};
     const liveWell0 = tanks.liveWell?.['0'] || {};
     document.getElementById('tanks-grid').innerHTML = `
-      <div class="info-item" data-path="tanks.fuel.0.currentLevel" data-label="Fuel (Main)" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div><div class="value">${formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value, fuelMain.temperature?.value)}</div></div>
-      <div class="info-item" data-path="tanks.fuel.reserve.currentLevel" data-label="Fuel (Reserve)" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div><div class="value">${formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value, fuelReserve.temperature?.value)}</div></div>
-      <div class="info-item" data-path="tanks.freshWater.0.currentLevel" data-label="Fresh Water 1" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div><div class="value">${formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value, null)}</div></div>
-      <div class="info-item" data-path="tanks.freshWater.1.currentLevel" data-label="Fresh Water 2" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div><div class="value">${formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value, null)}</div></div>
-      <div class="info-item" data-path="tanks.propane.a.currentLevel" data-label="Propane A" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div><div class="value">${formatTankDisplay(propaneA.currentLevel?.value, null, propaneA.temperature?.value)}</div></div>
-      <div class="info-item" data-path="tanks.propane.b.currentLevel" data-label="Propane B" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div><div class="value">${formatTankDisplay(propaneB.currentLevel?.value, null, propaneB.temperature?.value)}</div></div>
-      <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null, blackwaterBow.temperature?.value)}</div></div>
-      <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null, null)}</div></div>
+      <div class="info-item" data-path="tanks.fuel.0.currentLevel" data-label="Fuel (Main)" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div><div class="value">${formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value)}</div></div>
+      <div class="info-item" data-path="tanks.fuel.reserve.currentLevel" data-label="Fuel (Reserve)" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div><div class="value">${formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value)}</div></div>
+      <div class="info-item" data-path="tanks.freshWater.0.currentLevel" data-label="Fresh Water 1" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div><div class="value">${formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value)}</div></div>
+      <div class="info-item" data-path="tanks.freshWater.1.currentLevel" data-label="Fresh Water 2" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div><div class="value">${formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value)}</div></div>
+      <div class="info-item" data-path="tanks.propane.a.currentLevel" data-label="Propane A" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div><div class="value">${formatTankDisplay(propaneA.currentLevel?.value, null)}</div></div>
+      <div class="info-item" data-path="tanks.propane.b.currentLevel" data-label="Propane B" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div><div class="value">${formatTankDisplay(propaneB.currentLevel?.value, null)}</div></div>
+      <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div><div class="value">${formatTankDisplay(blackwaterBow.currentLevel?.value, null)}</div></div>
+      <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div><div class="value">${formatTankDisplay(liveWell0.currentLevel?.value, null)}</div></div>
     `;
   } catch (err) {
     console.error("Failed to load data:", err);
