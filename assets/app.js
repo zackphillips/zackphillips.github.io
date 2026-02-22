@@ -876,10 +876,14 @@ async function loadData() {
     const formatValue = (value) => {
       if (!Number.isFinite(value)) return '';
       const abs = Math.abs(value);
+      if (abs >= 1000) return `${(value / 1000).toFixed(1)}k`;
       if (abs >= 100 || abs === 0) return value.toFixed(0);
       if (abs >= 10) return value.toFixed(1);
       return value.toFixed(2);
     };
+    const formatTime = (date) =>
+      date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
     const rawValues = points.map((p) => p.v);
     const displayValues = rawValues.map(transform);
     const min = Math.min(...displayValues);
@@ -887,17 +891,14 @@ async function loadData() {
     const rawMin = Math.min(...rawValues);
     const rawMax = Math.max(...rawValues);
     const rawRange = rawMax - rawMin || 1;
-    const padding = {
-      top: 6,
-      right: 6,
-      bottom: 10,
-      left: 14,
-    };
+
+    const padding = { top: 8, right: 8, bottom: 20, left: 34 };
     const w = canvas.width - padding.left - padding.right;
     const h = canvas.height - padding.top - padding.bottom;
     const axisX = canvas.height - padding.bottom;
     const axisY = padding.left;
 
+    // Axes
     ctx.strokeStyle = axisColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -906,25 +907,45 @@ async function loadData() {
     ctx.lineTo(canvas.width - padding.right, axisX);
     ctx.stroke();
 
+    // Y-axis labels (right-aligned into left padding, no unit to save space)
     ctx.fillStyle = labelColor;
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'left';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText(`${formatValue(max)}${unit}`, 2, padding.top - 2);
+    ctx.fillText(`${formatValue(max)}${unit}`, axisY - 2, padding.top);
     ctx.textBaseline = 'bottom';
-    ctx.fillText(`${formatValue(min)}${unit}`, 2, axisX + 2);
+    ctx.fillText(`${formatValue(min)}${unit}`, axisY - 2, axisX);
 
+    // X-axis time ticks (4 labels: start, ⅓, ⅔, end)
+    const tFirst = points[0].t.getTime();
+    const tLast  = points[points.length - 1].t.getTime();
+    const numTicks = 3;
+    ctx.font = '9px sans-serif';
+    ctx.textBaseline = 'top';
+    for (let i = 0; i <= numTicks; i++) {
+      const ratio = i / numTicks;
+      const x = padding.left + ratio * w;
+      const tickDate = new Date(tFirst + ratio * (tLast - tFirst));
+      ctx.textAlign = i === 0 ? 'left' : i === numTicks ? 'right' : 'center';
+      ctx.fillText(formatTime(tickDate), x, axisX + 3);
+      // tick mark
+      ctx.strokeStyle = axisColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, axisX);
+      ctx.lineTo(x, axisX + 3);
+      ctx.stroke();
+    }
+
+    // Data line
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
     points.forEach((point, index) => {
       const x = padding.left + (index / (points.length - 1)) * w;
       const y = padding.top + (1 - (point.v - rawMin) / rawRange) * h;
-      if (index === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
+      if (index === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     });
     ctx.stroke();
   };
@@ -934,6 +955,8 @@ async function loadData() {
    * Safe to call multiple times — re-renders existing canvases in place.
    * Also exposed as module-level refreshSparklines for the theme toggle.
    */
+  const SPARKLINE_HEIGHT = 80;
+
   const initInlineSparklines = async () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const colors = {
@@ -946,26 +969,58 @@ async function loadData() {
     const seriesMap = await loadSeries();
     if (!seriesMap || !seriesMap.size) return;
 
+    // Render a canvas per info-item.
     document.querySelectorAll('.info-item[data-path]').forEach((item) => {
       const path = item.dataset.path;
       const list = seriesMap.get(path);
       if (!list || !list.length) return;
 
-      // Re-use existing canvas or create a new one.
       let canvas = item.querySelector('.sparkline-inline');
       if (!canvas) {
         canvas = document.createElement('canvas');
         canvas.className = 'sparkline-inline';
-        canvas.height = 36;
+        canvas.height = SPARKLINE_HEIGHT;
+        canvas.style.display = 'none'; // hidden by default
         item.appendChild(canvas);
       }
-      // Match canvas pixel width to card width (important for crisp rendering).
-      const w = item.clientWidth || 120;
-      canvas.width = w;
+      canvas.width = item.clientWidth || 120;
+      canvas.height = SPARKLINE_HEIGHT;
 
       const points = list.slice(-SPARKLINE_POINTS);
-      const displayConfig = PATH_DISPLAY_CONFIG[path] || {};
-      renderSparkline(canvas, points, displayConfig, colors);
+      renderSparkline(canvas, points, PATH_DISPLAY_CONFIG[path] || {}, colors);
+    });
+
+    // Add a toggle button to each panel that has at least one sparkline canvas.
+    document.querySelectorAll('.info-panel').forEach((panel) => {
+      const sparklines = panel.querySelectorAll('.sparkline-inline');
+      if (!sparklines.length) return;
+
+      // Don't add a second button on re-render.
+      if (panel.querySelector('.sparkline-toggle-btn')) return;
+
+      // The header is always the first direct child div of the panel.
+      const header = panel.querySelector(':scope > div:first-child');
+      if (!header) return;
+
+      const btn = document.createElement('button');
+      btn.className = 'sparkline-toggle-btn';
+      btn.textContent = '📈 History';
+      btn.dataset.open = 'false';
+
+      // Make the header a flex row so the button sits on the right.
+      header.style.display = 'flex';
+      header.style.justifyContent = 'space-between';
+      header.style.alignItems = 'center';
+      header.appendChild(btn);
+
+      btn.addEventListener('click', () => {
+        const opening = btn.dataset.open === 'false';
+        panel.querySelectorAll('.sparkline-inline').forEach((c) => {
+          c.style.display = opening ? 'block' : 'none';
+        });
+        btn.dataset.open = opening ? 'true' : 'false';
+        btn.textContent = opening ? '📉 Hide History' : '📈 History';
+      });
     });
   };
 
