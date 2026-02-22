@@ -27,26 +27,6 @@ const PANEL_SKELETONS = {
   'tanks-grid': 6,
 };
 
-const STATUS_LEVEL_META = {
-  ok:   { className: 'status-ok',   fallbackLabel: 'OK' },
-  warn: { className: 'status-warn', fallbackLabel: 'Watch' },
-  alert:{ className: 'status-alert',fallbackLabel: 'Alert' },
-};
-
-function renderStatusBadge(status) {
-  if (!status || !status.level) return '';
-  const meta = STATUS_LEVEL_META[status.level] || {};
-  const label = status.label || meta.fallbackLabel || 'Status';
-  const className = meta.className || '';
-  return `<span class="status-chip ${className}">${label}</span>`;
-}
-
-function wrapValue(display, badgeHtml) {
-  if (!badgeHtml) {
-    return `<div class="value">${display}</div>`;
-  }
-  return `<div class="value value-with-badge">${display}${badgeHtml}</div>`;
-}
 
 function classifyBatteryStatus(percent) {
   if (!Number.isFinite(percent)) return null;
@@ -110,7 +90,8 @@ function classifyByZones(value, zones) {
 
 // Render a value div whose text is colored by status level (ok/warn/alert).
 function colorValue(display, status) {
-  const cls = (status?.level && display !== 'N/A') ? ` value-${status.level}` : '';
+  if (display === 'N/A') return `<div class="value"><span class="value-na">N/A</span></div>`;
+  const cls = status?.level ? ` value-${status.level}` : '';
   return `<div class="value${cls}">${display}</div>`;
 }
 
@@ -1476,11 +1457,11 @@ async function loadData() {
       <div class="info-item" title="${withUpdated('Vessel beam - maximum width of the vessel', data.design?.beam)}"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('Maximum vessel draft - depth below waterline', data.design?.draft)}"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('Vessel air height - height above waterline', data.design?.airHeight)}"><div class="label">Air Height</div><div class="value">${data.design?.airHeight?.value ? (data.design.airHeight.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Vessel name from SignalK', data)}"><div class="label">Vessel Name</div><div class="value">${data.name || 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Maritime Mobile Service Identity - unique vessel identifier', data)}"><div class="label">MMSI</div><div class="value">${data.mmsi || vesselData?.mmsi || 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('VHF radio callsign', data.communication)}"><div class="label">Callsign</div><div class="value">${data.communication?.callsignVhf || 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Hull Number (Assigned by Beneteau)', vesselData)}"><div class="label">Hull #</div><div class="value">${vesselData?.hull_number || 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('US Coast Guard vessel registration number', vesselData)}"><div class="label">USCG #</div><div class="value">${vesselData?.uscg_number || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Vessel name from SignalK', data)}"><div class="label">Vessel Name</div><div class="value value-text">${data.name || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Maritime Mobile Service Identity - unique vessel identifier', data)}"><div class="label">MMSI</div><div class="value value-text">${data.mmsi || vesselData?.mmsi || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('VHF radio callsign', data.communication)}"><div class="label">Callsign</div><div class="value value-text">${data.communication?.callsignVhf || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Hull Number (Assigned by Beneteau)', vesselData)}"><div class="label">Hull #</div><div class="value value-text">${vesselData?.hull_number || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('US Coast Guard vessel registration number', vesselData)}"><div class="label">USCG #</div><div class="value value-text">${vesselData?.uscg_number || 'N/A'}</div></div>
     `;
 
     const isNumericValue = (val) => typeof val === 'number' && Number.isFinite(val);
@@ -1510,7 +1491,7 @@ async function loadData() {
     `;
 
     document.getElementById('internet-grid').innerHTML = `
-      <div class="info-item" title="${withUpdated('Internet service provider', internet.ISP)}"><div class="label">ISP</div><div class="value">${internet.ISP?.value || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Internet service provider', internet.ISP)}"><div class="label">ISP</div><div class="value value-text">${internet.ISP?.value || 'N/A'}</div></div>
       <div class="info-item" data-path="internet.speed.download" data-label="Download" title="${withUpdated('Download speed', internet.speed?.download)}"><div class="label">Download</div><div class="value">${isNumericValue(internet.speed?.download?.value) ? internet.speed.download.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
       <div class="info-item" data-path="internet.speed.upload" data-label="Upload" title="${withUpdated('Upload speed', internet.speed?.upload)}"><div class="label">Upload</div><div class="value">${isNumericValue(internet.speed?.upload?.value) ? internet.speed.upload.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
       <div class="info-item" data-path="internet.ping.latency" data-label="Latency" title="${withUpdated('Ping latency', internet.ping?.latency)}"><div class="label">Latency</div><div class="value">${isNumericValue(internet.ping?.latency?.value) ? internet.ping.latency.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
@@ -1521,7 +1502,7 @@ async function loadData() {
     const propulsion = data.propulsion?.port || {};
     const rpmValue = propulsion.revolutions?.value;
     document.getElementById('propulsion-grid').innerHTML = `
-      <div class="info-item" title="${withUpdated('Engine state', propulsion.state)}"><div class="label">State</div><div class="value">${propulsion.state?.value || 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Engine state', propulsion.state)}"><div class="label">State</div><div class="value value-text">${propulsion.state?.value || 'N/A'}</div></div>
       <div class="info-item" data-path="propulsion.port.revolutions" data-label="RPM" title="${withUpdated('Engine revolutions per minute', propulsion.revolutions)}"><div class="label">RPM</div><div class="value">${isNumericValue(rpmValue) ? (rpmValue * 60).toFixed(0) + ' RPM' : 'N/A'}</div></div>
     `;
 

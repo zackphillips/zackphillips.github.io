@@ -51,6 +51,8 @@ body {
   align-items: stretch;
   gap: 20px;
   padding: 20px 20px 0 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .logo-side {
@@ -69,6 +71,7 @@ body {
   background-color: var(--bg-tertiary);
   padding: 20px;
   border-radius: 8px;
+  min-width: 0;
   transition: background-color 0.3s ease;
 }
 
@@ -103,61 +106,21 @@ body {
   transition: color 0.3s ease;
 }
 
-.value-with-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
 
-.status-chip {
-  font-size: 0.68em;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-weight: 700;
-  border: 1px solid transparent;
-}
-
-.status-ok {
-  background: rgba(46, 204, 113, 0.15);
-  color: #1e8f58;
-  border-color: rgba(46, 204, 113, 0.35);
-}
-
-.status-warn {
-  background: rgba(243, 156, 18, 0.18);
-  color: #b66b00;
-  border-color: rgba(243, 156, 18, 0.35);
-}
-
-.status-alert {
-  background: rgba(231, 76, 60, 0.18);
-  color: #b62323;
-  border-color: rgba(231, 76, 60, 0.35);
-}
-
-[data-theme="dark"] .status-ok {
-  background: rgba(46, 204, 113, 0.18);
-  color: #8ef4b8;
-}
-
-[data-theme="dark"] .status-warn {
-  background: rgba(243, 189, 18, 0.18);
-  color: #ffd27f;
-}
-
-[data-theme="dark"] .status-alert {
-  background: rgba(231, 76, 60, 0.18);
-  color: #ff9f9f;
+.panel-title {
+  font-weight: bold;
+  font-size: 1.1em;
+  margin-bottom: 15px;
+  text-align: left;
+  color: var(--text-primary);
 }
 
 /* Colored value text — replaces status chips, uses same palette but no background */
 .value-ok    { color: #1e8f58; }
 .value-warn  { color: #b66b00; }
 .value-alert { color: #b62323; }
+.value-na    { color: var(--text-muted); font-weight: 400; }
+.value-text  { font-family: inherit; }
 
 [data-theme="dark"] .value-ok    { color: #6dbb8a; }
 [data-theme="dark"] .value-warn  { color: #c9a060; }
@@ -246,6 +209,7 @@ body {
 
 .button-row {
   display: flex;
+  flex-direction: row;
   gap: 16px;
   margin-top: auto;
   justify-content: space-between;
@@ -323,8 +287,9 @@ body {
 @media (max-width: 700px) {
   .info-logo-row {
     flex-direction: column;
+    align-items: stretch;
     gap: 10px;
-    padding: 10px;
+    padding: 10px 10px 0 10px;
   }
 
   .logo-side {
@@ -386,161 +351,6 @@ body {
     display: flex !important;
     flex-direction: column !important;
     gap: 15px !important;
-  }
-}
-
-.button-row {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
-  margin-top: 18px;
-  justify-content: space-between;
-}
-
-.action-btn {
-  flex: 1;
-  padding: 12px 18px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 1.1em;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  color: #fff;
-}
-
-.signal-btn {
-  background-color: #2c3e50;
-}
-
-.signal-btn:hover {
-  background-color: #1a232c;
-}
-
-.plotter-btn {
-  background-color: #2c3e50;
-}
-
-.plotter-btn:hover {
-  background-color: #1a232c;
-}
-
-.wifi-note {
-  font-size: 0.9em;
-  font-style: italic;
-  text-align: center;
-  color: #7f8c8d;
-  margin-top: 10px;
-}
-
-@media (max-width: 700px) {
-  .button-row {
-    flex-direction: column;
-    gap: 10px;
-  }
-}
-
-.info-logo-row {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 20px;
-  padding: 20px 20px 0 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.logo-side {
-  max-width: 220px;
-  width: auto;
-  height: auto;
-  display: block;
-  flex-shrink: 0;
-  object-fit: contain;
-}
-
-.info-panel {
-  flex: 1 1 0%;
-  display: flex;
-  flex-direction: column;
-  background-color: #ecf0f1;
-  padding: 20px;
-  border-radius: 8px;
-  min-width: 0;
-}
-
-.data-grid {
-  margin-bottom: 20px;
-}
-
-.button-row {
-  display: flex;
-  flex-direction: row;
-  gap: 16px;
-  margin-top: auto;
-  justify-content: space-between;
-}
-
-.action-btn {
-  flex: 1;
-  padding: 12px 18px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 1.1em;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  color: #fff;
-}
-
-.signal-btn {
-  background-color: #2c3e50;
-}
-
-.signal-btn:hover {
-  background-color: #1a232c;
-}
-
-.plotter-btn {
-  background-color: #2c3e50;
-}
-
-.plotter-btn:hover {
-  background-color: #1a232c;
-}
-
-.wifi-note {
-  font-size: 0.9em;
-  font-style: italic;
-  text-align: center;
-  color: var(--text-muted);
-  margin-top: 10px;
-  transition: color 0.3s ease;
-}
-
-@media (max-width: 700px) {
-  .info-logo-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    padding: 10px 10px 0 10px;
-  }
-
-  .logo-side {
-    max-width: 120px;
-    width: auto;
-    height: auto;
-    margin: 0 auto;
-    object-fit: contain;
-  }
-
-  .info-panel {
-    padding: 10px;
-  }
-
-  .button-row {
-    flex-direction: column;
-    gap: 10px;
   }
 }
 
