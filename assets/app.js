@@ -923,7 +923,7 @@ async function loadData() {
 
   try {
     console.log('Starting to load data...');
-    setupSparklineEvents();
+    // setupSparklineEvents(); // disabled: sparkline popups overlapped with charts
 
     // Load data from local file
     let res;
