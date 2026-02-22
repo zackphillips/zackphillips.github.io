@@ -224,9 +224,9 @@ class SignalKTokenRequester:
             print(f"[ERROR] Error loading token from config file: {e}")
             return None
 
-    def check_token_exists(self, info_json_path="data/vessel/info.yaml"):
-        """Check if a valid token exists in config file."""
-        token = self.get_token_from_info_json(info_json_path)
+    def check_token_exists(self, token_file="data/vessel/signalk_token.txt"):
+        """Check if a valid token exists in the token file."""
+        token = self.get_token_from_file(token_file)
         if token:
             # Test if token is valid
             if self.test_token(token):
@@ -237,18 +237,25 @@ class SignalKTokenRequester:
         return None
 
 
-def check_token_exists(info_json_path="data/vessel/info.yaml"):
-    """Check if a valid token exists in config file."""
+def check_token_exists(token_file="data/vessel/signalk_token.txt", info_json_path="data/vessel/info.yaml"):
+    """Check if a valid token exists in the token file."""
     try:
-        info_data = load_vessel_info(info_json_path)
+        try:
+            with open(token_file) as f:
+                token = f.read().strip()
+        except FileNotFoundError:
+            return False, f"No token file found at {token_file}"
 
-        token = info_data.get("signalk", {}).get("token")
         if not token:
-            return False, "No token found in config file"
+            return False, "Token file is empty"
 
-        # Test if token is valid
-        host = info_data.get("signalk", {}).get("host", "192.168.8.50")
-        port = info_data.get("signalk", {}).get("port", "3000")
+        # Read host/port from info.yaml for the test request
+        try:
+            info_data = load_vessel_info(info_json_path)
+            host = info_data.get("signalk", {}).get("host", "192.168.8.50")
+            port = info_data.get("signalk", {}).get("port", "3000")
+        except Exception:
+            host, port = "192.168.8.50", "3000"
 
         try:
             headers = {
@@ -271,7 +278,7 @@ def check_token_exists(info_json_path="data/vessel/info.yaml"):
             return False, f"Error testing token: {e}"
 
     except Exception as e:
-        return False, f"Error reading config file: {e}"
+        return False, f"Error reading token file: {e}"
 
 
 def main():
@@ -290,7 +297,7 @@ def main():
         "--timeout", type=int, default=300, help="Approval timeout in seconds"
     )
     parser.add_argument(
-        "--token-file", default="signalk_token.txt", help="Token file path"
+        "--token-file", default="data/vessel/signalk_token.txt", help="Token file path"
     )
     parser.add_argument(
         "--test-only", action="store_true", help="Only test existing token"
@@ -309,7 +316,7 @@ def main():
 
     # If --check flag is provided, run the check functionality
     if args.check:
-        token_valid, message = check_token_exists(args.info_json)
+        token_valid, message = check_token_exists(args.token_file, args.info_json)
 
         if not args.quiet:
             if token_valid:
@@ -370,9 +377,9 @@ def main():
         print("[ERROR] Token test failed")
         sys.exit(1)
 
-    # Save the token to config file
-    if requester.save_token_to_info_json(token, args.info_json):
-        print("\n[SUCCESS] Access token obtained and saved to config file.")
+    # Save the token to the token file (gitignored, not info.yaml)
+    if requester.save_token_to_file(token, args.token_file):
+        print(f"\n[SUCCESS] Access token obtained and saved to {args.token_file}.")
         print(f"Token: {token}")
         print("Use this token in your WebSocket connections:")
         print(
@@ -381,7 +388,7 @@ def main():
     else:
         print("\n[SUCCESS] Access token obtained.")
         print(f"Token: {token}")
-        print("(Token not saved to config file)")
+        print("(Token not saved to file)")
 
 
 if __name__ == "__main__":
