@@ -1234,6 +1234,7 @@ async function loadData() {
     const elec = data.electrical || {};
     const env = data.environment || {};
     const entertainment = data.entertainment || {};
+    const internet = data.internet || {};
 
     const signalkName = data.name;
     const signalkMmsi = data.mmsi;
@@ -1485,11 +1486,6 @@ async function loadData() {
       <div class="info-item" title="${withUpdated('Sunset time today', data.environment?.sunlight?.times?.sunset)}"><div class="label">Sunset</div><div class="value">${data.environment?.sunlight?.times?.sunset?.value ? new Date(data.environment.sunlight.times.sunset.value).toLocaleTimeString() : 'N/A'}</div></div>
     `;
 
-    const internet = data.internet || {};
-    const packetLossValue = internet.packetLoss?.value;
-    const packetLossDisplay = isNumericValue(packetLossValue)
-      ? `${(packetLossValue <= 1 ? packetLossValue * 100 : packetLossValue).toFixed(1)}%`
-      : 'N/A';
     document.getElementById('internet-grid').innerHTML = `
       <div class="info-item" title="${withUpdated('Internet service provider', internet.ISP)}"><div class="label">ISP</div><div class="value">${internet.ISP?.value || 'N/A'}</div></div>
       <div class="info-item" data-path="internet.speed.download" data-label="Download" title="${withUpdated('Download speed', internet.speed?.download)}"><div class="label">Download</div><div class="value">${isNumericValue(internet.speed?.download?.value) ? internet.speed.download.value.toFixed(1) + ' Mbps' : 'N/A'}</div></div>
