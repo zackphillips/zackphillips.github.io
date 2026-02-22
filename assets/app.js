@@ -2145,7 +2145,7 @@ async function loadWindForecast() {
         break;
       default:
         // Default to wttr.in (global)
-        response = await fetch(`https://wttr.in/?format=j1&lat=${lat}&lon=${lon}`);
+        response = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
         break;
     }
 
