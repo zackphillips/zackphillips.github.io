@@ -15,8 +15,14 @@ from .utils import get_project_root, load_vessel_info
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
 STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
-POSITION_RETENTION_HOURS = (24 * 14)
+POSITION_RETENTION_HOURS = (24 * 24)  # 24 days
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
+
+# Top-level SignalK keys to include in compressed position archives.
+# Excludes static design data, raw sensor hardware keys, and AIS bounding boxes.
+SNAPSHOT_PATH_WHITELIST: frozenset[str] = frozenset({
+    "navigation", "environment", "electrical", "tanks", "propulsion", "internet"
+})
 
 
 def load_vessel_data() -> dict:
@@ -236,6 +242,52 @@ def _write_position_index(path: Path, entries: list[dict[str, Any]]) -> None:
     path.write_text(json.dumps(payload, indent=2))
 
 
+def _collect_signalk_values(
+    node: Any,
+    path: str,
+    *,
+    values: list[dict[str, Any]],
+    whitelist: frozenset[str] | None = None,
+) -> None:
+    """Collect SignalK paths and values as a list of {path, value} dicts.
+
+    At the top level (path="") the optional *whitelist* restricts which
+    top-level keys are traversed.  Object-valued nodes whose every leaf is
+    numeric (e.g. navigation.position) are emitted as a single object entry
+    rather than being flattened into individual scalar entries.
+    """
+    if not isinstance(node, dict):
+        return
+
+    # Top-level: optionally restrict to whitelisted keys only.
+    if not path:
+        keys = (k for k in node if not whitelist or k in whitelist)
+        for key in keys:
+            child = node[key]
+            if isinstance(child, dict):
+                _collect_signalk_values(child, key, values=values)
+        return
+
+    value = node.get("value")
+    if isinstance(value, (int, float)):
+        values.append({"path": path, "value": float(value)})
+    elif isinstance(value, dict):
+        # If every leaf is numeric, emit as a compact object (e.g. position).
+        numeric_leaves = {k: v for k, v in value.items() if isinstance(v, (int, float))}
+        if numeric_leaves and len(numeric_leaves) == len(value):
+            values.append({"path": path, "value": numeric_leaves})
+        else:
+            for k, v in value.items():
+                if isinstance(v, (int, float)):
+                    values.append({"path": f"{path}.{k}", "value": float(v)})
+
+    for key, child in node.items():
+        if key in {"value", "meta", "values", "pgn", "$source", "source"}:
+            continue
+        if isinstance(child, dict):
+            _collect_signalk_values(child, f"{path}.{key}", values=values)
+
+
 def _collect_numeric_values(
     node: Any,
     path: str,
@@ -295,21 +347,38 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
 
     filename = _format_position_filename(timestamp)
     position_file = output_dir / filename
-    numeric_values: dict[str, float] = {}
-    _collect_numeric_values(blob, "", values=numeric_values)
 
-    position_payload = {
-        "timestamp": timestamp.isoformat(),
-        "latitude": lat,
-        "longitude": lon,
-        "file": filename,
-        "numericValues": numeric_values,
+    # --- Snapshot file: full SignalK delta format, whitelisted paths only ---
+    signalk_values: list[dict[str, Any]] = []
+    _collect_signalk_values(blob, "", values=signalk_values, whitelist=SNAPSHOT_PATH_WHITELIST)
+    # Ensure navigation.position is present and is the first entry.
+    pos_entry = {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}
+    signalk_values = [v for v in signalk_values if v["path"] != "navigation.position"]
+    signalk_values.insert(0, pos_entry)
+
+    snapshot_payload = {
+        "context": "vessels.self",
+        "updates": [{
+            "timestamp": timestamp.isoformat(),
+            "values": signalk_values,
+        }],
     }
+    position_file.write_text(json.dumps(snapshot_payload, indent=2))
+
+    # --- Index entry: compact SignalK values (position + key nav fields only) ---
+    index_values: list[dict[str, Any]] = [
+        {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}},
+    ]
     if speed_over_ground is not None:
-        position_payload["speedOverGround"] = speed_over_ground
+        index_values.append({"path": "navigation.speedOverGround", "value": speed_over_ground})
     if course_over_ground_true is not None:
-        position_payload["courseOverGroundTrue"] = course_over_ground_true
-    position_file.write_text(json.dumps(position_payload, indent=2))
+        index_values.append({"path": "navigation.courseOverGroundTrue", "value": course_over_ground_true})
+
+    index_entry: dict[str, Any] = {
+        "timestamp": timestamp.isoformat(),
+        "file": filename,
+        "values": index_values,
+    }
 
     index_path = output_dir / Path(POSITION_INDEX_FILE).name
     entries = _load_position_index(index_path)
@@ -320,7 +389,7 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
         return entry_ts is not None and entry_ts >= cutoff
 
     entries = [entry for entry in entries if keep_entry(entry)]
-    entries.append(position_payload)
+    entries.append(index_entry)
     entries.sort(key=lambda item: item.get("timestamp") or "")
     _write_position_index(index_path, entries)
 

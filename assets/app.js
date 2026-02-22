@@ -41,6 +41,48 @@ async function updateMapLocation(lat, lon) {
   }
 }
 
+// 24 distinct colors for per-day track segments (cycles if more than 24 days).
+const DAY_TRACK_COLORS = [
+  '#e74c3c', '#e67e22', '#f39c12', '#2ecc71', '#1abc9c', '#3498db',
+  '#9b59b6', '#e91e63', '#ff5722', '#8bc34a', '#00bcd4', '#673ab7',
+  '#ff9800', '#4caf50', '#03a9f4', '#9c27b0', '#f44336', '#cddc39',
+  '#009688', '#2196f3', '#ff4081', '#76ff03', '#40c4ff', '#ea80fc',
+];
+
+/**
+ * Normalise a positions_index entry to {latitude, longitude, timestamp,
+ * speedOverGround, courseOverGroundTrue}, handling both:
+ *   - Legacy format: flat keys (latitude, longitude, speedOverGround, …)
+ *   - New SignalK format: values array [{path, value}, …]
+ */
+function parsePositionPoint(point) {
+  if (!point || typeof point !== 'object') return null;
+
+  if (Array.isArray(point.values)) {
+    // New SignalK-style format
+    const find = (path) => point.values.find((v) => v.path === path)?.value;
+    const pos = find('navigation.position');
+    const sog = find('navigation.speedOverGround');
+    const cog = find('navigation.courseOverGroundTrue');
+    return {
+      latitude: Number(pos?.latitude),
+      longitude: Number(pos?.longitude),
+      timestamp: point.timestamp ?? null,
+      speedOverGround: sog != null ? Number(sog) : NaN,
+      courseOverGroundTrue: cog != null ? Number(cog) : NaN,
+    };
+  }
+
+  // Legacy flat format
+  return {
+    latitude: Number(point.latitude),
+    longitude: Number(point.longitude),
+    timestamp: point.timestamp ?? null,
+    speedOverGround: point.speedOverGround != null ? Number(point.speedOverGround) : NaN,
+    courseOverGroundTrue: point.courseOverGroundTrue != null ? Number(point.courseOverGroundTrue) : NaN,
+  };
+}
+
 async function loadTrack() {
   try {
     const response = await fetch(`data/telemetry/positions_index.json?ts=${Date.now()}`);
@@ -48,65 +90,71 @@ async function loadTrack() {
       throw new Error(`Positions index not found: ${response.status}`);
     }
     const payload = await response.json();
-    const positions = Array.isArray(payload) ? payload : payload.positions;
-    if (!Array.isArray(positions)) {
-      return;
-    }
-    const latlngs = positions
-      .map((point) => {
-        const latitude = Number(point.latitude);
-        const longitude = Number(point.longitude);
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-          return null;
-        }
-        return [latitude, longitude];
-      })
-      .filter(Boolean);
+    const rawPositions = Array.isArray(payload) ? payload : payload.positions;
+    if (!Array.isArray(rawPositions) || !map) return;
 
-    if (!latlngs.length || !map) {
-      return;
+    // Filter to the most recent 24 days.
+    const cutoff = new Date();
+    cutoff.setUTCDate(cutoff.getUTCDate() - 24);
+
+    const positions = rawPositions
+      .map(parsePositionPoint)
+      .filter((p) => p
+        && Number.isFinite(p.latitude)
+        && Number.isFinite(p.longitude)
+        && (!p.timestamp || new Date(p.timestamp) >= cutoff));
+
+    if (!positions.length) return;
+
+    // Group by UTC calendar day (YYYY-MM-DD).
+    const byDay = new Map();
+    for (const p of positions) {
+      const dayKey = p.timestamp
+        ? new Date(p.timestamp).toISOString().slice(0, 10)
+        : 'unknown';
+      if (!byDay.has(dayKey)) byDay.set(dayKey, []);
+      byDay.get(dayKey).push(p);
     }
 
+    // Clear previous track layers.
     if (!trackMarkers) {
       trackMarkers = L.layerGroup().addTo(map);
     } else {
       trackMarkers.clearLayers();
     }
-
-    if (!trackLine) {
-      trackLine = L.polyline(latlngs, {
-        color: '#3498db',
-        weight: 3,
-        opacity: 0.8,
-      }).addTo(map);
-    } else {
-      trackLine.setLatLngs(latlngs);
+    if (trackLine) {
+      const lines = Array.isArray(trackLine) ? trackLine : [trackLine];
+      lines.forEach((l) => map.removeLayer(l));
+      trackLine = null;
     }
 
-    positions.forEach((point) => {
-      const latitude = Number(point.latitude);
-      const longitude = Number(point.longitude);
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-        return;
-      }
-      const timeLabel = point.timestamp ? new Date(point.timestamp).toLocaleString() : 'N/A';
-      const speedValue = Number(point.speedOverGround);
-      const speedLabel = Number.isFinite(speedValue)
-        ? `${(speedValue * 1.94384).toFixed(1)} kts`
-        : 'N/A';
-      const courseValue = Number(point.courseOverGroundTrue);
-      const courseLabel = Number.isFinite(courseValue)
-        ? `${(courseValue * 180 / Math.PI).toFixed(0)}°`
-        : 'N/A';
-      const tooltip = `<strong>Time:</strong> ${timeLabel}<br/><strong>Speed:</strong> ${speedLabel}<br/><strong>Course:</strong> ${courseLabel}`;
-      L.circleMarker([latitude, longitude], {
-        radius: 3,
-        color: '#1f6fb2',
-        fillColor: '#3498db',
-        fillOpacity: 0.7,
-        weight: 1,
-      }).bindTooltip(tooltip, { direction: 'top', opacity: 0.9 }).addTo(trackMarkers);
+    // Draw one polyline + markers per day, cycling through 24 colours.
+    const days = [...byDay.keys()].sort();
+    const lines = [];
+    days.forEach((day, idx) => {
+      const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
+      const pts = byDay.get(day);
+      const latlngs = pts.map((p) => [p.latitude, p.longitude]);
+      lines.push(L.polyline(latlngs, { color, weight: 3, opacity: 0.8 }).addTo(map));
+
+      pts.forEach((point) => {
+        const timeLabel = point.timestamp ? new Date(point.timestamp).toLocaleString() : 'N/A';
+        const speedLabel = Number.isFinite(point.speedOverGround)
+          ? `${(point.speedOverGround * 1.94384).toFixed(1)} kts` : 'N/A';
+        const courseLabel = Number.isFinite(point.courseOverGroundTrue)
+          ? `${(point.courseOverGroundTrue * 180 / Math.PI).toFixed(0)}°` : 'N/A';
+        const tooltipHtml = `<strong>Time:</strong> ${timeLabel}<br/><strong>Speed:</strong> ${speedLabel}<br/><strong>Course:</strong> ${courseLabel}`;
+        L.circleMarker([point.latitude, point.longitude], {
+          radius: 3,
+          color,
+          fillColor: color,
+          fillOpacity: 0.7,
+          weight: 1,
+        }).bindTooltip(tooltipHtml, { direction: 'top', opacity: 0.9 }).addTo(trackMarkers);
+      });
     });
+
+    trackLine = lines;
   } catch (error) {
     console.warn('Unable to load track data:', error);
   }
@@ -713,17 +761,35 @@ async function loadData() {
     const map = new Map();
     for (const snapshot of snapshots) {
       if (!snapshot || typeof snapshot !== 'object') continue;
-      const timestamp = snapshot.timestamp || snapshot.time || null;
+
+      // Support both formats:
+      //   New: SignalK delta  → { context, updates: [{ timestamp, values: [{path, value}] }] }
+      //   Legacy:             → { timestamp, numericValues: { path: value } }
+      const update = snapshot.updates?.[0];
+      const timestamp = update?.timestamp || snapshot.timestamp || snapshot.time || null;
       const date = timestamp ? new Date(timestamp) : null;
       if (!date || Number.isNaN(date.getTime())) continue;
-      const values = snapshot.numericValues;
-      if (!values || typeof values !== 'object') continue;
-      Object.entries(values).forEach(([path, value]) => {
-        if (typeof value !== 'number' || !Number.isFinite(value)) return;
-        const list = map.get(path) || [];
-        list.push({ t: date, v: value });
-        map.set(path, list);
-      });
+
+      if (Array.isArray(update?.values)) {
+        // New SignalK format
+        for (const { path, value } of update.values) {
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            const list = map.get(path) || [];
+            list.push({ t: date, v: value });
+            map.set(path, list);
+          }
+        }
+      } else {
+        // Legacy numericValues format
+        const values = snapshot.numericValues;
+        if (!values || typeof values !== 'object') continue;
+        Object.entries(values).forEach(([path, value]) => {
+          if (typeof value !== 'number' || !Number.isFinite(value)) return;
+          const list = map.get(path) || [];
+          list.push({ t: date, v: value });
+          map.set(path, list);
+        });
+      }
     }
     for (const list of map.values()) {
       list.sort((a, b) => a.t - b.t);
