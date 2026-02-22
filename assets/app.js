@@ -91,6 +91,29 @@ function classifyWasteTank(level) {
   return { level: 'alert', label: 'Full' };
 }
 
+// Classify a value using SignalK meta.zones if available, otherwise return null.
+// SignalK zone states: nominal/normal → ok, warn/caution → warn, alert/alarm/emergency → alert.
+function classifyByZones(value, zones) {
+  if (!Array.isArray(zones) || !Number.isFinite(value)) return null;
+  for (const zone of zones) {
+    const above = zone.lower == null || value >= zone.lower;
+    const below = zone.upper == null || value <= zone.upper;
+    if (above && below) {
+      const s = zone.state;
+      if (s === 'nominal' || s === 'normal') return { level: 'ok' };
+      if (s === 'warn'    || s === 'caution') return { level: 'warn' };
+      if (s === 'alert'   || s === 'alarm' || s === 'emergency') return { level: 'alert' };
+    }
+  }
+  return null;
+}
+
+// Render a value div whose text is colored by status level (ok/warn/alert).
+function colorValue(display, status) {
+  const cls = (status?.level && display !== 'N/A') ? ` value-${status.level}` : '';
+  return `<div class="value${cls}">${display}</div>`;
+}
+
 function renderSkeletonGrid(containerId, count = 6) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -1391,28 +1414,28 @@ async function loadData() {
       ? getAnchorDistanceColor(nav.anchor.currentRadius.value > nav.anchor.maxRadius.value, currentTheme)
       : 'var(--text-primary)';
     const anchorDisplay = anchorFeet != null ? `<span style="color:${anchorColor};">${anchorFeet.toFixed(1)} ft</span>` : 'N/A';
-    const anchorBadge = renderStatusBadge(classifyAnchorStatus(nav.anchor?.currentRadius?.value, nav.anchor?.maxRadius?.value));
-    const anchorValueHtml = wrapValue(anchorDisplay, anchorBadge);
+    const anchorValueHtml = `<div class="value">${anchorDisplay}</div>`;
 
-    const socPercent = elec.batteries?.house?.capacity?.stateOfCharge?.value != null
-      ? elec.batteries.house.capacity.stateOfCharge.value * 100
-      : null;
+    const socRaw = elec.batteries?.house?.capacity?.stateOfCharge?.value;
+    const socZones = elec.batteries?.house?.capacity?.stateOfCharge?.meta?.zones;
+    const socPercent = socRaw != null ? socRaw * 100 : null;
     const socDisplay = socPercent != null ? `${socPercent.toFixed(0)}%` : 'N/A';
-    const socValueHtml = wrapValue(socDisplay, renderStatusBadge(classifyBatteryStatus(socPercent)));
+    const socValueHtml = colorValue(socDisplay, classifyByZones(socRaw, socZones) || classifyBatteryStatus(socPercent));
 
-    const timeRemainingHours = elec.batteries?.house?.capacity?.timeRemaining?.value != null
-      ? elec.batteries.house.capacity.timeRemaining.value / 3600
-      : null;
+    const timeRemainingRaw = elec.batteries?.house?.capacity?.timeRemaining?.value;
+    const timeRemainingZones = elec.batteries?.house?.capacity?.timeRemaining?.meta?.zones;
+    const timeRemainingHours = timeRemainingRaw != null ? timeRemainingRaw / 3600 : null;
     const timeRemainingDisplay = timeRemainingHours != null ? `${timeRemainingHours.toFixed(1)} hrs` : 'N/A';
-    const timeRemainingHtml = wrapValue(timeRemainingDisplay, renderStatusBadge(classifyBatteryTime(timeRemainingHours)));
+    const timeRemainingHtml = colorValue(timeRemainingDisplay, classifyByZones(timeRemainingRaw, timeRemainingZones) || classifyBatteryTime(timeRemainingHours));
 
     const packetLossValueRaw = internet.packetLoss?.value;
+    const packetLossZones = internet.packetLoss?.meta?.zones;
     const packetLossPercent = packetLossValueRaw != null ? (packetLossValueRaw <= 1 ? packetLossValueRaw * 100 : packetLossValueRaw) : null;
     const packetLossDisplay = packetLossPercent != null ? `${packetLossPercent.toFixed(1)}%` : 'N/A';
-    const packetLossHtml = wrapValue(packetLossDisplay, renderStatusBadge(classifyPacketLoss(packetLossValueRaw)));
+    const packetLossHtml = colorValue(packetLossDisplay, classifyByZones(packetLossValueRaw, packetLossZones) || classifyPacketLoss(packetLossValueRaw));
 
-    const tankValueWithBadge = (level, valueDisplay, waste = false) =>
-      wrapValue(valueDisplay, renderStatusBadge(waste ? classifyWasteTank(level) : classifyTankLevel(level)));
+    const tankValueWithBadge = (level, valueDisplay, waste = false, zones = null) =>
+      colorValue(valueDisplay, classifyByZones(level, zones) || (waste ? classifyWasteTank(level) : classifyTankLevel(level)));
 
     document.getElementById('navigation-grid').innerHTML = `
       <div class="info-item" title="${withUpdated('Current vessel latitude position', nav.position)}"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
@@ -1512,14 +1535,14 @@ async function loadData() {
     const blackwaterBow = tanks.blackwater?.bow || {};
     const liveWell0 = tanks.liveWell?.['0'] || {};
     document.getElementById('tanks-grid').innerHTML = `
-      <div class="info-item" data-path="tanks.fuel.0.currentLevel" data-label="Fuel (Main)" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div>${tankValueWithBadge(fuelMain.currentLevel?.value, formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value))}</div>
-      <div class="info-item" data-path="tanks.fuel.reserve.currentLevel" data-label="Fuel (Reserve)" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div>${tankValueWithBadge(fuelReserve.currentLevel?.value, formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value))}</div>
-      <div class="info-item" data-path="tanks.freshWater.0.currentLevel" data-label="Fresh Water 1" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div>${tankValueWithBadge(freshWater0.currentLevel?.value, formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value))}</div>
-      <div class="info-item" data-path="tanks.freshWater.1.currentLevel" data-label="Fresh Water 2" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div>${tankValueWithBadge(freshWater1.currentLevel?.value, formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value))}</div>
-      <div class="info-item" data-path="tanks.propane.a.currentLevel" data-label="Propane A" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div>${tankValueWithBadge(propaneA.currentLevel?.value, formatTankDisplay(propaneA.currentLevel?.value, null))}</div>
-      <div class="info-item" data-path="tanks.propane.b.currentLevel" data-label="Propane B" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div>${tankValueWithBadge(propaneB.currentLevel?.value, formatTankDisplay(propaneB.currentLevel?.value, null))}</div>
-      <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div>${tankValueWithBadge(blackwaterBow.currentLevel?.value, formatTankDisplay(blackwaterBow.currentLevel?.value, null), true)}</div>
-      <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div>${tankValueWithBadge(liveWell0.currentLevel?.value, formatTankDisplay(liveWell0.currentLevel?.value, null), true)}</div>
+      <div class="info-item" data-path="tanks.fuel.0.currentLevel" data-label="Fuel (Main)" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div>${tankValueWithBadge(fuelMain.currentLevel?.value, formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value), false, fuelMain.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.fuel.reserve.currentLevel" data-label="Fuel (Reserve)" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div>${tankValueWithBadge(fuelReserve.currentLevel?.value, formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value), false, fuelReserve.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.freshWater.0.currentLevel" data-label="Fresh Water 1" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div>${tankValueWithBadge(freshWater0.currentLevel?.value, formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value), false, freshWater0.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.freshWater.1.currentLevel" data-label="Fresh Water 2" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div>${tankValueWithBadge(freshWater1.currentLevel?.value, formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value), false, freshWater1.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.propane.a.currentLevel" data-label="Propane A" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div>${tankValueWithBadge(propaneA.currentLevel?.value, formatTankDisplay(propaneA.currentLevel?.value, null), false, propaneA.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.propane.b.currentLevel" data-label="Propane B" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div>${tankValueWithBadge(propaneB.currentLevel?.value, formatTankDisplay(propaneB.currentLevel?.value, null), false, propaneB.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div>${tankValueWithBadge(blackwaterBow.currentLevel?.value, formatTankDisplay(blackwaterBow.currentLevel?.value, null), true, blackwaterBow.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div>${tankValueWithBadge(liveWell0.currentLevel?.value, formatTankDisplay(liveWell0.currentLevel?.value, null), true, liveWell0.currentLevel?.meta?.zones)}</div>
     `;
 
     // Render inline sparklines now that all info-item cards are in the DOM.
