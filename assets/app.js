@@ -1242,7 +1242,7 @@ async function loadData() {
 
       const btn = document.createElement('button');
       btn.className = 'sparkline-toggle-btn';
-      btn.textContent = '📈 History';
+      btn.textContent = 'Show History';
       btn.dataset.open = 'false';
 
       // Make the header a flex row so the button sits on the right.
@@ -1257,7 +1257,7 @@ async function loadData() {
           c.style.display = opening ? 'block' : 'none';
         });
         btn.dataset.open = opening ? 'true' : 'false';
-        btn.textContent = opening ? '📉 Hide History' : '📈 History';
+        btn.textContent = opening ? 'Hide History' : 'Show History';
       });
     });
   };
@@ -2422,10 +2422,10 @@ function initDarkMode() {
 function updateDarkModeButton(theme) {
   const button = document.getElementById('darkModeToggle');
   if (theme === 'dark') {
-    button.textContent = '☀️ Light Mode';
+    button.textContent = 'Light Mode';
     button.style.background = '#f39c12';
   } else {
-    button.textContent = '🌙 Dark Mode';
+    button.textContent = 'Dark Mode';
     button.style.background = '#2c3e50';
   }
 }
