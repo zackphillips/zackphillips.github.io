@@ -621,11 +621,6 @@ body {
   margin-bottom: 6px;
 }
 
-/* Alert Summary */
-#alert-summary {
-  border-left-color: var(--border-color);
-}
-
 /* Per-panel accent colors on the left border */
 #navigation-panel  { border-left-color: #4a90d9; } /* blue        — position/nav   */
 #wind-panel        { border-left-color: #00b4d8; } /* cyan        — wind/air       */
@@ -636,6 +631,7 @@ body {
 #propulsion-panel  { border-left-color: #ef4444; } /* red         — engine         */
 #tanks-panel       { border-left-color: #a78bfa; } /* lavender    — tanks          */
 #now-playing-panel { border-left-color: #ec4899; } /* pink        — music          */
+#alert-summary     { border-left-color: #c2762c; } /* warm amber  — system alerts  */
 
 .alert-chips {
   display: flex;
@@ -690,4 +686,14 @@ body {
   font-size: 0.95em;
   margin-top: 2px;
   font-family: 'Courier New', 'Monaco', 'Menlo', 'Consolas', monospace;
+}
+
+/* Alert chips that support unit cycling */
+.alert-chip--unit {
+  cursor: pointer;
+  user-select: none;
+}
+
+.alert-chip--unit:active {
+  transform: scale(0.95);
 }

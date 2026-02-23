@@ -108,7 +108,13 @@ function renderAlertSummary() {
     const labelEl = item.querySelector('.label');
     if (!labelEl) return;
     const level = valueEl.classList.contains('value-alert') ? 'alert' : 'warn';
-    items.push({ label: labelEl.textContent.trim(), value: valueEl.textContent.trim(), level });
+    items.push({
+      label: labelEl.textContent.trim(),
+      value: (valueEl.querySelector('span') || valueEl).textContent.trim(),
+      level,
+      unitGroup: item.dataset.unitGroup || null,
+      raw: item.dataset.raw || null,
+    });
   });
   items.sort((a, b) => (a.level === 'alert' ? -1 : 1));
   if (!items.length) { el.style.display = 'none'; return; }
@@ -116,11 +122,17 @@ function renderAlertSummary() {
   el.innerHTML = `
     <div class="panel-title">System Alerts</div>
     <div class="alert-chips">
-      ${items.map(i => `
-        <div class="alert-chip alert-chip--${i.level}">
+      ${items.map(i => {
+        const unitAttrs = i.unitGroup
+          ? ` data-unit-group="${i.unitGroup}" data-raw="${i.raw ?? ''}" title="Tap to change units"`
+          : '';
+        const unitClass = i.unitGroup ? ' alert-chip--unit' : '';
+        return `
+        <div class="alert-chip alert-chip--${i.level}${unitClass}"${unitAttrs}>
           <span class="alert-chip__label">${i.label}</span>
           <span class="alert-chip__value">${i.value}</span>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>`;
 }
 
@@ -1150,11 +1162,25 @@ async function loadData() {
     const rawMax = Math.max(...rawValues);
     const rawRange = rawMax - rawMin || 1;
 
-    const padding = { top: 8, right: 8, bottom: 20, left: 34 };
+    // Measure widest y-axis label so left padding is never too narrow.
+    ctx.font = '10px system-ui,-apple-system,sans-serif';
+    const maxLabelW = Math.max(
+      ctx.measureText(`${formatValue(max)}${unit}`).width,
+      ctx.measureText(`${formatValue(min)}${unit}`).width,
+    );
+    const leftPad = Math.max(38, Math.ceil(maxLabelW) + 8);
+
+    const padding = { top: 14, right: 10, bottom: 22, left: leftPad };
     const w = canvas.width - padding.left - padding.right;
     const h = canvas.height - padding.top - padding.bottom;
     const axisX = canvas.height - padding.bottom;
     const axisY = padding.left;
+
+    // Use the theme's readable text color for labels, falling back to a
+    // semi-opaque value so it works even without CSS variables.
+    const cssLabel = getComputedStyle(document.documentElement)
+      .getPropertyValue('--text-secondary').trim();
+    const readableLabelColor = cssLabel || labelColor;
 
     // Axes
     ctx.strokeStyle = axisColor;
@@ -1165,21 +1191,22 @@ async function loadData() {
     ctx.lineTo(canvas.width - padding.right, axisX);
     ctx.stroke();
 
-    // Y-axis labels (right-aligned into left padding, no unit to save space)
-    ctx.fillStyle = labelColor;
+    // Y-axis labels — two labels (max + min), vertically inset so they
+    // never clip against the canvas edge.
+    ctx.fillStyle = readableLabelColor;
     ctx.font = '10px system-ui,-apple-system,sans-serif';
     ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`${formatValue(max)}${unit}`, axisY - 2, padding.top);
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(`${formatValue(min)}${unit}`, axisY - 2, axisX);
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${formatValue(max)}${unit}`, axisY - 4, padding.top + 5);
+    ctx.fillText(`${formatValue(min)}${unit}`, axisY - 4, axisX - 5);
 
-    // X-axis time ticks (4 labels: start, ⅓, ⅔, end)
+    // X-axis time ticks — three labels: start, midpoint, end.
     const tFirst = points[0].t.getTime();
     const tLast  = points[points.length - 1].t.getTime();
-    const numTicks = 3;
+    const numTicks = 2;
     ctx.font = '10px system-ui,-apple-system,sans-serif';
     ctx.textBaseline = 'top';
+    ctx.fillStyle = readableLabelColor;
     for (let i = 0; i <= numTicks; i++) {
       const ratio = i / numTicks;
       const x = padding.left + ratio * w;
@@ -2610,9 +2637,9 @@ function updateChartsForTheme(theme) {
 
   // Real-time SignalK updates removed; using static data only
 
-  // Unit toggle: click/tap any info-item with data-unit-group to cycle its units.
+  // Unit toggle: click/tap any info-item or alert-chip with data-unit-group to cycle units.
   document.addEventListener('click', (e) => {
-    const item = e.target.closest('.info-item[data-unit-group]');
+    const item = e.target.closest('.info-item[data-unit-group], .alert-chip[data-unit-group]');
     if (!item) return;
     const group = item.dataset.unitGroup;
     if (!UNIT_GROUPS[group]) return;
@@ -2637,6 +2664,8 @@ function updateChartsForTheme(theme) {
       inner.textContent = formatted;
     });
     if (refreshSparklines) refreshSparklines();
+    // Refresh alert chips so they show the updated unit.
+    renderAlertSummary();
   });
 
   // Add event listener for forecast model dropdown
