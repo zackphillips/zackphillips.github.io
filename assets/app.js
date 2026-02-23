@@ -883,6 +883,9 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: { left: 6, right: 12, top: 6, bottom: 4 }
+        },
         plugins: {
           tooltip: {
             mode: 'index',
@@ -914,19 +917,15 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
               color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'
             },
             ticks: {
-              color: isDark ? '#ffffff' : '#111827',
-              font: { size: 13 },
-              maxTicksLimit: 3,
-              callback: function(value, index, ticks) {
-                // Show text only on middle tick; start/end show tick mark only
-                if (index === 0 || index === ticks.length - 1) return '';
-                return this.getLabelForValue(value);
-              }
+              color: isDark ? '#e2e8f0' : '#0f172a',
+              font: { size: 13, weight: '500' },
+              maxTicksLimit: 1,
             },
             title: {
               display: true,
               text: `Tides as of ${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`,
-              color: isDark ? '#ffffff' : '#111827'
+              color: isDark ? '#e2e8f0' : '#0f172a',
+              font: { size: 13 },
             }
           },
           y: {
@@ -934,12 +933,15 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
               color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'
             },
             ticks: {
-              color: isDark ? '#ffffff' : '#2c3e50'
+              color: isDark ? '#e2e8f0' : '#0f172a',
+              font: { size: 13, weight: '500' },
+              maxTicksLimit: 2,
             },
             title: {
               display: true,
               text: "Tide Height (ft)",
-              color: isDark ? '#ffffff' : '#2c3e50'
+              color: isDark ? '#e2e8f0' : '#0f172a',
+              font: { size: 13 },
             },
             min: Math.min(...heights) - 1,
             max: Math.max(...heights) + 1
@@ -1159,7 +1161,18 @@ async function loadData() {
     const rawMax = Math.max(...rawValues);
     const rawRange = rawMax - rawMin || 1;
 
-    const padding = { top: 8, right: 8, bottom: 20, left: 34 };
+    const FONT = '13px system-ui,-apple-system,sans-serif';
+
+    // Measure label widths first so left padding is always wide enough to
+    // prevent clipping, regardless of value magnitude or unit string length.
+    ctx.font = FONT;
+    const maxLabel = `${formatValue(max)}${unit}`;
+    const minLabel = `${formatValue(min)}${unit}`;
+    const labelW = Math.ceil(Math.max(
+      ctx.measureText(maxLabel).width,
+      ctx.measureText(minLabel).width,
+    ));
+    const padding = { top: 10, right: 8, bottom: 28, left: labelW + 10 };
     const w = canvas.width - padding.left - padding.right;
     const h = canvas.height - padding.top - padding.bottom;
     const axisX = canvas.height - padding.bottom;
@@ -1174,39 +1187,43 @@ async function loadData() {
     ctx.lineTo(canvas.width - padding.right, axisX);
     ctx.stroke();
 
-    // Y-axis labels (right-aligned into left padding, no unit to save space)
+    // Y-axis: 2 labels (max + min) with small tick marks on the axis line.
+    const halfFont = 7; // half of 13px line-height for vertical centering
+    ctx.font = FONT;
     ctx.fillStyle = labelColor;
-    ctx.font = '12px system-ui,-apple-system,sans-serif';
     ctx.textAlign = 'right';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`${formatValue(max)}${unit}`, axisY - 2, padding.top);
-    ctx.textBaseline = 'bottom';
-    ctx.fillText(`${formatValue(min)}${unit}`, axisY - 2, axisX);
+    ctx.textBaseline = 'middle';
+    // Max label + tick
+    ctx.fillText(maxLabel, axisY - 6, padding.top + halfFont);
+    ctx.strokeStyle = axisColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(axisY - 4, padding.top + halfFont);
+    ctx.lineTo(axisY, padding.top + halfFont);
+    ctx.stroke();
+    // Min label + tick
+    ctx.fillText(minLabel, axisY - 6, axisX - halfFont);
+    ctx.beginPath();
+    ctx.moveTo(axisY - 4, axisX - halfFont);
+    ctx.lineTo(axisY, axisX - halfFont);
+    ctx.stroke();
 
-    // X-axis time ticks (3 positions: start, middle, end; text only on middle)
+    // X-axis: 1 tick + label at the midpoint of the time range.
     const tFirst = points[0].t.getTime();
     const tLast  = points[points.length - 1].t.getTime();
-    const numTicks = 2;
-    ctx.font = '12px system-ui,-apple-system,sans-serif';
+    const midX   = padding.left + w / 2;
+    const midDate = new Date((tFirst + tLast) / 2);
+    ctx.fillStyle = labelColor;
+    ctx.font = FONT;
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    for (let i = 0; i <= numTicks; i++) {
-      const ratio = i / numTicks;
-      const x = padding.left + ratio * w;
-      const tickDate = new Date(tFirst + ratio * (tLast - tFirst));
-      // Only show text label for the middle tick; start/end get tick mark only
-      if (i !== 0 && i !== numTicks) {
-        ctx.textAlign = 'center';
-        ctx.fillStyle = labelColor;
-        ctx.fillText(formatTime(tickDate), x, axisX + 4);
-      }
-      // Tick mark at all positions
-      ctx.strokeStyle = axisColor;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, axisX);
-      ctx.lineTo(x, axisX + 3);
-      ctx.stroke();
-    }
+    ctx.fillText(formatTime(midDate), midX, axisX + 5);
+    ctx.strokeStyle = axisColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(midX, axisX);
+    ctx.lineTo(midX, axisX + 4);
+    ctx.stroke();
 
     // Data line
     ctx.strokeStyle = lineColor;
@@ -1226,7 +1243,7 @@ async function loadData() {
    * Safe to call multiple times — re-renders existing canvases in place.
    * Also exposed as module-level refreshSparklines for the theme toggle.
    */
-  const SPARKLINE_HEIGHT = 80;
+  const SPARKLINE_HEIGHT = 95;
 
   // Parse a computed rgb()/rgba() color string and return [r, g, b].
   const parseRgb = (str) => {
@@ -1237,9 +1254,9 @@ async function loadData() {
   const initInlineSparklines = async () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const baseColors = {
-      axis:   isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
-      label:  isDark ? 'rgba(255, 255, 255, 0.90)' : 'rgba(0, 0, 0, 0.82)',
-      noData: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.30)',
+      axis:   isDark ? 'rgba(255, 255, 255, 0.30)' : 'rgba(0, 0, 0, 0.25)',
+      label:  isDark ? '#e2e8f0' : '#0f172a',
+      noData: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.40)',
     };
     // Fallback line color if we can't read the panel accent.
     const fallbackLine = isDark ? 'rgba(96, 165, 250, 0.95)' : 'rgba(37, 99, 235, 0.85)';
