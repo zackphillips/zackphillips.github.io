@@ -108,7 +108,9 @@ function renderAlertSummary() {
     const labelEl = item.querySelector('.label');
     if (!labelEl) return;
     const level = valueEl.classList.contains('value-alert') ? 'alert' : 'warn';
-    items.push({ label: labelEl.textContent.trim(), value: valueEl.textContent.trim(), level });
+    const unitGroup = item.dataset.unitGroup || null;
+    const raw = item.dataset.raw || null;
+    items.push({ label: labelEl.textContent.trim(), value: valueEl.textContent.trim(), level, unitGroup, raw });
   });
   items.sort((a, b) => (a.level === 'alert' ? -1 : 1));
   if (!items.length) { el.style.display = 'none'; return; }
@@ -117,7 +119,7 @@ function renderAlertSummary() {
     <div class="panel-title">System Alerts</div>
     <div class="alert-chips">
       ${items.map(i => `
-        <div class="alert-chip alert-chip--${i.level}">
+        <div class="alert-chip alert-chip--${i.level}"${i.unitGroup ? ` data-unit-group="${i.unitGroup}" data-raw="${i.raw}"` : ''}>
           <span class="alert-chip__label">${i.label}</span>
           <span class="alert-chip__value">${i.value}</span>
         </div>`).join('')}
@@ -912,12 +914,19 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
               color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)'
             },
             ticks: {
-              color: isDark ? '#ffffff' : '#2c3e50'
+              color: isDark ? '#ffffff' : '#111827',
+              font: { size: 13 },
+              maxTicksLimit: 3,
+              callback: function(value, index, ticks) {
+                // Show text only on middle tick; start/end show tick mark only
+                if (index === 0 || index === ticks.length - 1) return '';
+                return this.getLabelForValue(value);
+              }
             },
             title: {
               display: true,
               text: `Tides as of ${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`,
-              color: isDark ? '#ffffff' : '#2c3e50'
+              color: isDark ? '#ffffff' : '#111827'
             }
           },
           y: {
@@ -1167,26 +1176,30 @@ async function loadData() {
 
     // Y-axis labels (right-aligned into left padding, no unit to save space)
     ctx.fillStyle = labelColor;
-    ctx.font = '10px system-ui,-apple-system,sans-serif';
+    ctx.font = '12px system-ui,-apple-system,sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     ctx.fillText(`${formatValue(max)}${unit}`, axisY - 2, padding.top);
     ctx.textBaseline = 'bottom';
     ctx.fillText(`${formatValue(min)}${unit}`, axisY - 2, axisX);
 
-    // X-axis time ticks (4 labels: start, ⅓, ⅔, end)
+    // X-axis time ticks (3 positions: start, middle, end; text only on middle)
     const tFirst = points[0].t.getTime();
     const tLast  = points[points.length - 1].t.getTime();
-    const numTicks = 3;
-    ctx.font = '10px system-ui,-apple-system,sans-serif';
+    const numTicks = 2;
+    ctx.font = '12px system-ui,-apple-system,sans-serif';
     ctx.textBaseline = 'top';
     for (let i = 0; i <= numTicks; i++) {
       const ratio = i / numTicks;
       const x = padding.left + ratio * w;
       const tickDate = new Date(tFirst + ratio * (tLast - tFirst));
-      ctx.textAlign = i === 0 ? 'left' : i === numTicks ? 'right' : 'center';
-      ctx.fillText(formatTime(tickDate), x, axisX + 3);
-      // tick mark
+      // Only show text label for the middle tick; start/end get tick mark only
+      if (i !== 0 && i !== numTicks) {
+        ctx.textAlign = 'center';
+        ctx.fillStyle = labelColor;
+        ctx.fillText(formatTime(tickDate), x, axisX + 4);
+      }
+      // Tick mark at all positions
       ctx.strokeStyle = axisColor;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -1225,7 +1238,7 @@ async function loadData() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const baseColors = {
       axis:   isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
-      label:  isDark ? 'rgba(255, 255, 255, 0.60)' : 'rgba(0, 0, 0, 0.55)',
+      label:  isDark ? 'rgba(255, 255, 255, 0.90)' : 'rgba(0, 0, 0, 0.82)',
       noData: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.30)',
     };
     // Fallback line color if we can't read the panel accent.
@@ -2610,9 +2623,10 @@ function updateChartsForTheme(theme) {
 
   // Real-time SignalK updates removed; using static data only
 
-  // Unit toggle: click/tap any info-item with data-unit-group to cycle its units.
+  // Unit toggle: click/tap any info-item or alert-chip with data-unit-group to cycle its units.
   document.addEventListener('click', (e) => {
-    const item = e.target.closest('.info-item[data-unit-group]');
+    const item = e.target.closest('.info-item[data-unit-group]') ||
+                 e.target.closest('.alert-chip[data-unit-group]');
     if (!item) return;
     const group = item.dataset.unitGroup;
     if (!UNIT_GROUPS[group]) return;
@@ -2636,6 +2650,8 @@ function updateChartsForTheme(theme) {
       const inner = valueEl.querySelector('span') || valueEl;
       inner.textContent = formatted;
     });
+    // Refresh alert chips to reflect the new unit.
+    renderAlertSummary();
     if (refreshSparklines) refreshSparklines();
   });
 
