@@ -400,8 +400,9 @@ const PATH_TO_UNIT_GROUP = {
 };
 
 // Persisted unit preferences: { groupName: cycleIndex }
+const UNIT_PREFS_KEY = 'unitPrefs_v2'; // bump when UNIT_GROUPS defaults change
 const unitPrefs = (() => {
-  try { return JSON.parse(localStorage.getItem('unitPrefs') || '{}'); }
+  try { return JSON.parse(localStorage.getItem(UNIT_PREFS_KEY) || '{}'); }
   catch { return {}; }
 })();
 
@@ -1071,7 +1072,7 @@ async function loadData() {
     'environment.water.temperature':                     { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
     'environment.inside.temperature':                    { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
     'environment.inside.humidity':                       { transform: v => v * 100,                        unit: '%'     },
-    'environment.inside.pressure':                       { transform: v => v * 0.0002953,                  unit: 'inHg'  },
+    'environment.inside.pressure':                       { transform: v => v / 100,                        unit: 'mbar'  },
     'environment.inside.airQuality.tvoc':                { transform: v => v,                              unit: 'ppb'   },
     'environment.inside.airQuality.eco2':                { transform: v => v,                              unit: 'ppm'   },
     'internet.speed.download':                           { transform: v => v,                              unit: 'Mbps'  },
@@ -2588,7 +2589,7 @@ function updateChartsForTheme(theme) {
     const group = item.dataset.unitGroup;
     if (!UNIT_GROUPS[group]) return;
     unitPrefs[group] = ((unitPrefs[group] || 0) + 1) % UNIT_GROUPS[group].length;
-    try { localStorage.setItem('unitPrefs', JSON.stringify(unitPrefs)); } catch {}
+    try { localStorage.setItem(UNIT_PREFS_KEY, JSON.stringify(unitPrefs)); } catch {}
     // Re-render every box in this group from its stored raw SI value.
     document.querySelectorAll(`.info-item[data-unit-group="${group}"]`).forEach(el => {
       const raw = parseFloat(el.dataset.raw);
