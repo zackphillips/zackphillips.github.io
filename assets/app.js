@@ -286,7 +286,9 @@ async function loadTrack() {
     }
 
     // Draw one polyline + markers per day, cycling through 24 colours.
-    const days = [...byDay.keys()].sort();
+    // Sort newest-first so that when old days expire they fall off the end
+    // and existing tracks keep their colour assignment.
+    const days = [...byDay.keys()].sort().reverse();
     const lines = [];
     days.forEach((day, idx) => {
       const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
@@ -356,6 +358,7 @@ const SPARKLINE_POINTS = 60;
 let seriesByPath = null;
 let seriesPromise = null;
 let refreshSparklines = null; // set once initInlineSparklines is ready
+let bannerState = 'ok'; // 'ok' | 'error' — persists across theme switches
 
 // ── Unit-toggle configuration ──────────────────────────────────────────────
 // Each group lists unit options in cycle order. Clicking/tapping any info-item
@@ -1164,7 +1167,7 @@ async function loadData() {
 
     // Y-axis labels (right-aligned into left padding, no unit to save space)
     ctx.fillStyle = labelColor;
-    ctx.font = '9px system-ui,-apple-system,sans-serif';
+    ctx.font = '10px system-ui,-apple-system,sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
     ctx.fillText(`${formatValue(max)}${unit}`, axisY - 2, padding.top);
@@ -1175,7 +1178,7 @@ async function loadData() {
     const tFirst = points[0].t.getTime();
     const tLast  = points[points.length - 1].t.getTime();
     const numTicks = 3;
-    ctx.font = '9px system-ui,-apple-system,sans-serif';
+    ctx.font = '10px system-ui,-apple-system,sans-serif';
     ctx.textBaseline = 'top';
     for (let i = 0; i <= numTicks; i++) {
       const ratio = i / numTicks;
@@ -1212,14 +1215,21 @@ async function loadData() {
    */
   const SPARKLINE_HEIGHT = 80;
 
+  // Parse a computed rgb()/rgba() color string and return [r, g, b].
+  const parseRgb = (str) => {
+    const m = str.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/);
+    return m ? [+m[1], +m[2], +m[3]] : null;
+  };
+
   const initInlineSparklines = async () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const colors = {
-      line:   isDark ? 'rgba(96, 165, 250, 0.95)'  : 'rgba(37, 99, 235, 0.85)',
-      axis:   isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-      label:  isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.4)',
-      noData: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)',
+    const baseColors = {
+      axis:   isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
+      label:  isDark ? 'rgba(255, 255, 255, 0.60)' : 'rgba(0, 0, 0, 0.55)',
+      noData: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.30)',
     };
+    // Fallback line color if we can't read the panel accent.
+    const fallbackLine = isDark ? 'rgba(96, 165, 250, 0.95)' : 'rgba(37, 99, 235, 0.85)';
 
     const seriesMap = await loadSeries();
     if (!seriesMap || !seriesMap.size) return;
@@ -1241,12 +1251,20 @@ async function loadData() {
       canvas.width = item.clientWidth || 120;
       canvas.height = SPARKLINE_HEIGHT;
 
+      // Derive line color from the parent panel's left-border accent.
+      let lineColor = fallbackLine;
+      const panel = item.closest('.info-panel');
+      if (panel) {
+        const rgb = parseRgb(getComputedStyle(panel).borderLeftColor);
+        if (rgb) lineColor = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${isDark ? 0.95 : 0.85})`;
+      }
+
       const points = list.slice(-SPARKLINE_POINTS);
       const grp = PATH_TO_UNIT_GROUP[path];
       const displayCfg = grp
         ? { transform: getUnitCfg(grp).transform, unit: getUnitCfg(grp).unit }
         : (PATH_DISPLAY_CONFIG[path] || {});
-      renderSparkline(canvas, points, displayCfg, colors);
+      renderSparkline(canvas, points, displayCfg, { ...baseColors, line: lineColor });
     });
 
     // Add a toggle button to each panel that has at least one sparkline canvas.
@@ -1376,8 +1394,9 @@ async function loadData() {
       statusElement.textContent = 'Static Data';
       statusElement.style.color = isDark ? '#d4edda' : '#2c3e50';
     } else if (dataSource === 'dummy') {
-      statusElement.textContent = '⚠️ Demo Data';
+      statusElement.textContent = 'Demo Data';
       statusElement.style.color = '#f39c12';
+      bannerState = 'error';
     }
 
     // Try specific field first, fall back to recursive scan
@@ -1399,19 +1418,21 @@ async function loadData() {
       const now = new Date();
       const diffMs    = now - modifiedDate;
       const diffHours = diffMs / (1000 * 60 * 60);
-      const ageDot    = diffHours < 1 ? '🟢' : diffHours < 6 ? '🟡' : diffHours < 24 ? '🟠' : '🔴';
       const ageLabel  = formatAge(diffMs);
-      timeElement.textContent = `${ageDot} ${ageLabel} · ${modifiedDate.toLocaleString()}`;
+      timeElement.textContent = `${ageLabel} · ${modifiedDate.toLocaleString()}`;
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       if (diffHours > 3) {
+        bannerState = 'error';
         banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
         banner.style.color = isDark ? "#f8d7da" : "#721c24";
       } else {
+        bannerState = 'ok';
         banner.style.background = isDark ? "#1e3a1e" : '#dff0d8';
         banner.style.color = isDark ? "#d4edda" : '#2c3e50';
       }
     } else {
-      timeElement.textContent = '🔴 Timestamp not found';
+      bannerState = 'error';
+      timeElement.textContent = 'Timestamp not found';
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
       banner.style.color = isDark ? "#f8d7da" : "#721c24";
@@ -2516,23 +2537,11 @@ function updateChartsForTheme(theme) {
 
   }
 
-  // Update banner colors
+  // Update banner colors — preserve the ok/error state set when data was loaded
   const banner = document.getElementById('updateBanner');
-  const statusElement = document.getElementById('dataStatus');
-  const timeElement = document.getElementById('updateTime');
   const isDark = theme === 'dark';
 
-  // Update status text colors and banner background
-  if (statusElement.textContent.includes('Static Data')) {
-    statusElement.style.color = isDark ? '#d4edda' : '#2c3e50';
-    banner.style.background = isDark ? '#1e3a1e' : '#dff0d8';
-    banner.style.color = isDark ? '#d4edda' : '#2c3e50';
-  } else if (statusElement.textContent.includes('API Data') || statusElement.textContent.includes('Streaming')) {
-    statusElement.style.color = '#3498db';
-    banner.style.background = isDark ? '#1e3a1e' : '#dff0d8';
-    banner.style.color = isDark ? '#d4edda' : '#2c3e50';
-  } else if (statusElement.textContent.includes('Error') || statusElement.textContent.includes('Demo')) {
-    statusElement.style.color = '#f39c12';
+  if (bannerState === 'error') {
     banner.style.background = isDark ? '#3d1e1e' : '#f8d7da';
     banner.style.color = isDark ? '#f8d7da' : '#721c24';
   } else {
