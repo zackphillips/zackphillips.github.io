@@ -286,10 +286,17 @@ async function loadTrack() {
     }
 
     // Draw one polyline + markers per day, cycling through 24 colours.
+    // Colours are assigned newest-first (today = index 0) so that when an old
+    // day drops off the 24-day window the remaining days keep their colours.
+    // Polylines are still plotted oldest-first so the newest track renders on top.
     const days = [...byDay.keys()].sort();
+    const colorByDay = {};
+    [...days].reverse().forEach((day, idx) => {
+      colorByDay[day] = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
+    });
     const lines = [];
-    days.forEach((day, idx) => {
-      const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
+    days.forEach((day) => {
+      const color = colorByDay[day];
       const pts = byDay.get(day);
       const latlngs = pts.map((p) => [p.latitude, p.longitude]);
       lines.push(L.polyline(latlngs, { color, weight: 3, opacity: 0.8 }).addTo(map));
@@ -313,14 +320,14 @@ async function loadTrack() {
 
     trackLine = lines;
 
-    // Build / rebuild the day-colour legend.
+    // Build / rebuild the day-colour legend (newest day shown first).
     if (trackLegend) { trackLegend.remove(); trackLegend = null; }
     if (days.length && map) {
       trackLegend = L.control({ position: 'bottomright' });
       trackLegend.onAdd = () => {
         const div = L.DomUtil.create('div', 'track-legend');
-        div.innerHTML = days.map((day, idx) => {
-          const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
+        div.innerHTML = [...days].reverse().map((day) => {
+          const color = colorByDay[day];
           const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
           return `<div class="track-legend-item">
             <span class="track-legend-swatch" style="background:${color}"></span>
@@ -1409,7 +1416,7 @@ async function loadData() {
       statusElement.textContent = 'Static Data';
       statusElement.style.color = isDark ? '#d4edda' : '#2c3e50';
     } else if (dataSource === 'dummy') {
-      statusElement.textContent = '⚠️ Demo Data';
+      statusElement.textContent = 'Demo Data';
       statusElement.style.color = '#f39c12';
     }
 
@@ -1432,19 +1439,21 @@ async function loadData() {
       const now = new Date();
       const diffMs    = now - modifiedDate;
       const diffHours = diffMs / (1000 * 60 * 60);
-      const ageDot    = diffHours < 1 ? '🟢' : diffHours < 6 ? '🟡' : diffHours < 24 ? '🟠' : '🔴';
       const ageLabel  = formatAge(diffMs);
-      timeElement.textContent = `${ageDot} ${ageLabel} · ${modifiedDate.toLocaleString()}`;
+      timeElement.textContent = `${ageLabel} · ${modifiedDate.toLocaleString()}`;
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       if (diffHours > 3) {
+        banner.dataset.stale = 'true';
         banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
         banner.style.color = isDark ? "#f8d7da" : "#721c24";
       } else {
+        banner.dataset.stale = 'false';
         banner.style.background = isDark ? "#1e3a1e" : '#dff0d8';
         banner.style.color = isDark ? "#d4edda" : '#2c3e50';
       }
     } else {
-      timeElement.textContent = '🔴 Timestamp not found';
+      timeElement.textContent = 'Timestamp not found';
+      banner.dataset.stale = 'true';
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
       banner.style.color = isDark ? "#f8d7da" : "#721c24";
@@ -2555,20 +2564,26 @@ function updateChartsForTheme(theme) {
   const timeElement = document.getElementById('updateTime');
   const isDark = theme === 'dark';
 
-  // Update status text colors and banner background
-  if (statusElement.textContent.includes('Static Data')) {
-    statusElement.style.color = isDark ? '#d4edda' : '#2c3e50';
-    banner.style.background = isDark ? '#1e3a1e' : '#dff0d8';
-    banner.style.color = isDark ? '#d4edda' : '#2c3e50';
-  } else if (statusElement.textContent.includes('API Data') || statusElement.textContent.includes('Streaming')) {
-    statusElement.style.color = '#3498db';
-    banner.style.background = isDark ? '#1e3a1e' : '#dff0d8';
-    banner.style.color = isDark ? '#d4edda' : '#2c3e50';
-  } else if (statusElement.textContent.includes('Error') || statusElement.textContent.includes('Demo')) {
+  // Update status text colors and banner background.
+  // For static/streaming data we also check data-stale to preserve the
+  // stale (red) vs fresh (green) banner state across theme switches.
+  const isStale = banner.dataset.stale === 'true';
+  if (statusElement.textContent.includes('Error') || statusElement.textContent.includes('Demo')) {
     statusElement.style.color = '#f39c12';
     banner.style.background = isDark ? '#3d1e1e' : '#f8d7da';
     banner.style.color = isDark ? '#f8d7da' : '#721c24';
+  } else if (isStale) {
+    banner.style.background = isDark ? '#3d1e1e' : '#f8d7da';
+    banner.style.color = isDark ? '#f8d7da' : '#721c24';
+    if (statusElement.textContent.includes('Static Data')) {
+      statusElement.style.color = isDark ? '#f8d7da' : '#721c24';
+    }
   } else {
+    if (statusElement.textContent.includes('Static Data')) {
+      statusElement.style.color = isDark ? '#d4edda' : '#2c3e50';
+    } else if (statusElement.textContent.includes('API Data') || statusElement.textContent.includes('Streaming')) {
+      statusElement.style.color = '#3498db';
+    }
     banner.style.background = isDark ? '#1e3a1e' : '#dff0d8';
     banner.style.color = isDark ? '#d4edda' : '#2c3e50';
   }
