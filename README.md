@@ -141,11 +141,9 @@ zackphillips.github.io/
 │   └── *.png                   # App icons
 ├── data/
 │   ├── vessel/
-│   │   ├── info.json           # Vessel configuration
+│   │   ├── info.yaml           # Vessel configuration
 │   │   ├── logo.png            # Vessel logo
-│   │   └── polars/
-│   │       ├── polars.csv      # Polar performance data
-│   │       └── polars_readme.md # Polar data documentation
+│   │   └── polars.csv          # Polar performance data
 │   ├── telemetry/
 │   │   └── signalk_latest.json # Data file that is regularly updated
 │   └── tide_stations.json      # NOAA tide station data
@@ -249,7 +247,7 @@ make logs
 - Check browser console for errors
 
 **Charts not updating**:
-- Ensure polar data file exists at `data/vessel/polars/polars.csv`
+- Ensure polar data file exists at `data/vessel/polars.csv`
 - Check JavaScript console for errors
 - Verify data format in CSV file
 

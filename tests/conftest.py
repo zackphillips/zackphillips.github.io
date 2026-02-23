@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import subprocess
@@ -7,6 +6,7 @@ from pathlib import Path
 
 import pytest
 import requests
+import yaml
 
 
 SIGNALK_CHECK_ENV = os.getenv("SIGNALK_VERIFY_FOR_TESTS", "").lower() in {
@@ -24,17 +24,17 @@ def check_signalk_running():
     """
     if not SIGNALK_CHECK_ENV:
         return
-    # Read SignalK configuration from info.json
-    info_path = Path(__file__).parent.parent / "data" / "vessel" / "info.json"
+    # Read SignalK configuration from info.yaml
+    info_path = Path(__file__).parent.parent / "data" / "vessel" / "info.yaml"
 
     if not info_path.exists():
-        pytest.skip("info.json not found - cannot determine SignalK configuration")
+        pytest.skip("info.yaml not found - cannot determine SignalK configuration")
 
     try:
         with open(info_path) as f:
-            config = json.load(f)
-    except (json.JSONDecodeError, KeyError) as e:
-        pytest.skip(f"Failed to parse info.json: {e}")
+            config = yaml.safe_load(f)
+    except (yaml.YAMLError, KeyError) as e:
+        pytest.skip(f"Failed to parse info.yaml: {e}")
 
     signalk_config = config.get("signalk", {})
     host = signalk_config.get("host")
@@ -42,7 +42,7 @@ def check_signalk_running():
     protocol = signalk_config.get("protocol", "http")
 
     if not host or not port:
-        pytest.skip("SignalK host or port not configured in info.json")
+        pytest.skip("SignalK host or port not configured in info.yaml")
 
     # Construct the SignalK URL
     signalk_url = f"{protocol}://{host}:{port}"

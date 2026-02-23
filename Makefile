@@ -556,13 +556,13 @@ install-sensors: check-linux check-signalk-token
 	@echo "Enabling I2C interface..."
 	@sudo raspi-config nonint do_i2c 0
 	# Only install lgpio if running on Linux
-	@if [ "$(UNAME_S)" == "Linux" ]; then \
-		@echo "Installing lgpio..."; \
-		sudo apt install -y lgpio;
-	fi;
+	@if [ "$(UNAME_S)" = "Linux" ]; then \
+		echo "Installing lgpio..."; \
+		sudo apt install -y lgpio; \
+	fi
 	@echo "Installing Python dependencies with uv..."
 	@echo "Using uv to install sensor dependencies..."
-	@"$(UV_BIN)" sync
+	@"$(UV_BIN)" sync --extra pi
 	@echo "Making sensor script executable..."
 	@chmod +x scripts/i2c_sensor_read_and_publish.py
 	@echo "Installation complete!"
@@ -665,6 +665,11 @@ check-i2c: check-linux
 
 # Check SignalK token
 check-signalk-token:
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
 	@echo "Checking SignalK token..."
 	@"$(UV_BIN)" run python -m scripts.signalk_token_management --check || ( \
 		echo ""; \

@@ -357,6 +357,65 @@ let seriesByPath = null;
 let seriesPromise = null;
 let refreshSparklines = null; // set once initInlineSparklines is ready
 
+// ── Unit-toggle configuration ──────────────────────────────────────────────
+// Each group lists unit options in cycle order. Clicking/tapping any info-item
+// with a matching data-unit-group cycles to the next unit in the list.
+const UNIT_GROUPS = {
+  speed: [
+    { unit: 'kts',  transform: v => v * 1.94384,  digits: 1 },
+    { unit: 'mph',  transform: v => v * 2.23694,   digits: 1 },
+    { unit: 'km/h', transform: v => v * 3.6,       digits: 1 },
+  ],
+  temperature: [
+    { unit: '°F', transform: v => (v - 273.15) * 9 / 5 + 32, digits: 1 },
+    { unit: '°C', transform: v => v - 273.15,                 digits: 1 },
+  ],
+  pressure: [
+    { unit: 'mbar', transform: v => v / 100,       digits: 1 },
+    { unit: 'inHg', transform: v => v * 0.0002953, digits: 2 },
+  ],
+  distance: [
+    { unit: 'nm', transform: v => v / 1852,    digits: 1 },
+    { unit: 'km', transform: v => v / 1000,    digits: 2 },
+    { unit: 'mi', transform: v => v / 1609.34, digits: 1 },
+  ],
+  length: [
+    { unit: 'ft', transform: v => v * 3.28084, digits: 1 },
+    { unit: 'm',  transform: v => v,            digits: 1 },
+  ],
+};
+
+// Maps SignalK paths to a UNIT_GROUPS key for sparkline display config.
+const PATH_TO_UNIT_GROUP = {
+  'navigation.speedOverGround':      'speed',
+  'navigation.speedThroughWater':    'speed',
+  'environment.wind.speedTrue':      'speed',
+  'environment.wind.speedApparent':  'speed',
+  'navigation.trip.log':             'distance',
+  'navigation.log':                  'distance',
+  'environment.water.temperature':   'temperature',
+  'environment.inside.temperature':  'temperature',
+  'environment.inside.pressure':     'pressure',
+  'navigation.anchor.currentRadius': 'length',
+};
+
+// Persisted unit preferences: { groupName: cycleIndex }
+const UNIT_PREFS_KEY = 'unitPrefs_v2'; // bump when UNIT_GROUPS defaults change
+const unitPrefs = (() => {
+  try { return JSON.parse(localStorage.getItem(UNIT_PREFS_KEY) || '{}'); }
+  catch { return {}; }
+})();
+
+const getUnitCfg = (group) =>
+  UNIT_GROUPS[group][(unitPrefs[group] || 0) % UNIT_GROUPS[group].length];
+
+// Format a raw SI value using the active unit preference for a group.
+const fmtUnit = (group, rawSI) => {
+  if (rawSI == null || !Number.isFinite(rawSI)) return 'N/A';
+  const { transform, unit, digits } = getUnitCfg(group);
+  return `${transform(rawSI).toFixed(digits)}\u00a0${unit}`;
+};
+
 const hasValidCoordinates = (latitude, longitude) =>
   Number.isFinite(latitude) && Number.isFinite(longitude);
 
@@ -1013,7 +1072,7 @@ async function loadData() {
     'environment.water.temperature':                     { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
     'environment.inside.temperature':                    { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
     'environment.inside.humidity':                       { transform: v => v * 100,                        unit: '%'     },
-    'environment.inside.pressure':                       { transform: v => v * 0.0002953,                  unit: 'inHg'  },
+    'environment.inside.pressure':                       { transform: v => v / 100,                        unit: 'mbar'  },
     'environment.inside.airQuality.tvoc':                { transform: v => v,                              unit: 'ppb'   },
     'environment.inside.airQuality.eco2':                { transform: v => v,                              unit: 'ppm'   },
     'internet.speed.download':                           { transform: v => v,                              unit: 'Mbps'  },
@@ -1162,7 +1221,11 @@ async function loadData() {
       canvas.height = SPARKLINE_HEIGHT;
 
       const points = list.slice(-SPARKLINE_POINTS);
-      renderSparkline(canvas, points, PATH_DISPLAY_CONFIG[path] || {}, colors);
+      const grp = PATH_TO_UNIT_GROUP[path];
+      const displayCfg = grp
+        ? { transform: getUnitCfg(grp).transform, unit: getUnitCfg(grp).unit }
+        : (PATH_DISPLAY_CONFIG[path] || {});
+      renderSparkline(canvas, points, displayCfg, colors);
     });
 
     // Add a toggle button to each panel that has at least one sparkline canvas.
@@ -1179,7 +1242,7 @@ async function loadData() {
 
       const btn = document.createElement('button');
       btn.className = 'sparkline-toggle-btn';
-      btn.textContent = '📈 History';
+      btn.textContent = 'Show History';
       btn.dataset.open = 'false';
 
       // Make the header a flex row so the button sits on the right.
@@ -1194,7 +1257,7 @@ async function loadData() {
           c.style.display = opening ? 'block' : 'none';
         });
         btn.dataset.open = opening ? 'true' : 'false';
-        btn.textContent = opening ? '📉 Hide History' : '📈 History';
+        btn.textContent = opening ? 'Hide History' : 'Show History';
       });
     });
   };
@@ -1418,10 +1481,9 @@ async function loadData() {
     // Update navigation data
     const currentTheme = document.documentElement.getAttribute('data-theme');
 
-    const anchorFeet = nav.anchor?.currentRadius?.value ? nav.anchor.currentRadius.value * 3.28084 : null;
-    const anchorStatus = classifyAnchorStatus(nav.anchor?.currentRadius?.value, nav.anchor?.maxRadius?.value);
-    const anchorDisplay = anchorFeet != null ? `${anchorFeet.toFixed(1)} ft` : 'N/A';
-    const anchorValueHtml = colorValue(anchorDisplay, anchorStatus);
+    const anchorRawSI = nav.anchor?.currentRadius?.value ?? null;
+    const anchorStatus = classifyAnchorStatus(anchorRawSI, nav.anchor?.maxRadius?.value);
+    const anchorValueHtml = colorValue(fmtUnit('length', anchorRawSI), anchorStatus);
 
     const socRaw = elec.batteries?.house?.capacity?.stateOfCharge?.value;
     const socZones = elec.batteries?.house?.capacity?.stateOfCharge?.meta?.zones;
@@ -1447,25 +1509,25 @@ async function loadData() {
     document.getElementById('navigation-grid').innerHTML = `
       <div class="info-item" title="${withUpdated('Current vessel latitude position', nav.position)}"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('Current vessel longitude position', nav.position)}"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
-      <div class="info-item" data-path="navigation.speedOverGround" data-label="SOG" title="${withUpdated('Speed Over Ground - actual speed relative to the seabed', nav.speedOverGround)}"><div class="label">SOG</div><div class="value">${nav.speedOverGround?.value ? (nav.speedOverGround.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" data-path="navigation.speedThroughWater" data-label="STW" title="${withUpdated('Speed Through Water - speed relative to the water', nav.speedThroughWater)}"><div class="label">STW</div><div class="value">${nav.speedThroughWater?.value ? (nav.speedThroughWater.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
-      <div class="info-item" data-path="navigation.trip.log" data-label="Trip" title="${withUpdated('Trip distance - distance traveled on current trip', nav.trip?.log)}"><div class="label">Trip</div><div class="value">${nav.trip?.log?.value ? (nav.trip.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
-      <div class="info-item" data-path="navigation.log" data-label="Log" title="${withUpdated('Total log distance - cumulative distance traveled', nav.log)}"><div class="label">Log</div><div class="value">${nav.log?.value ? (nav.log.value / 1852).toFixed(1) + ' nm' : 'N/A'}</div></div>
+      <div class="info-item" data-path="navigation.speedOverGround" data-label="SOG" data-unit-group="speed" data-raw="${nav.speedOverGround?.value ?? ''}" title="${withUpdated('Speed Over Ground - actual speed relative to the seabed', nav.speedOverGround)}"><div class="label">SOG</div><div class="value">${fmtUnit('speed', nav.speedOverGround?.value)}</div></div>
+      <div class="info-item" data-path="navigation.speedThroughWater" data-label="STW" data-unit-group="speed" data-raw="${nav.speedThroughWater?.value ?? ''}" title="${withUpdated('Speed Through Water - speed relative to the water', nav.speedThroughWater)}"><div class="label">STW</div><div class="value">${fmtUnit('speed', nav.speedThroughWater?.value)}</div></div>
+      <div class="info-item" data-path="navigation.trip.log" data-label="Trip" data-unit-group="distance" data-raw="${nav.trip?.log?.value ?? ''}" title="${withUpdated('Trip distance - distance traveled on current trip', nav.trip?.log)}"><div class="label">Trip</div><div class="value">${fmtUnit('distance', nav.trip?.log?.value)}</div></div>
+      <div class="info-item" data-path="navigation.log" data-label="Log" data-unit-group="distance" data-raw="${nav.log?.value ?? ''}" title="${withUpdated('Total log distance - cumulative distance traveled', nav.log)}"><div class="label">Log</div><div class="value">${fmtUnit('distance', nav.log?.value)}</div></div>
       <div class="info-item" data-path="navigation.attitude.roll" data-label="Roll" title="${withUpdated('Vessel roll angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Roll</div><div class="value">${data.navigation?.attitude?.value?.roll ? (data.navigation.attitude.value.roll * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
       <div class="info-item" data-path="navigation.attitude.pitch" data-label="Pitch" title="${withUpdated('Vessel pitch angle from BNO055 IMU', data.navigation?.attitude)}"><div class="label">Pitch</div><div class="value">${data.navigation?.attitude?.value?.pitch ? (data.navigation.attitude.value.pitch * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
       <div class="info-item" data-path="navigation.courseOverGroundTrue" data-label="COG" title="${withUpdated('Course Over Ground - true direction the vessel is moving', nav.courseOverGroundTrue)}"><div class="label">COG</div><div class="value">${nav.courseOverGroundTrue?.value ? (nav.courseOverGroundTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
       <div class="info-item" data-path="navigation.headingMagnetic" data-label="Mag Heading" title="${withUpdated('Magnetic heading from MMC5603 magnetometer', data.navigation?.headingMagnetic)}"><div class="label">Mag Heading</div><div class="value">${data.navigation?.headingMagnetic?.value ? (data.navigation.headingMagnetic.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
       <div class="info-item" data-path="steering.rudderAngle" data-label="Rudder Angle" title="${withUpdated('Current rudder angle - positive is starboard, negative is port', data.steering?.rudderAngle)}"><div class="label">Rudder Angle</div><div class="value">${data.steering?.rudderAngle?.value ? (data.steering.rudderAngle.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
-      <div class="info-item" data-path="navigation.anchor.currentRadius" data-label="Anchor Distance" title="${withUpdated('Distance from anchor position - red if outside safe radius', nav.anchor?.currentRadius)}"><div class="label">Anchor Distance</div>${anchorValueHtml}</div>
+      <div class="info-item" data-path="navigation.anchor.currentRadius" data-label="Anchor Distance" data-unit-group="length" data-raw="${nav.anchor?.currentRadius?.value ?? ''}" title="${withUpdated('Distance from anchor position - red if outside safe radius', nav.anchor?.currentRadius)}"><div class="label">Anchor Distance</div>${anchorValueHtml}</div>
       <div class="info-item" data-path="navigation.anchor.bearingTrue" data-label="Anchor Bearing" title="${withUpdated('Bearing to anchor position from current location', nav.anchor?.bearingTrue)}"><div class="label">Anchor Bearing</div><div class="value">${nav.anchor?.bearingTrue?.value ? (nav.anchor.bearingTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
     `;
 
     // Update wind data
     document.getElementById('wind-grid').innerHTML = `
-      <div class="info-item" data-path="environment.wind.speedTrue" data-label="Wind Speed" title="${withUpdated('True wind speed - actual wind speed in the atmosphere', env.wind?.speedTrue)}"><div class="label">True Wind Speed</div><div class="value">${env.wind?.speedTrue?.value ? (env.wind.speedTrue.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.wind.speedTrue" data-label="Wind Speed" data-unit-group="speed" data-raw="${env.wind?.speedTrue?.value ?? ''}" title="${withUpdated('True wind speed - actual wind speed in the atmosphere', env.wind?.speedTrue)}"><div class="label">True Wind Speed</div><div class="value">${fmtUnit('speed', env.wind?.speedTrue?.value)}</div></div>
       <div class="info-item" data-path="environment.wind.angleTrue" data-label="Wind Dir" title="${withUpdated('True wind direction - actual wind direction relative to true north', env.wind?.angleTrue)}"><div class="label">True Wind Dir</div><div class="value">${env.wind?.angleTrue?.value ? (env.wind.angleTrue.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
       <div class="info-item" data-path="environment.wind.angleApparent" data-label="Apparent Wind Angle" title="${withUpdated('Apparent wind angle - wind direction relative to vessel heading', data.environment?.wind?.angleApparent)}"><div class="label">Apparent Angle</div><div class="value">${data.environment?.wind?.angleApparent?.value ? (data.environment.wind.angleApparent.value * 180 / Math.PI).toFixed(0) + '°' : 'N/A'}</div></div>
-      <div class="info-item" data-path="environment.wind.speedApparent" data-label="Apparent Wind Speed" title="${withUpdated('Apparent wind speed - wind speed as felt on the vessel', data.environment?.wind?.speedApparent)}"><div class="label">Apparent Speed</div><div class="value">${data.environment?.wind?.speedApparent?.value ? (data.environment.wind.speedApparent.value * 1.94384).toFixed(1) + ' kts' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.wind.speedApparent" data-label="Apparent Wind Speed" data-unit-group="speed" data-raw="${data.environment?.wind?.speedApparent?.value ?? ''}" title="${withUpdated('Apparent wind speed - wind speed as felt on the vessel', data.environment?.wind?.speedApparent)}"><div class="label">Apparent Speed</div><div class="value">${fmtUnit('speed', data.environment?.wind?.speedApparent?.value)}</div></div>
     `;
 
     // Update power data
@@ -1479,10 +1541,10 @@ async function loadData() {
 
     // Update the vessel information with static vessel data
     document.getElementById('vessel-grid').innerHTML = `
-      <div class="info-item" title="${withUpdated('Overall vessel length from bow to stern', data.design?.length)}"><div class="label">Vessel Length</div><div class="value">${data.design?.length?.value?.overall ? (data.design.length.value.overall * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Vessel beam - maximum width of the vessel', data.design?.beam)}"><div class="label">Vessel Beam</div><div class="value">${data.design?.beam?.value ? (data.design.beam.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Maximum vessel draft - depth below waterline', data.design?.draft)}"><div class="label">Vessel Draft</div><div class="value">${data.design?.draft?.value?.maximum ? (data.design.draft.value.maximum * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Vessel air height - height above waterline', data.design?.airHeight)}"><div class="label">Air Height</div><div class="value">${data.design?.airHeight?.value ? (data.design.airHeight.value * 3.28084).toFixed(1) + ' ft' : 'N/A'}</div></div>
+      <div class="info-item" data-unit-group="length" data-raw="${data.design?.length?.value?.overall ?? ''}" title="${withUpdated('Overall vessel length from bow to stern', data.design?.length)}"><div class="label">Vessel Length</div><div class="value">${fmtUnit('length', data.design?.length?.value?.overall)}</div></div>
+      <div class="info-item" data-unit-group="length" data-raw="${data.design?.beam?.value ?? ''}" title="${withUpdated('Vessel beam - maximum width of the vessel', data.design?.beam)}"><div class="label">Vessel Beam</div><div class="value">${fmtUnit('length', data.design?.beam?.value)}</div></div>
+      <div class="info-item" data-unit-group="length" data-raw="${data.design?.draft?.value?.maximum ?? ''}" title="${withUpdated('Maximum vessel draft - depth below waterline', data.design?.draft)}"><div class="label">Vessel Draft</div><div class="value">${fmtUnit('length', data.design?.draft?.value?.maximum)}</div></div>
+      <div class="info-item" data-unit-group="length" data-raw="${data.design?.airHeight?.value ?? ''}" title="${withUpdated('Vessel air height - height above waterline', data.design?.airHeight)}"><div class="label">Air Height</div><div class="value">${fmtUnit('length', data.design?.airHeight?.value)}</div></div>
       <div class="info-item" title="${withUpdated('Vessel name from SignalK', data)}"><div class="label">Vessel Name</div><div class="value value-text">${data.name || 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('Maritime Mobile Service Identity - unique vessel identifier', data)}"><div class="label">MMSI</div><div class="value value-text">${data.mmsi || vesselData?.mmsi || 'N/A'}</div></div>
       <div class="info-item" title="${withUpdated('VHF radio callsign', data.communication)}"><div class="label">Callsign</div><div class="value value-text">${data.communication?.callsignVhf || 'N/A'}</div></div>
@@ -1505,10 +1567,10 @@ async function loadData() {
     };
     // Update the environment with environmental data
     document.getElementById('environment-grid').innerHTML = `
-      <div class="info-item" data-path="environment.water.temperature" data-label="Water Temp" title="${withUpdated('Water temperature at the surface', env.water?.temperature)}"><div class="label">Water Temp</div><div class="value">${env.water?.temperature?.value ? ((env.water.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
-      <div class="info-item" data-path="environment.inside.temperature" data-label="Inside Temp" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Inside Temp</div><div class="value">${data.environment?.inside?.temperature?.value ? ((data.environment.inside.temperature.value - 273.15) * 9/5 + 32).toFixed(1) + '°F' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.water.temperature" data-label="Water Temp" data-unit-group="temperature" data-raw="${env.water?.temperature?.value ?? ''}" title="${withUpdated('Water temperature at the surface', env.water?.temperature)}"><div class="label">Water Temp</div><div class="value">${fmtUnit('temperature', env.water?.temperature?.value)}</div></div>
+      <div class="info-item" data-path="environment.inside.temperature" data-label="Inside Temp" data-unit-group="temperature" data-raw="${data.environment?.inside?.temperature?.value ?? ''}" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Inside Temp</div><div class="value">${fmtUnit('temperature', data.environment?.inside?.temperature?.value)}</div></div>
       <div class="info-item" data-path="environment.inside.humidity" data-label="Inside Humidity" title="${withUpdated('Inside humidity from BME280 sensor', data.environment?.inside?.humidity)}"><div class="label">Inside Humidity</div><div class="value">${data.environment?.inside?.humidity?.value ? (data.environment.inside.humidity.value * 100).toFixed(1) + '%' : 'N/A'}</div></div>
-      <div class="info-item" data-path="environment.inside.pressure" data-label="Barometric Pressure" title="${withUpdated('Inside barometric pressure from BME280 sensor', data.environment?.inside?.pressure)}"><div class="label">Barometric Pressure</div><div class="value">${data.environment?.inside?.pressure?.value ? (data.environment.inside.pressure.value * 0.0002953).toFixed(2) + ' inHg' : 'N/A'}</div></div>
+      <div class="info-item" data-path="environment.inside.pressure" data-label="Barometric Pressure" data-unit-group="pressure" data-raw="${data.environment?.inside?.pressure?.value ?? ''}" title="${withUpdated('Inside barometric pressure from BME280 sensor', data.environment?.inside?.pressure)}"><div class="label">Barometric Pressure</div><div class="value">${fmtUnit('pressure', data.environment?.inside?.pressure?.value)}</div></div>
       <div class="info-item" data-path="environment.inside.airQuality.tvoc" data-label="TVOC" title="${withUpdated('Indoor air quality - Total Volatile Organic Compounds', data.environment?.inside?.airQuality?.tvoc)}"><div class="label">TVOC</div><div class="value">${data.environment?.inside?.airQuality?.tvoc?.value ? data.environment.inside.airQuality.tvoc.value.toFixed(0) + ' ppb' : 'N/A'}</div></div>
       <div class="info-item" data-path="environment.inside.airQuality.eco2" data-label="CO₂" title="${withUpdated('Indoor air quality - Carbon Dioxide equivalent', data.environment?.inside?.airQuality?.eco2)}"><div class="label">CO₂</div><div class="value">${data.environment?.inside?.airQuality?.eco2?.value ? data.environment.inside.airQuality.eco2.value.toFixed(0) + ' ppm' : 'N/A'}</div></div>
       <div class="info-item" data-path="navigation.magneticVariation" data-label="Magnetic Variation" title="${withUpdated('Magnetic variation at current position - difference between true and magnetic north', data.navigation?.magneticVariation)}"><div class="label">Magnetic Variation</div><div class="value">${data.navigation?.magneticVariation?.value ? (data.navigation.magneticVariation.value * 180 / Math.PI).toFixed(1) + '°' : 'N/A'}</div></div>
@@ -2145,7 +2207,7 @@ async function loadWindForecast() {
         break;
       default:
         // Default to wttr.in (global)
-        response = await fetch(`https://wttr.in/?format=j1&lat=${lat}&lon=${lon}`);
+        response = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
         break;
     }
 
@@ -2360,10 +2422,10 @@ function initDarkMode() {
 function updateDarkModeButton(theme) {
   const button = document.getElementById('darkModeToggle');
   if (theme === 'dark') {
-    button.textContent = '☀️ Light Mode';
+    button.textContent = 'Light Mode';
     button.style.background = '#f39c12';
   } else {
-    button.textContent = '🌙 Dark Mode';
+    button.textContent = 'Dark Mode';
     button.style.background = '#2c3e50';
   }
 }
@@ -2519,6 +2581,27 @@ function updateChartsForTheme(theme) {
   loadData();
 
   // Real-time SignalK updates removed; using static data only
+
+  // Unit toggle: click/tap any info-item with data-unit-group to cycle its units.
+  document.addEventListener('click', (e) => {
+    const item = e.target.closest('.info-item[data-unit-group]');
+    if (!item) return;
+    const group = item.dataset.unitGroup;
+    if (!UNIT_GROUPS[group]) return;
+    unitPrefs[group] = ((unitPrefs[group] || 0) + 1) % UNIT_GROUPS[group].length;
+    try { localStorage.setItem(UNIT_PREFS_KEY, JSON.stringify(unitPrefs)); } catch {}
+    // Re-render every box in this group from its stored raw SI value.
+    document.querySelectorAll(`.info-item[data-unit-group="${group}"]`).forEach(el => {
+      const raw = parseFloat(el.dataset.raw);
+      const valueEl = el.querySelector('.value');
+      if (!valueEl) return;
+      const formatted = fmtUnit(group, Number.isFinite(raw) ? raw : null);
+      // Preserve colour spans produced by colorValue(); only update the text.
+      const inner = valueEl.querySelector('span') || valueEl;
+      inner.textContent = formatted;
+    });
+    if (refreshSparklines) refreshSparklines();
+  });
 
   // Add event listener for forecast model dropdown
   document.getElementById('forecast-model').addEventListener('change', function() {
