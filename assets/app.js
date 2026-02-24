@@ -2754,9 +2754,13 @@ async function loadConditionsForecast() {
         scales: {
           x: makeXAxis(isLast),
           y: {
-            display: false,
+            position: 'right',
+            display: true,
             min: -1,
             max: 1,
+            grid: { drawOnChartArea: false },
+            border: { display: false },
+            ticks: { color: 'transparent', font: { size: 8 } },
             afterFit(scale) { scale.width = 44; }
           }
         }
@@ -2837,7 +2841,7 @@ async function loadConditionsForecast() {
 
   // Current direction — arrows
   const curDirAccent = isDark ? '#e879f9' : '#a21caf';
-  renderDirectionChart('condCurrentDirChart', currentDir, 'Cur Dir', curDirAccent, false, OM_MARINE);
+  renderDirectionChart('condCurrentDirChart', currentDir, 'Current Dir', curDirAccent, false, OM_MARINE);
 
   // Temperature (orange)
   const tempAccent  = isDark ? '#fb923c' : '#ea580c';
