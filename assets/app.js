@@ -122,24 +122,41 @@ function renderAlertSummary() {
   if (!el) return;
   const items = [];
   document.querySelectorAll('.info-item').forEach(item => {
+    if (item.closest('#alert-summary')) return; // avoid self-reference on re-render
     const valueEl = item.querySelector('.value-alert, .value-warn');
     if (!valueEl) return;
     const labelEl = item.querySelector('.label');
     if (!labelEl) return;
     const level = valueEl.classList.contains('value-alert') ? 'alert' : 'warn';
-    items.push({ label: labelEl.textContent.trim(), value: valueEl.textContent.trim(), level });
+    items.push({
+      label: labelEl.textContent.trim(),
+      valueHtml: valueEl.innerHTML,
+      level,
+      unitGroup: item.dataset.unitGroup || '',
+      raw: item.dataset.raw || '',
+      path: item.dataset.path || '',
+      dataLevel: item.dataset.level || '',
+    });
   });
   items.sort((a, b) => (a.level === 'alert' ? -1 : 1));
   if (!items.length) { el.style.display = 'none'; return; }
   el.style.display = '';
   el.innerHTML = `
     <div class="panel-title">System Alerts</div>
-    <div class="alert-chips">
-      ${items.map(i => `
-        <div class="alert-chip alert-chip--${i.level}">
-          <span class="alert-chip__label">${i.label}</span>
-          <span class="alert-chip__value">${i.value}</span>
-        </div>`).join('')}
+    <div class="data-grid">
+      ${items.map(i => {
+        const attrs = [
+          i.unitGroup ? `data-unit-group="${i.unitGroup}"` : '',
+          i.raw !== '' ? `data-raw="${i.raw}"` : '',
+          i.path ? `data-path="${i.path}"` : '',
+          i.dataLevel ? `data-level="${i.dataLevel}"` : '',
+        ].filter(Boolean).join(' ');
+        return `
+          <div class="info-item" ${attrs}>
+            <div class="label">${i.label}</div>
+            <div class="value value-${i.level}">${i.valueHtml}</div>
+          </div>`;
+      }).join('')}
     </div>`;
 }
 
@@ -1684,12 +1701,12 @@ async function loadData() {
     const toPercent = (val, digits = 0) =>
       isNumericValue(val) ? `${(val * 100).toFixed(digits)}%` : 'N/A';
     const formatTankDisplay = (level, volume) => {
-      const parts = [];
       const levelDisplay = toPercent(level);
-      if (levelDisplay !== 'N/A') parts.push(levelDisplay);
       const volumeDisplay = isNumericValue(volume) ? fmtUnit('volume', volume) : null;
-      if (volumeDisplay) parts.push(volumeDisplay);
-      return parts.length ? parts.join(' | ') : 'N/A';
+      if (levelDisplay !== 'N/A' && volumeDisplay) {
+        return `<span>${levelDisplay}</span><span class="value-sub">${volumeDisplay}</span>`;
+      }
+      return levelDisplay !== 'N/A' ? levelDisplay : (volumeDisplay || 'N/A');
     };
     // Update the environment with environmental data
     document.getElementById('environment-grid').innerHTML = `
@@ -2706,14 +2723,16 @@ function updateChartsForTheme(theme) {
       // Tank volume items store the level% separately; reconstruct the combined display.
       if (group === 'volume' && el.dataset.level) {
         const lvl = el.dataset.level;
-        const parts = [];
-        if (lvl && lvl !== 'N/A') parts.push(lvl);
-        if (formatted !== 'N/A') parts.push(formatted);
-        formatted = parts.length ? parts.join(' | ') : 'N/A';
+        if (lvl && lvl !== 'N/A' && formatted !== 'N/A') {
+          valueEl.innerHTML = `<span>${lvl}</span><span class="value-sub">${formatted}</span>`;
+        } else {
+          valueEl.textContent = (lvl && lvl !== 'N/A') ? lvl : (formatted !== 'N/A' ? formatted : 'N/A');
+        }
+      } else {
+        // Preserve colour spans produced by colorValue(); only update the text.
+        const inner = valueEl.querySelector('span') || valueEl;
+        inner.textContent = formatted;
       }
-      // Preserve colour spans produced by colorValue(); only update the text.
-      const inner = valueEl.querySelector('span') || valueEl;
-      inner.textContent = formatted;
     });
     if (refreshSparklines) refreshSparklines();
   });
