@@ -414,6 +414,12 @@ let seriesPromise = null;
 let refreshSparklines = null; // set once initInlineSparklines is ready
 let bannerState = 'ok'; // 'ok' | 'error' — persists across theme switches
 
+// ── Theme cycling ──────────────────────────────────────────────────────────
+const THEMES = ['light', 'mermug', 'dark', 'deep-sea', 'starboard', 'port-light',
+                'midnight-watch', 'chart-room', 'fog-bank', 'overcast', 'coral', 'kelp', 'dusk'];
+const DARK_THEMES = new Set(['dark', 'mermug', 'deep-sea', 'starboard', 'port-light', 'midnight-watch']);
+function isDarkTheme(theme) { return DARK_THEMES.has(theme); }
+
 // ── Unit-toggle configuration ──────────────────────────────────────────────
 // Each group lists unit options in cycle order. Clicking/tapping any info-item
 // with a matching data-unit-group cycles to the next unit in the list.
@@ -906,7 +912,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
       tideChartInstance.destroy();
     }
 
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
 
     tideChartInstance = new Chart(ctx, {
       type: 'line',
@@ -1279,7 +1285,7 @@ async function loadData() {
   };
 
   const initInlineSparklines = async () => {
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
     const baseColors = {
       axis:   isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(0, 0, 0, 0.20)',
       label:  isDark ? 'rgba(255, 255, 255, 0.60)' : 'rgba(0, 0, 0, 0.55)',
@@ -1500,7 +1506,7 @@ async function loadData() {
     if (hasGpsFix) {
       if (!map) {
         map = L.map('map').setView([lat, lon], 13);
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
         const tileLayer = isDark
           ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
               attribution: '© OpenStreetMap contributors © CARTO'
@@ -1923,7 +1929,7 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
   if (!polarData) return;
 
   // Get theme information early for use throughout the function
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
 
   isDrawingPolarChart = true;
   lastPolarChartUpdate = now;
@@ -2254,7 +2260,7 @@ async function loadConditionsForecast() {
     return out;
   }
 
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
 
   // Wind
   let windSpeed   = new Array(49).fill(null);
@@ -2887,7 +2893,7 @@ function initDarkMode() {
 
       isThemeChanging = true;
       const currentTheme = html.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      const newTheme = THEMES[(THEMES.indexOf(currentTheme) + 1) % THEMES.length];
 
       // Update button immediately to show it's been clicked
       updateDarkModeButton(newTheme);
@@ -2917,19 +2923,16 @@ function initDarkMode() {
 
 function updateDarkModeButton(theme) {
   const button = document.getElementById('darkModeToggle');
-  if (theme === 'dark') {
-    button.textContent = 'Light Mode';
-    button.style.background = '#f39c12';
-  } else {
-    button.textContent = 'Dark Mode';
-    button.style.background = '#2c3e50';
-  }
+  const nextTheme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+  button.textContent = nextTheme;
+  button.style.background = isDarkTheme(theme) ? '#555e6e' : '#2c3e50';
+  button.style.color = '#fff';
 }
 
 function updateChartsForTheme(theme) {
   // Update tide chart
   if (tideChartInstance) {
-    const isDark = theme === 'dark';
+    const isDark = isDarkTheme(theme);
     tideChartInstance.options.scales.x.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)';
     tideChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)';
     tideChartInstance.options.scales.x.ticks.color = isDark ? '#ffffff' : '#2c3e50';
