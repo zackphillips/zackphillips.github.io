@@ -1901,7 +1901,7 @@ function updatePolarPerformance() {
   const indicator = document.getElementById('polar-engine-indicator');
   if (indicator) {
     if (engineOn) {
-      indicator.textContent = rpm != null ? `⚙ Motoring · ${rpm} RPM` : '⚙ Engine On';
+      indicator.textContent = rpm != null ? `Motoring · ${rpm} RPM` : 'Engine On';
       indicator.style.display = '';
     } else {
       indicator.style.display = 'none';
