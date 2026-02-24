@@ -2885,39 +2885,20 @@ function initDarkMode() {
   updateDarkModeButton(savedTheme);
 
   darkModeToggle.addEventListener('click', () => {
-      // Prevent multiple clicks while theme is changing
-      if (isThemeChanging) {
-        console.log('Theme change already in progress, ignoring click');
-        return;
-      }
-
-      isThemeChanging = true;
       const currentTheme = html.getAttribute('data-theme');
       const newTheme = THEMES[(THEMES.indexOf(currentTheme) + 1) % THEMES.length];
 
-      // Update button immediately to show it's been clicked
+      // Apply theme immediately
+      html.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
       updateDarkModeButton(newTheme);
 
-      // Debounce chart updates to prevent rapid toggling issues
-      if (themeChangeTimeout) {
-        clearTimeout(themeChangeTimeout);
-      }
+      // Debounce the expensive chart redraws
+      if (themeChangeTimeout) clearTimeout(themeChangeTimeout);
       themeChangeTimeout = setTimeout(() => {
-        // Apply theme change after delay
-        html.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-
-        // Update charts
         updateChartsForTheme(newTheme);
-
-        // Re-render inline sparklines with updated theme colors
         refreshSparklines?.();
-
-        // Re-enable theme changes after chart update completes
-        setTimeout(() => {
-          isThemeChanging = false;
-        }, 200); // Reduced delay to ensure chart is fully rendered
-      }, 150); // Reduced delay to 150ms
+      }, 150);
     });
 }
 
