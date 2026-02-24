@@ -1593,6 +1593,8 @@ async function loadData() {
       loadWindForecast().catch(err => console.error('Wind forecast error:', err));
       // Load wave forecast asynchronously without blocking main data load
       loadWaveForecast().catch(err => console.error('Wave forecast error:', err));
+      // Load unified 48-hr conditions forecast
+      loadConditionsForecast().catch(err => console.error('Conditions forecast error:', err));
       // Update map location title
       updateMapLocation(lat, lon).catch(err => console.error('Location fetch error:', err));
       // Load track for last 24 hours
@@ -2189,6 +2191,422 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
 
 
 
+// ─────────────────────────────────────────────────────────────────────────
+// Conditions Forecast — 48-hr unified panel
+// ─────────────────────────────────────────────────────────────────────────
+let conditionsChartInstances = {};
+
+async function loadConditionsForecast() {
+  const stack   = document.getElementById('conditions-chart-stack');
+  const loading = document.getElementById('conditions-loading');
+
+  const tidePos = resolveTidePosition(lat, lon);
+  if (!hasValidCoordinates(tidePos.lat, tidePos.lon)) {
+    if (loading) loading.textContent = 'Waiting for GPS position…';
+    return;
+  }
+
+  const now         = new Date();
+  // 48-hr window: midnight local today → midnight local day+2
+  const windowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+  const windowEnd   = new Date(windowStart.getTime() + 48 * 3600000);
+  const nowOffset   = (now - windowStart) / 3600000; // fractional hour within window
+
+  // Format YYYY-MM-DD in local time
+  function localDateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  // Format YYYYMMDD in UTC (for NOAA)
+  function utcDateStr(d) {
+    return `${d.getUTCFullYear()}${String(d.getUTCMonth()+1).padStart(2,'0')}${String(d.getUTCDate()).padStart(2,'0')}`;
+  }
+
+  const today    = localDateStr(windowStart);
+  const tomorrow = localDateStr(new Date(windowStart.getTime() + 24 * 3600000));
+  const latR = Math.round(tidePos.lat * 100) / 100;
+  const lonR = Math.round(tidePos.lon * 100) / 100;
+
+  // Show date range in header
+  const dateRangeEl = document.getElementById('conditions-date-range');
+  if (dateRangeEl) {
+    const fmtD = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    dateRangeEl.textContent = `${fmtD(windowStart)} – ${fmtD(new Date(windowEnd.getTime() - 1))}`;
+  }
+
+  // Fetch all three sources in parallel; each fails independently
+  const [atmosResult, marineResult, tideResult] = await Promise.allSettled([
+
+    // ── Atmospheric (Open-Meteo) ──────────────────────────────────────────
+    (async () => {
+      const key = `cond_atmos_${latR}_${lonR}_${today}`;
+      const hit = getCached(key, 60 * 60 * 1000);
+      if (hit) return hit;
+      const url = `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${tidePos.lat}&longitude=${tidePos.lon}` +
+        `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,surface_pressure` +
+        `&wind_speed_unit=kn&temperature_unit=fahrenheit` +
+        `&timezone=auto&start_date=${today}&end_date=${tomorrow}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`atmos HTTP ${res.status}`);
+      const data = await res.json();
+      setCached(key, data);
+      return data;
+    })(),
+
+    // ── Marine (Open-Meteo Marine) ────────────────────────────────────────
+    (async () => {
+      const key = `cond_marine_${latR}_${lonR}_${today}`;
+      const hit = getCached(key, 60 * 60 * 1000);
+      if (hit) return hit;
+      const url = `https://marine-api.open-meteo.com/v1/marine` +
+        `?latitude=${tidePos.lat}&longitude=${tidePos.lon}` +
+        `&hourly=wave_height,wave_period,wave_direction,ocean_current_velocity,ocean_current_direction` +
+        `&timezone=auto&start_date=${today}&end_date=${tomorrow}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`marine HTTP ${res.status}`);
+      const data = await res.json();
+      setCached(key, data);
+      return data;
+    })(),
+
+    // ── Tide (NOAA) ───────────────────────────────────────────────────────
+    (async () => {
+      const station = await findNearestNOAAStation(tidePos.lat, tidePos.lon);
+      const begin   = utcDateStr(windowStart);
+      const end     = utcDateStr(windowEnd);
+      const key     = `cond_tide_${station.id}_${begin}_${end}`;
+      const hit     = getCached(key, 3 * 60 * 60 * 1000);
+      if (hit) return { station, predictions: hit };
+      const params = new URLSearchParams({
+        product: 'predictions', application: 'vessel-tracker',
+        begin_date: begin, end_date: end,
+        datum: 'MLLW', station: station.id,
+        time_zone: 'gmt', units: 'english', interval: 'h', format: 'json'
+      });
+      const res = await fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${params}`);
+      if (!res.ok) throw new Error(`tide HTTP ${res.status}`);
+      const json = await res.json();
+      if (json.error) throw new Error(json.error.message);
+      const predictions = json.predictions || [];
+      if (predictions.length > 0) setCached(key, predictions);
+      return { station, predictions };
+    })()
+  ]);
+
+  // ── Build unified hourly arrays (index 0 = windowStart, 48 = windowEnd) ─
+  // Open-Meteo hourly times are local (timezone=auto), no Z suffix → new Date() treats as local ✓
+  function mapHourlyLocal(times, values) {
+    const out = new Array(49).fill(null);
+    if (!times || !values) return out;
+    times.forEach((ts, i) => {
+      const t   = new Date(ts);
+      const idx = Math.round((t - windowStart) / 3600000);
+      if (idx >= 0 && idx <= 48 && values[i] != null) out[idx] = values[i];
+    });
+    return out;
+  }
+
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  // Wind
+  let windSpeed   = new Array(49).fill(null);
+  let windGust    = new Array(49).fill(null);
+  let windCurrent = null;
+  if (atmosResult.status === 'fulfilled') {
+    const h = atmosResult.value?.hourly;
+    if (h) {
+      windSpeed = mapHourlyLocal(h.time, h.wind_speed_10m);
+      windGust  = mapHourlyLocal(h.time, h.wind_gusts_10m);
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      windCurrent = windSpeed[idx];
+    }
+  }
+
+  // Swell
+  let swellHeight = new Array(49).fill(null);
+  let swellCurrent = null;
+  if (marineResult.status === 'fulfilled') {
+    const h = marineResult.value?.hourly;
+    if (h) {
+      const raw = mapHourlyLocal(h.time, h.wave_height);
+      swellHeight = raw.map(v => v != null ? v * 3.28084 : null); // m → ft
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      swellCurrent = swellHeight[idx];
+    }
+  }
+
+  // Ocean current speed
+  let currentSpeed = new Array(49).fill(null);
+  let currentCurrent = null;
+  if (marineResult.status === 'fulfilled') {
+    const h = marineResult.value?.hourly;
+    if (h) {
+      const raw = mapHourlyLocal(h.time, h.ocean_current_velocity);
+      currentSpeed = raw.map(v => v != null ? v * 1.94384 : null); // m/s → kts
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      currentCurrent = currentSpeed[idx];
+    }
+  }
+
+  // Temperature
+  let temperature = new Array(49).fill(null);
+  let tempCurrent = null;
+  if (atmosResult.status === 'fulfilled') {
+    const h = atmosResult.value?.hourly;
+    if (h) {
+      temperature = mapHourlyLocal(h.time, h.temperature_2m);
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      tempCurrent = temperature[idx];
+    }
+  }
+
+  // Tide — NOAA returns UTC timestamps with a space ("YYYY-MM-DD HH:mm")
+  let tideHeight = new Array(49).fill(null);
+  let tideCurrent = null;
+  let tideStationName = '';
+  if (tideResult.status === 'fulfilled') {
+    const { station, predictions } = tideResult.value;
+    tideStationName = station?.name || '';
+    predictions.forEach(d => {
+      // Force UTC parse by appending 'Z' after replacing space with 'T'
+      const t   = new Date(d.t.replace(' ', 'T') + 'Z');
+      const idx = Math.round((t - windowStart) / 3600000);
+      if (idx >= 0 && idx <= 48) tideHeight[idx] = parseFloat(d.v);
+    });
+    const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+    tideCurrent = tideHeight[idx];
+  }
+
+  // Update sidebar current values
+  function setCrVal(id, val, digits) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val != null ? val.toFixed(digits) : '--';
+  }
+  setCrVal('cr-wind-val',    windCurrent,    1);
+  setCrVal('cr-swell-val',   swellCurrent,   1);
+  setCrVal('cr-tide-val',    tideCurrent,    1);
+  setCrVal('cr-temp-val',    tempCurrent,    0);
+  setCrVal('cr-current-val', currentCurrent, 2);
+
+  // Show charts, hide loading message
+  if (loading) loading.style.display = 'none';
+  if (stack)   stack.style.display   = '';
+
+  // ── Chart helpers ─────────────────────────────────────────────────────────
+  const gridColor   = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+  const tickColor   = isDark ? '#99a0b0'                : '#6b7280';
+  const nowLineClr  = isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.30)';
+  const nowFillClr  = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.025)';
+
+  function nowAnnotations(showLabel) {
+    return {
+      nowBand: {
+        type: 'box',
+        xMin: nowOffset - 0.25,
+        xMax: nowOffset + 0.25,
+        backgroundColor: nowFillClr,
+        borderWidth: 0,
+        drawTime: 'beforeDatasetsDraw'
+      },
+      nowLine: {
+        type: 'line',
+        xMin: nowOffset,
+        xMax: nowOffset,
+        borderColor: nowLineClr,
+        borderWidth: 1.5,
+        borderDash: [3, 3],
+        drawTime: 'afterDatasetsDraw',
+        label: showLabel ? {
+          display: true,
+          content: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          position: 'start',
+          yAdjust: 6,
+          backgroundColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)',
+          color: isDark ? '#dde' : '#444',
+          font: { size: 9, weight: '600' },
+          padding: { x: 5, y: 3 },
+          borderRadius: 4
+        } : { display: false }
+      }
+    };
+  }
+
+  function makeXAxis(isLast) {
+    return {
+      type: 'linear',
+      min: 0,
+      max: 48,
+      display: isLast,
+      grid: { color: gridColor, tickLength: isLast ? 4 : 0 },
+      border: { display: false },
+      ticks: {
+        color: tickColor,
+        font: { size: 9 },
+        stepSize: 6,
+        callback(val) {
+          if (val < 0 || val > 48 || val % 6 !== 0) return null;
+          const t = new Date(windowStart.getTime() + val * 3600000);
+          if (val % 24 === 0) {
+            // Midnight: show short day+date
+            return t.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          }
+          return t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        }
+      }
+    };
+  }
+
+  function makeYAxis(unitLabel, accentColor) {
+    return {
+      display: true,
+      position: 'right',
+      grid: { color: gridColor },
+      border: { display: false },
+      ticks: {
+        color: tickColor,
+        font: { size: 9 },
+        maxTicksLimit: 4,
+        callback: v => (Math.abs(v) >= 10 ? v.toFixed(0) : v.toFixed(1))
+      },
+      title: {
+        display: true,
+        text: unitLabel,
+        color: accentColor,
+        font: { size: 8, weight: '700' },
+        padding: { top: 0, bottom: 0 }
+      }
+    };
+  }
+
+  function buildDataset(values, label, unit, digits, borderColor, bgColor, opts = {}) {
+    return {
+      label,
+      unit,
+      digits,
+      data: values.map((v, i) => ({ x: i, y: v })),
+      borderColor,
+      backgroundColor: bgColor,
+      borderWidth: opts.dashed ? 1.5 : 1.8,
+      borderDash: opts.dashed ? [5, 3] : undefined,
+      fill: opts.fill !== undefined ? opts.fill : true,
+      tension: 0.38,
+      pointRadius: 0,
+      pointHoverRadius: 3,
+      spanGaps: true,
+      order: opts.order ?? 0
+    };
+  }
+
+  function renderChart(canvasId, datasets, unitLabel, accentColor, isLast, yMin, yMax) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (conditionsChartInstances[canvasId]) {
+      conditionsChartInstances[canvasId].destroy();
+      delete conditionsChartInstances[canvasId];
+    }
+    const yAxis = makeYAxis(unitLabel, accentColor);
+    if (yMin != null) yAxis.min = yMin;
+    if (yMax != null) yAxis.max = yMax;
+
+    const chart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: { datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 350 },
+        layout: { padding: { top: 4, bottom: 0, left: 0, right: 6 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            bodyFont: { size: 10 },
+            titleFont: { size: 10 },
+            callbacks: {
+              title([ctx]) {
+                const t = new Date(windowStart.getTime() + ctx.parsed.x * 3600000);
+                return t.toLocaleString('en-US', {
+                  weekday: 'short', month: 'short', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit', hour12: false
+                });
+              },
+              label(ctx) {
+                if (ctx.parsed.y == null) return null;
+                const { label: lbl, unit: u, digits: dg } = ctx.dataset;
+                return `${lbl}: ${ctx.parsed.y.toFixed(dg ?? 1)} ${u ?? ''}`;
+              }
+            }
+          },
+          annotation: { annotations: nowAnnotations(isLast) }
+        },
+        scales: {
+          x: makeXAxis(isLast),
+          y: yAxis
+        }
+      },
+      plugins: [Chart.registry.getPlugin('annotation')]
+    });
+
+    conditionsChartInstances[canvasId] = chart;
+  }
+
+  // ── Render each row ───────────────────────────────────────────────────────
+
+  // Wind (sky-blue)
+  const windAccent = isDark ? '#38bdf8' : '#0ea5e9';
+  const windMax = Math.max(15, ...windGust.filter(v => v != null)) * 1.08;
+  renderChart('condWindChart', [
+    buildDataset(windGust,  'Gusts', 'kts', 1,
+      isDark ? 'rgba(56,189,248,0.30)' : 'rgba(14,165,233,0.25)',
+      'transparent', { dashed: true, fill: false, order: 1 }),
+    buildDataset(windSpeed, 'Wind',  'kts', 1,
+      windAccent,
+      isDark ? 'rgba(56,189,248,0.14)' : 'rgba(14,165,233,0.10)',
+      { order: 0 })
+  ], 'kts', windAccent, false, 0, windMax);
+
+  // Swell (emerald)
+  const swellAccent = isDark ? '#34d399' : '#059669';
+  const swellMax = Math.max(3, ...swellHeight.filter(v => v != null)) * 1.12;
+  renderChart('condSwellChart', [
+    buildDataset(swellHeight, 'Swell', 'ft', 1,
+      swellAccent,
+      isDark ? 'rgba(52,211,153,0.14)' : 'rgba(5,150,105,0.10)')
+  ], 'ft', swellAccent, false, 0, swellMax);
+
+  // Tide (indigo) — may have nulls at start/end; use spanGaps
+  const tideAccent = isDark ? '#818cf8' : '#4f46e5';
+  const validTide  = tideHeight.filter(v => v != null);
+  const tideMin    = validTide.length ? Math.min(...validTide) - 0.6 : -2;
+  const tideMax    = validTide.length ? Math.max(...validTide) + 0.6 :  6;
+  renderChart('condTideChart', [
+    buildDataset(tideHeight, tideStationName ? `Tide (${tideStationName})` : 'Tide', 'ft', 1,
+      tideAccent,
+      isDark ? 'rgba(129,140,248,0.14)' : 'rgba(79,70,229,0.10)')
+  ], 'ft', tideAccent, false, tideMin, tideMax);
+
+  // Temperature (orange)
+  const tempAccent  = isDark ? '#fb923c' : '#ea580c';
+  const validTemp   = temperature.filter(v => v != null);
+  const tempMinY    = validTemp.length ? Math.min(...validTemp) - 4 : 40;
+  const tempMaxY    = validTemp.length ? Math.max(...validTemp) + 4 : 80;
+  renderChart('condTempChart', [
+    buildDataset(temperature, 'Temp', '°F', 0,
+      tempAccent,
+      isDark ? 'rgba(251,146,60,0.14)' : 'rgba(234,88,12,0.10)')
+  ], '°F', tempAccent, false, tempMinY, tempMaxY);
+
+  // Ocean Current (violet) — last row, shows x-axis
+  const curAccent = isDark ? '#c084fc' : '#9333ea';
+  const validCur  = currentSpeed.filter(v => v != null);
+  const curMax    = validCur.length ? Math.max(0.5, ...validCur) * 1.12 : 1;
+  renderChart('condCurrentChart', [
+    buildDataset(currentSpeed, 'Current', 'kts', 2,
+      curAccent,
+      isDark ? 'rgba(192,132,252,0.14)' : 'rgba(147,51,234,0.10)')
+  ], 'kts', curAccent, true, 0, curMax);
+}
+
 async function loadWaveForecast() {
   try {
     if (!hasValidCoordinates(lat, lon)) {
@@ -2632,6 +3050,11 @@ function updateChartsForTheme(theme) {
 
   // Staleness class drives status-hero colors via CSS; no inline style needed here.
 
+  // Redraw conditions forecast charts with new theme colors
+  if (Object.keys(conditionsChartInstances).length > 0) {
+    loadConditionsForecast().catch(err => console.error('Conditions forecast theme error:', err));
+  }
+
   // Update map tile layer
   if (map) {
     map.eachLayer((layer) => {
@@ -2743,5 +3166,10 @@ function updateChartsForTheme(theme) {
     if (lat && lon) {
       loadWaveForecast();
     }
+  }, 60 * 60 * 1000);
+
+  // Update conditions forecast every hour
+  setInterval(() => {
+    loadConditionsForecast().catch(err => console.error('Conditions forecast error:', err));
   }, 60 * 60 * 1000);
 });

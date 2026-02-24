@@ -773,6 +773,114 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Conditions Forecast Panel
+   ───────────────────────────────────────────────────────────────────────── */
+
+.conditions-forecast-panel {
+  border-left-color: #0ea5e9;
+}
+
+.conditions-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.conditions-date-range {
+  margin-left: auto;
+  font-size: 0.75em;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.conditions-loading {
+  font-size: 0.85em;
+  color: var(--text-muted);
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* Outer border that wraps all rows */
+.conditions-chart-stack {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* Each metric row */
+.conditions-row {
+  display: flex;
+  align-items: stretch;
+  height: 78px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.conditions-row--last {
+  border-bottom: none;
+  height: 110px; /* extra room for x-axis tick labels */
+}
+
+/* Sidebar: label + current value */
+.conditions-row-label {
+  flex: 0 0 66px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 10px 0 8px;
+  gap: 2px;
+  background: var(--bg-quaternary);
+  border-right: 1px solid var(--border-color);
+}
+
+.cr-name {
+  font-size: 0.60em;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.cr-value {
+  font-size: 1.05em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  line-height: 1.1;
+  font-family: 'SF Mono', 'Fira Mono', 'Consolas', monospace;
+}
+
+.cr-unit {
+  font-size: 0.60em;
+  color: var(--text-muted);
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Canvas area */
+.conditions-canvas-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  position: relative;
+}
+
+.conditions-canvas-wrap canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Mobile: shrink sidebar */
+@media (max-width: 600px) {
+  .conditions-row-label {
+    flex: 0 0 52px;
+    padding: 0 6px 0 6px;
+  }
+  .cr-value { font-size: 0.9em; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Responsive
    ───────────────────────────────────────────────────────────────────────── */
 @media (max-width: 1200px) {
