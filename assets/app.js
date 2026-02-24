@@ -2873,8 +2873,8 @@ function initDarkMode() {
   const darkModeToggle = document.getElementById('darkModeToggle');
   const html = document.documentElement;
 
-  // Check for saved theme preference or default to light mode
-  const savedTheme = localStorage.getItem('theme') || 'light';
+  // Check for saved theme preference, then vessel config, then fall back to light
+  const savedTheme = localStorage.getItem('theme') || vesselData?.theme || 'light';
   html.setAttribute('data-theme', savedTheme);
   updateDarkModeButton(savedTheme);
 
