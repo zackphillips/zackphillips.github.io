@@ -658,23 +658,10 @@ function updateVesselLinks() {
     };
   }
 
-  // Update SignalK links
-  const signalkAdminLink = document.getElementById('signalk-admin-link');
-  const signalkFreeboardLink = document.getElementById('signalk-freeboard-link');
-  const signalkAnchorAlarmLink = document.getElementById('signalk-anchor-alarm-link');
+  // Update AIS links
   const marinetrafficLink = document.getElementById('marinetraffic-link');
   const myshiptrackingLink = document.getElementById('myshiptracking-link');
 
-  if (signalkAdminLink && vesselData.signalk?.admin_url) {
-    signalkAdminLink.href = vesselData.signalk.admin_url;
-  }
-  if (signalkFreeboardLink && vesselData.signalk?.freeboard_url) {
-    signalkFreeboardLink.href = vesselData.signalk.freeboard_url;
-  }
-  if (signalkAnchorAlarmLink && vesselData.signalk?.host) {
-    // SignalK anchor alarm is typically available at the SignalK server root with anchor alarm plugin
-    signalkAnchorAlarmLink.href = `http://${vesselData.signalk.host}:${vesselData.signalk.port || 3000}/`;
-  }
   if (marinetrafficLink && vesselData.links?.marinetraffic) {
     marinetrafficLink.href = vesselData.links.marinetraffic;
   }
