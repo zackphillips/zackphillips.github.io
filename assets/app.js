@@ -404,6 +404,7 @@ let polarChartInstance = null;
 let polarData = null;
 let currentEnv = null; // Global environment data
 let currentNav = null; // Global navigation data
+let currentPropulsion = null; // Global propulsion data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
 const SNAPSHOT_INDEX_URL = 'data/telemetry/snapshots_index.json';
@@ -1437,6 +1438,7 @@ async function loadData() {
     // Store globally for polar performance calculations
     currentNav = nav;
     currentEnv = env;
+    currentPropulsion = data.propulsion?.port || {};
 
     // Compute vessel state from SOG and anchor watch
     const sogKts = (nav?.speedOverGround?.value ?? 0) * 1.94384;
@@ -1871,41 +1873,39 @@ function updatePolarPerformance() {
   const polarSpeed = getPolarSpeed(twa, tws);
   const performancePercent = polarSpeed > 0 ? (bsp / polarSpeed * 100).toFixed(1) : 0;
 
-  // Get bearing to destination for VMG calculation
-  let bearingToDest = null;
-  if (currentNav?.courseRhumbline?.bearingToDestinationTrue?.value) {
-    bearingToDest = currentNav.courseRhumbline.bearingToDestinationTrue.value * 180 / Math.PI;
-  }
+  // Engine / propulsion state
+  const engineState = currentPropulsion?.state?.value;
+  const engineHz    = currentPropulsion?.revolutions?.value;
+  const rpm         = engineHz != null ? Math.round(engineHz * 60) : null;
+  const engineOn    = engineState === 'started' || (rpm != null && rpm > 100);
+  const engineColor = engineOn ? '#ef4444' : '#22c55e';
+  const engineLabel = engineOn
+    ? `Running${rpm != null ? ` · ${rpm} RPM` : ''}`
+    : (engineState ? 'Off' : 'N/A');
 
-  // Calculate VMG relative to destination (not wind)
-  const vmg = bearingToDest ? calculateVMG(bearingToDest, bsp) : 0;
-  const polarVMG = bearingToDest ? calculateVMG(bearingToDest, polarSpeed) : 0;
-
-  // Update performance display with data availability indicators
-  const windAngleDisplay = windAngle ? `${twa.toFixed(1)}°` : 'N/A (using 90°)';
-  const boatSpeedDisplay = boatSpeed ? `${bsp.toFixed(1)} kts` : 'N/A (using 0 kts)';
-  const windSpeedDisplay = windSpeed ? `${tws.toFixed(1)} kts` : 'N/A (using 10 kts)';
+  // Update performance display
+  const windAngleDisplay = windAngle ? `${twa.toFixed(1)}°` : 'N/A';
+  const boatSpeedDisplay = boatSpeed ? `${bsp.toFixed(1)} kts` : 'N/A';
+  const windSpeedDisplay = windSpeed ? `${tws.toFixed(1)} kts` : 'N/A';
 
   document.getElementById('polar-performance').innerHTML = `
     <div><strong>True Wind Angle:</strong> ${windAngleDisplay}</div>
+    <div><strong>True Wind Speed:</strong> ${windSpeedDisplay}</div>
     <div><strong>Boat Speed:</strong> ${boatSpeedDisplay}</div>
     <div><strong>Polar Speed:</strong> ${polarSpeed.toFixed(1)} kts</div>
     <div><strong>Performance:</strong> <span style="color: ${performancePercent >= 95 ? '#27ae60' : performancePercent >= 85 ? '#f39c12' : '#e74c3c'}">${performancePercent}%</span></div>
+    <div><strong>Engine:</strong> <span style="color: ${engineColor}">${engineLabel}</span></div>
   `;
 
-  // Update VMG display
-  if (bearingToDest) {
-    document.getElementById('vmg-analysis').innerHTML = `
-      <div><strong>Current VMG:</strong> ${vmg.toFixed(1)} kts</div>
-      <div><strong>Polar VMG:</strong> ${polarVMG.toFixed(1)} kts</div>
-      <div><strong>VMG %:</strong> <span style="color: ${vmg >= polarVMG * 0.95 ? '#27ae60' : vmg >= polarVMG * 0.85 ? '#f39c12' : '#e74c3c'}">${polarVMG > 0 ? (vmg / polarVMG * 100).toFixed(1) : 0}%</span></div>
-    `;
-  } else {
-    document.getElementById('vmg-analysis').innerHTML = `
-      <div><strong>Current VMG:</strong> <span style="color: #7f8c8d;">No destination set</span></div>
-      <div><strong>Polar VMG:</strong> <span style="color: #7f8c8d;">No destination set</span></div>
-      <div><strong>VMG %:</strong> <span style="color: #7f8c8d;">No destination set</span></div>
-    `;
+  // Show/hide motoring badge over the polar chart
+  const indicator = document.getElementById('polar-engine-indicator');
+  if (indicator) {
+    if (engineOn) {
+      indicator.textContent = rpm != null ? `⚙ Motoring · ${rpm} RPM` : '⚙ Engine On';
+      indicator.style.display = '';
+    } else {
+      indicator.style.display = 'none';
+    }
   }
 
   // Always draw polar chart, even with default values
