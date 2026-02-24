@@ -2474,7 +2474,9 @@ async function loadConditionsForecast() {
         color: accentColor,
         font: { size: 8, weight: '700' },
         padding: { top: 0, bottom: 0 }
-      }
+      },
+      // Force every y-axis to the same width so all plot areas align
+      afterFit(scale) { scale.width = 44; }
     };
   }
 
