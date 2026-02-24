@@ -2642,6 +2642,131 @@ async function loadConditionsForecast() {
     conditionsChartInstances[canvasId] = chart;
   }
 
+  // Render a direction row as evenly-spaced arrow glyphs instead of a line.
+  // A hidden line dataset is still used so Chart.js handles axes, layout,
+  // and hover tooltips identically to all other rows.
+  function renderDirectionChart(canvasId, dirData, label, accentColor, isLast, source) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (conditionsChartInstances[canvasId]) {
+      conditionsChartInstances[canvasId].destroy();
+      delete conditionsChartInstances[canvasId];
+    }
+
+    const dirs16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+
+    const arrowPlugin = {
+      id: `dirArrows_${canvasId}`,
+      afterDatasetsDraw(chart) {
+        const { ctx, chartArea: { left, right, top, bottom } } = chart;
+        const plotW  = right - left;
+        const centerY = (top + bottom) / 2;
+        const len  = 9;
+        const head = 4;
+
+        ctx.save();
+        // Clip to the chart area so arrows don't overdraw axes
+        ctx.beginPath();
+        ctx.rect(left, top, plotW, bottom - top);
+        ctx.clip();
+
+        ctx.lineWidth = 1.6;
+        ctx.lineCap   = 'round';
+        ctx.strokeStyle = accentColor;
+
+        for (let i = 0; i <= 48; i += 3) {
+          const dir = dirData[i];
+          if (dir == null) continue;
+          const px = left + (i / 48) * plotW;
+          // 0° = N = "up" on screen → subtract 90° to convert to canvas angle
+          const rad = ((dir - 90) * Math.PI) / 180;
+
+          ctx.save();
+          ctx.translate(px, centerY);
+          ctx.rotate(rad);
+          ctx.beginPath();
+          ctx.moveTo(-len / 2, 0);
+          ctx.lineTo( len / 2, 0);
+          ctx.moveTo( len / 2, 0);
+          ctx.lineTo( len / 2 - head, -head * 0.55);
+          ctx.moveTo( len / 2, 0);
+          ctx.lineTo( len / 2 - head,  head * 0.55);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.restore();
+      }
+    };
+
+    // Hidden dataset — provides hover hitboxes and keeps layout identical
+    const hoverData = dirData.map((v, i) => ({ x: i, y: 0 }));
+
+    const chart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        datasets: [{
+          label,
+          data: hoverData,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          pointHoverBackgroundColor: accentColor,
+          borderColor: 'transparent',
+          backgroundColor: 'transparent',
+          borderWidth: 0,
+          tension: 0,
+          spanGaps: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 350 },
+        layout: { padding: { top: 4, bottom: 0, left: 0, right: 6 } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            bodyFont: { size: 10 },
+            titleFont: { size: 10 },
+            callbacks: {
+              title([ctx]) {
+                const t = new Date(windowStart.getTime() + ctx.parsed.x * 3600000);
+                return t.toLocaleString('en-US', {
+                  weekday: 'short', month: 'short', day: 'numeric',
+                  hour: '2-digit', minute: '2-digit', hour12: false
+                });
+              },
+              label(ctx) {
+                const dir = dirData[Math.round(ctx.parsed.x)];
+                if (dir == null) return null;
+                const cardinal = dirs16[Math.round(dir / 22.5) % 16];
+                return `${label}: ${cardinal} (${dir.toFixed(0)}°)`;
+              },
+              footer() { return source ? `Source: ${source}` : undefined; }
+            },
+            footerFont: { size: 9, style: 'italic' },
+            footerColor: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+            footerMarginTop: 4
+          },
+          annotation: { annotations: nowAnnotations(isLast) }
+        },
+        scales: {
+          x: makeXAxis(isLast),
+          y: {
+            display: false,
+            min: -1,
+            max: 1,
+            afterFit(scale) { scale.width = 44; }
+          }
+        }
+      },
+      plugins: [arrowPlugin, Chart.registry.getPlugin('annotation')]
+    });
+
+    conditionsChartInstances[canvasId] = chart;
+  }
+
   // ── Render each row ───────────────────────────────────────────────────────
 
   const OM_FORECAST = 'Open-Meteo Forecast';
@@ -2661,13 +2786,9 @@ async function loadConditionsForecast() {
       { order: 0 })
   ], 'kts', windAccent, false, 0, windMax, OM_FORECAST);
 
-  // Wind direction (sky-blue, 0–360°)
+  // Wind direction — arrows
   const windDirAccent = isDark ? '#7dd3fc' : '#0369a1';
-  renderChart('condWindDirChart', [
-    buildDataset(windDir, 'Wind Dir', '°', 0,
-      windDirAccent,
-      isDark ? 'rgba(125,211,252,0.14)' : 'rgba(3,105,161,0.10)')
-  ], '°', windDirAccent, false, 0, 360, OM_FORECAST);
+  renderDirectionChart('condWindDirChart', windDir, 'Wind Dir', windDirAccent, false, OM_FORECAST);
 
   // Swell height (emerald)
   const swellAccent = isDark ? '#34d399' : '#059669';
@@ -2689,13 +2810,9 @@ async function loadConditionsForecast() {
       isDark ? 'rgba(34,211,238,0.14)' : 'rgba(8,145,178,0.10)')
   ], 's', periodAccent, false, periodMin, periodMax, OM_MARINE);
 
-  // Swell direction (teal, 0–360°)
+  // Swell direction — arrows
   const swellDirAccent = isDark ? '#2dd4bf' : '#0d9488';
-  renderChart('condSwellDirChart', [
-    buildDataset(swellDir, 'Swell Dir', '°', 0,
-      swellDirAccent,
-      isDark ? 'rgba(45,212,191,0.14)' : 'rgba(13,148,136,0.10)')
-  ], '°', swellDirAccent, false, 0, 360, OM_MARINE);
+  renderDirectionChart('condSwellDirChart', swellDir, 'Swell Dir', swellDirAccent, false, OM_MARINE);
 
   // Tide (indigo) — may have nulls at start/end; use spanGaps
   const tideAccent = isDark ? '#818cf8' : '#4f46e5';
@@ -2718,13 +2835,9 @@ async function loadConditionsForecast() {
       isDark ? 'rgba(192,132,252,0.14)' : 'rgba(147,51,234,0.10)')
   ], 'kts', curAccent, false, 0, curMax, OM_MARINE);
 
-  // Ocean current direction (violet, 0–360°)
+  // Current direction — arrows
   const curDirAccent = isDark ? '#e879f9' : '#a21caf';
-  renderChart('condCurrentDirChart', [
-    buildDataset(currentDir, 'Cur Dir', '°', 0,
-      curDirAccent,
-      isDark ? 'rgba(232,121,249,0.14)' : 'rgba(162,28,175,0.10)')
-  ], '°', curDirAccent, false, 0, 360, OM_MARINE);
+  renderDirectionChart('condCurrentDirChart', currentDir, 'Cur Dir', curDirAccent, false, OM_MARINE);
 
   // Temperature (orange)
   const tempAccent  = isDark ? '#fb923c' : '#ea580c';
