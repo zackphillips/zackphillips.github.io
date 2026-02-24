@@ -8,11 +8,29 @@ Chart.defaults.font.family = 'system-ui, -apple-system, BlinkMacSystemFont, "Seg
 Chart.defaults.font.size = 12;
 
 let map, marker, trackLine, trackMarkers;
-let anchorLayer = null;   // Leaflet circle for anchor swing radius
-let trackLegend = null;   // Leaflet control for day-colour legend
+let anchorLayer = null;    // Leaflet circle for anchor swing radius
+let anchorMarker = null;   // ⚓ icon at anchor drop position
+let anchorLine = null;     // dashed line from anchor to vessel
+let trackLegend = null;    // Leaflet control for day-colour legend
 let lat, lon; // Global variables for coordinates
 let vesselState = ''; // 'underway' | 'at anchor' | ''
 let vesselData = null; // Global vessel information
+
+// ---------------------------------------------------------------------------
+// localStorage forecast cache  —  TTL-based, silently degrades if unavailable
+// ---------------------------------------------------------------------------
+function getCached(key, ttlMs) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > ttlMs) { localStorage.removeItem(key); return null; }
+    return data;
+  } catch { return null; }
+}
+function setCached(key, data) {
+  try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch { /* quota */ }
+}
 let tideStations = null; // Global tide stations data
 const DEFAULT_TIDE_LOCATION = {
   lat: 37.806,
@@ -744,23 +762,20 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
   let url = buildUrl(targetStation.id);
   const fallbackStation = { id: '9414290', name: 'San Francisco', lat: 37.806, lon: -122.465 };
   let attemptedFallback = false;
+  const tideCacheKey = `tide_${targetStation.id}_${begin}`;
 
   try {
-    console.debug('Tide fetch: attempting station', {
-      id: targetStation.id,
-      name: targetStation.name,
-      lat: targetStation.lat,
-      lon: targetStation.lon,
-      url,
-      begin_date: begin,
-      end_date: end
-    });
-    
     let res;
-    let json;
-    
-    // Try primary station
-    try {
+    // Serve from cache if fresh (3-hour TTL — tide predictions don't change within a day)
+    let json = (() => { const c = getCached(tideCacheKey, 3 * 60 * 60 * 1000); return c ? { predictions: c } : null; })();
+
+    // Try primary station (skipped when cache hit)
+    if (!json) console.debug('Tide fetch: attempting station', {
+      id: targetStation.id, name: targetStation.name,
+      lat: targetStation.lat, lon: targetStation.lon,
+      url, begin_date: begin, end_date: end
+    });
+    if (!json) try {
       res = await fetch(url);
       if (res.ok) {
         json = await res.json();
@@ -834,6 +849,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
       }
     }
     const rawData = Array.isArray(json?.predictions) ? json.predictions : [];
+    if (rawData.length > 0) setCached(tideCacheKey, rawData);
     if (rawData.length === 0) {
       console.warn('No tide predictions returned from NOAA for station', {
         id: targetStation.id,
@@ -1509,13 +1525,21 @@ async function loadData() {
         marker.setLatLng([lat, lon]);
       }
 
-      // Anchor swing-radius circle.
+      // Anchor watch — swing circle, drop marker, and rode line.
       const anchorPos = nav.anchor?.position?.value;
       const anchorRadius = nav.anchor?.maxRadius?.value;
       if (anchorPos?.latitude && anchorPos?.longitude && anchorRadius > 0) {
         const anchorLatLng = [anchorPos.latitude, anchorPos.longitude];
+        const vesselLatLng = [lat, lon];
+        const radiusFt = (anchorRadius * 3.28084).toFixed(0);
+        const currentDist = nav.anchor?.currentRadius?.value;
+        const distFt = currentDist != null ? (currentDist * 3.28084).toFixed(0) : '?';
+        const tooltipText = `⚓ Swing radius: ${radiusFt} ft · Boat is ${distFt} ft out`;
+
+        // Swing-radius circle
         if (anchorLayer) {
           anchorLayer.setLatLng(anchorLatLng).setRadius(anchorRadius);
+          anchorLayer.setTooltipContent(tooltipText);
         } else {
           anchorLayer = L.circle(anchorLatLng, {
             radius: anchorRadius,
@@ -1525,13 +1549,40 @@ async function loadData() {
             opacity: 0.7,
             weight: 2,
             dashArray: '6 4',
-          }).bindTooltip(`⚓ Anchor radius: ${(anchorRadius * 3.28084).toFixed(0)} ft`, {
-            sticky: true, opacity: 0.85,
+          }).bindTooltip(tooltipText, { sticky: true, opacity: 0.85 }).addTo(map);
+        }
+
+        // Anchor drop marker (⚓ emoji icon)
+        const anchorIcon = L.divIcon({
+          html: '<div style="font-size:18px;line-height:1;text-align:center;">⚓</div>',
+          className: '',
+          iconSize: [22, 22],
+          iconAnchor: [11, 11],
+        });
+        if (anchorMarker) {
+          anchorMarker.setLatLng(anchorLatLng);
+          anchorMarker.setTooltipContent(`⚓ Anchor drop · Radius: ${radiusFt} ft`);
+        } else {
+          anchorMarker = L.marker(anchorLatLng, { icon: anchorIcon })
+            .bindTooltip(`⚓ Anchor drop · Radius: ${radiusFt} ft`, { opacity: 0.85 })
+            .addTo(map);
+        }
+
+        // Rode line from anchor drop to vessel
+        if (anchorLine) {
+          anchorLine.setLatLngs([anchorLatLng, vesselLatLng]);
+        } else {
+          anchorLine = L.polyline([anchorLatLng, vesselLatLng], {
+            color: '#f39c12',
+            weight: 2,
+            opacity: 0.55,
+            dashArray: '5 5',
           }).addTo(map);
         }
-      } else if (anchorLayer) {
-        anchorLayer.remove();
-        anchorLayer = null;
+      } else {
+        if (anchorLayer)  { anchorLayer.remove();  anchorLayer  = null; }
+        if (anchorMarker) { anchorMarker.remove(); anchorMarker = null; }
+        if (anchorLine)   { anchorLine.remove();   anchorLine   = null; }
       }
 
       // Load wind forecast asynchronously without blocking main data load
@@ -2148,13 +2199,17 @@ async function loadWaveForecast() {
       return;
     }
 
-    const response = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period,wave_direction&timezone=auto`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    const waveCacheKey = `wave_${Math.round(lat * 100) / 100}_${Math.round(lon * 100) / 100}`;
+    const cachedWave = getCached(waveCacheKey, 60 * 60 * 1000); // 1-hour TTL
+    let data;
+    if (cachedWave) {
+      data = cachedWave;
+    } else {
+      const response = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period,wave_direction&timezone=auto`);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      data = await response.json();
+      setCached(waveCacheKey, data);
     }
-
-    const data = await response.json();
 
     let forecastHTML = '';
     const waveForecastGrid = document.getElementById('wave-forecast-grid');
@@ -2271,25 +2326,25 @@ async function loadWindForecast() {
     }
 
     const selectedModel = document.getElementById('forecast-model').value;
-    let response;
-
-    // Select API based on chosen model
-    switch(selectedModel) {
-      case 'ecmwf':
-        // ECMWF via OpenMeteo (free tier, global)
-        response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_direction_10m&timezone=auto`);
-        break;
-      default:
-        // Default to wttr.in (global)
-        response = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
-        break;
+    const windCacheKey = `wind_${Math.round(lat * 100) / 100}_${Math.round(lon * 100) / 100}_${selectedModel}`;
+    const cachedWind = getCached(windCacheKey, 60 * 60 * 1000); // 1-hour TTL
+    let data;
+    if (cachedWind) {
+      data = cachedWind;
+    } else {
+      let response;
+      switch(selectedModel) {
+        case 'ecmwf':
+          response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_direction_10m&timezone=auto`);
+          break;
+        default:
+          response = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
+          break;
+      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      data = await response.json();
+      setCached(windCacheKey, data);
     }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
 
     let forecastHTML = '';
     const windForecastGrid = document.getElementById('wind-forecast-grid');
