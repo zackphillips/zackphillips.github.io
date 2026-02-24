@@ -200,12 +200,19 @@ async function updateMapLocation(lat, lon) {
 function setStatusSentence(locationName) {
   const el = document.getElementById('status-sentence');
   if (!el) return;
+  const isStale = document.getElementById('status-hero')?.classList.contains('stale');
   if (vesselState === 'underway') {
-    el.textContent = `Underway near ${locationName}`;
+    el.textContent = isStale
+      ? `Last seen underway near ${locationName}`
+      : `Underway near ${locationName}`;
   } else if (vesselState === 'at anchor') {
-    el.textContent = `At anchor in ${locationName}`;
+    el.textContent = isStale
+      ? `Last seen at anchor in ${locationName}`
+      : `At anchor in ${locationName}`;
   } else {
-    el.textContent = `In ${locationName}`;
+    el.textContent = isStale
+      ? `Last seen in ${locationName}`
+      : `In ${locationName}`;
   }
 }
 
@@ -575,10 +582,22 @@ function updateVesselLinks() {
       logoImg.alt = `${vesselData.name} Logo`;
     }
 
-    // Update WiFi note
-    const wifiNote = document.querySelector('.wifi-note');
-    if (wifiNote) {
-      wifiNote.textContent = `*Only works on ${vesselData.name} WiFi`;
+  }
+
+  // Render passage banner if a current passage is configured
+  const passage = vesselData.passage;
+  const passageBanner = document.getElementById('passage-banner');
+  if (passageBanner) {
+    if (passage?.from && passage?.to) {
+      let text = `${passage.from} → ${passage.to}`;
+      if (passage.departed) {
+        const d = new Date(`${passage.departed}T12:00:00`);
+        text += ` · Departed ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      }
+      passageBanner.textContent = text;
+      passageBanner.style.display = 'block';
+    } else {
+      passageBanner.style.display = 'none';
     }
   }
 
