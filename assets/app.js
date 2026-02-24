@@ -2304,14 +2304,18 @@ async function loadConditionsForecast() {
   // Wind
   let windSpeed   = new Array(49).fill(null);
   let windGust    = new Array(49).fill(null);
+  let windDir     = new Array(49).fill(null);
   let windCurrent = null;
+  let windDirCurrent = null;
   if (atmosResult.status === 'fulfilled') {
     const h = atmosResult.value?.hourly;
     if (h) {
       windSpeed = mapHourlyLocal(h.time, h.wind_speed_10m);
       windGust  = mapHourlyLocal(h.time, h.wind_gusts_10m);
+      windDir   = mapHourlyLocal(h.time, h.wind_direction_10m);
       const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
-      windCurrent = windSpeed[idx];
+      windCurrent    = windSpeed[idx];
+      windDirCurrent = windDir[idx];
     }
   }
 
@@ -2328,16 +2332,20 @@ async function loadConditionsForecast() {
     }
   }
 
-  // Ocean current speed
+  // Ocean current speed + direction
   let currentSpeed = new Array(49).fill(null);
+  let currentDir   = new Array(49).fill(null);
   let currentCurrent = null;
+  let currentDirCurrent = null;
   if (marineResult.status === 'fulfilled') {
     const h = marineResult.value?.hourly;
     if (h) {
       const raw = mapHourlyLocal(h.time, h.ocean_current_velocity);
       currentSpeed = raw.map(v => v != null ? v * 1.94384 : null); // m/s → kts
+      currentDir   = mapHourlyLocal(h.time, h.ocean_current_direction);
       const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
-      currentCurrent = currentSpeed[idx];
+      currentCurrent    = currentSpeed[idx];
+      currentDirCurrent = currentDir[idx];
     }
   }
 
@@ -2435,25 +2443,28 @@ async function loadConditionsForecast() {
     const el = document.getElementById(id);
     if (el) el.textContent = val != null ? val.toFixed(digits) : '--';
   }
+  const cardinalAbbr = deg => {
+    if (deg == null) return '--';
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
+  };
+  const setDirVal = (id, deg) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = cardinalAbbr(deg);
+  };
+
   setCrVal('cr-wind-val',     windCurrent,     1);
+  setDirVal('cr-winddir-val', windDirCurrent);
   setCrVal('cr-swell-val',    swellCurrent,    1);
   setCrVal('cr-period-val',   periodCurrent,   1);
-  // Swell direction: show as cardinal abbreviation
-  const swellDirEl = document.getElementById('cr-swelldir-val');
-  if (swellDirEl) {
-    if (swellDirCurrent != null) {
-      const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-      swellDirEl.textContent = dirs[Math.round(swellDirCurrent / 22.5) % 16];
-    } else {
-      swellDirEl.textContent = '--';
-    }
-  }
+  setDirVal('cr-swelldir-val', swellDirCurrent);
   setCrVal('cr-tide-val',     tideCurrent,     1);
   setCrVal('cr-temp-val',     tempCurrent,     0);
   setCrVal('cr-precip-val',   precipCurrent,   0);
   setCrVal('cr-cloud-val',    cloudCurrent,    0);
   setCrVal('cr-pressure-val', pressureCurrent, 0);
   setCrVal('cr-current-val',  currentCurrent,  2);
+  setDirVal('cr-curdir-val',  currentDirCurrent);
 
   // Show charts, hide loading message
   if (loading) loading.style.display = 'none';
@@ -2513,13 +2524,15 @@ async function loadConditionsForecast() {
         // same bottom padding and the vertical gridlines stay in sync.
         color: isLast ? tickColor : 'transparent',
         font: { size: 9 },
+        maxRotation: 90,
+        minRotation: 90,
         stepSize: 6,
         callback(val) {
           if (val < 0 || val > 48 || val % 6 !== 0) return null;
           const t = new Date(windowStart.getTime() + val * 3600000);
           if (val % 24 === 0) {
-            // Midnight: show short day+date
-            return t.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            // Midnight: compact "Mon 24" to keep label short when rotated
+            return t.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
           }
           return t.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
         }
@@ -2570,7 +2583,7 @@ async function loadConditionsForecast() {
     };
   }
 
-  function renderChart(canvasId, datasets, unitLabel, accentColor, isLast, yMin, yMax) {
+  function renderChart(canvasId, datasets, unitLabel, accentColor, isLast, yMin, yMax, source) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     if (conditionsChartInstances[canvasId]) {
@@ -2607,8 +2620,14 @@ async function loadConditionsForecast() {
                 if (ctx.parsed.y == null) return null;
                 const { label: lbl, unit: u, digits: dg } = ctx.dataset;
                 return `${lbl}: ${ctx.parsed.y.toFixed(dg ?? 1)} ${u ?? ''}`;
+              },
+              footer() {
+                return source ? `Source: ${source}` : undefined;
               }
-            }
+            },
+            footerFont: { size: 9, style: 'italic' },
+            footerColor: isDark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.40)',
+            footerMarginTop: 4
           },
           annotation: { annotations: nowAnnotations(isLast) }
         },
@@ -2625,7 +2644,11 @@ async function loadConditionsForecast() {
 
   // ── Render each row ───────────────────────────────────────────────────────
 
-  // Wind (sky-blue)
+  const OM_FORECAST = 'Open-Meteo Forecast';
+  const OM_MARINE   = 'Open-Meteo Marine';
+  const NOAA_TIDES  = 'NOAA Tides & Currents';
+
+  // Wind speed + gusts (sky-blue)
   const windAccent = isDark ? '#38bdf8' : '#0ea5e9';
   const windMax = Math.max(15, ...windGust.filter(v => v != null)) * 1.08;
   renderChart('condWindChart', [
@@ -2636,7 +2659,15 @@ async function loadConditionsForecast() {
       windAccent,
       isDark ? 'rgba(56,189,248,0.14)' : 'rgba(14,165,233,0.10)',
       { order: 0 })
-  ], 'kts', windAccent, false, 0, windMax);
+  ], 'kts', windAccent, false, 0, windMax, OM_FORECAST);
+
+  // Wind direction (sky-blue, 0–360°)
+  const windDirAccent = isDark ? '#7dd3fc' : '#0369a1';
+  renderChart('condWindDirChart', [
+    buildDataset(windDir, 'Wind Dir', '°', 0,
+      windDirAccent,
+      isDark ? 'rgba(125,211,252,0.14)' : 'rgba(3,105,161,0.10)')
+  ], '°', windDirAccent, false, 0, 360, OM_FORECAST);
 
   // Swell height (emerald)
   const swellAccent = isDark ? '#34d399' : '#059669';
@@ -2645,7 +2676,7 @@ async function loadConditionsForecast() {
     buildDataset(swellHeight, 'Swell Height', 'ft', 1,
       swellAccent,
       isDark ? 'rgba(52,211,153,0.14)' : 'rgba(5,150,105,0.10)')
-  ], 'ft', swellAccent, false, 0, swellMax);
+  ], 'ft', swellAccent, false, 0, swellMax, OM_MARINE);
 
   // Swell period (cyan)
   const periodAccent = isDark ? '#22d3ee' : '#0891b2';
@@ -2656,15 +2687,15 @@ async function loadConditionsForecast() {
     buildDataset(swellPeriod, 'Swell Period', 's', 1,
       periodAccent,
       isDark ? 'rgba(34,211,238,0.14)' : 'rgba(8,145,178,0.10)')
-  ], 's', periodAccent, false, periodMin, periodMax);
+  ], 's', periodAccent, false, periodMin, periodMax, OM_MARINE);
 
-  // Swell direction (teal) — raw degrees 0–360
+  // Swell direction (teal, 0–360°)
   const swellDirAccent = isDark ? '#2dd4bf' : '#0d9488';
   renderChart('condSwellDirChart', [
     buildDataset(swellDir, 'Swell Dir', '°', 0,
       swellDirAccent,
       isDark ? 'rgba(45,212,191,0.14)' : 'rgba(13,148,136,0.10)')
-  ], '°', swellDirAccent, false, 0, 360);
+  ], '°', swellDirAccent, false, 0, 360, OM_MARINE);
 
   // Tide (indigo) — may have nulls at start/end; use spanGaps
   const tideAccent = isDark ? '#818cf8' : '#4f46e5';
@@ -2675,9 +2706,9 @@ async function loadConditionsForecast() {
     buildDataset(tideHeight, tideStationName ? `Tide (${tideStationName})` : 'Tide', 'ft', 1,
       tideAccent,
       isDark ? 'rgba(129,140,248,0.14)' : 'rgba(79,70,229,0.10)')
-  ], 'ft', tideAccent, false, tideMin, tideMax);
+  ], 'ft', tideAccent, false, tideMin, tideMax, NOAA_TIDES);
 
-  // Ocean Current (violet) — grouped with tide
+  // Ocean current speed (violet)
   const curAccent = isDark ? '#c084fc' : '#9333ea';
   const validCur  = currentSpeed.filter(v => v != null);
   const curMax    = validCur.length ? Math.max(0.5, ...validCur) * 1.12 : 1;
@@ -2685,7 +2716,15 @@ async function loadConditionsForecast() {
     buildDataset(currentSpeed, 'Current', 'kts', 2,
       curAccent,
       isDark ? 'rgba(192,132,252,0.14)' : 'rgba(147,51,234,0.10)')
-  ], 'kts', curAccent, false, 0, curMax);
+  ], 'kts', curAccent, false, 0, curMax, OM_MARINE);
+
+  // Ocean current direction (violet, 0–360°)
+  const curDirAccent = isDark ? '#e879f9' : '#a21caf';
+  renderChart('condCurrentDirChart', [
+    buildDataset(currentDir, 'Cur Dir', '°', 0,
+      curDirAccent,
+      isDark ? 'rgba(232,121,249,0.14)' : 'rgba(162,28,175,0.10)')
+  ], '°', curDirAccent, false, 0, 360, OM_MARINE);
 
   // Temperature (orange)
   const tempAccent  = isDark ? '#fb923c' : '#ea580c';
@@ -2696,7 +2735,7 @@ async function loadConditionsForecast() {
     buildDataset(temperature, 'Temp', '°F', 0,
       tempAccent,
       isDark ? 'rgba(251,146,60,0.14)' : 'rgba(234,88,12,0.10)')
-  ], '°F', tempAccent, false, tempMinY, tempMaxY);
+  ], '°F', tempAccent, false, tempMinY, tempMaxY, OM_FORECAST);
 
   // Precipitation probability (light blue)
   const precipAccent = isDark ? '#93c5fd' : '#2563eb';
@@ -2704,7 +2743,7 @@ async function loadConditionsForecast() {
     buildDataset(precipProb, 'Precip', '%', 0,
       precipAccent,
       isDark ? 'rgba(147,197,253,0.20)' : 'rgba(37,99,235,0.12)')
-  ], '%', precipAccent, false, 0, 100);
+  ], '%', precipAccent, false, 0, 100, OM_FORECAST);
 
   // Cloud cover (slate)
   const cloudAccent = isDark ? '#94a3b8' : '#64748b';
@@ -2712,7 +2751,7 @@ async function loadConditionsForecast() {
     buildDataset(cloudCover, 'Cloud', '%', 0,
       cloudAccent,
       isDark ? 'rgba(148,163,184,0.16)' : 'rgba(100,116,139,0.10)')
-  ], '%', cloudAccent, false, 0, 100);
+  ], '%', cloudAccent, false, 0, 100, OM_FORECAST);
 
   // Pressure (amber) — last row, shows x-axis
   const pressureAccent = isDark ? '#fbbf24' : '#d97706';
@@ -2723,7 +2762,7 @@ async function loadConditionsForecast() {
     buildDataset(pressure, 'Pressure', 'hPa', 0,
       pressureAccent,
       isDark ? 'rgba(251,191,36,0.14)' : 'rgba(217,119,6,0.10)')
-  ], 'hPa', pressureAccent, true, pressureMin, pressureMax);
+  ], 'hPa', pressureAccent, true, pressureMin, pressureMax, OM_FORECAST);
 }
 
 // Dark mode functionality
