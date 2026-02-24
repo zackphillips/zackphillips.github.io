@@ -463,49 +463,6 @@ body {
   border-color: var(--accent);
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   Now Playing
-   ───────────────────────────────────────────────────────────────────────── */
-.now-playing-content {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 14px 16px;
-  background: var(--bg-quaternary);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
-}
-
-.now-playing-main { flex: 1; min-width: 0; }
-
-.now-playing-track {
-  font-size: 1.1em;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.now-playing-meta {
-  color: var(--text-secondary);
-  font-size: 0.85em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.now-playing-side {
-  flex-shrink: 0;
-  text-align: right;
-}
-
-.now-playing-sub {
-  color: var(--text-muted);
-  font-size: 0.78em;
-  margin-top: 3px;
-}
 
 /* ─────────────────────────────────────────────────────────────────────────
    Polar sub-cards
@@ -608,7 +565,6 @@ body {
 #internet-panel    { border-left-color: #f97316; }
 #propulsion-panel  { border-left-color: #ef4444; }
 #tanks-panel       { border-left-color: #a78bfa; }
-#now-playing-panel { border-left-color: #ec4899; }
 
 .alert-chips {
   display: flex;
@@ -782,9 +738,18 @@ body {
   border-left-color: #0ea5e9;
 }
 
-/* Give the header its own inset since the panel has no padding */
+/* Compact header strip — tight padding, single divider into the chart grid */
 .conditions-forecast-panel .conditions-header {
-  padding: 22px 24px 0;
+  padding: 7px 12px;
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* Panel-title inside the header needs no extra bottom space or border */
+.conditions-forecast-panel .panel-title {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 /* Chart stack fills edge-to-edge inside the panel frame */
@@ -963,11 +928,6 @@ body {
 
   .polar-chart-container { height: 320px !important; }
 
-  #now-playing-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 10px;
-  }
 
   #track-info { text-align: center !important; }
 

@@ -1603,8 +1603,6 @@ async function loadData() {
     const tidePosition = resolveTidePosition(lat, lon);
     drawTideGraph(tidePosition.lat, tidePosition.lon, tidePosition);
 
-    // Update the Now Playing section
-    updateNowPlaying(entertainment);
 
     // Update navigation data
     const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -1835,50 +1833,6 @@ function calculateVMG(bearingToDest, bsp) {
   return bsp * Math.cos(angleRad);
 }
 
-function updateNowPlaying(entertainment) {
-  const trackNameEl = document.getElementById('track-name');
-  const artistAlbumEl = document.getElementById('artist-album');
-  const playbackSourceEl = document.getElementById('playback-source');
-  const trackNumberEl = document.getElementById('track-number');
-
-  // Check if we have entertainment data from Fusion stereo
-  const fusion = entertainment?.device?.fusion1;
-  if (!fusion || !fusion.track) {
-    trackNameEl.textContent = 'No track playing';
-    artistAlbumEl.textContent = 'No artist information';
-    playbackSourceEl.textContent = 'No source';
-    trackNumberEl.textContent = 'Track -- of --';
-    return;
-  }
-
-  const track = fusion.track;
-  const trackName = track.name?.value || 'Unknown Track';
-  const artistName = track.artistName?.value || 'Unknown Artist';
-  const albumName = track.albumName?.value || '';
-  const trackNumber = track.number?.value || 0;
-  const totalTracks = track.totalTracks?.value || 0;
-
-  // Get the current playback source
-  let sourceName = 'Unknown Source';
-  if (fusion.output?.zone1?.source?.value) {
-    const sourcePath = fusion.output.zone1.source.value;
-    // Extract source name from path like "entertainment.device.fusion1.avsource.source6"
-    const sourceMatch = sourcePath.match(/\.source(\d+)$/);
-    if (sourceMatch) {
-      const sourceNum = sourceMatch[1];
-      const source = fusion.avsource?.[`source${sourceNum}`];
-      if (source?.name?.value) {
-        sourceName = source.name.value;
-      }
-    }
-  }
-
-  // Update the display
-  trackNameEl.textContent = trackName;
-  artistAlbumEl.textContent = albumName ? `${artistName} - ${albumName}` : artistName;
-  playbackSourceEl.textContent = sourceName;
-  trackNumberEl.textContent = `Track ${trackNumber} of ${totalTracks}`;
-}
 
 function updatePolarPerformance() {
   if (!polarData) {
