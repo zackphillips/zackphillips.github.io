@@ -2238,12 +2238,13 @@ async function loadConditionsForecast() {
 
     // ── Atmospheric (Open-Meteo) ──────────────────────────────────────────
     (async () => {
-      const key = `cond_atmos_${latR}_${lonR}_${today}`;
+      const key = `cond_atmos2_${latR}_${lonR}_${today}`;
       const hit = getCached(key, 60 * 60 * 1000);
       if (hit) return hit;
       const url = `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${tidePos.lat}&longitude=${tidePos.lon}` +
-        `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,surface_pressure` +
+        `&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,` +
+        `surface_pressure,precipitation_probability,cloud_cover` +
         `&wind_speed_unit=kn&temperature_unit=fahrenheit` +
         `&timezone=auto&start_date=${today}&end_date=${tomorrow}`;
       const res = await fetch(url);
@@ -2377,16 +2378,68 @@ async function loadConditionsForecast() {
     tideCurrent = tideHeight[idx];
   }
 
+  // Swell period
+  let swellPeriod = new Array(49).fill(null);
+  let periodCurrent = null;
+  if (marineResult.status === 'fulfilled') {
+    const h = marineResult.value?.hourly;
+    if (h) {
+      swellPeriod = mapHourlyLocal(h.time, h.wave_period);
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      periodCurrent = swellPeriod[idx];
+    }
+  }
+
+  // Precipitation probability
+  let precipProb = new Array(49).fill(null);
+  let precipCurrent = null;
+  if (atmosResult.status === 'fulfilled') {
+    const h = atmosResult.value?.hourly;
+    if (h) {
+      precipProb = mapHourlyLocal(h.time, h.precipitation_probability);
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      precipCurrent = precipProb[idx];
+    }
+  }
+
+  // Cloud cover
+  let cloudCover = new Array(49).fill(null);
+  let cloudCurrent = null;
+  if (atmosResult.status === 'fulfilled') {
+    const h = atmosResult.value?.hourly;
+    if (h) {
+      cloudCover = mapHourlyLocal(h.time, h.cloud_cover);
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      cloudCurrent = cloudCover[idx];
+    }
+  }
+
+  // Surface pressure
+  let pressure = new Array(49).fill(null);
+  let pressureCurrent = null;
+  if (atmosResult.status === 'fulfilled') {
+    const h = atmosResult.value?.hourly;
+    if (h) {
+      pressure = mapHourlyLocal(h.time, h.surface_pressure);
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      pressureCurrent = pressure[idx];
+    }
+  }
+
   // Update sidebar current values
   function setCrVal(id, val, digits) {
     const el = document.getElementById(id);
     if (el) el.textContent = val != null ? val.toFixed(digits) : '--';
   }
-  setCrVal('cr-wind-val',    windCurrent,    1);
-  setCrVal('cr-swell-val',   swellCurrent,   1);
-  setCrVal('cr-tide-val',    tideCurrent,    1);
-  setCrVal('cr-temp-val',    tempCurrent,    0);
-  setCrVal('cr-current-val', currentCurrent, 2);
+  setCrVal('cr-wind-val',     windCurrent,     1);
+  setCrVal('cr-swell-val',    swellCurrent,    1);
+  setCrVal('cr-period-val',   periodCurrent,   1);
+  setCrVal('cr-tide-val',     tideCurrent,     1);
+  setCrVal('cr-temp-val',     tempCurrent,     0);
+  setCrVal('cr-precip-val',   precipCurrent,   0);
+  setCrVal('cr-cloud-val',    cloudCurrent,    0);
+  setCrVal('cr-pressure-val', pressureCurrent, 0);
+  setCrVal('cr-current-val',  currentCurrent,  2);
 
   // Show charts, hide loading message
   if (loading) loading.style.display = 'none';
@@ -2474,7 +2527,9 @@ async function loadConditionsForecast() {
         color: accentColor,
         font: { size: 8, weight: '700' },
         padding: { top: 0, bottom: 0 }
-      }
+      },
+      // Force every y-axis to the same width so all plot areas align
+      afterFit(scale) { scale.width = 44; }
     };
   }
 
@@ -2574,6 +2629,17 @@ async function loadConditionsForecast() {
       isDark ? 'rgba(52,211,153,0.14)' : 'rgba(5,150,105,0.10)')
   ], 'ft', swellAccent, false, 0, swellMax);
 
+  // Swell period (cyan)
+  const periodAccent = isDark ? '#22d3ee' : '#0891b2';
+  const validPeriod  = swellPeriod.filter(v => v != null);
+  const periodMin    = validPeriod.length ? Math.max(0, Math.min(...validPeriod) - 1) : 0;
+  const periodMax    = validPeriod.length ? Math.max(...validPeriod) + 1 : 20;
+  renderChart('condPeriodChart', [
+    buildDataset(swellPeriod, 'Period', 's', 1,
+      periodAccent,
+      isDark ? 'rgba(34,211,238,0.14)' : 'rgba(8,145,178,0.10)')
+  ], 's', periodAccent, false, periodMin, periodMax);
+
   // Tide (indigo) — may have nulls at start/end; use spanGaps
   const tideAccent = isDark ? '#818cf8' : '#4f46e5';
   const validTide  = tideHeight.filter(v => v != null);
@@ -2595,6 +2661,33 @@ async function loadConditionsForecast() {
       tempAccent,
       isDark ? 'rgba(251,146,60,0.14)' : 'rgba(234,88,12,0.10)')
   ], '°F', tempAccent, false, tempMinY, tempMaxY);
+
+  // Precipitation probability (light blue)
+  const precipAccent = isDark ? '#93c5fd' : '#2563eb';
+  renderChart('condPrecipChart', [
+    buildDataset(precipProb, 'Precip', '%', 0,
+      precipAccent,
+      isDark ? 'rgba(147,197,253,0.20)' : 'rgba(37,99,235,0.12)')
+  ], '%', precipAccent, false, 0, 100);
+
+  // Cloud cover (slate)
+  const cloudAccent = isDark ? '#94a3b8' : '#64748b';
+  renderChart('condCloudChart', [
+    buildDataset(cloudCover, 'Cloud', '%', 0,
+      cloudAccent,
+      isDark ? 'rgba(148,163,184,0.16)' : 'rgba(100,116,139,0.10)')
+  ], '%', cloudAccent, false, 0, 100);
+
+  // Pressure (amber)
+  const pressureAccent = isDark ? '#fbbf24' : '#d97706';
+  const validPressure  = pressure.filter(v => v != null);
+  const pressureMin    = validPressure.length ? Math.min(...validPressure) - 2 : 990;
+  const pressureMax    = validPressure.length ? Math.max(...validPressure) + 2 : 1030;
+  renderChart('condPressureChart', [
+    buildDataset(pressure, 'Pressure', 'hPa', 0,
+      pressureAccent,
+      isDark ? 'rgba(251,191,36,0.14)' : 'rgba(217,119,6,0.10)')
+  ], 'hPa', pressureAccent, false, pressureMin, pressureMax);
 
   // Ocean Current (violet) — last row, shows x-axis
   const curAccent = isDark ? '#c084fc' : '#9333ea';
