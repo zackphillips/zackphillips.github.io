@@ -1418,7 +1418,7 @@ async function loadData() {
       console.log('Dummy data created successfully');
     }
 
-    console.log('Fetch response status:', res.status);
+    console.log('Fetch response status:', res?.status);
     const nav = data.navigation || {};
     const elec = data.electrical || {};
     const env = data.environment || {};
@@ -1750,7 +1750,7 @@ async function loadData() {
     if (statusHero) statusHero.classList.add('stale');
 
     Object.keys(PANEL_SKELETONS).forEach((id) =>
-      renderEmptyState(id, 'Data unavailable', 'SignalK feed not reachable.'));
+      renderEmptyState(id, 'Data unavailable', 'Could not load vessel data.'));
   }
 }
 
