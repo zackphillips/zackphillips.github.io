@@ -47,23 +47,70 @@ body {
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.info-logo-row {
+#status-hero {
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  gap: 20px;
-  padding: 20px 20px 0 20px;
-  width: 100%;
-  box-sizing: border-box;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.logo-side {
-  max-width: 220px;
-  width: auto;
-  height: auto;
-  display: block;
+#status-hero.stale {
+  background: var(--bg-stale, #f8d7da);
+  color: #721c24;
+}
+
+[data-theme="dark"] #status-hero.stale {
+  background: #3d1e1e;
+  color: #f8d7da;
+}
+
+.status-hero__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   flex-shrink: 0;
+}
+
+.status-hero__logo {
+  height: 52px;
+  width: auto;
   object-fit: contain;
+  display: block;
+}
+
+#status-vessel {
+  font-weight: 700;
+  font-size: 1.1em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.status-hero__right {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#status-sentence {
+  font-size: 1em;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#status-age {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+.map-section {
+  width: 100%;
 }
 
 .info-panel {
@@ -293,12 +340,8 @@ body {
   gap: 20px;
 }
 
-.map-container {
-  padding: 20px;
-}
-
 #map {
-  height: 500px;
+  height: 550px;
   width: 100%;
 }
 
@@ -320,21 +363,6 @@ body {
 }
 
 @media (max-width: 700px) {
-  .info-logo-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    padding: 10px 10px 0 10px;
-  }
-
-  .logo-side {
-    max-width: 120px;
-    width: auto;
-    height: auto;
-    margin: 0 auto;
-    object-fit: contain;
-  }
-
   .data-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -408,20 +436,25 @@ body {
   text-decoration: underline;
 }
 
-#updateBanner {
-  padding: 8px 16px;
-  font-weight: 500;
-  font-size: 0.85em;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border-bottom: 2px solid var(--accent);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
+@media (max-width: 600px) {
+  #status-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+  }
 
-[data-theme="dark"] #updateBanner {
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  border-bottom-color: var(--accent);
+  .status-hero__logo {
+    height: 40px;
+  }
+
+  #status-sentence {
+    white-space: normal;
+  }
+
+  #map {
+    height: 350px;
+  }
 }
 
 .floating-dark-mode-btn {

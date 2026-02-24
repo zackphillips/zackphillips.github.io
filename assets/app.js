@@ -11,6 +11,7 @@ let map, marker, trackLine, trackMarkers;
 let anchorLayer = null;   // Leaflet circle for anchor swing radius
 let trackLegend = null;   // Leaflet control for day-colour legend
 let lat, lon; // Global variables for coordinates
+let vesselState = ''; // 'underway' | 'at anchor' | ''
 let vesselData = null; // Global vessel information
 let tideStations = null; // Global tide stations data
 const DEFAULT_TIDE_LOCATION = {
@@ -189,10 +190,22 @@ async function updateMapLocation(lat, lon) {
       }
     }
 
-    document.getElementById('mapTitle').textContent = locationName;
+    setStatusSentence(locationName);
   } catch (error) {
     console.error('Error fetching location:', error);
-    document.getElementById('mapTitle').textContent = 'Location unavailable';
+    setStatusSentence('unknown location');
+  }
+}
+
+function setStatusSentence(locationName) {
+  const el = document.getElementById('status-sentence');
+  if (!el) return;
+  if (vesselState === 'underway') {
+    el.textContent = `Underway near ${locationName}`;
+  } else if (vesselState === 'at anchor') {
+    el.textContent = `At anchor in ${locationName}`;
+  } else {
+    el.textContent = `In ${locationName}`;
   }
 }
 
@@ -546,6 +559,11 @@ function updateVesselLinks() {
     const pageTitle = document.getElementById('page-title');
     if (pageTitle) {
       pageTitle.textContent = `${vesselData.name} Tracker`;
+    }
+
+    const statusVessel = document.getElementById('status-vessel');
+    if (statusVessel) {
+      statusVessel.textContent = vesselData.name;
     }
 
     // Update document title
@@ -1383,25 +1401,20 @@ async function loadData() {
     currentNav = nav;
     currentEnv = env;
 
-    // Update banner with data source and timestamp
-    const statusElement = document.getElementById('dataStatus');
-    const timeElement = document.getElementById('updateTime');
-    const banner = document.getElementById('updateBanner');
-
-    // Set data source status
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (dataSource === 'static') {
-      statusElement.textContent = 'Static Data';
-      statusElement.style.color = isDark ? '#d4edda' : '#2c3e50';
-    } else if (dataSource === 'dummy') {
-      statusElement.textContent = 'Demo Data';
-      statusElement.style.color = '#f39c12';
-      bannerState = 'error';
+    // Compute vessel state from SOG and anchor watch
+    const sogKts = (nav?.speedOverGround?.value ?? 0) * 1.94384;
+    const anchorSet = !!(nav?.anchor?.position?.value && nav?.anchor?.maxRadius?.value > 0);
+    if (sogKts > 0.5) {
+      vesselState = 'underway';
+    } else if (anchorSet) {
+      vesselState = 'at anchor';
+    } else {
+      vesselState = '';
     }
 
-    // Try specific field first, fall back to recursive scan
-    let timestampStr = data.navigation?.position?.timestamp;
-    let modifiedDate = timestampStr ? new Date(timestampStr) : findLatestTimestamp(data);
+    // Update status hero age / staleness
+    const statusHero = document.getElementById('status-hero');
+    const ageEl = document.getElementById('status-age');
 
     const formatAge = (ms) => {
       const s = Math.floor(ms / 1000);
@@ -1414,28 +1427,30 @@ async function loadData() {
       return `${d} day${d === 1 ? '' : 's'} ago`;
     };
 
-    if (modifiedDate && !isNaN(modifiedDate.getTime())) {
-      const now = new Date();
-      const diffMs    = now - modifiedDate;
+    // Try specific field first, fall back to recursive scan
+    let timestampStr = data.navigation?.position?.timestamp;
+    let modifiedDate = timestampStr ? new Date(timestampStr) : findLatestTimestamp(data);
+
+    if (dataSource === 'dummy') {
+      bannerState = 'error';
+      if (ageEl) ageEl.textContent = 'Demo data';
+      if (statusHero) statusHero.classList.add('stale');
+    } else if (modifiedDate && !isNaN(modifiedDate.getTime())) {
+      const diffMs    = Date.now() - modifiedDate;
       const diffHours = diffMs / (1000 * 60 * 60);
       const ageLabel  = formatAge(diffMs);
-      timeElement.textContent = `${ageLabel} · ${modifiedDate.toLocaleString()}`;
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      if (diffHours > 3) {
+      if (ageEl) ageEl.textContent = `Updated ${ageLabel}`;
+      if (diffHours > 6) {
         bannerState = 'error';
-        banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
-        banner.style.color = isDark ? "#f8d7da" : "#721c24";
+        if (statusHero) statusHero.classList.add('stale');
       } else {
         bannerState = 'ok';
-        banner.style.background = isDark ? "#1e3a1e" : '#dff0d8';
-        banner.style.color = isDark ? "#d4edda" : '#2c3e50';
+        if (statusHero) statusHero.classList.remove('stale');
       }
     } else {
       bannerState = 'error';
-      timeElement.textContent = 'Timestamp not found';
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
-      banner.style.color = isDark ? "#f8d7da" : "#721c24";
+      if (ageEl) ageEl.textContent = 'Update time unknown';
+      if (statusHero) statusHero.classList.add('stale');
     }
 
     lat = nav.position?.value?.latitude;
@@ -1511,7 +1526,8 @@ async function loadData() {
       // Update polar performance
       updatePolarPerformance();
     } else {
-      document.getElementById('mapTitle').textContent = 'Waiting for GPS position...';
+      const sentenceEl = document.getElementById('status-sentence');
+      if (sentenceEl) sentenceEl.textContent = 'Waiting for GPS position...';
     }
 
     const tidePosition = resolveTidePosition(lat, lon);
@@ -1660,11 +1676,10 @@ async function loadData() {
   } catch (err) {
     console.error("Failed to load data:", err);
     console.error("Error details:", err.message);
-    const banner = document.getElementById('updateBanner');
-    banner.textContent = `Error loading data: ${err.message}`;
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    banner.style.background = isDark ? "#3d1e1e" : "#f8d7da";
-    banner.style.color = isDark ? "#f8d7da" : "#721c24";
+    const sentenceEl = document.getElementById('status-sentence');
+    if (sentenceEl) sentenceEl.textContent = `Error loading data: ${err.message}`;
+    const statusHero = document.getElementById('status-hero');
+    if (statusHero) statusHero.classList.add('stale');
 
     Object.keys(PANEL_SKELETONS).forEach((id) =>
       renderEmptyState(id, 'Data unavailable', 'SignalK feed not reachable.'));
@@ -2537,17 +2552,7 @@ function updateChartsForTheme(theme) {
 
   }
 
-  // Update banner colors — preserve the ok/error state set when data was loaded
-  const banner = document.getElementById('updateBanner');
-  const isDark = theme === 'dark';
-
-  if (bannerState === 'error') {
-    banner.style.background = isDark ? '#3d1e1e' : '#f8d7da';
-    banner.style.color = isDark ? '#f8d7da' : '#721c24';
-  } else {
-    banner.style.background = isDark ? '#1e3a1e' : '#dff0d8';
-    banner.style.color = isDark ? '#d4edda' : '#2c3e50';
-  }
+  // Staleness class drives status-hero colors via CSS; no inline style needed here.
 
   // Update map tile layer
   if (map) {
