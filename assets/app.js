@@ -2489,11 +2489,15 @@ async function loadConditionsForecast() {
       type: 'linear',
       min: 0,
       max: 48,
-      display: isLast,
+      // Always display so Chart.js allocates the same axis height on every row,
+      // keeping all plot areas the same width and gridlines aligned.
+      display: true,
       grid: { color: gridColor, tickLength: isLast ? 4 : 0 },
       border: { display: false },
       ticks: {
-        color: tickColor,
+        // Invisible on non-last rows but still measured, so every row gets the
+        // same bottom padding and the vertical gridlines stay in sync.
+        color: isLast ? tickColor : 'transparent',
         font: { size: 9 },
         stepSize: 6,
         callback(val) {
@@ -2620,11 +2624,11 @@ async function loadConditionsForecast() {
       { order: 0 })
   ], 'kts', windAccent, false, 0, windMax);
 
-  // Swell (emerald)
+  // Swell height (emerald)
   const swellAccent = isDark ? '#34d399' : '#059669';
   const swellMax = Math.max(3, ...swellHeight.filter(v => v != null)) * 1.12;
   renderChart('condSwellChart', [
-    buildDataset(swellHeight, 'Swell', 'ft', 1,
+    buildDataset(swellHeight, 'Swell Height', 'ft', 1,
       swellAccent,
       isDark ? 'rgba(52,211,153,0.14)' : 'rgba(5,150,105,0.10)')
   ], 'ft', swellAccent, false, 0, swellMax);
@@ -2635,7 +2639,7 @@ async function loadConditionsForecast() {
   const periodMin    = validPeriod.length ? Math.max(0, Math.min(...validPeriod) - 1) : 0;
   const periodMax    = validPeriod.length ? Math.max(...validPeriod) + 1 : 20;
   renderChart('condPeriodChart', [
-    buildDataset(swellPeriod, 'Period', 's', 1,
+    buildDataset(swellPeriod, 'Swell Period', 's', 1,
       periodAccent,
       isDark ? 'rgba(34,211,238,0.14)' : 'rgba(8,145,178,0.10)')
   ], 's', periodAccent, false, periodMin, periodMax);
@@ -2650,6 +2654,16 @@ async function loadConditionsForecast() {
       tideAccent,
       isDark ? 'rgba(129,140,248,0.14)' : 'rgba(79,70,229,0.10)')
   ], 'ft', tideAccent, false, tideMin, tideMax);
+
+  // Ocean Current (violet) — grouped with tide
+  const curAccent = isDark ? '#c084fc' : '#9333ea';
+  const validCur  = currentSpeed.filter(v => v != null);
+  const curMax    = validCur.length ? Math.max(0.5, ...validCur) * 1.12 : 1;
+  renderChart('condCurrentChart', [
+    buildDataset(currentSpeed, 'Current', 'kts', 2,
+      curAccent,
+      isDark ? 'rgba(192,132,252,0.14)' : 'rgba(147,51,234,0.10)')
+  ], 'kts', curAccent, false, 0, curMax);
 
   // Temperature (orange)
   const tempAccent  = isDark ? '#fb923c' : '#ea580c';
@@ -2678,7 +2692,7 @@ async function loadConditionsForecast() {
       isDark ? 'rgba(148,163,184,0.16)' : 'rgba(100,116,139,0.10)')
   ], '%', cloudAccent, false, 0, 100);
 
-  // Pressure (amber)
+  // Pressure (amber) — last row, shows x-axis
   const pressureAccent = isDark ? '#fbbf24' : '#d97706';
   const validPressure  = pressure.filter(v => v != null);
   const pressureMin    = validPressure.length ? Math.min(...validPressure) - 2 : 990;
@@ -2687,17 +2701,7 @@ async function loadConditionsForecast() {
     buildDataset(pressure, 'Pressure', 'hPa', 0,
       pressureAccent,
       isDark ? 'rgba(251,191,36,0.14)' : 'rgba(217,119,6,0.10)')
-  ], 'hPa', pressureAccent, false, pressureMin, pressureMax);
-
-  // Ocean Current (violet) — last row, shows x-axis
-  const curAccent = isDark ? '#c084fc' : '#9333ea';
-  const validCur  = currentSpeed.filter(v => v != null);
-  const curMax    = validCur.length ? Math.max(0.5, ...validCur) * 1.12 : 1;
-  renderChart('condCurrentChart', [
-    buildDataset(currentSpeed, 'Current', 'kts', 2,
-      curAccent,
-      isDark ? 'rgba(192,132,252,0.14)' : 'rgba(147,51,234,0.10)')
-  ], 'kts', curAccent, true, 0, curMax);
+  ], 'hPa', pressureAccent, true, pressureMin, pressureMax);
 }
 
 async function loadWaveForecast() {
