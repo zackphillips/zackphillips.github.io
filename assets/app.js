@@ -937,6 +937,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { left: 10 } },
         plugins: {
           tooltip: {
             mode: 'index',
