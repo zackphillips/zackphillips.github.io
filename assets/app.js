@@ -2594,6 +2594,37 @@ async function loadConditionsForecast() {
     if (yMin != null) yAxis.min = yMin;
     if (yMax != null) yAxis.max = yMax;
 
+    // Draw a dot on each dataset curve at the current moment
+    const nowDotPlugin = {
+      id: `nowDot_${canvasId}`,
+      afterDatasetsDraw(chart) {
+        const { ctx, scales: { x, y } } = chart;
+        if (nowOffset < 0 || nowOffset > 48) return;
+        const px = x.getPixelForValue(nowOffset);
+        const i0 = Math.floor(nowOffset);
+        const i1 = Math.min(i0 + 1, 48);
+        const frac = nowOffset - i0;
+
+        chart.data.datasets.forEach((ds, di) => {
+          if (chart.getDatasetMeta(di).hidden) return;
+          const y0 = ds.data[i0]?.y;
+          const y1 = ds.data[i1]?.y;
+          if (y0 == null && y1 == null) return;
+          const nowY = (y0 != null && y1 != null) ? y0 + (y1 - y0) * frac : (y0 ?? y1);
+          const py = y.getPixelForValue(nowY);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fillStyle = ds.borderColor;
+          ctx.fill();
+          ctx.strokeStyle = isDark ? 'rgba(22,22,28,0.85)' : 'rgba(255,255,255,0.85)';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.restore();
+        });
+      }
+    };
+
     const chart = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: { datasets },
@@ -2636,7 +2667,7 @@ async function loadConditionsForecast() {
           y: yAxis
         }
       },
-      plugins: [Chart.registry.getPlugin('annotation')]
+      plugins: [nowDotPlugin, Chart.registry.getPlugin('annotation')]
     });
 
     conditionsChartInstances[canvasId] = chart;
