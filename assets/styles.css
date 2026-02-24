@@ -777,9 +777,20 @@ body {
    ───────────────────────────────────────────────────────────────────────── */
 
 .conditions-forecast-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  padding: 0;
+  overflow: hidden;       /* clip chart stack to panel border-radius */
+  border-left-color: #0ea5e9;
+}
+
+/* Give the header its own inset since the panel has no padding */
+.conditions-forecast-panel .conditions-header {
+  padding: 22px 24px 0;
+}
+
+/* Chart stack fills edge-to-edge inside the panel frame */
+.conditions-forecast-panel .conditions-chart-stack {
+  border: none;
+  border-radius: 0;
 }
 
 .conditions-header {
