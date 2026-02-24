@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="icon" href="/assets/favicon.ico" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#2c3e50" />
+  <meta name="theme-color" content="#4f46e5" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Mermug" />
@@ -20,6 +20,8 @@
   <!-- Floating Dark Mode Button -->
   <button id="darkModeToggle" class="floating-dark-mode-btn">Dark Mode</button>
   <div class="container">
+
+    <!-- STATUS HERO -->
     <div id="status-hero">
       <div class="status-hero__left">
         <img src="data/vessel/logo.png" alt="Vessel Logo" class="status-hero__logo" />
@@ -31,22 +33,23 @@
       </div>
     </div>
 
+    <!-- MAP -->
     <div class="map-section">
       <div id="map"></div>
     </div>
 
-    <!-- PASSAGE BANNER -->
+    <!-- PASSAGE BANNER (shown only when passage is set in info.yaml) -->
     <div id="passage-banner" class="passage-banner" style="display:none;"></div>
 
     <!-- LINKS -->
-    <div style="margin: 20px;">
-      <div class="button-row" style="justify-content: flex-end; gap: 10px;">
+    <div class="links-section">
+      <div class="button-row">
         <a href="#" id="marinetraffic-link" target="_blank" class="action-btn ais-btn">MarineTraffic</a>
         <a href="#" id="myshiptracking-link" target="_blank" class="action-btn ais-btn">MyShipTracking</a>
       </div>
       <details class="crew-tools">
         <summary>Crew tools (vessel WiFi only)</summary>
-        <div class="button-row" style="margin-top: 10px; gap: 10px;">
+        <div class="button-row" style="margin-top: 10px; justify-content: flex-start;">
           <a href="#" id="signalk-admin-link" target="_blank" class="action-btn signal-btn">Open SignalK</a>
           <a href="#" id="signalk-freeboard-link" target="_blank" class="action-btn plotter-btn">Open Freeboard-SK</a>
           <a href="#" id="signalk-anchor-alarm-link" target="_blank" class="action-btn anchor-btn">Anchor Alarm</a>
@@ -54,26 +57,28 @@
       </details>
     </div>
 
+    <div class="content-panels">
+
     <!-- ALERT SUMMARY -->
-    <div id="alert-summary" class="info-panel" style="display:none; margin: 0 20px 20px;"></div>
+    <div id="alert-summary" class="info-panel" style="display:none;"></div>
 
     <!-- NAVIGATION -->
-    <div class="info-panel" id="navigation-panel" style="margin: 20px;">
+    <div class="info-panel" id="navigation-panel">
       <div class="panel-title">Navigation</div>
       <div class="data-grid" id="navigation-grid"></div>
     </div>
 
     <!-- TIDE CHART -->
-    <div class="info-panel" style="margin: 20px;">
-      <div id="tideHeader" class="panel-title" style="padding-top: 10px; margin-bottom: 0;"></div>
+    <div class="info-panel">
+      <div id="tideHeader" class="panel-title"></div>
       <canvas id="tideChart"></canvas>
     </div>
 
     <!-- WIND FORECAST -->
-    <div class="info-panel" style="margin: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <div id="windHeader" class="panel-title" style="flex: 1; margin-bottom: 0;">Wind Forecast at Current Location</div>
-        <select id="forecast-model" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9em; cursor: pointer;">
+    <div class="info-panel">
+      <div class="forecast-header">
+        <div id="windHeader" class="panel-title">Wind Forecast at Current Location</div>
+        <select id="forecast-model" class="forecast-model-select">
           <option value="wttr">wttr.in</option>
           <option value="ecmwf">ECMWF</option>
         </select>
@@ -88,7 +93,7 @@
     </div>
 
     <!-- WAVE FORECAST -->
-    <div class="info-panel" style="margin: 20px;">
+    <div class="info-panel">
       <div class="panel-title">Swell Forecast (Dominant) at Current Location</div>
       <div class="wave-forecast-grid" id="wave-forecast-grid">
         <div class="wave-forecast-item">
@@ -101,100 +106,99 @@
     </div>
 
     <!-- WIND -->
-    <div class="info-panel" id="wind-panel" style="margin: 20px;">
+    <div class="info-panel" id="wind-panel">
       <div class="panel-title">Wind</div>
       <div class="data-grid" id="wind-grid"></div>
     </div>
 
     <!-- ENVIRONMENT -->
-    <div class="info-panel" id="environment-panel" style="margin: 20px;">
+    <div class="info-panel" id="environment-panel">
       <div class="panel-title">Environment</div>
       <div class="data-grid" id="environment-grid"></div>
     </div>
 
     <!-- POWER -->
-    <div class="info-panel" id="power-panel" style="margin: 20px;">
+    <div class="info-panel" id="power-panel">
       <div class="panel-title">Power</div>
       <div class="data-grid" id="power-grid"></div>
     </div>
 
     <!-- NOW PLAYING -->
-    <div class="info-panel" id="now-playing-panel" style="margin: 20px;">
+    <div class="info-panel" id="now-playing-panel">
       <div class="panel-title">Now Playing</div>
-      <div id="now-playing-content" style="display: flex; align-items: center; gap: 20px; padding: 15px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
-        <div style="flex: 1;">
-          <div id="track-name" style="font-size: 1.2em; font-weight: bold; color: var(--text-primary); margin-bottom: 5px;">No track playing</div>
-          <div id="artist-album" style="color: var(--text-secondary); font-size: 0.9em;">No artist information</div>
+      <div id="now-playing-content" class="now-playing-content">
+        <div class="now-playing-main">
+          <div id="track-name" class="now-playing-track">No track playing</div>
+          <div id="artist-album" class="now-playing-meta">No artist information</div>
         </div>
-        <div id="track-info" style="flex: 1; text-align: right;">
-          <div id="playback-source" style="color: var(--text-secondary); font-size: 0.9em;">No source</div>
-          <div id="track-number" style="color: var(--text-secondary); font-size: 0.8em;">Track -- of --</div>
+        <div id="track-info" class="now-playing-side">
+          <div id="playback-source" class="now-playing-meta">No source</div>
+          <div id="track-number" class="now-playing-sub">Track -- of --</div>
         </div>
       </div>
     </div>
 
     <!-- VESSEL INFORMATION -->
-    <div class="info-panel" id="vessel-panel" style="margin: 20px;">
+    <div class="info-panel" id="vessel-panel">
       <div class="panel-title">Vessel Information</div>
       <div class="data-grid" id="vessel-grid"></div>
     </div>
 
     <!-- INTERNET -->
-    <div class="info-panel" id="internet-panel" style="margin: 20px;">
+    <div class="info-panel" id="internet-panel">
       <div class="panel-title">Internet</div>
       <div class="data-grid" id="internet-grid"></div>
     </div>
 
     <!-- PROPULSION -->
-    <div class="info-panel" id="propulsion-panel" style="margin: 20px;">
+    <div class="info-panel" id="propulsion-panel">
       <div class="panel-title">Propulsion</div>
       <div class="data-grid" id="propulsion-grid"></div>
     </div>
 
     <!-- TANKS -->
-    <div class="info-panel" id="tanks-panel" style="margin: 20px;">
+    <div class="info-panel" id="tanks-panel">
       <div class="panel-title">Tanks</div>
       <div class="data-grid" id="tanks-grid"></div>
     </div>
 
     <!-- POLAR PERFORMANCE -->
-    <div class="info-panel" style="margin: 20px;">
+    <div class="info-panel">
       <div class="panel-title">Polar Performance</div>
       <div class="polar-performance-grid" id="polar-performance-grid">
-        <!-- Left Column: Performance Data -->
-        <div style="display: flex; flex-direction: column; gap: 15px;">
-          <div style="background: var(--bg-quaternary); padding: 15px; border-radius: 8px;">
-            <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">Current Performance</div>
-            <div id="polar-performance" style="font-size: 0.9em;">
+        <div class="polar-data-col">
+          <div class="polar-sub-card">
+            <div class="polar-sub-title">Current Performance</div>
+            <div id="polar-performance" class="polar-sub-body">
               <div>Loading polar data...</div>
             </div>
           </div>
-          <div style="background: var(--bg-quaternary); padding: 15px; border-radius: 8px;">
-            <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">VMG Analysis</div>
-            <div id="vmg-analysis" style="font-size: 0.9em;">
+          <div class="polar-sub-card">
+            <div class="polar-sub-title">VMG Analysis</div>
+            <div id="vmg-analysis" class="polar-sub-body">
               <div>Calculating VMG...</div>
             </div>
           </div>
         </div>
-        <!-- Right Column: Polar Chart -->
-        <div style="background: var(--bg-quaternary); padding: 15px; border-radius: 8px;">
-          <div style="font-weight: bold; margin-bottom: 10px; color: var(--text-primary);">Polar Chart</div>
-          <div class="polar-chart-container" style="position: relative; height: 600px; width: 100%;">
+        <div class="polar-sub-card">
+          <div class="polar-sub-title">Polar Chart</div>
+          <div class="polar-chart-container">
             <canvas id="polarChart"></canvas>
           </div>
         </div>
       </div>
     </div>
 
+    </div><!-- /.content-panels -->
+  </div><!-- /.container -->
+
+  <div class="footer">
+    Created by <a href="https://zackphillips.com" target="_blank">Zack Phillips</a>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="assets/utils.js"></script>
   <script src="assets/app.js?v=2"></script>
-
-  <div class="footer">
-    Created by <a href="https://zackphillips.com" target="_blank">Zack Phillips</a>
-  </div>
 </body>
 </html>
