@@ -2911,9 +2911,10 @@ function updateDarkModeButton(theme) {
 }
 
 function updateChartsForTheme(theme) {
+  const isDark = isDarkTheme(theme);
+
   // Update tide chart
   if (tideChartInstance) {
-    const isDark = isDarkTheme(theme);
     tideChartInstance.options.scales.x.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)';
     tideChartInstance.options.scales.y.grid.color = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.08)';
     tideChartInstance.options.scales.x.ticks.color = isDark ? '#ffffff' : '#2c3e50';
