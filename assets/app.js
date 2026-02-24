@@ -191,8 +191,6 @@ function renderForecastSkeleton(containerId, count = 4) {
 
 function primeSkeletons() {
   Object.entries(PANEL_SKELETONS).forEach(([id, count]) => renderSkeletonGrid(id, count));
-  renderForecastSkeleton('wind-forecast-grid');
-  renderForecastSkeleton('wave-forecast-grid');
 }
 
 function renderEmptyState(containerId, title, subtitle = '') {
@@ -1589,10 +1587,6 @@ async function loadData() {
         if (anchorLine)   { anchorLine.remove();   anchorLine   = null; }
       }
 
-      // Load wind forecast asynchronously without blocking main data load
-      loadWindForecast().catch(err => console.error('Wind forecast error:', err));
-      // Load wave forecast asynchronously without blocking main data load
-      loadWaveForecast().catch(err => console.error('Wave forecast error:', err));
       // Load unified 48-hr conditions forecast
       loadConditionsForecast().catch(err => console.error('Conditions forecast error:', err));
       // Update map location title
@@ -1759,8 +1753,6 @@ async function loadData() {
 
     Object.keys(PANEL_SKELETONS).forEach((id) =>
       renderEmptyState(id, 'Data unavailable', 'SignalK feed not reachable.'));
-    renderEmptyState('wind-forecast-grid', 'Forecast unavailable', 'Check network or GPS data.');
-    renderEmptyState('wave-forecast-grid', 'Wave data unavailable', 'Retry when online.');
   }
 }
 
@@ -2390,6 +2382,18 @@ async function loadConditionsForecast() {
     }
   }
 
+  // Swell direction
+  let swellDir = new Array(49).fill(null);
+  let swellDirCurrent = null;
+  if (marineResult.status === 'fulfilled') {
+    const h = marineResult.value?.hourly;
+    if (h) {
+      swellDir = mapHourlyLocal(h.time, h.wave_direction);
+      const idx = Math.min(48, Math.max(0, Math.round(nowOffset)));
+      swellDirCurrent = swellDir[idx];
+    }
+  }
+
   // Precipitation probability
   let precipProb = new Array(49).fill(null);
   let precipCurrent = null;
@@ -2434,6 +2438,16 @@ async function loadConditionsForecast() {
   setCrVal('cr-wind-val',     windCurrent,     1);
   setCrVal('cr-swell-val',    swellCurrent,    1);
   setCrVal('cr-period-val',   periodCurrent,   1);
+  // Swell direction: show as cardinal abbreviation
+  const swellDirEl = document.getElementById('cr-swelldir-val');
+  if (swellDirEl) {
+    if (swellDirCurrent != null) {
+      const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+      swellDirEl.textContent = dirs[Math.round(swellDirCurrent / 22.5) % 16];
+    } else {
+      swellDirEl.textContent = '--';
+    }
+  }
   setCrVal('cr-tide-val',     tideCurrent,     1);
   setCrVal('cr-temp-val',     tempCurrent,     0);
   setCrVal('cr-precip-val',   precipCurrent,   0);
@@ -2644,6 +2658,14 @@ async function loadConditionsForecast() {
       isDark ? 'rgba(34,211,238,0.14)' : 'rgba(8,145,178,0.10)')
   ], 's', periodAccent, false, periodMin, periodMax);
 
+  // Swell direction (teal) — raw degrees 0–360
+  const swellDirAccent = isDark ? '#2dd4bf' : '#0d9488';
+  renderChart('condSwellDirChart', [
+    buildDataset(swellDir, 'Swell Dir', '°', 0,
+      swellDirAccent,
+      isDark ? 'rgba(45,212,191,0.14)' : 'rgba(13,148,136,0.10)')
+  ], '°', swellDirAccent, false, 0, 360);
+
   // Tide (indigo) — may have nulls at start/end; use spanGaps
   const tideAccent = isDark ? '#818cf8' : '#4f46e5';
   const validTide  = tideHeight.filter(v => v != null);
@@ -2702,322 +2724,6 @@ async function loadConditionsForecast() {
       pressureAccent,
       isDark ? 'rgba(251,191,36,0.14)' : 'rgba(217,119,6,0.10)')
   ], 'hPa', pressureAccent, true, pressureMin, pressureMax);
-}
-
-async function loadWaveForecast() {
-  try {
-    if (!hasValidCoordinates(lat, lon)) {
-      document.getElementById('wave-forecast-grid').innerHTML = `
-        <div class="wave-forecast-item">
-          <div class="wave-time">Waiting</div>
-          <div class="wave-height">For GPS</div>
-          <div class="wave-period">Position</div>
-          <div class="wave-direction">--</div>
-        </div>
-      `;
-      return;
-    }
-
-    const waveCacheKey = `wave_${Math.round(lat * 100) / 100}_${Math.round(lon * 100) / 100}`;
-    const cachedWave = getCached(waveCacheKey, 60 * 60 * 1000); // 1-hour TTL
-    let data;
-    if (cachedWave) {
-      data = cachedWave;
-    } else {
-      const response = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height,wave_period,wave_direction&timezone=auto`);
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      data = await response.json();
-      setCached(waveCacheKey, data);
-    }
-
-    let forecastHTML = '';
-    const waveForecastGrid = document.getElementById('wave-forecast-grid');
-
-    // Find current time index in the data
-    const now = new Date();
-    let currentIndex = 0;
-    let minDiff = Infinity;
-
-    data.hourly.time.forEach((timeStr, index) => {
-      const forecastTime = new Date(timeStr);
-      const diff = Math.abs(forecastTime - now);
-      if (diff < minDiff) {
-        minDiff = diff;
-        currentIndex = index;
-      }
-    });
-
-
-
-    // Get next 4 time periods starting from current time
-    const timeIntervals = [0, 3, 6, 9];
-    const timeLabels = ['Now', '+3hr', '+6hr', '+9hr'];
-
-    timeIntervals.forEach((hourOffset, index) => {
-      const dataIndex = currentIndex + hourOffset;
-      const waveHeight = data.hourly.wave_height[dataIndex];
-      const wavePeriod = data.hourly.wave_period[dataIndex];
-      const waveDirection = data.hourly.wave_direction[dataIndex];
-
-      if (waveHeight !== null && wavePeriod !== null && waveDirection !== null) {
-        const waveHeightFt = waveHeight * 3.28084;
-
-        // Determine color based on wave height
-        let backgroundColor;
-        if (waveHeightFt < 2) {
-          backgroundColor = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)'; // Green
-        } else if (waveHeightFt >= 2 && waveHeightFt < 5) {
-          backgroundColor = 'linear-gradient(135deg, #3498db 0%, #5dade2 100%)'; // Blue
-        } else if (waveHeightFt >= 5 && waveHeightFt < 7) {
-          backgroundColor = 'linear-gradient(135deg, #f39c12 0%, #f7dc6f 100%)'; // Orange
-        } else if (waveHeightFt >= 7 && waveHeightFt < 10) {
-          backgroundColor = 'linear-gradient(135deg, #e74c3c 0%, #ec7063 100%)'; // Red
-        } else {
-          backgroundColor = 'linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%)'; // Purple
-        }
-
-        // Convert direction to cardinal directions
-        const direction = waveDirection;
-        let directionText;
-        if (direction >= 337.5 || direction < 22.5) directionText = 'N';
-        else if (direction >= 22.5 && direction < 67.5) directionText = 'NE';
-        else if (direction >= 67.5 && direction < 112.5) directionText = 'E';
-        else if (direction >= 112.5 && direction < 157.5) directionText = 'SE';
-        else if (direction >= 157.5 && direction < 202.5) directionText = 'S';
-        else if (direction >= 202.5 && direction < 247.5) directionText = 'SW';
-        else if (direction >= 247.5 && direction < 292.5) directionText = 'W';
-        else if (direction >= 292.5 && direction < 337.5) directionText = 'NW';
-        else directionText = 'N';
-
-        const time = new Date(data.hourly.time[dataIndex]);
-        const timeStr = time.toLocaleTimeString('en-US', {
-          hour: 'numeric',
-          minute: '2-digit',
-          hour12: true
-        });
-
-        forecastHTML += `
-          <div class="wave-forecast-item" style="background: ${backgroundColor};">
-            <div class="wave-time">${timeLabels[index]} (${timeStr})</div>
-            <div class="wave-height">${waveHeightFt.toFixed(1)}ft @ ${wavePeriod.toFixed(1)}s</div>
-            <div class="wave-direction">${directionText} (${waveDirection.toFixed(0)}°)</div>
-          </div>
-        `;
-      }
-    });
-
-    if (forecastHTML === '') {
-      forecastHTML = `
-        <div class="wave-forecast-item">
-          <div class="wave-time">No Data</div>
-          <div class="wave-height">Available</div>
-          <div class="wave-period">--</div>
-          <div class="wave-direction">--</div>
-        </div>
-      `;
-    }
-
-    waveForecastGrid.innerHTML = forecastHTML;
-  } catch (error) {
-    console.error('Wave forecast error:', error);
-    document.getElementById('wave-forecast-grid').innerHTML = `
-      <div class="wave-forecast-item">
-        <div class="wave-time">Error</div>
-        <div class="wave-height">Loading</div>
-        <div class="wave-period">Failed</div>
-        <div class="wave-direction">--</div>
-      </div>
-    `;
-  }
-}
-
-async function loadWindForecast() {
-  try {
-    if (!hasValidCoordinates(lat, lon)) {
-      document.getElementById('wind-forecast-grid').innerHTML = `
-        <div class="wind-forecast-item">
-          <div class="wind-time">Waiting</div>
-          <div class="wind-speed">For GPS</div>
-          <div class="wind-direction">Position</div>
-        </div>
-      `;
-      return;
-    }
-
-    const selectedModel = document.getElementById('forecast-model').value;
-    const windCacheKey = `wind_${Math.round(lat * 100) / 100}_${Math.round(lon * 100) / 100}_${selectedModel}`;
-    const cachedWind = getCached(windCacheKey, 60 * 60 * 1000); // 1-hour TTL
-    let data;
-    if (cachedWind) {
-      data = cachedWind;
-    } else {
-      let response;
-      switch(selectedModel) {
-        case 'ecmwf':
-          response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=wind_speed_10m,wind_direction_10m&timezone=auto`);
-          break;
-        default:
-          response = await fetch(`https://wttr.in/${lat},${lon}?format=j1`);
-          break;
-      }
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-      data = await response.json();
-      setCached(windCacheKey, data);
-    }
-
-    let forecastHTML = '';
-    const windForecastGrid = document.getElementById('wind-forecast-grid');
-
-    // Parse data based on selected model
-    if (selectedModel === 'wttr' && data && data.weather && data.weather[0] && data.weather[0].hourly) {
-      // wttr.in format
-      const timeIntervals = [0, 3, 6, 9]; // Start with 0 for "Now"
-      const usedIndices = new Set();
-
-      timeIntervals.forEach(hours => {
-        const targetTime = new Date();
-        targetTime.setHours(targetTime.getHours() + hours);
-
-        let closestForecast = null;
-        let closestIndex = -1;
-        let minDiff = Infinity;
-
-        data.weather[0].hourly.forEach((forecast, index) => {
-          if (usedIndices.has(index)) return;
-
-          const forecastTime = new Date(forecast.time);
-          const diff = Math.abs(forecastTime - targetTime);
-          if (diff < minDiff) {
-            minDiff = diff;
-            closestForecast = forecast;
-            closestIndex = index;
-          }
-        });
-
-        if (closestForecast && closestForecast.windspeedKmph) {
-          usedIndices.add(closestIndex);
-          const windSpeedKmph = parseInt(closestForecast.windspeedKmph);
-          const windSpeedKts = (windSpeedKmph * 0.539957).toFixed(1);
-          const windDeg = parseInt(closestForecast.winddirDegree);
-          const windDirection = getWindDirection(windDeg);
-
-          const targetTime = new Date();
-          targetTime.setHours(targetTime.getHours() + hours);
-          const timeStr = targetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-          const speedKts = parseFloat(windSpeedKts);
-          let windColor = '';
-          if (speedKts < 10) {
-            windColor = 'background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);';
-          } else if (speedKts >= 10 && speedKts < 15) {
-            windColor = 'background: linear-gradient(135deg, #00b894 0%, #00a085 100%);';
-          } else if (speedKts >= 15 && speedKts < 20) {
-            windColor = 'background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);';
-          } else if (speedKts >= 20 && speedKts < 25) {
-            windColor = 'background: linear-gradient(135deg, #e17055 0%, #d63031 100%);';
-          } else {
-            windColor = 'background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);';
-          }
-
-          // Create time label - "Now" for current conditions, "+Xh" for future
-          const timeLabel = hours === 0 ? 'Now' : `+${hours}h`;
-
-          forecastHTML += `
-            <div class="wind-forecast-item" style="${windColor}">
-              <div class="wind-time">${timeLabel} (${timeStr})</div>
-              <div class="wind-speed">${windSpeedKts} kts</div>
-              <div class="wind-direction">${windDirection} (${windDeg}°)</div>
-            </div>
-          `;
-        }
-      });
-    } else if (selectedModel === 'ecmwf' && data && data.hourly) {
-      // ECMWF format
-      const timeIntervals = [0, 3, 6, 9]; // Start with 0 for "Now"
-      const usedIndices = new Set();
-
-      timeIntervals.forEach(hours => {
-        const targetTime = new Date();
-        targetTime.setHours(targetTime.getHours() + hours);
-
-        let closestIndex = -1;
-        let minDiff = Infinity;
-
-        data.hourly.time.forEach((timeStr, index) => {
-          if (usedIndices.has(index)) return;
-
-          const forecastTime = new Date(timeStr);
-          const diff = Math.abs(forecastTime - targetTime);
-          if (diff < minDiff) {
-            minDiff = diff;
-            closestIndex = index;
-          }
-        });
-
-        if (closestIndex >= 0) {
-          usedIndices.add(closestIndex);
-          const windSpeedMs = data.hourly.wind_speed_10m[closestIndex];
-          const windSpeedKts = (windSpeedMs * 1.94384).toFixed(1); // m/s to knots
-          const windDeg = data.hourly.wind_direction_10m[closestIndex];
-          const windDirection = getWindDirection(windDeg);
-
-          const targetTime = new Date();
-          targetTime.setHours(targetTime.getHours() + hours);
-          const timeStr = targetTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-          const speedKts = parseFloat(windSpeedKts);
-          let windColor = '';
-          if (speedKts < 10) {
-            windColor = 'background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);';
-          } else if (speedKts >= 10 && speedKts < 15) {
-            windColor = 'background: linear-gradient(135deg, #00b894 0%, #00a085 100%);';
-          } else if (speedKts >= 15 && speedKts < 20) {
-            windColor = 'background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);';
-          } else if (speedKts >= 20 && speedKts < 25) {
-            windColor = 'background: linear-gradient(135deg, #e17055 0%, #d63031 100%);';
-          } else {
-            windColor = 'background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);';
-          }
-
-          // Create time label - "Now" for current conditions, "+Xh" for future
-          const timeLabel = hours === 0 ? 'Now' : `+${hours}h`;
-
-          forecastHTML += `
-            <div class="wind-forecast-item" style="${windColor}">
-              <div class="wind-time">${timeLabel} (${timeStr})</div>
-              <div class="wind-speed">${windSpeedKts} kts</div>
-              <div class="wind-direction">${windDirection} (${windDeg}°)</div>
-            </div>
-          `;
-        }
-      });
-
-    } else {
-      // Fallback for other models or errors
-      forecastHTML = `
-        <div class="wind-forecast-item">
-          <div class="wind-time">Model</div>
-          <div class="wind-speed">Not</div>
-          <div class="wind-direction">Available</div>
-        </div>
-      `;
-    }
-
-    if (forecastHTML) {
-      windForecastGrid.innerHTML = forecastHTML;
-    } else {
-      throw new Error('No forecast data available for this location');
-    }
-  } catch (error) {
-    console.error('Wind forecast fetch error:', error);
-    document.getElementById('wind-forecast-grid').innerHTML = `
-      <div class="wind-forecast-item" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
-        <div class="wind-time">Error</div>
-        <div class="wind-speed">${error.message}</div>
-        <div class="wind-direction">Try another model</div>
-      </div>
-    `;
-  }
 }
 
 // Dark mode functionality
@@ -3243,27 +2949,6 @@ function updateChartsForTheme(theme) {
     });
     if (refreshSparklines) refreshSparklines();
   });
-
-  // Add event listener for forecast model dropdown
-  document.getElementById('forecast-model').addEventListener('change', function() {
-    if (lat && lon) {
-      loadWindForecast();
-    }
-  });
-
-  // Update wind forecast every hour
-  setInterval(() => {
-    if (lat && lon) {
-      loadWindForecast();
-    }
-  }, 60 * 60 * 1000);
-
-  // Update wave forecast every hour
-  setInterval(() => {
-    if (lat && lon) {
-      loadWaveForecast();
-    }
-  }, 60 * 60 * 1000);
 
   // Update conditions forecast every hour
   setInterval(() => {
