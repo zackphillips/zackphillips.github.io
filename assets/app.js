@@ -415,9 +415,8 @@ let refreshSparklines = null; // set once initInlineSparklines is ready
 let bannerState = 'ok'; // 'ok' | 'error' — persists across theme switches
 
 // ── Theme cycling ──────────────────────────────────────────────────────────
-const THEMES = ['light', 'mermug', 'dark', 'deep-sea', 'starboard', 'port-light',
-                'midnight-watch', 'chart-room', 'fog-bank', 'overcast', 'coral', 'kelp', 'dusk'];
-const DARK_THEMES = new Set(['dark', 'mermug', 'deep-sea', 'starboard', 'port-light', 'midnight-watch']);
+const THEMES = ['marine', 'dark', 'bright'];
+const DARK_THEMES = new Set(['marine', 'dark']);
 function isDarkTheme(theme) { return DARK_THEMES.has(theme); }
 
 // ── Unit-toggle configuration ──────────────────────────────────────────────
@@ -2880,7 +2879,7 @@ function initDarkMode() {
   const html = document.documentElement;
 
   // Check for saved theme preference, then vessel config, then fall back to light
-  const savedTheme = localStorage.getItem('theme') || vesselData?.theme || 'light';
+  const savedTheme = localStorage.getItem('theme') || vesselData?.theme || 'marine';
   html.setAttribute('data-theme', savedTheme);
   updateDarkModeButton(savedTheme);
 
