@@ -428,8 +428,8 @@ let refreshSparklines = null; // set once initInlineSparklines is ready
 let bannerState = 'ok'; // 'ok' | 'error' — persists across theme switches
 
 // ── Theme cycling ──────────────────────────────────────────────────────────
-const THEMES = ['marine', 'dark', 'bright'];
-const DARK_THEMES = new Set(['marine', 'dark']);
+const THEMES = ['marine', 'mermug', 'bright'];
+const DARK_THEMES = new Set(['marine', 'mermug']);
 function isDarkTheme(theme) { return DARK_THEMES.has(theme); }
 
 // ── Unit-toggle configuration ──────────────────────────────────────────────
@@ -2916,8 +2916,7 @@ function initDarkMode() {
 
 function updateDarkModeButton(theme) {
   const button = document.getElementById('darkModeToggle');
-  const nextTheme = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
-  button.textContent = nextTheme;
+  button.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
   button.style.background = isDarkTheme(theme) ? '#555e6e' : '#2c3e50';
   button.style.color = '#fff';
 }
