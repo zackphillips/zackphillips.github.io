@@ -6,6 +6,19 @@ const { haversine, getAnchorDistanceColor, getWindDirection } = vesselUtils;
 
 Chart.defaults.font.family = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 Chart.defaults.font.size = 12;
+Chart.defaults.events = ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove', 'touchend'];
+
+// Hide tooltips when the cursor/finger leaves the chart area
+Chart.register({
+  id: 'tooltipHideOnLeave',
+  afterEvent(chart, args) {
+    const type = args.event.type;
+    if (type === 'mouseout' || type === 'touchend') {
+      chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+      chart.update('none');
+    }
+  }
+});
 
 let map, marker, trackLine, trackMarkers;
 let anchorLayer = null;    // Leaflet circle for anchor swing radius
