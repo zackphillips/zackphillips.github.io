@@ -46,12 +46,17 @@ def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return R * 2 * math.asin(math.sqrt(a))
 
 
+def _get_privacy_zone_center(lat: float, lon: float) -> tuple[float, float] | None:
+    """Return the center of the first exclusion zone containing (lat, lon), or None."""
+    for zone_lat, zone_lon, radius in PRIVACY_EXCLUSION_ZONES:
+        if _haversine_m(lat, lon, zone_lat, zone_lon) <= radius:
+            return zone_lat, zone_lon
+    return None
+
+
 def _is_position_private(lat: float, lon: float) -> bool:
     """Return True if the position falls inside any privacy exclusion zone."""
-    return any(
-        _haversine_m(lat, lon, zone_lat, zone_lon) <= radius
-        for zone_lat, zone_lon, radius in PRIVACY_EXCLUSION_ZONES
-    )
+    return _get_privacy_zone_center(lat, lon) is not None
 
 
 def load_vessel_data() -> dict:
@@ -409,10 +414,10 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
             heading_value = heading.get("value")
             if isinstance(heading_value, (int, float)):
                 course_over_ground_true = heading_value
-    # Check privacy: redact position if inside an exclusion zone.
-    position_private = _is_position_private(lat, lon)
-    if position_private:
-        print(f"Privacy: position redacted - within exclusion zone ({lat:.6f}, {lon:.6f})")
+    # Check privacy: use zone center if inside an exclusion zone.
+    zone_center = _get_privacy_zone_center(lat, lon)
+    if zone_center is not None:
+        print(f"Privacy: showing zone center ({zone_center[0]:.6f}, {zone_center[1]:.6f}) - vessel within exclusion zone")
 
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -423,12 +428,11 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     # --- Snapshot file: full SignalK delta format, whitelisted paths only ---
     signalk_values: list[dict[str, Any]] = []
     _collect_signalk_values(blob, "", values=signalk_values, whitelist=SNAPSHOT_PATH_WHITELIST)
-    # Always strip any auto-collected navigation.position (may be redacted).
+    # Always strip any auto-collected navigation.position (may need replacing).
     signalk_values = [v for v in signalk_values if v["path"] != "navigation.position"]
-    if not position_private:
-        # Prepend position only when it is safe to store.
-        pos_entry = {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}
-        signalk_values.insert(0, pos_entry)
+    display_lat, display_lon = zone_center if zone_center is not None else (lat, lon)
+    pos_entry = {"path": "navigation.position", "value": {"latitude": display_lat, "longitude": display_lon}}
+    signalk_values.insert(0, pos_entry)
 
     snapshot_payload = {
         "context": "vessels.self",
@@ -442,24 +446,16 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     # Always update the all-snapshots index (no position data — privacy safe).
     _update_snapshot_index(output_dir, filename, timestamp)
 
-    # --- Index entry: only written when position is not private ---
-    if position_private:
-        # Update the index (pruning old entries) without adding a new one.
-        index_path = output_dir / Path(POSITION_INDEX_FILE).name
-        entries = _load_position_index(index_path)
-        cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
-        entries = [e for e in entries if (_parse_timestamp(e.get("timestamp")) or datetime.min.replace(tzinfo=UTC)) >= cutoff]
-        _write_position_index(index_path, entries)
-        _prune_old_position_files(output_dir)
-        return
-
+    # --- Index entry: use zone center when inside a privacy zone ---
+    display_lat, display_lon = zone_center if zone_center is not None else (lat, lon)
     index_values: list[dict[str, Any]] = [
-        {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}},
+        {"path": "navigation.position", "value": {"latitude": display_lat, "longitude": display_lon}},
     ]
-    if speed_over_ground is not None:
-        index_values.append({"path": "navigation.speedOverGround", "value": speed_over_ground})
-    if course_over_ground_true is not None:
-        index_values.append({"path": "navigation.courseOverGroundTrue", "value": course_over_ground_true})
+    if zone_center is None:
+        if speed_over_ground is not None:
+            index_values.append({"path": "navigation.speedOverGround", "value": speed_over_ground})
+        if course_over_ground_true is not None:
+            index_values.append({"path": "navigation.courseOverGroundTrue", "value": course_over_ground_true})
 
     index_entry: dict[str, Any] = {
         "timestamp": timestamp.isoformat(),
@@ -510,8 +506,7 @@ def run_update(
         git_reset(remote=remote, branch=branch)
     blob = fetch_blob(signalk_url=signalk_url)
 
-    # Redact navigation.position from the live blob if inside a privacy zone,
-    # so the position is never committed to the public repository.
+    # Replace position with zone center in the blob if inside a privacy zone.
     nav = blob.get("navigation") if isinstance(blob, dict) else None
     if isinstance(nav, dict):
         pos = nav.get("position")
@@ -520,9 +515,11 @@ def run_update(
             lat = pos_val.get("latitude")
             lon = pos_val.get("longitude")
             if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
-                if _is_position_private(lat, lon):
-                    print(f"Privacy: position redacted from {output_file.name} - within exclusion zone")
-                    nav.pop("position", None)
+                zone_center = _get_privacy_zone_center(lat, lon)
+                if zone_center is not None:
+                    print(f"Privacy: replacing position with zone center in {output_file.name}")
+                    pos_val["latitude"] = zone_center[0]
+                    pos_val["longitude"] = zone_center[1]
 
     output_file.write_text(json.dumps(blob, indent=2), encoding="utf-8")
     print(f"Wrote SignalK blob to {output_file}")
