@@ -412,7 +412,7 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     # Check privacy: redact position if inside an exclusion zone.
     position_private = _is_position_private(lat, lon)
     if position_private:
-        print(f"Privacy: position redacted — within exclusion zone ({lat:.6f}, {lon:.6f})")
+        print(f"Privacy: position redacted - within exclusion zone ({lat:.6f}, {lon:.6f})")
 
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -521,7 +521,7 @@ def run_update(
             lon = pos_val.get("longitude")
             if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
                 if _is_position_private(lat, lon):
-                    print(f"Privacy: position redacted from {output_file.name} — within exclusion zone")
+                    print(f"Privacy: position redacted from {output_file.name} - within exclusion zone")
                     nav.pop("position", None)
 
     output_file.write_text(json.dumps(blob, indent=2), encoding="utf-8")
