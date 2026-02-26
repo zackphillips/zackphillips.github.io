@@ -14,7 +14,11 @@ import uuid
 import requests
 
 # Import utilities (used in multiple methods)
-from .utils import load_vessel_info, save_vessel_info
+# Support both direct invocation (python3 scripts/...) and module invocation (python -m scripts....)
+try:
+    from .utils import load_vessel_info, save_vessel_info
+except ImportError:
+    from utils import load_vessel_info, save_vessel_info
 
 
 class SignalKTokenRequester:
@@ -324,7 +328,7 @@ def main():
             else:
                 print(f"[ERROR] SignalK token issue: {message}")
                 print("\nTo create a token, run:")
-                print("  python3 scripts/signalk_token_management.py")
+                print("  make create-signalk-token")
                 print("\nOr run the vessel configuration wizard:")
                 print("  make config")
 
