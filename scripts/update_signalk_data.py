@@ -256,7 +256,7 @@ def _load_position_index(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     try:
-        payload = json.loads(path.read_text())
+        payload = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return []
     if isinstance(payload, list):
@@ -268,7 +268,7 @@ def _load_position_index(path: Path) -> list[dict[str, Any]]:
 
 def _write_position_index(path: Path, entries: list[dict[str, Any]]) -> None:
     payload = {"positions": entries}
-    path.write_text(json.dumps(payload, indent=2))
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
 
 def _collect_signalk_values(
@@ -353,7 +353,7 @@ def _update_snapshot_index(output_dir: Path, filename: str, timestamp: datetime)
     """
     index_path = output_dir / Path(SNAPSHOT_INDEX_FILE).name
     try:
-        existing = json.loads(index_path.read_text()) if index_path.exists() else []
+        existing = json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else []
         if not isinstance(existing, list):
             existing = []
     except json.JSONDecodeError:
@@ -366,7 +366,7 @@ def _update_snapshot_index(output_dir: Path, filename: str, timestamp: datetime)
     ]
     existing.append({"timestamp": timestamp.isoformat(), "file": filename})
     existing.sort(key=lambda e: e.get("timestamp") or "")
-    index_path.write_text(json.dumps(existing, indent=2))
+    index_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
 
 
 def _prune_old_position_files(output_dir: Path) -> None:
@@ -437,7 +437,7 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
             "values": signalk_values,
         }],
     }
-    position_file.write_text(json.dumps(snapshot_payload, indent=2))
+    position_file.write_text(json.dumps(snapshot_payload, indent=2), encoding="utf-8")
 
     # Always update the all-snapshots index (no position data — privacy safe).
     _update_snapshot_index(output_dir, filename, timestamp)
@@ -524,7 +524,7 @@ def run_update(
                     print(f"Privacy: position redacted from {output_file.name} — within exclusion zone")
                     nav.pop("position", None)
 
-    output_file.write_text(json.dumps(blob, indent=2))
+    output_file.write_text(json.dumps(blob, indent=2), encoding="utf-8")
     print(f"Wrote SignalK blob to {output_file}")
     update_position_cache(blob, output_file)
     git_commit_and_push(
