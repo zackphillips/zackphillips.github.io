@@ -340,7 +340,7 @@ def validate_sensor_config(sensor_config: dict[str, Any]) -> None:
 
         # Check if offset is reasonable (within ±2π radians)
         if abs(offset) > 2 * 3.14159:
-            raise SensorConfigError(f"Unreasonable heading correction offset: {offset} (should be within ±2π radians)")
+            raise SensorConfigError(f"Unreasonable heading correction offset: {offset} (should be within +/-2*pi radians)")
 
 
 def create_default_vessel_config() -> dict[str, Any]:

@@ -178,7 +178,7 @@ class SGP30Sensor(BaseSensor):
                     # If we have enough consecutive good readings, mark as stabilized
                     if consecutive_good_readings >= required_good_readings:
                         logger.info(
-                            f"SGP30: ✓ Sensor stabilized after {attempt + 1} seconds "
+                            f"SGP30: Sensor stabilized after {attempt + 1} seconds "
                             f"with {consecutive_good_readings} consecutive good readings"
                         )
                         logger.info(
@@ -205,7 +205,7 @@ class SGP30Sensor(BaseSensor):
             # If we've tried for 60 seconds and still getting baseline values, proceed anyway
             if not self._stabilized:
                 logger.warning(
-                    f"SGP30: ⚠ Still returning baseline values after {max_attempts} seconds"
+                    f"SGP30: Still returning baseline values after {max_attempts} seconds"
                 )
                 logger.warning(
                     f"SGP30: Final attempt values - TVOC: {tvoc} ppb, eCO2: {eco2} ppm"
