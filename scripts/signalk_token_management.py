@@ -14,11 +14,7 @@ import uuid
 import requests
 
 # Import utilities (used in multiple methods)
-# Support both direct invocation (python3 scripts/...) and module invocation (python -m scripts....)
-try:
-    from .utils import load_vessel_info, save_vessel_info
-except ImportError:
-    from utils import load_vessel_info, save_vessel_info
+from .utils import load_vessel_info, save_vessel_info
 
 
 class SignalKTokenRequester:
