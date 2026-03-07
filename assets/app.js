@@ -480,9 +480,12 @@ const PATH_TO_UNIT_GROUP = {
   'environment.wind.speedApparent':  'speed',
   'navigation.trip.log':             'distance',
   'navigation.log':                  'distance',
-  'environment.water.temperature':   'temperature',
-  'environment.inside.temperature':  'temperature',
-  'environment.inside.pressure':     'pressure',
+  'environment.water.temperature':               'temperature',
+  'environment.inside.temperature':              'temperature',
+  'environment.outside.temperature':             'temperature',
+  'environment.inside.refridgerator.temperature':'temperature',
+  'environment.inside.freezer.temperature':      'temperature',
+  'environment.inside.pressure':                 'pressure',
   'navigation.anchor.currentRadius': 'length',
   'navigation.attitude.roll':        'angle',
   'navigation.attitude.pitch':       'angle',
@@ -1170,6 +1173,9 @@ async function loadData() {
     'electrical.batteries.house.capacity.timeRemaining': { transform: v => v / 3600,                       unit: 'hrs'   },
     'environment.water.temperature':                     { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
     'environment.inside.temperature':                    { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
+    'environment.outside.temperature':                   { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
+    'environment.inside.refridgerator.temperature':      { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
+    'environment.inside.freezer.temperature':            { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
     'environment.inside.humidity':                       { transform: v => v * 100,                        unit: '%'     },
     'environment.inside.pressure':                       { transform: v => v / 100,                        unit: 'mbar'  },
     'environment.inside.airQuality.tvoc':                { transform: v => v,                              unit: 'ppb'   },
@@ -1713,7 +1719,10 @@ async function loadData() {
     // Update the environment with environmental data
     document.getElementById('environment-grid').innerHTML = `
       <div class="info-item" data-path="environment.water.temperature" data-label="Water Temp" data-unit-group="temperature" data-raw="${env.water?.temperature?.value ?? ''}" title="${withUpdated('Water temperature at the surface', env.water?.temperature)}"><div class="label">Water Temp</div><div class="value">${fmtUnit('temperature', env.water?.temperature?.value)}</div></div>
-      <div class="info-item" data-path="environment.inside.temperature" data-label="Inside Temp" data-unit-group="temperature" data-raw="${data.environment?.inside?.temperature?.value ?? ''}" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Inside Temp</div><div class="value">${fmtUnit('temperature', data.environment?.inside?.temperature?.value)}</div></div>
+      <div class="info-item" data-path="environment.outside.temperature" data-label="Outdoor Temp" data-unit-group="temperature" data-raw="${data.environment?.outside?.temperature?.value ?? ''}" title="${withUpdated('Outside air temperature', data.environment?.outside?.temperature)}"><div class="label">Outdoor Temp</div><div class="value">${fmtUnit('temperature', data.environment?.outside?.temperature?.value)}</div></div>
+      <div class="info-item" data-path="environment.inside.temperature" data-label="Indoor Temp" data-unit-group="temperature" data-raw="${data.environment?.inside?.temperature?.value ?? ''}" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Indoor Temp</div><div class="value">${fmtUnit('temperature', data.environment?.inside?.temperature?.value)}</div></div>
+      <div class="info-item" data-path="environment.inside.refridgerator.temperature" data-label="Fridge Temp" data-unit-group="temperature" data-raw="${data.environment?.inside?.refridgerator?.temperature?.value ?? ''}" title="${withUpdated('Refrigerator temperature', data.environment?.inside?.refridgerator?.temperature)}"><div class="label">Fridge Temp</div><div class="value">${fmtUnit('temperature', data.environment?.inside?.refridgerator?.temperature?.value)}</div></div>
+      <div class="info-item" data-path="environment.inside.freezer.temperature" data-label="Freezer Temp" data-unit-group="temperature" data-raw="${data.environment?.inside?.freezer?.temperature?.value ?? ''}" title="${withUpdated('Freezer temperature', data.environment?.inside?.freezer?.temperature)}"><div class="label">Freezer Temp</div><div class="value">${fmtUnit('temperature', data.environment?.inside?.freezer?.temperature?.value)}</div></div>
       <div class="info-item" data-path="environment.inside.humidity" data-label="Inside Humidity" title="${withUpdated('Inside humidity from BME280 sensor', data.environment?.inside?.humidity)}"><div class="label">Inside Humidity</div><div class="value">${data.environment?.inside?.humidity?.value ? (data.environment.inside.humidity.value * 100).toFixed(1) + '%' : 'N/A'}</div></div>
       <div class="info-item" data-path="environment.inside.pressure" data-label="Barometric Pressure" data-unit-group="pressure" data-raw="${data.environment?.inside?.pressure?.value ?? ''}" title="${withUpdated('Inside barometric pressure from BME280 sensor', data.environment?.inside?.pressure)}"><div class="label">Barometric Pressure</div><div class="value">${fmtUnit('pressure', data.environment?.inside?.pressure?.value)}</div></div>
       <div class="info-item" data-path="environment.inside.airQuality.tvoc" data-label="TVOC" title="${withUpdated('Indoor air quality - Total Volatile Organic Compounds', data.environment?.inside?.airQuality?.tvoc)}"><div class="label">TVOC</div><div class="value">${data.environment?.inside?.airQuality?.tvoc?.value ? data.environment.inside.airQuality.tvoc.value.toFixed(0) + ' ppb' : 'N/A'}</div></div>
