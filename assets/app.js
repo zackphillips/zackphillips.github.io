@@ -2018,20 +2018,21 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
     focusSide = relativeAngle > 0 ? 'starboard' : 'port';
   }
 
-  // Create full 360° angle array
+  // Create full 360° angle array.
+  // Labels use sailing sign convention: positive = starboard, negative = port.
   const fullAngles = [];
   const fullLabels = [];
 
-  // Add angles from 0° to 180° (port side)
+  // Starboard side: 0° → +180°
   for (let i = 0; i <= 180; i += 15) {
     fullAngles.push(i);
-    fullLabels.push(`${i}°`);
+    fullLabels.push(i === 0 ? '0°' : `+${i}°`);
   }
 
-  // Add angles from 195° to 345° (starboard side)
+  // Port side: -165° → -15° (stored internally as 195°→345° for Chart.js)
   for (let i = 195; i <= 345; i += 15) {
     fullAngles.push(i);
-    fullLabels.push(`${i}°`);
+    fullLabels.push(`${i - 360}°`);  // 195→-165, 210→-150, … 345→-15
   }
 
   // Create datasets for each wind speed
@@ -2172,8 +2173,7 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
             pointLabels: {
               color: isDark ? '#ffffff' : '#2c3e50',
               font: {
-                size: 14,
-                weight: 'bold'
+                size: 9,
               },
               callback: function(value, index) {
                 return value;
@@ -2186,6 +2186,7 @@ function drawPolarChart(currentTWA, currentSpeed, currentTWS) {
             },
             startAngle: startAngle,
             min: 0,
+            max: 12,
             backgroundColor: 'transparent'
           }
         }
