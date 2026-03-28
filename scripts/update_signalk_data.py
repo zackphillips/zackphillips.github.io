@@ -220,6 +220,10 @@ def git_commit_and_push(
     file_path: Path, amend: bool, no_push: bool, force_push: bool
 ) -> None:
     subprocess.run(["git", "add", "data/telemetry"], check=True)
+    # Include calculated polars in the same commit so the site gets updated curves.
+    polar_csv = get_project_root() / "data/vessel/polars_calculated.csv"
+    if polar_csv.exists():
+        subprocess.run(["git", "add", str(polar_csv)], check=True)
     commit_cmd = ["git", "commit", "-m", f"Auto update {datetime.now().isoformat()}"]
     if amend:
         commit_cmd.insert(2, "--amend")
