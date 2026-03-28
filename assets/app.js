@@ -415,6 +415,7 @@ function getAllStations() {
 let tideChartInstance = null;
 let polarChartInstance = null;
 let polarData = null;
+let activePolarSource = 'estimated'; // 'estimated' | 'calculated'
 let currentEnv = null; // Global environment data
 let currentNav = null; // Global navigation data
 let currentPropulsion = null; // Global propulsion data
@@ -1775,9 +1776,9 @@ async function loadData() {
   }
 }
 
-async function loadPolarData() {
+async function loadPolarData(csvPath = 'data/vessel/polars.csv') {
   try {
-    const response = await fetch('data/vessel/polars.csv');
+    const response = await fetch(csvPath);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -1805,6 +1806,48 @@ async function loadPolarData() {
       <div style="color: #e74c3c;">Error loading polar data: ${error.message}</div>
     `;
   }
+}
+
+async function initPolarToggle() {
+  const btn = document.getElementById('polar-source-toggle');
+  if (!btn) return;
+
+  // Check whether calculated polars exist and have any non-zero data.
+  let hasCalculated = false;
+  try {
+    const resp = await fetch('data/vessel/polars_calculated.csv');
+    if (resp.ok) {
+      const text = await resp.text();
+      hasCalculated = text.split('\n').slice(1).some(line => {
+        return line.split(';').slice(1).some(v => parseFloat(v) > 0);
+      });
+    }
+  } catch (_) { /* file not present yet */ }
+
+  if (!hasCalculated) return;
+
+  const updateBtn = () => {
+    if (activePolarSource === 'estimated') {
+      btn.textContent = 'Estimated';
+      btn.title = 'Showing ORC estimated polars — click to switch to your calculated polars';
+    } else {
+      btn.textContent = 'Calculated';
+      btn.title = 'Showing your calculated polars — click to switch to ORC estimated polars';
+    }
+  };
+
+  updateBtn();
+  btn.style.display = '';
+
+  btn.addEventListener('click', async () => {
+    activePolarSource = activePolarSource === 'estimated' ? 'calculated' : 'estimated';
+    const csvPath = activePolarSource === 'calculated'
+      ? 'data/vessel/polars_calculated.csv'
+      : 'data/vessel/polars.csv';
+    await loadPolarData(csvPath);
+    updateBtn();
+    updatePolarPerformance();
+  });
 }
 
 function getPolarSpeed(twa, tws) {
@@ -3053,6 +3096,7 @@ function updateChartsForTheme(theme) {
 
   initDarkMode();
   loadPolarData();
+  initPolarToggle();
   loadData();
 
   // Real-time SignalK updates removed; using static data only

@@ -6,6 +6,7 @@
 .PHONY: check-bme280-service-status check-bno055-service-status check-mmc5603-service-status check-sgp30-service-status
 .PHONY: show-logs-website show-logs-bme280 show-logs-bno055 show-logs-mmc5603 show-logs-sgp30
 .PHONY: calibrate-mmc5603 calibrate-bno055 calibrate-sgp30
+.PHONY: install-polars-service uninstall-polars-service check-service-status-polars show-logs-polars run-polar-update
 
 # Default target
 .DEFAULT_GOAL := help
@@ -167,7 +168,7 @@ check-linux:
 # Default target
 help:
 	@echo "Installation and General Usage:"
-	@echo "  make install        - Install all services (website, sensors)"
+	@echo "  make install        - Install all services (website, polars, sensors)"
 	@echo "  make uninstall      - Uninstall all services (Linux only)"
 	@echo "  make status         - Reports all sensor and website statuses"
 	@echo "  make config        - Interactive vessel configuration wizard"
@@ -184,6 +185,7 @@ help:
 	@echo "  make pre-commit-install - Install pre-commit hooks (requires uv)"
 	@echo "  make lint          - Run ruff linter and auto-fix issues on all Python files"
 	@echo "  make run-website-update       - Run one website telemetry update now"
+	@echo "  make run-polar-update         - Run one polar accumulation sample now"
 	@echo "  make run-bme280        - Run BME280 sensor read and publish"
 	@echo "  make run-bno055        - Run BNO055 sensor read and publish"
 	@echo "  make run-mmc5603      - Run MMC5603 sensor read and publish"
@@ -196,16 +198,19 @@ help:
 	@echo ""
 	@echo "Service management:"
 	@echo "  make install-website-service    - Install website data updater service"
+	@echo "  make install-polars-service     - Install polar accumulation service (10s)"
 	@echo "  make install-all-sensor-services    - Install all individual sensor services"
 	@echo "  make install-bme280-service    - Install BME280 sensor service"
 	@echo "  make install-bno055-service    - Install BNO055 sensor service"
 	@echo "  make install-mmc5603-service   - Install MMC5603 sensor service"
 	@echo "  make install-sgp30-service     - Install SGP30 sensor service"
 	@echo "  make check-service-status-website - Check website service status"
+	@echo "  make check-service-status-polars  - Check polar accumulation service status"
 	@echo "  make check-service-status-all-sensors - Check all sensor service statuses"
 	@echo ""
 	@echo "Logs:"
 	@echo "  make show-logs-website             - Show website service logs"
+	@echo "  make show-logs-polars              - Show polar accumulation service logs"
 	@echo "  make show-logs-all-sensors       - Show all sensor service logs"
 	@echo "  make show-logs-bme280          - Show BME280 sensor logs"
 	@echo "  make show-logs-bno055          - Show BNO055 sensor logs"
@@ -235,10 +240,13 @@ install: check-linux check-signalk-token
 	@echo ""
 	@echo "This will install:"
 	@echo "  - Website data updater service"
+	@echo "  - Polar accumulation service"
 	@echo "  - Individual sensor services (BME280, BNO055, MMC5603, SGP30)"
 	@echo ""
 	@echo ""
 	@$(MAKE) install-website-service
+	@echo ""
+	@$(MAKE) install-polars-service
 	@echo ""
 	@$(MAKE) install-all-sensor-services
 	@echo ""
@@ -246,6 +254,7 @@ install: check-linux check-signalk-token
 	@echo ""
 	@echo "Service Summary:"
 	@echo "  - Website service: Updates telemetry data every 150 seconds"
+	@echo "  - Polars service: Accumulates polar performance data every 10 seconds"
 	@echo "  - Fast sensor service: Publishes basic sensor data every 10 seconds"
 	@echo "  - Slow sensor service: Publishes all sensor data every 240 seconds"
 	@echo ""
@@ -259,10 +268,13 @@ uninstall: check-linux
 	@echo ""
 	@echo "This will uninstall:"
 	@echo "  - Website data updater service"
+	@echo "  - Polar accumulation service"
 	@echo "  - Individual sensor services (BME280, BNO055, MMC5603, SGP30)"
 	@echo ""
 	@echo ""
 	@$(MAKE) uninstall-website-service
+	@echo ""
+	@$(MAKE) uninstall-polars-service
 	@echo ""
 	@$(MAKE) uninstall-all-sensor-services
 	@echo ""
@@ -276,6 +288,49 @@ install-website-service: check-linux check-signalk-token
 		exit 1; \
 	fi
 	$(call install-service,website,vesselwebsite,Vessel Tracker Data Updater,scripts.update_signalk_data,--interval 150,150)
+
+install-polars-service: check-linux
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	@echo "Installing polar accumulation service..."
+	@if [ -f "/etc/systemd/system/vesselpolars.service" ]; then \
+		echo "vesselpolars service already exists. Uninstalling first..."; \
+		sudo systemctl stop vesselpolars 2>/dev/null || true; \
+		sudo systemctl disable vesselpolars 2>/dev/null || true; \
+	fi
+	@sed -e "s|{{DESCRIPTION}}|Vessel Polar Performance Accumulator|g" \
+		-e "s|{{USER}}|$$(whoami)|g" \
+		-e "s|{{WORKING_DIRECTORY}}|$(CURDIR)|g" \
+		-e "s|{{EXEC_START}}|$(UV_BIN) run python -m scripts.update_polar_data --interval 10|g" \
+		-e "s|{{SIGNALK_URL}}|http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self|g" \
+		"$(CURDIR)/services/polars.service.tpl" | sudo tee /etc/systemd/system/vesselpolars.service > /dev/null
+	@echo "Reloading systemd..."
+	@sudo systemctl daemon-reload
+	@echo "Enabling and starting vesselpolars service..."
+	@sudo systemctl enable vesselpolars
+	@sudo systemctl start vesselpolars
+	@echo "vesselpolars service installed and started successfully!"
+
+uninstall-polars-service: check-linux
+	$(call uninstall-service,vesselpolars)
+
+check-service-status-polars: check-linux
+	$(call check-service-status,vesselpolars,polars)
+
+show-logs-polars: check-linux
+	$(call show-service-logs,vesselpolars)
+
+run-polar-update:
+	@if [ -z "$(UV_BIN)" ]; then \
+		echo "Error: 'uv' is not installed. Please install uv first."; \
+		echo "Visit: https://github.com/astral-sh/uv"; \
+		exit 1; \
+	fi
+	@echo "Running one polar accumulation sample..."
+	"$(UV_BIN)" run python -m scripts.update_polar_data --interval 0 --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self"
 
 install-all-sensor-services: check-linux check-signalk-token
 	@if [ -z "$(UV_BIN)" ]; then \
@@ -385,6 +440,15 @@ status: check-linux
 		echo "Service: vesselwebsite"; \
 		sudo systemctl is-active vesselwebsite >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
 		sudo systemctl is-enabled vesselwebsite >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
+	else \
+		echo "Status: ✗ Not installed"; \
+	fi
+	@echo ""
+	@echo "--- Polar Accumulation Service Status ---"
+	@if [ -f "/etc/systemd/system/vesselpolars.service" ]; then \
+		echo "Service: vesselpolars"; \
+		sudo systemctl is-active vesselpolars >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
+		sudo systemctl is-enabled vesselpolars >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
 	else \
 		echo "Status: ✗ Not installed"; \
 	fi
