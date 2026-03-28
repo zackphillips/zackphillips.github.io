@@ -1,9 +1,25 @@
 import math
 from unittest.mock import patch
 
-import pytest
-
 import scripts.update_polar_data as upd
+
+
+# --- _fold_twa ---
+
+def test_fold_twa_starboard():
+    assert upd._fold_twa(90.0) == 90.0
+
+def test_fold_twa_port():
+    assert upd._fold_twa(270.0) == 90.0
+
+def test_fold_twa_head_to_wind():
+    assert upd._fold_twa(0.0) == 0.0
+
+def test_fold_twa_dead_downwind():
+    assert upd._fold_twa(180.0) == 180.0
+
+def test_fold_twa_negative():
+    assert upd._fold_twa(-45.0) == 45.0
 
 
 # --- _twa_bin ---
@@ -87,6 +103,39 @@ def test_update_accumulator_filters_low_stw():
     improved = upd.update_accumulator(acc, 90.0, 10.0, 0.2)  # STW below MIN_STW_KTS
     assert not improved
     assert acc["bins"] == {}
+
+def test_update_accumulator_filters_hull_speed():
+    acc = {"bins": {}, "observations": 0}
+    improved = upd.update_accumulator(acc, 90.0, 20.0, 10.0)  # STW above MAX_STW_KTS
+    assert not improved
+    assert acc["bins"] == {}
+
+def test_update_accumulator_filters_speed_wind_ratio():
+    acc = {"bins": {}, "observations": 0}
+    # 6 kts boat speed in 2 kts of wind — obviously motoring
+    improved = upd.update_accumulator(acc, 90.0, 2.0, 6.0)
+    assert not improved
+    assert acc["bins"] == {}
+
+def test_update_accumulator_filters_small_twa():
+    acc = {"bins": {}, "observations": 0}
+    # 20° TWA — no displacement sailboat points this high
+    improved = upd.update_accumulator(acc, 20.0, 10.0, 5.0)
+    assert not improved
+    assert acc["bins"] == {}
+
+def test_update_accumulator_filters_small_twa_port_side():
+    acc = {"bins": {}, "observations": 0}
+    # 340° = 20° folded — same filter should apply
+    improved = upd.update_accumulator(acc, 340.0, 10.0, 5.0)
+    assert not improved
+    assert acc["bins"] == {}
+
+def test_update_accumulator_accepts_at_min_twa_boundary():
+    acc = {"bins": {}, "observations": 0}
+    # Exactly at MIN_TWA_DEG should be accepted
+    improved = upd.update_accumulator(acc, upd.MIN_TWA_DEG, 10.0, 5.0)
+    assert improved
 
 def test_update_accumulator_increments_observations_even_without_improvement():
     acc = {"bins": {}, "observations": 0}

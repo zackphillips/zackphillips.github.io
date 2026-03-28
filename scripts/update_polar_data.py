@@ -37,6 +37,9 @@ TWS_BIN_SIZE = 2  # knots
 # Quality-filter thresholds
 MIN_TWS_KTS = 2.0
 MIN_STW_KTS = 0.5
+MAX_STW_KTS = 9.5        # generous hull-speed ceiling for a 42ft displacement boat
+MAX_SPEED_WIND_RATIO = 1.5  # STW can't exceed 1.5× TWS (catches motoring in light air)
+MIN_TWA_DEG = 30         # no displacement sailboat points within 30° of true wind
 
 
 def _twa_bin(twa_deg: float) -> int:
@@ -66,9 +69,21 @@ def save_accumulator(acc: dict, path: Path) -> None:
     path.write_text(json.dumps(acc, indent=2))
 
 
+def _fold_twa(twa_deg: float) -> float:
+    """Fold an arbitrary TWA to the 0–180° range."""
+    twa = abs(twa_deg) % 360
+    return 360 - twa if twa > 180 else twa
+
+
 def update_accumulator(acc: dict, twa_deg: float, tws_kts: float, stw_kts: float) -> bool:
     """Update the max-speed bin; return True if any bin was improved."""
     if tws_kts < MIN_TWS_KTS or stw_kts < MIN_STW_KTS:
+        return False
+    if stw_kts > MAX_STW_KTS:
+        return False
+    if stw_kts > tws_kts * MAX_SPEED_WIND_RATIO:
+        return False
+    if _fold_twa(twa_deg) < MIN_TWA_DEG:
         return False
     key = f"{_twa_bin(twa_deg)}_{_tws_bin(tws_kts)}"
     improved = key not in acc["bins"] or stw_kts > acc["bins"][key]
