@@ -383,7 +383,7 @@ function renderTracks() {
     const segments = olderDays.map((day) =>
       trackByDay.get(day).map((p) => [p.latitude, p.longitude])
     );
-    olderTrackLayer = L.polyline(segments, { color: '#ffffff', weight: 2, opacity: 0.45 }).addTo(map);
+    olderTrackLayer = L.polyline(segments, { color: '#ffffff', weight: 2, opacity: 0.6 }).addTo(map);
   }
 
   // Build / rebuild the day-colour legend.
@@ -404,21 +404,35 @@ function renderTracks() {
       </div>`;
     }).join('');
 
+    const olderCount = days.length - RECENT_TRACK_COUNT;
+    let olderSwatchHtml = '';
+    if (olderDays.length > 0) {
+      olderSwatchHtml = `<div class="track-legend-item track-legend-item--muted">
+        <span class="track-legend-swatch track-legend-swatch--past"></span>
+        <span>Past (${olderDays.length} day${olderDays.length === 1 ? '' : 's'})</span>
+      </div>`;
+    }
+
     let historyHtml = '';
     if (hasOlder) {
-      const modes = ['+5', '+10', 'all'];
-      const labels = ['+5', '+10', 'All'];
-      const btns = modes.map((m, i) =>
-        `<button class="track-hist-btn${trackHistoryMode === m ? ' active' : ''}" data-mode="${m}">${labels[i]}</button>`
+      const histModes = [
+        { mode: '+5',  label: '+5',  count: 5 },
+        { mode: '+10', label: '+10', count: 10 },
+        { mode: 'all', label: 'All', count: Infinity },
+      ].filter(({ count }) => count === Infinity || olderCount > count);
+      const btns = histModes.map(({ mode, label }) =>
+        `<button class="track-hist-btn${trackHistoryMode === mode ? ' active' : ''}" data-mode="${mode}">${label}</button>`
       ).join('');
       historyHtml = `<div class="track-hist-row"><span class="track-hist-label">History:</span>${btns}</div>`;
     }
 
-    div.innerHTML = legendItems + historyHtml;
+    div.innerHTML = legendItems + olderSwatchHtml + historyHtml;
+
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
 
     div.querySelectorAll('.track-hist-btn').forEach((btn) => {
-      L.DomEvent.on(btn, 'click', (e) => {
-        L.DomEvent.stopPropagation(e);
+      L.DomEvent.on(btn, 'click', () => {
         const mode = btn.dataset.mode;
         trackHistoryMode = trackHistoryMode === mode ? 'none' : mode;
         renderTracks();
