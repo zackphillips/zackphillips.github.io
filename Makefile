@@ -519,7 +519,7 @@ run-website-update:
 	fi
 	@echo "Running one website telemetry update..."
 	@echo "Fetching from SignalK and writing data..."; \
-	"$(UV_BIN)" run python -m scripts.update_signalk_data --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
+	"$(UV_BIN)" run python -m scripts.update_signalk_data --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
 
 # Run tests
 test: test-py test-js
