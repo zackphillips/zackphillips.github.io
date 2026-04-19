@@ -25,6 +25,9 @@ let anchorLayer = null;    // Leaflet circle for anchor swing radius
 let anchorMarker = null;   // ⚓ icon at anchor drop position
 let anchorLine = null;     // dashed line from anchor to vessel
 let trackLegend = null;    // Leaflet control for day-colour legend
+let trackHistoryMode = 'none'; // 'none' | '+5' | '+10' | 'all'
+let trackByDay = new Map();    // Cached track data keyed by YYYY-MM-DD
+let olderTrackLayer = null;    // Leaflet layer for older tracks shown in white
 let lat, lon; // Global variables for coordinates
 let vesselState = ''; // 'underway' | 'at anchor' | ''
 let vesselData = null; // Global vessel information
@@ -270,6 +273,20 @@ const DAY_TRACK_COLORS = [
   '#009688', '#2196f3', '#ff4081', '#76ff03', '#40c4ff', '#ea80fc',
 ];
 
+const HARBOR_CENTER_LAT = 37.7802069;
+const HARBOR_CENTER_LON = -122.3858040;
+const HARBOR_RADIUS_M = 200;
+const RECENT_TRACK_COUNT = 10;
+
+function haversineMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 /**
  * Normalise a positions_index entry to {latitude, longitude, timestamp,
  * speedOverGround, courseOverGroundTrue}, handling both:
@@ -304,6 +321,129 @@ function parsePositionPoint(point) {
   };
 }
 
+function renderTracks() {
+  if (!map || !trackByDay.size) return;
+
+  // Clear previous track layers.
+  if (!trackMarkers) {
+    trackMarkers = L.layerGroup().addTo(map);
+  } else {
+    trackMarkers.clearLayers();
+  }
+  if (trackLine) {
+    const lines = Array.isArray(trackLine) ? trackLine : [trackLine];
+    lines.forEach((l) => map.removeLayer(l));
+    trackLine = null;
+  }
+  if (olderTrackLayer) {
+    map.removeLayer(olderTrackLayer);
+    olderTrackLayer = null;
+  }
+
+  // Sort newest-first; recent = first RECENT_TRACK_COUNT, older = remainder.
+  const days = [...trackByDay.keys()].sort().reverse();
+  const recentDays = days.slice(0, RECENT_TRACK_COUNT);
+
+  let extraCount = 0;
+  if (trackHistoryMode === '+5') extraCount = 5;
+  else if (trackHistoryMode === '+10') extraCount = 10;
+  else if (trackHistoryMode === 'all') extraCount = Infinity;
+
+  const olderDays = extraCount > 0
+    ? days.slice(RECENT_TRACK_COUNT, extraCount === Infinity ? undefined : RECENT_TRACK_COUNT + extraCount)
+    : [];
+
+  // Draw recent tracks with per-day colours.
+  const lines = [];
+  recentDays.forEach((day, idx) => {
+    const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
+    const pts = trackByDay.get(day);
+    const latlngs = pts.map((p) => [p.latitude, p.longitude]);
+    lines.push(L.polyline(latlngs, { color, weight: 3, opacity: 0.8 }).addTo(map));
+    pts.forEach((point) => {
+      const timeLabel = point.timestamp ? new Date(point.timestamp).toLocaleString() : 'N/A';
+      const speedLabel = Number.isFinite(point.speedOverGround)
+        ? `${(point.speedOverGround * 1.94384).toFixed(1)} kts` : 'N/A';
+      const courseLabel = Number.isFinite(point.courseOverGroundTrue)
+        ? `${(point.courseOverGroundTrue * 180 / Math.PI).toFixed(0)}°` : 'N/A';
+      const tooltipHtml = `<strong>Time:</strong> ${timeLabel}<br/><strong>Speed:</strong> ${speedLabel}<br/><strong>Course:</strong> ${courseLabel}`;
+      L.circleMarker([point.latitude, point.longitude], {
+        radius: 3,
+        color,
+        fillColor: color,
+        fillOpacity: 0.7,
+        weight: 1,
+      }).bindTooltip(tooltipHtml, { direction: 'top', opacity: 0.9 }).addTo(trackMarkers);
+    });
+  });
+  trackLine = lines;
+
+  // Draw older tracks together in white (multi-segment polyline).
+  if (olderDays.length) {
+    const segments = olderDays.map((day) =>
+      trackByDay.get(day).map((p) => [p.latitude, p.longitude])
+    );
+    olderTrackLayer = L.polyline(segments, { color: '#ffffff', weight: 2, opacity: 0.6 }).addTo(map);
+  }
+
+  // Build / rebuild the day-colour legend.
+  if (trackLegend) { trackLegend.remove(); trackLegend = null; }
+  if (!days.length || !map) return;
+
+  const hasOlder = days.length > RECENT_TRACK_COUNT;
+
+  trackLegend = L.control({ position: 'bottomright' });
+  trackLegend.onAdd = () => {
+    const div = L.DomUtil.create('div', 'track-legend');
+    const legendItems = recentDays.map((day, idx) => {
+      const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
+      const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      return `<div class="track-legend-item">
+        <span class="track-legend-swatch" style="background:${color}"></span>
+        <span>${label}</span>
+      </div>`;
+    }).join('');
+
+    const olderCount = days.length - RECENT_TRACK_COUNT;
+    let olderSwatchHtml = '';
+    if (olderDays.length > 0) {
+      olderSwatchHtml = `<div class="track-legend-item track-legend-item--muted">
+        <span class="track-legend-swatch track-legend-swatch--past"></span>
+        <span>Past (${olderDays.length} day${olderDays.length === 1 ? '' : 's'})</span>
+      </div>`;
+    }
+
+    let historyHtml = '';
+    if (hasOlder) {
+      const histModes = [
+        { mode: '+5',  label: '+5',  count: 5 },
+        { mode: '+10', label: '+10', count: 10 },
+        { mode: 'all', label: 'All', count: Infinity },
+      ].filter(({ count }) => count === Infinity || olderCount > count);
+      const btns = histModes.map(({ mode, label }) =>
+        `<button class="track-hist-btn${trackHistoryMode === mode ? ' active' : ''}" data-mode="${mode}">${label}</button>`
+      ).join('');
+      historyHtml = `<div class="track-hist-row"><span class="track-hist-label">History:</span>${btns}</div>`;
+    }
+
+    div.innerHTML = legendItems + olderSwatchHtml + historyHtml;
+
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+
+    div.querySelectorAll('.track-hist-btn').forEach((btn) => {
+      L.DomEvent.on(btn, 'click', () => {
+        const mode = btn.dataset.mode;
+        trackHistoryMode = trackHistoryMode === mode ? 'none' : mode;
+        renderTracks();
+      });
+    });
+
+    return div;
+  };
+  trackLegend.addTo(map);
+}
+
 async function loadTrack() {
   try {
     const response = await fetch(`data/telemetry/positions_index.json?ts=${Date.now()}`);
@@ -314,7 +454,7 @@ async function loadTrack() {
     const rawPositions = Array.isArray(payload) ? payload : payload.positions;
     if (!Array.isArray(rawPositions) || !map) return;
 
-    // Filter to the most recent 24 days.
+    // Filter to the most recent 24 days, excluding positions inside the harbor geofence.
     const cutoff = new Date();
     cutoff.setUTCDate(cutoff.getUTCDate() - 24);
 
@@ -323,7 +463,8 @@ async function loadTrack() {
       .filter((p) => p
         && Number.isFinite(p.latitude)
         && Number.isFinite(p.longitude)
-        && (!p.timestamp || new Date(p.timestamp) >= cutoff));
+        && (!p.timestamp || new Date(p.timestamp) >= cutoff)
+        && haversineMeters(p.latitude, p.longitude, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) > HARBOR_RADIUS_M);
 
     if (!positions.length) return;
 
@@ -339,66 +480,8 @@ async function loadTrack() {
       byDay.get(dayKey).push(p);
     }
 
-    // Clear previous track layers.
-    if (!trackMarkers) {
-      trackMarkers = L.layerGroup().addTo(map);
-    } else {
-      trackMarkers.clearLayers();
-    }
-    if (trackLine) {
-      const lines = Array.isArray(trackLine) ? trackLine : [trackLine];
-      lines.forEach((l) => map.removeLayer(l));
-      trackLine = null;
-    }
-
-    // Draw one polyline + markers per day, cycling through 24 colours.
-    // Sort newest-first so that when old days expire they fall off the end
-    // and existing tracks keep their colour assignment.
-    const days = [...byDay.keys()].sort().reverse();
-    const lines = [];
-    days.forEach((day, idx) => {
-      const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
-      const pts = byDay.get(day);
-      const latlngs = pts.map((p) => [p.latitude, p.longitude]);
-      lines.push(L.polyline(latlngs, { color, weight: 3, opacity: 0.8 }).addTo(map));
-
-      pts.forEach((point) => {
-        const timeLabel = point.timestamp ? new Date(point.timestamp).toLocaleString() : 'N/A';
-        const speedLabel = Number.isFinite(point.speedOverGround)
-          ? `${(point.speedOverGround * 1.94384).toFixed(1)} kts` : 'N/A';
-        const courseLabel = Number.isFinite(point.courseOverGroundTrue)
-          ? `${(point.courseOverGroundTrue * 180 / Math.PI).toFixed(0)}°` : 'N/A';
-        const tooltipHtml = `<strong>Time:</strong> ${timeLabel}<br/><strong>Speed:</strong> ${speedLabel}<br/><strong>Course:</strong> ${courseLabel}`;
-        L.circleMarker([point.latitude, point.longitude], {
-          radius: 3,
-          color,
-          fillColor: color,
-          fillOpacity: 0.7,
-          weight: 1,
-        }).bindTooltip(tooltipHtml, { direction: 'top', opacity: 0.9 }).addTo(trackMarkers);
-      });
-    });
-
-    trackLine = lines;
-
-    // Build / rebuild the day-colour legend.
-    if (trackLegend) { trackLegend.remove(); trackLegend = null; }
-    if (days.length && map) {
-      trackLegend = L.control({ position: 'bottomright' });
-      trackLegend.onAdd = () => {
-        const div = L.DomUtil.create('div', 'track-legend');
-        div.innerHTML = days.map((day, idx) => {
-          const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
-          const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
-          return `<div class="track-legend-item">
-            <span class="track-legend-swatch" style="background:${color}"></span>
-            <span>${label}</span>
-          </div>`;
-        }).join('');
-        return div;
-      };
-      trackLegend.addTo(map);
-    }
+    trackByDay = byDay;
+    renderTracks();
   } catch (error) {
     console.warn('Unable to load track data:', error);
   }
