@@ -117,28 +117,10 @@ def parse_args() -> SimpleNamespace:
         help="Use HTTPS instead of HTTP for SignalK connection",
     )
     parser.add_argument(
-        "--no-reset",
-        dest="no_reset",
-        action="store_true",
-        default=os.getenv("NO_RESET", "false").lower() == "true",
-    )
-    parser.add_argument(
         "--no-push",
         dest="no_push",
         action="store_true",
         default=os.getenv("NO_PUSH", "false").lower() == "true",
-    )
-    parser.add_argument(
-        "--amend",
-        dest="amend",
-        action="store_true",
-        default=os.getenv("GIT_AMEND", "true").lower() == "true",
-    )
-    parser.add_argument(
-        "--force-push",
-        dest="force_push",
-        action="store_true",
-        default=os.getenv("GIT_FORCE_PUSH", "true").lower() == "true",
     )
     return parser.parse_args()
 
@@ -211,30 +193,30 @@ def filter_stale_data(
     return blob
 
 
-def git_reset(remote: str, branch: str) -> None:
-    subprocess.run(["git", "fetch", "--all"], check=True)
-    subprocess.run(["git", "reset", "--hard", f"{remote}/{branch}"], check=True)
-
-
-def git_commit_and_push(
-    file_path: Path, amend: bool, no_push: bool, force_push: bool
-) -> None:
+def git_commit_and_push(no_push: bool, remote: str, branch: str) -> None:
     subprocess.run(["git", "add", "data/telemetry"], check=True)
-    # Include calculated polars in the same commit so the site gets updated curves.
     polar_csv = get_project_root() / "data/vessel/polars_calculated.csv"
     if polar_csv.exists():
         subprocess.run(["git", "add", str(polar_csv)], check=True)
-    commit_cmd = ["git", "commit", "-m", f"Auto update {datetime.now().isoformat()}"]
-    if amend:
-        commit_cmd.insert(2, "--amend")
-    # allow empty to avoid failures when content is unchanged
-    commit_cmd.insert(2, "--allow-empty")
-    subprocess.run(commit_cmd, check=True)
-    if not no_push:
-        push_cmd = ["git", "push"]
-        if force_push:
-            push_cmd.append("--force")
+    subprocess.run(
+        ["git", "commit", "--allow-empty", "-m", f"Auto update {datetime.now().isoformat()}"],
+        check=True,
+    )
+    if no_push:
+        return
+    push_cmd = ["git", "push", remote, branch]
+    try:
         subprocess.run(push_cmd, check=True)
+    except subprocess.CalledProcessError:
+        # Push failed — fetch latest and rebase queued commits on top, then retry.
+        # If that also fails (offline or genuine conflict), defer and continue.
+        try:
+            subprocess.run(["git", "fetch", remote], check=True)
+            subprocess.run(["git", "rebase", f"{remote}/{branch}"], check=True)
+            subprocess.run(push_cmd, check=True)
+        except subprocess.CalledProcessError as e:
+            subprocess.run(["git", "rebase", "--abort"], check=False)
+            print(f"Push deferred (offline or merge conflict): {e}")
 
 
 def _parse_timestamp(value: Any) -> datetime | None:
@@ -489,10 +471,7 @@ def run_update(
     signalk_url: str,
     output_path: str,
     use_https: bool,
-    no_reset: bool,
-    amend: bool,
     no_push: bool,
-    force_push: bool,
 ) -> Path:
     # Modify SignalK URL if use_https is specified
     if use_https and signalk_url.startswith("http://"):
@@ -506,8 +485,6 @@ def run_update(
 
     # Ensure destination directory exists
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    if not no_reset:
-        git_reset(remote=remote, branch=branch)
     blob = fetch_blob(signalk_url=signalk_url)
 
     # Replace position with zone center in the blob if inside a privacy zone.
@@ -528,9 +505,7 @@ def run_update(
     output_file.write_text(json.dumps(blob, indent=2), encoding="utf-8")
     print(f"Wrote SignalK blob to {output_file}")
     update_position_cache(blob, output_file)
-    git_commit_and_push(
-        file_path=output_file, amend=amend, no_push=no_push, force_push=force_push
-    )
+    git_commit_and_push(no_push=no_push, remote=remote, branch=branch)
     return output_file
 
 
@@ -544,10 +519,7 @@ def main() -> int:
                 signalk_url=args.signalk_url,
                 output_path=args.output,
                 use_https=args.use_https,
-                no_reset=args.no_reset,
-                amend=args.amend,
                 no_push=args.no_push,
-                force_push=args.force_push,
             )
             if args.interval == 0:
                 break

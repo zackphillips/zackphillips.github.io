@@ -60,7 +60,6 @@ def test_filter_stale_data_keeps_recent_values():
 
 
 def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
-    # Fake requests module to avoid dependency and network
     class FakeResp:
         def raise_for_status(self):
             pass
@@ -73,7 +72,6 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
         def get(url):
             return FakeResp()
 
-    # Capture subprocess.run calls
     calls = []
 
     def fake_run(cmd, check=True, **kwargs):
@@ -84,7 +82,6 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
 
         return R()
 
-    # Patch both requests module and subprocess.run
     with (
         patch("scripts.update_signalk_data.requests", FakeRequests),
         patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
@@ -94,22 +91,17 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
         usd.run_update(
             branch=test_branch,
             remote="origin",
-            signalk_url="http://example",  # mocked
+            signalk_url="http://example",
             output_path=str(out),
             use_https=False,
-            no_reset=False,
-            amend=False,
             no_push=False,
-            force_push=False,
         )
 
         assert out.exists()
         assert json.loads(out.read_text()) == {"ok": True}
-        # Ensure reset targeted origin/_test_branch_tmp and commit without --amend --force
-        assert ["git", "fetch", "--all"] in calls
-        assert ["git", "reset", "--hard", f"origin/{test_branch}"] in calls
         assert any(cmd[:3] == ["git", "commit", "--allow-empty"] for cmd in calls)
-        assert ["git", "push"] in calls
+        assert any(cmd[:2] == ["git", "push"] for cmd in calls)
+        assert not any(cmd[:2] == ["git", "reset"] for cmd in calls)
 
 
 def test_https_conversion(tmp_path, test_branch):
@@ -125,7 +117,6 @@ def test_https_conversion(tmp_path, test_branch):
     class FakeRequests:
         @staticmethod
         def get(url):
-            # Verify the URL was converted to HTTPS
             assert url.startswith("https://")
             return FakeResp()
 
@@ -150,164 +141,12 @@ def test_https_conversion(tmp_path, test_branch):
             remote="origin",
             signalk_url="http://example.com:3000/api",
             output_path=str(out),
-            use_https=True,  # This should convert HTTP to HTTPS
-            no_reset=False,
-            amend=False,
+            use_https=True,
             no_push=False,
-            force_push=False,
         )
 
         assert out.exists()
         assert json.loads(out.read_text()) == {"data": "test"}
-
-
-def test_no_reset_mode(tmp_path, test_branch):
-    """Test that git reset is skipped when no_reset=True."""
-
-    class FakeResp:
-        def raise_for_status(self):
-            pass
-
-        def json(self):
-            return {"data": "test"}
-
-    class FakeRequests:
-        @staticmethod
-        def get(url):
-            return FakeResp()
-
-    calls = []
-
-    def fake_run(cmd, check=True, **kwargs):
-        calls.append(cmd)
-
-        class R:
-            returncode = 0
-
-        return R()
-
-    with (
-        patch("scripts.update_signalk_data.requests", FakeRequests),
-        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
-    ):
-        out = tmp_path / "signalk_latest.json"
-
-        usd.run_update(
-            branch=test_branch,
-            remote="origin",
-            signalk_url="http://example.com/api",
-            output_path=str(out),
-            use_https=False,
-            no_reset=True,  # This should skip git reset
-            amend=False,
-            no_push=False,
-            force_push=False,
-        )
-
-        assert out.exists()
-        # Verify git reset was not called
-        reset_calls = [cmd for cmd in calls if cmd[:2] == ["git", "reset"]]
-        assert len(reset_calls) == 0
-
-
-def test_amend_commit(tmp_path, test_branch):
-    """Test that --amend flag is used when amend=True."""
-
-    class FakeResp:
-        def raise_for_status(self):
-            pass
-
-        def json(self):
-            return {"data": "test"}
-
-    class FakeRequests:
-        @staticmethod
-        def get(url):
-            return FakeResp()
-
-    calls = []
-
-    def fake_run(cmd, check=True, **kwargs):
-        calls.append(cmd)
-
-        class R:
-            returncode = 0
-
-        return R()
-
-    with (
-        patch("scripts.update_signalk_data.requests", FakeRequests),
-        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
-    ):
-        out = tmp_path / "signalk_latest.json"
-
-        usd.run_update(
-            branch=test_branch,
-            remote="origin",
-            signalk_url="http://example.com/api",
-            output_path=str(out),
-            use_https=False,
-            no_reset=False,
-            amend=True,  # This should add --amend to commit
-            no_push=False,
-            force_push=False,
-        )
-
-        assert out.exists()
-        # Verify --amend was used in commit
-        commit_calls = [cmd for cmd in calls if cmd[:2] == ["git", "commit"]]
-        assert len(commit_calls) > 0
-        assert "--amend" in commit_calls[0]
-
-
-def test_force_push(tmp_path, test_branch):
-    """Test that --force flag is used when force_push=True."""
-
-    class FakeResp:
-        def raise_for_status(self):
-            pass
-
-        def json(self):
-            return {"data": "test"}
-
-    class FakeRequests:
-        @staticmethod
-        def get(url):
-            return FakeResp()
-
-    calls = []
-
-    def fake_run(cmd, check=True, **kwargs):
-        calls.append(cmd)
-
-        class R:
-            returncode = 0
-
-        return R()
-
-    with (
-        patch("scripts.update_signalk_data.requests", FakeRequests),
-        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
-    ):
-        out = tmp_path / "signalk_latest.json"
-
-        usd.run_update(
-            branch=test_branch,
-            remote="origin",
-            signalk_url="http://example.com/api",
-            output_path=str(out),
-            use_https=False,
-            no_reset=False,
-            amend=False,
-            no_push=False,
-            force_push=True,  # This should add --force to push
-        )
-
-        assert out.exists()
-        # Verify --force was used in push
-        push_calls = [cmd for cmd in calls if cmd[:2] == ["git", "push"]]
-        assert len(push_calls) > 0
-        assert "--force" in push_calls[0]
 
 
 def test_no_push_mode(tmp_path, test_branch):
@@ -347,16 +186,162 @@ def test_no_push_mode(tmp_path, test_branch):
             signalk_url="http://example.com/api",
             output_path=str(out),
             use_https=False,
-            no_reset=False,
-            amend=False,
-            no_push=True,  # This should skip git push
-            force_push=False,
+            no_push=True,
         )
 
         assert out.exists()
-        # Verify git push was not called
         push_calls = [cmd for cmd in calls if cmd[:2] == ["git", "push"]]
         assert len(push_calls) == 0
+
+
+def test_push_deferred_when_offline(tmp_path, test_branch):
+    """Push and fetch failures (offline) are caught; commit is preserved locally."""
+
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeRequests:
+        @staticmethod
+        def get(url):
+            return FakeResp()
+
+    calls = []
+
+    def fake_run(cmd, check=True, **kwargs):
+        calls.append(cmd)
+        if cmd[:2] in (["git", "push"], ["git", "fetch"]):
+            raise subprocess.CalledProcessError(1, cmd)
+
+        class R:
+            returncode = 0
+
+        return R()
+
+    with (
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
+    ):
+        out = tmp_path / "signalk_latest.json"
+
+        # Should not raise even though all network ops fail
+        usd.run_update(
+            branch=test_branch,
+            remote="origin",
+            signalk_url="http://example",
+            output_path=str(out),
+            use_https=False,
+            no_push=False,
+        )
+
+        assert out.exists()
+        commit_calls = [cmd for cmd in calls if "commit" in cmd]
+        assert len(commit_calls) > 0
+        push_attempts = [cmd for cmd in calls if cmd[:2] == ["git", "push"]]
+        assert len(push_attempts) >= 1
+
+
+def test_push_rebases_on_diverged_remote(tmp_path, test_branch):
+    """On non-fast-forward push failure, script fetches, rebases, and retries push."""
+
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeRequests:
+        @staticmethod
+        def get(url):
+            return FakeResp()
+
+    first_push_done = [False]
+    calls = []
+
+    def fake_run(cmd, check=True, **kwargs):
+        calls.append(cmd)
+        if cmd[:2] == ["git", "push"] and not first_push_done[0]:
+            first_push_done[0] = True
+            raise subprocess.CalledProcessError(1, cmd)
+
+        class R:
+            returncode = 0
+
+        return R()
+
+    with (
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
+    ):
+        out = tmp_path / "signalk_latest.json"
+
+        usd.run_update(
+            branch=test_branch,
+            remote="origin",
+            signalk_url="http://example",
+            output_path=str(out),
+            use_https=False,
+            no_push=False,
+        )
+
+        assert out.exists()
+        assert any(cmd[:2] == ["git", "fetch"] for cmd in calls)
+        assert any(cmd[:2] == ["git", "rebase"] for cmd in calls)
+        push_calls = [cmd for cmd in calls if cmd[:2] == ["git", "push"]]
+        assert len(push_calls) == 2
+
+
+def test_push_aborts_rebase_on_conflict(tmp_path, test_branch):
+    """When rebase hits a conflict, abort is called and the script continues."""
+
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeRequests:
+        @staticmethod
+        def get(url):
+            return FakeResp()
+
+    calls = []
+
+    def fake_run(cmd, check=True, **kwargs):
+        calls.append(cmd)
+        if cmd[:2] == ["git", "push"]:
+            raise subprocess.CalledProcessError(1, cmd)
+        if cmd[:2] == ["git", "rebase"] and "--abort" not in cmd:
+            raise subprocess.CalledProcessError(1, cmd)
+
+        class R:
+            returncode = 0
+
+        return R()
+
+    with (
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
+    ):
+        out = tmp_path / "signalk_latest.json"
+
+        usd.run_update(
+            branch=test_branch,
+            remote="origin",
+            signalk_url="http://example",
+            output_path=str(out),
+            use_https=False,
+            no_push=False,
+        )
+
+        assert out.exists()
+        abort_calls = [cmd for cmd in calls if cmd == ["git", "rebase", "--abort"]]
+        assert len(abort_calls) == 1
 
 
 def test_requests_error_handling(tmp_path, test_branch):
@@ -383,7 +368,6 @@ def test_requests_error_handling(tmp_path, test_branch):
     ):
         out = tmp_path / "signalk_latest.json"
 
-        # Should raise an exception when requests fails
         try:
             usd.run_update(
                 branch=test_branch,
@@ -391,15 +375,11 @@ def test_requests_error_handling(tmp_path, test_branch):
                 signalk_url="http://example.com/api",
                 output_path=str(out),
                 use_https=False,
-                no_reset=False,
-                amend=False,
                 no_push=False,
-                force_push=False,
             )
             raise Exception("Expected exception was not raised")
         except Exception as e:
             assert "Network error" in str(e)
-            # Verify no file was written
             assert not out.exists()
 
 
@@ -447,7 +427,6 @@ def test_integration_updates_test_branch(tmp_path, test_branch):
     run(["git", "fetch", "--all"], cwd=work)
     run(["git", "checkout", "-b", test_branch, f"origin/{test_branch}"], cwd=work)
 
-    # Fake requests module to avoid network
     class FakeResp:
         def raise_for_status(self):
             pass
@@ -460,11 +439,9 @@ def test_integration_updates_test_branch(tmp_path, test_branch):
         def get(url):
             return FakeResp()
 
-    # Patch the requests module with our fake implementation
     with patch("scripts.update_signalk_data.requests", FakeRequests):
         out = work / "signalk_latest.json"
 
-        # Change to the working directory before running the script
         original_cwd = os.getcwd()
         try:
             os.chdir(work)
@@ -474,17 +451,12 @@ def test_integration_updates_test_branch(tmp_path, test_branch):
                 signalk_url="http://example",
                 output_path=str(out),
                 use_https=False,
-                no_reset=False,
-                amend=False,
                 no_push=False,
-                force_push=False,
             )
         finally:
             os.chdir(original_cwd)
 
         assert out.exists()
-        # Ensure test_branch branch on origin has advanced (contains latest file content commit)
-        # Fetch the ref hash
         before_after = (
             subprocess.check_output(
                 ["git", "ls-remote", str(origin), f"refs/heads/{test_branch}"]
