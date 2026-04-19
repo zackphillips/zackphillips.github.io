@@ -48,8 +48,6 @@ define install-service
 			-e "s|{{RESTART_SEC}}|$(6)|g" \
 			-e "s|{{GIT_BRANCH}}|$(CURRENT_BRANCH)|g" \
 			-e "s|{{GIT_REMOTE}}|origin|g" \
-			-e "s|{{GIT_AMEND}}|false|g" \
-			-e "s|{{GIT_FORCE_PUSH}}|false|g" \
 			-e "s|{{SIGNALK_URL}}|http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self|g" \
 			-e "s|{{OUTPUT_FILE}}|data/telemetry/signalk_latest.json|g" \
 			"$(CURDIR)/services/systemd.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
