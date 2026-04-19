@@ -198,8 +198,11 @@ def git_commit_and_push(no_push: bool, remote: str, branch: str) -> None:
     polar_csv = get_project_root() / "data/vessel/polars_calculated.csv"
     if polar_csv.exists():
         subprocess.run(["git", "add", str(polar_csv)], check=True)
+    nothing_staged = subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0
+    if nothing_staged:
+        return
     subprocess.run(
-        ["git", "commit", "--allow-empty", "-m", f"Auto update {datetime.now().isoformat()}"],
+        ["git", "commit", "-m", f"Auto update {datetime.now().isoformat()}"],
         check=True,
     )
     if no_push:

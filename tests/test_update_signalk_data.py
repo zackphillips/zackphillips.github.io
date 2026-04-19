@@ -78,7 +78,7 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
-            returncode = 0
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
 
@@ -99,7 +99,7 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
 
         assert out.exists()
         assert json.loads(out.read_text()) == {"ok": True}
-        assert any(cmd[:3] == ["git", "commit", "--allow-empty"] for cmd in calls)
+        assert any(cmd[:2] == ["git", "commit"] for cmd in calls)
         assert any(cmd[:2] == ["git", "push"] for cmd in calls)
         assert not any(cmd[:2] == ["git", "reset"] for cmd in calls)
 
@@ -126,7 +126,7 @@ def test_https_conversion(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
-            returncode = 0
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
 
@@ -170,7 +170,7 @@ def test_no_push_mode(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
-            returncode = 0
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
 
@@ -192,6 +192,51 @@ def test_no_push_mode(tmp_path, test_branch):
         assert out.exists()
         push_calls = [cmd for cmd in calls if cmd[:2] == ["git", "push"]]
         assert len(push_calls) == 0
+
+
+def test_no_commit_when_data_unchanged(tmp_path, test_branch):
+    """No commit or push is made when staged diff is empty (data unchanged)."""
+
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeRequests:
+        @staticmethod
+        def get(url):
+            return FakeResp()
+
+    calls = []
+
+    def fake_run(cmd, check=True, **kwargs):
+        calls.append(cmd)
+
+        class R:
+            returncode = 0  # diff returns 0 → nothing staged
+
+        return R()
+
+    with (
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
+    ):
+        out = tmp_path / "signalk_latest.json"
+
+        usd.run_update(
+            branch=test_branch,
+            remote="origin",
+            signalk_url="http://example",
+            output_path=str(out),
+            use_https=False,
+            no_push=False,
+        )
+
+        assert out.exists()
+        assert not any(cmd[:2] == ["git", "commit"] for cmd in calls)
+        assert not any(cmd[:2] == ["git", "push"] for cmd in calls)
 
 
 def test_push_deferred_when_offline(tmp_path, test_branch):
@@ -217,7 +262,7 @@ def test_push_deferred_when_offline(tmp_path, test_branch):
             raise subprocess.CalledProcessError(1, cmd)
 
         class R:
-            returncode = 0
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
 
@@ -269,7 +314,7 @@ def test_push_rebases_on_diverged_remote(tmp_path, test_branch):
             raise subprocess.CalledProcessError(1, cmd)
 
         class R:
-            returncode = 0
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
 
@@ -320,7 +365,7 @@ def test_push_aborts_rebase_on_conflict(tmp_path, test_branch):
             raise subprocess.CalledProcessError(1, cmd)
 
         class R:
-            returncode = 0
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
 
@@ -358,7 +403,7 @@ def test_requests_error_handling(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
-            returncode = 0
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
 
