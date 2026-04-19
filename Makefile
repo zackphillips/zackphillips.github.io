@@ -48,8 +48,6 @@ define install-service
 			-e "s|{{RESTART_SEC}}|$(6)|g" \
 			-e "s|{{GIT_BRANCH}}|$(CURRENT_BRANCH)|g" \
 			-e "s|{{GIT_REMOTE}}|origin|g" \
-			-e "s|{{GIT_AMEND}}|false|g" \
-			-e "s|{{GIT_FORCE_PUSH}}|false|g" \
 			-e "s|{{SIGNALK_URL}}|http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self|g" \
 			-e "s|{{OUTPUT_FILE}}|data/telemetry/signalk_latest.json|g" \
 			"$(CURDIR)/services/systemd.service.tpl" | sudo tee /etc/systemd/system/$(2).service > /dev/null; \
@@ -521,7 +519,7 @@ run-website-update:
 	fi
 	@echo "Running one website telemetry update..."
 	@echo "Fetching from SignalK and writing data..."; \
-	"$(UV_BIN)" run python -m scripts.update_signalk_data --no-reset --amend --force-push --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
+	"$(UV_BIN)" run python -m scripts.update_signalk_data --signalk-url "http://$(SENSOR_HOST):$(SENSOR_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
 
 # Run tests
 test: test-py test-js
