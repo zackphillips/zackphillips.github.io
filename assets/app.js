@@ -26,7 +26,8 @@ let anchorMarker = null;   // ⚓ icon at anchor drop position
 let anchorLine = null;     // dashed line from anchor to vessel
 let trackLegend = null;    // Leaflet control for day-colour legend
 let trackHistoryMode = 'none'; // 'none' | '+5' | '+10' | 'all'
-let trackByDay = new Map();    // Cached track data keyed by YYYY-MM-DD
+let trackByDay = new Map();    // Cached track data keyed by YYYY-MM-DD (local)
+let tracksIndex = [];          // Metadata from tracks_index.json (all sailing days ever)
 let olderTrackLayer = null;    // Leaflet layer for older tracks shown in white
 let lat, lon; // Global variables for coordinates
 let vesselState = ''; // 'underway' | 'at anchor' | ''
@@ -326,6 +327,24 @@ function parsePositionPoint(point) {
   };
 }
 
+function _gpxLinkForDay(localDay) {
+  // Find the tracks_index entry whose start timestamp maps to this local day.
+  for (const track of tracksIndex) {
+    if (!track.file) continue;
+    const startLocal = track.start
+      ? (() => { const d = new Date(track.start); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()
+      : null;
+    if (track.date === localDay || startLocal === localDay) {
+      const vesselSlug = (vesselData?.name || 'vessel').replace(/[^a-z0-9]/gi, '-');
+      return {
+        url: `data/telemetry/${track.file}`,
+        filename: `${vesselSlug}-${track.date}.gpx`,
+      };
+    }
+  }
+  return null;
+}
+
 function renderTracks() {
   if (!map || !trackByDay.size) return;
 
@@ -401,9 +420,13 @@ function renderTracks() {
     const legendItems = recentDays.map((day, idx) => {
       const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
       const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const gpxLink = _gpxLinkForDay(day);
+      const dlBtn = gpxLink
+        ? `<a class="track-gpx-dl" href="${gpxLink.url}" download="${gpxLink.filename}" title="Download GPX">↓</a>`
+        : '';
       return `<div class="track-legend-item">
         <span class="track-legend-swatch" style="background:${color}"></span>
-        <span>${label}</span>
+        <span>${label}</span>${dlBtn}
       </div>`;
     }).join('');
 
@@ -480,9 +503,92 @@ async function loadTrack() {
 
     trackByDay = byDay;
     renderTracks();
+    // Load historical tracks (GPX files) without blocking the initial render.
+    loadHistoricalTracks();
   } catch (error) {
     console.warn('Unable to load track data:', error);
   }
+}
+
+function parseGpxText(gpxText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(gpxText, 'application/xml');
+  if (doc.querySelector('parsererror')) return [];
+  const points = [];
+  doc.querySelectorAll('trkpt').forEach((trkpt) => {
+    const lat = parseFloat(trkpt.getAttribute('lat'));
+    const lon = parseFloat(trkpt.getAttribute('lon'));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const timeEl = trkpt.querySelector('time');
+    const timestamp = timeEl ? timeEl.textContent.trim() : null;
+    const speedEl = trkpt.querySelector('speed');
+    const courseEl = trkpt.querySelector('course');
+    const speedMs = speedEl ? parseFloat(speedEl.textContent) : NaN;
+    const courseDeg = courseEl ? parseFloat(courseEl.textContent) : NaN;
+    points.push({
+      latitude: lat,
+      longitude: lon,
+      timestamp,
+      speedOverGround: Number.isFinite(speedMs) ? speedMs : NaN,
+      // Convert degrees → radians to match positions_index format
+      courseOverGroundTrue: Number.isFinite(courseDeg) ? courseDeg * Math.PI / 180 : NaN,
+    });
+  });
+  return points;
+}
+
+async function loadHistoricalTracks() {
+  try {
+    const resp = await fetch(`data/telemetry/tracks_index.json?ts=${Date.now()}`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    tracksIndex = Array.isArray(data) ? data : (data.tracks ?? []);
+  } catch (e) {
+    console.warn('Unable to load tracks index:', e);
+    return;
+  }
+
+  // Fetch all GPX files in parallel, skip days already covered by positions_index.
+  const covered = new Set(trackByDay.keys());
+  const toFetch = tracksIndex.filter((track) => {
+    // A track's UTC date might map to a different local day. Check both.
+    const utcDate = track.date;
+    const localDate = track.start
+      ? (() => { const d = new Date(track.start); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()
+      : null;
+    return !covered.has(utcDate) && !(localDate && covered.has(localDate));
+  });
+
+  if (!toFetch.length) return;
+
+  const results = await Promise.all(toFetch.map(async (track) => {
+    try {
+      const r = await fetch(`data/telemetry/${track.file}?ts=${Date.now()}`);
+      if (!r.ok) return null;
+      return { track, text: await r.text() };
+    } catch {
+      return null;
+    }
+  }));
+
+  let added = false;
+  for (const result of results) {
+    if (!result) continue;
+    const points = parseGpxText(result.text);
+    if (!points.length) continue;
+    // Group by local calendar day (same logic as loadTrack)
+    for (const p of points) {
+      if (!p.timestamp) continue;
+      const dt = new Date(p.timestamp);
+      const dayKey = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      if (!trackByDay.has(dayKey)) {
+        trackByDay.set(dayKey, []);
+        added = true;
+      }
+      trackByDay.get(dayKey).push(p);
+    }
+  }
+  if (added) renderTracks();
 }
 
 // Get all tide stations from loaded JSON data
