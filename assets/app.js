@@ -418,6 +418,10 @@ function renderTracks() {
       </div>`;
     }
 
+    const shownCount = recentDays.length + olderDays.length;
+    const totalCount = days.length;
+    const summaryHtml = `<div class="track-hist-summary">Showing ${shownCount} of ${totalCount} day${totalCount === 1 ? '' : 's'}</div>`;
+
     let historyHtml = '';
     if (hasOlder) {
       const histModes = [
@@ -431,7 +435,7 @@ function renderTracks() {
       historyHtml = `<div class="track-hist-row"><span class="track-hist-label">History:</span>${btns}</div>`;
     }
 
-    div.innerHTML = legendItems + olderSwatchHtml + historyHtml;
+    div.innerHTML = legendItems + olderSwatchHtml + summaryHtml + historyHtml;
 
     L.DomEvent.disableClickPropagation(div);
     L.DomEvent.disableScrollPropagation(div);
