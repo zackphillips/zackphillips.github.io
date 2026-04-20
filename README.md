@@ -65,7 +65,7 @@ make pre-commit-install
 make config
 ```
 
-This runs an interactive wizard that writes `data/vessel/info.yaml` with your vessel name, MMSI, SignalK host/port, and sensor config.
+This runs an interactive wizard that writes `data/vessel/info.yaml` with your vessel name, MMSI, and SignalK host/port.
 
 ### Run as a system service
 
@@ -75,26 +75,6 @@ make check-service-status     # Check it's running
 make logs                     # Stream live logs
 make change-server-update-period RESTART_SEC=300  # Change update interval (seconds)
 make uninstall-service        # Remove the service
-```
-
-### I2C sensors (optional)
-
-The Pi can also read onboard sensors (environmental, heading, air quality) and publish them to SignalK:
-
-```bash
-make install-sensors             # Install I2C dependencies
-make install-sensor-service      # Install recurring sensor reader (runs every 1s)
-make check-i2c                   # Verify I2C devices are connected
-make calibrate-heading           # Calibrate MMC5603 magnetic heading sensor
-make calibrate-imu               # Calibrate BNO055 IMU
-make calibrate-air               # Calibrate SGP30 air quality sensor
-```
-
-### SignalK authentication
-
-```bash
-make create-signalk-token    # Generate a SignalK access token
-make check-signalk-token     # Validate the token
 ```
 
 ---
@@ -118,7 +98,7 @@ make pre-commit-run  # Run linters and formatters
 
 | File | Description |
 |------|-------------|
-| `data/vessel/info.yaml` | Vessel configuration (name, MMSI, SignalK host, sensor config) |
+| `data/vessel/info.yaml` | Vessel configuration (name, MMSI, SignalK host/port) |
 | `data/vessel/polars.csv` | ORC polar performance data — download from [jieter.github.io/orc-data](https://jieter.github.io/orc-data/site/) |
 | `data/telemetry/signalk_latest.json` | Latest snapshot from SignalK |
 | `data/telemetry/positions_index.json` | Position history for track rendering |
