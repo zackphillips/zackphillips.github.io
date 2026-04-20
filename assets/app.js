@@ -226,7 +226,7 @@ async function updateMapLocation(lat, lon) {
     const inHarbor = haversineMeters(lat, lon, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) <= HARBOR_RADIUS_M;
     const lookupLat = inHarbor ? HARBOR_CENTER_LAT : lat;
     const lookupLon = inHarbor ? HARBOR_CENTER_LON : lon;
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lookupLat}&lon=${lookupLon}&format=json&zoom=16&addressdetails=1`);
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lookupLat}&lon=${lookupLon}&format=json&zoom=10&addressdetails=1`);
     const data = await response.json();
 
     let locationName = "Unknown Location";

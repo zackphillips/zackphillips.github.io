@@ -215,7 +215,7 @@ def git_commit_and_push(no_push: bool, remote: str, branch: str) -> None:
         # If that also fails (offline or genuine conflict), defer and continue.
         try:
             subprocess.run(["git", "fetch", remote], check=True)
-            subprocess.run(["git", "rebase", f"{remote}/{branch}"], check=True)
+            subprocess.run(["git", "rebase", "-X", "theirs", f"{remote}/{branch}"], check=True)
             subprocess.run(push_cmd, check=True)
         except subprocess.CalledProcessError as e:
             subprocess.run(["git", "rebase", "--abort"], check=False)
