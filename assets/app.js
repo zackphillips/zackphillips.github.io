@@ -459,16 +459,11 @@ async function loadTrack() {
     const rawPositions = Array.isArray(payload) ? payload : payload.positions;
     if (!Array.isArray(rawPositions) || !map) return;
 
-    // Filter to the most recent 24 days, excluding positions inside the harbor geofence.
-    const cutoff = new Date();
-    cutoff.setUTCDate(cutoff.getUTCDate() - 24);
-
     const positions = rawPositions
       .map(parsePositionPoint)
       .filter((p) => p
         && Number.isFinite(p.latitude)
         && Number.isFinite(p.longitude)
-        && (!p.timestamp || new Date(p.timestamp) >= cutoff)
         && haversineMeters(p.latitude, p.longitude, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) > HARBOR_RADIUS_M);
 
     if (!positions.length) return;
