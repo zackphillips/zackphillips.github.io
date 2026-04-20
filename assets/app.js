@@ -855,23 +855,18 @@ function updateVesselLinks() {
     vesselData.signalk.websocket_url = `${wsUrl}/signalk/v1/stream`;
   }
 
-  // Construct external tracking links using MMSI
-  if (vesselData.mmsi) {
+  // Construct external tracking links
+  if (vesselData.marinetraffic_ship_id) {
     vesselData.links = {
-      marinetraffic: `https://www.marinetraffic.com/en/ais/details/ships/mmsi:${vesselData.mmsi}`,
-      myshiptracking: `https://www.myshiptracking.com/vessels/mmsi-${vesselData.mmsi}`
+      marinetraffic: `https://www.marinetraffic.com/en/ais/details/ships/shipid:${vesselData.marinetraffic_ship_id}`
     };
   }
 
   // Update AIS links
   const marinetrafficLink = document.getElementById('marinetraffic-link');
-  const myshiptrackingLink = document.getElementById('myshiptracking-link');
 
   if (marinetrafficLink && vesselData.links?.marinetraffic) {
     marinetrafficLink.href = vesselData.links.marinetraffic;
-  }
-  if (myshiptrackingLink && vesselData.links?.myshiptracking) {
-    myshiptrackingLink.href = vesselData.links.myshiptracking;
   }
 }
 let themeChangeTimeout = null; // Timeout for theme change debouncing
