@@ -395,8 +395,6 @@ function renderTracks() {
   if (trackLegend) { trackLegend.remove(); trackLegend = null; }
   if (!days.length || !map) return;
 
-  const hasOlder = days.length > RECENT_TRACK_COUNT;
-
   trackLegend = L.control({ position: 'bottomright' });
   trackLegend.onAdd = () => {
     const div = L.DomUtil.create('div', 'track-legend');
@@ -418,20 +416,20 @@ function renderTracks() {
       </div>`;
     }
 
-    let historyHtml = '';
-    if (hasOlder) {
-      const histModes = [
-        { mode: '+5',  label: '+5',  count: 5 },
-        { mode: '+10', label: '+10', count: 10 },
-        { mode: 'all', label: 'All', count: Infinity },
-      ].filter(({ count }) => count === Infinity || olderCount > count);
-      const btns = histModes.map(({ mode, label }) =>
-        `<button class="track-hist-btn${trackHistoryMode === mode ? ' active' : ''}" data-mode="${mode}">${label}</button>`
-      ).join('');
-      historyHtml = `<div class="track-hist-row"><span class="track-hist-label">History:</span>${btns}</div>`;
-    }
+    const showing = recentDays.length + olderDays.length;
+    const summaryHtml = `<div class="track-legend-summary">Showing ${showing} of ${days.length} day${days.length === 1 ? '' : 's'}</div>`;
 
-    div.innerHTML = legendItems + olderSwatchHtml + historyHtml;
+    const histModes = [
+      { mode: '+5',  label: '+5',  count: 5 },
+      { mode: '+10', label: '+10', count: 10 },
+      { mode: 'all', label: 'All', count: Infinity },
+    ].filter(({ count }) => count === Infinity || olderCount > count);
+    const btns = histModes.map(({ mode, label }) =>
+      `<button class="track-hist-btn${trackHistoryMode === mode ? ' active' : ''}" data-mode="${mode}">${label}</button>`
+    ).join('');
+    const historyHtml = `<div class="track-hist-row"><span class="track-hist-label">History:</span>${btns}</div>`;
+
+    div.innerHTML = legendItems + olderSwatchHtml + summaryHtml + historyHtml;
 
     L.DomEvent.disableClickPropagation(div);
     L.DomEvent.disableScrollPropagation(div);
