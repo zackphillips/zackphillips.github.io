@@ -221,7 +221,12 @@ function renderEmptyState(containerId, title, subtitle = '') {
 
 async function updateMapLocation(lat, lon) {
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10&addressdetails=1`);
+    // If inside the harbor geofence, look up the geofence center so we get a
+    // proper landmark name instead of an open-water result.
+    const inHarbor = haversineMeters(lat, lon, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) <= HARBOR_RADIUS_M;
+    const lookupLat = inHarbor ? HARBOR_CENTER_LAT : lat;
+    const lookupLon = inHarbor ? HARBOR_CENTER_LON : lon;
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lookupLat}&lon=${lookupLon}&format=json&zoom=16&addressdetails=1`);
     const data = await response.json();
 
     let locationName = "Unknown Location";
