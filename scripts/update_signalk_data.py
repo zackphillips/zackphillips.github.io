@@ -4,6 +4,7 @@ import math
 import os
 import subprocess
 import time
+import xml.etree.ElementTree as ET
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
@@ -18,6 +19,13 @@ STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
 POSITION_RETENTION_HOURS = (24 * 24)  # 24 days
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
+TRACKS_DIR = "./data/telemetry/tracks"
+TRACKS_INDEX_FILE = "./data/telemetry/tracks_index.json"
+
+_NS_GPX = "http://www.topografix.com/GPX/1/1"
+_NS_GPXTPX = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
+ET.register_namespace("", _NS_GPX)
+ET.register_namespace("gpxtpx", _NS_GPXTPX)
 # All snapshot files (timestamp + filename only, no position — safe to publish).
 # Used by the frontend sparkline feature to load historical telemetry for all paths.
 SNAPSHOT_INDEX_FILE = "./data/telemetry/snapshots_index.json"
@@ -376,6 +384,162 @@ def _prune_old_position_files(output_dir: Path) -> None:
             file_path.unlink(missing_ok=True)
 
 
+# ── Per-day GPX track files ────────────────────────────────────────────────
+
+def _load_tracks_index(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text())
+        tracks = data.get("tracks", data) if isinstance(data, dict) else data
+        return tracks if isinstance(tracks, list) else []
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def _write_tracks_index(path: Path, entries: list[dict[str, Any]]) -> None:
+    path.write_text(json.dumps({"tracks": entries}, indent=2), encoding="utf-8")
+
+
+def _fmt_gpx_time(ts: str) -> str:
+    try:
+        dt = datetime.fromisoformat(ts)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=UTC)
+        else:
+            dt = dt.astimezone(UTC)
+        return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return ts
+
+
+def _extract_pos_from_values(
+    values: list[dict[str, Any]],
+) -> tuple[float | None, float | None, float | None, float | None]:
+    """Return (lat, lon, speed_ms, course_rad) from a positions index values list."""
+    lat = lon = speed = course = None
+    for v in values:
+        p = v.get("path", "")
+        val = v.get("value")
+        if p == "navigation.position" and isinstance(val, dict):
+            lat = val.get("latitude")
+            lon = val.get("longitude")
+        elif p == "navigation.speedOverGround" and isinstance(val, (int, float)):
+            speed = float(val)
+        elif p == "navigation.courseOverGroundTrue" and isinstance(val, (int, float)):
+            course = float(val)
+    return lat, lon, speed, course
+
+
+def _build_day_gpx(points: list[dict[str, Any]], date_str: str, vessel_name: str) -> str:
+    """Serialise one sailing day's points to a GPX XML string (no XML declaration)."""
+    g = ET.Element(f"{{{_NS_GPX}}}gpx", {"version": "1.1", "creator": vessel_name})
+    meta = ET.SubElement(g, f"{{{_NS_GPX}}}metadata")
+    ET.SubElement(meta, f"{{{_NS_GPX}}}name").text = f"{vessel_name} \u2014 {date_str}"
+    ET.SubElement(meta, f"{{{_NS_GPX}}}time").text = _fmt_gpx_time(points[0]["timestamp"])
+    trk = ET.SubElement(g, f"{{{_NS_GPX}}}trk")
+    ET.SubElement(trk, f"{{{_NS_GPX}}}name").text = f"{vessel_name} \u2014 {date_str}"
+    seg = ET.SubElement(trk, f"{{{_NS_GPX}}}trkseg")
+    for p in points:
+        trkpt = ET.SubElement(seg, f"{{{_NS_GPX}}}trkpt", {
+            "lat": f"{p['latitude']:.6f}",
+            "lon": f"{p['longitude']:.6f}",
+        })
+        ET.SubElement(trkpt, f"{{{_NS_GPX}}}time").text = _fmt_gpx_time(p["timestamp"])
+        speed = p.get("speed_ms")
+        course = p.get("course_rad")
+        if speed is not None or course is not None:
+            ext = ET.SubElement(trkpt, f"{{{_NS_GPX}}}extensions")
+            tpe = ET.SubElement(ext, f"{{{_NS_GPXTPX}}}TrackPointExtension")
+            if speed is not None:
+                ET.SubElement(tpe, f"{{{_NS_GPXTPX}}}speed").text = f"{speed:.3f}"
+            if course is not None:
+                ET.SubElement(tpe, f"{{{_NS_GPXTPX}}}course").text = f"{math.degrees(course) % 360:.1f}"
+    ET.indent(g, space="  ")
+    return ET.tostring(g, encoding="unicode")
+
+
+def _make_track_meta(date_str: str, points: list[dict[str, Any]]) -> dict[str, Any]:
+    total_nm = 0.0
+    max_spd_kts = 0.0
+    for i, p in enumerate(points):
+        spd = p.get("speed_ms")
+        if spd is not None:
+            max_spd_kts = max(max_spd_kts, spd * 1.94384)
+        if i > 0:
+            prev = points[i - 1]
+            total_nm += _haversine_m(
+                prev["latitude"], prev["longitude"], p["latitude"], p["longitude"]
+            ) / 1852.0
+    start_ts, end_ts = points[0]["timestamp"], points[-1]["timestamp"]
+    try:
+        start_dt = datetime.fromisoformat(start_ts).astimezone(UTC)
+        end_dt = datetime.fromisoformat(end_ts).astimezone(UTC)
+        duration_h = (end_dt - start_dt).total_seconds() / 3600
+    except ValueError:
+        duration_h = 0.0
+    return {
+        "date": date_str,
+        "file": f"tracks/{date_str}.gpx",
+        "start": _fmt_gpx_time(start_ts),
+        "end": _fmt_gpx_time(end_ts),
+        "duration_hours": round(duration_h, 2),
+        "points": len(points),
+        "max_speed_kts": round(max_spd_kts, 1),
+        "distance_nm": round(total_nm, 2),
+    }
+
+
+def _update_track_files(
+    all_entries: list[dict[str, Any]],
+    tracks_dir: Path,
+    tracks_index_path: Path,
+    vessel_name: str,
+) -> None:
+    """Generate/update per-day GPX files from positions index entries.
+
+    Past days are written once and never overwritten. Today's file is always
+    refreshed so it accumulates points throughout the sailing day. Existing
+    GPX files from earlier backfills are never deleted.
+    """
+    today_utc = datetime.now(UTC).strftime("%Y-%m-%d")
+    harbor_lat, harbor_lon, harbor_radius = PRIVACY_EXCLUSION_ZONES[0]
+
+    by_day: dict[str, list[dict[str, Any]]] = {}
+    for entry in all_entries:
+        ts = entry.get("timestamp", "")
+        lat, lon, speed, course = _extract_pos_from_values(entry.get("values", []))
+        if lat is None or lon is None or not ts:
+            continue
+        if _haversine_m(lat, lon, harbor_lat, harbor_lon) <= harbor_radius:
+            continue
+        date_str = ts[:10]
+        by_day.setdefault(date_str, []).append({
+            "timestamp": ts,
+            "latitude": lat,
+            "longitude": lon,
+            "speed_ms": speed,
+            "course_rad": course,
+        })
+
+    if not by_day:
+        return
+
+    tracks_dir.mkdir(parents=True, exist_ok=True)
+    existing = {t["date"]: t for t in _load_tracks_index(tracks_index_path)}
+
+    for date_str, points in by_day.items():
+        gpx_path = tracks_dir / f"{date_str}.gpx"
+        if gpx_path.exists() and date_str != today_utc:
+            existing.setdefault(date_str, _make_track_meta(date_str, points))
+            continue
+        gpx_xml = _build_day_gpx(points, date_str, vessel_name)
+        gpx_path.write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n{gpx_xml}\n', encoding="utf-8")
+        existing[date_str] = _make_track_meta(date_str, points)
+
+    _write_tracks_index(tracks_index_path, sorted(existing.values(), key=lambda t: t["date"]))
+
+
 def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     navigation = blob.get("navigation", {}) if isinstance(blob, dict) else {}
     position = navigation.get("position") if isinstance(navigation, dict) else None
@@ -464,6 +628,17 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     entries.append(index_entry)
     entries.sort(key=lambda item: item.get("timestamp") or "")
     _write_position_index(index_path, entries)
+
+    try:
+        vessel_name = load_vessel_data().get("vessel_data", {}).get("name", "Vessel")
+    except Exception:
+        vessel_name = "Vessel"
+    _update_track_files(
+        entries,
+        output_dir / "tracks",
+        output_dir / Path(TRACKS_INDEX_FILE).name,
+        vessel_name,
+    )
 
     _prune_old_position_files(output_dir)
 
