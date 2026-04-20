@@ -221,7 +221,12 @@ function renderEmptyState(containerId, title, subtitle = '') {
 
 async function updateMapLocation(lat, lon) {
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10&addressdetails=1`);
+    // If inside the harbor geofence, look up the geofence center so we get a
+    // proper landmark name instead of an open-water result.
+    const inHarbor = haversineMeters(lat, lon, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) <= HARBOR_RADIUS_M;
+    const lookupLat = inHarbor ? HARBOR_CENTER_LAT : lat;
+    const lookupLon = inHarbor ? HARBOR_CENTER_LON : lon;
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lookupLat}&lon=${lookupLon}&format=json&zoom=16&addressdetails=1`);
     const data = await response.json();
 
     let locationName = "Unknown Location";
@@ -454,16 +459,11 @@ async function loadTrack() {
     const rawPositions = Array.isArray(payload) ? payload : payload.positions;
     if (!Array.isArray(rawPositions) || !map) return;
 
-    // Filter to the most recent 24 days, excluding positions inside the harbor geofence.
-    const cutoff = new Date();
-    cutoff.setUTCDate(cutoff.getUTCDate() - 24);
-
     const positions = rawPositions
       .map(parsePositionPoint)
       .filter((p) => p
         && Number.isFinite(p.latitude)
         && Number.isFinite(p.longitude)
-        && (!p.timestamp || new Date(p.timestamp) >= cutoff)
         && haversineMeters(p.latitude, p.longitude, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) > HARBOR_RADIUS_M);
 
     if (!positions.length) return;
