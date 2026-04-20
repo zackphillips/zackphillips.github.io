@@ -25,7 +25,7 @@ let anchorLayer = null;    // Leaflet circle for anchor swing radius
 let anchorMarker = null;   // ⚓ icon at anchor drop position
 let anchorLine = null;     // dashed line from anchor to vessel
 let trackLegend = null;    // Leaflet control for day-colour legend
-let trackHistoryMode = 'none'; // 'none' | '+5' | '+10' | 'all'
+let recentTrackCount = 3;      // Number of most-recent tracks to colour (rest shown pale white)
 let trackByDay = new Map();    // Cached track data keyed by YYYY-MM-DD (local)
 let tracksIndex = [];          // Metadata from tracks_index.json (all sailing days ever)
 let olderTrackLayer = null;    // Leaflet layer for older tracks shown in white
@@ -282,7 +282,6 @@ const DAY_TRACK_COLORS = [
 const HARBOR_CENTER_LAT = 37.7802069;
 const HARBOR_CENTER_LON = -122.3858040;
 const HARBOR_RADIUS_M = 200;
-const RECENT_TRACK_COUNT = 10;
 
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -364,22 +363,23 @@ function renderTracks() {
     olderTrackLayer = null;
   }
 
-  // Sort newest-first; recent = first RECENT_TRACK_COUNT, older = remainder.
+  // Sort newest-first; recent = first recentTrackCount coloured, older = all remainder.
   const days = [...trackByDay.keys()].sort().reverse();
-  const recentDays = days.slice(0, RECENT_TRACK_COUNT);
+  const recentDays = days.slice(0, recentTrackCount);
+  const olderDays = days.slice(recentTrackCount);
 
-  let extraCount = 0;
-  if (trackHistoryMode === '+5') extraCount = 5;
-  else if (trackHistoryMode === '+10') extraCount = 10;
-  else if (trackHistoryMode === 'all') extraCount = Infinity;
+  // Draw older tracks first (pale white) so coloured recent tracks appear on top.
+  if (olderDays.length) {
+    const segments = olderDays.map((day) =>
+      trackByDay.get(day).map((p) => [p.latitude, p.longitude])
+    );
+    olderTrackLayer = L.polyline(segments, { color: '#ffffff', weight: 2, opacity: 0.35 }).addTo(map);
+  }
 
-  const olderDays = extraCount > 0
-    ? days.slice(RECENT_TRACK_COUNT, extraCount === Infinity ? undefined : RECENT_TRACK_COUNT + extraCount)
-    : [];
-
-  // Draw recent tracks with per-day colours.
+  // Draw recent tracks with per-day colours, oldest-to-newest so newest is on top.
   const lines = [];
-  recentDays.forEach((day, idx) => {
+  [...recentDays].reverse().forEach((day) => {
+    const idx = recentDays.indexOf(day);
     const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
     const pts = trackByDay.get(day);
     const latlngs = pts.map((p) => [p.latitude, p.longitude]);
@@ -402,14 +402,6 @@ function renderTracks() {
   });
   trackLine = lines;
 
-  // Draw older tracks together in white (multi-segment polyline).
-  if (olderDays.length) {
-    const segments = olderDays.map((day) =>
-      trackByDay.get(day).map((p) => [p.latitude, p.longitude])
-    );
-    olderTrackLayer = L.polyline(segments, { color: '#ffffff', weight: 2, opacity: 0.6 }).addTo(map);
-  }
-
   // Build / rebuild the day-colour legend.
   if (trackLegend) { trackLegend.remove(); trackLegend = null; }
   if (!days.length || !map) return;
@@ -430,44 +422,74 @@ function renderTracks() {
       </div>`;
     }).join('');
 
-    const olderCount = days.length - RECENT_TRACK_COUNT;
     let olderSwatchHtml = '';
     if (olderDays.length > 0) {
       olderSwatchHtml = `<div class="track-legend-item track-legend-item--muted">
         <span class="track-legend-swatch track-legend-swatch--past"></span>
-        <span>Past (${olderDays.length} day${olderDays.length === 1 ? '' : 's'})</span>
+        <span>Older (${olderDays.length} day${olderDays.length === 1 ? '' : 's'})</span>
+        <button class="track-gpx-dl track-older-dl" title="Download an older track">↓</button>
       </div>`;
     }
 
-    const showing = recentDays.length + olderDays.length;
-    const summaryHtml = `<div class="track-legend-summary">Showing ${showing} of ${days.length} day${days.length === 1 ? '' : 's'}</div>`;
-
-    const histModes = [
-      { mode: '+5',  label: '+5',  count: 5 },
-      { mode: '+10', label: '+10', count: 10 },
-      { mode: 'all', label: 'All', count: Infinity },
-    ].filter(({ count }) => count === Infinity || olderCount > count);
-    const btns = histModes.map(({ mode, label }) =>
-      `<button class="track-hist-btn${trackHistoryMode === mode ? ' active' : ''}" data-mode="${mode}">${label}</button>`
+    const trackCounts = [3, 5, 10].filter((count) => count <= days.length);
+    const btns = trackCounts.map((count) =>
+      `<button class="track-hist-btn${recentTrackCount === count ? ' active' : ''}" data-count="${count}">${count} Tracks</button>`
     ).join('');
-    const historyHtml = `<div class="track-hist-row"><span class="track-hist-label">History:</span>${btns}</div>`;
+    const historyHtml = trackCounts.length
+      ? `<div class="track-hist-row"><span class="track-hist-label">Show</span>${btns}</div>`
+      : '';
 
-    div.innerHTML = legendItems + olderSwatchHtml + summaryHtml + historyHtml;
+    div.innerHTML = legendItems + olderSwatchHtml + historyHtml;
 
     L.DomEvent.disableClickPropagation(div);
     L.DomEvent.disableScrollPropagation(div);
 
     div.querySelectorAll('.track-hist-btn').forEach((btn) => {
       L.DomEvent.on(btn, 'click', () => {
-        const mode = btn.dataset.mode;
-        trackHistoryMode = trackHistoryMode === mode ? 'none' : mode;
+        recentTrackCount = parseInt(btn.dataset.count, 10);
         renderTracks();
       });
     });
 
+    const olderDlBtn = div.querySelector('.track-older-dl');
+    if (olderDlBtn) {
+      L.DomEvent.on(olderDlBtn, 'click', () => {
+        showOlderTracksDialog(olderDays);
+      });
+    }
+
     return div;
   };
   trackLegend.addTo(map);
+}
+
+function showOlderTracksDialog(olderDays) {
+  const existing = document.getElementById('older-tracks-dialog');
+  if (existing) { existing.remove(); return; }
+
+  const dialog = document.createElement('div');
+  dialog.id = 'older-tracks-dialog';
+  dialog.className = 'older-tracks-dialog';
+
+  const rows = olderDays.map((day) => {
+    const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    const gpxLink = _gpxLinkForDay(day);
+    const dlBtn = gpxLink
+      ? `<a class="older-tracks-dialog-dl" href="${gpxLink.url}" download="${gpxLink.filename}" title="Download GPX">↓ GPX</a>`
+      : `<span class="older-tracks-no-gpx">No file</span>`;
+    return `<div class="older-tracks-dialog-row"><span class="older-tracks-dialog-date">${label}</span>${dlBtn}</div>`;
+  }).join('');
+
+  dialog.innerHTML = `
+    <div class="older-tracks-dialog-header">
+      <span>Download Older Tracks</span>
+      <button class="older-tracks-dialog-close" title="Close">✕</button>
+    </div>
+    <div class="older-tracks-dialog-list">${rows}</div>
+  `;
+
+  document.body.appendChild(dialog);
+  dialog.querySelector('.older-tracks-dialog-close').addEventListener('click', () => dialog.remove());
 }
 
 async function loadTrack() {
