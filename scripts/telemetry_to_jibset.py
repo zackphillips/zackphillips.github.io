@@ -6,10 +6,10 @@ import argparse
 import csv
 import json
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Iterable, List, Optional
 import xml.etree.ElementTree as ET
 
 
@@ -35,7 +35,7 @@ def parse_time_adjust(value: str) -> timedelta:
     return sign * timedelta(hours=int(hh), minutes=int(mm), seconds=int(ss))
 
 
-def parse_filename_timestamp(path: Path) -> Optional[datetime]:
+def parse_filename_timestamp(path: Path) -> datetime | None:
     match = FILENAME_TS_RE.match(path.name)
     if not match:
         return None
@@ -51,7 +51,7 @@ def parse_filename_timestamp(path: Path) -> Optional[datetime]:
     return dt.replace(tzinfo=timezone.utc)
 
 
-def parse_iso_timestamp(value: str) -> Optional[datetime]:
+def parse_iso_timestamp(value: str) -> datetime | None:
     try:
         dt = datetime.fromisoformat(value)
     except ValueError:
@@ -61,7 +61,7 @@ def parse_iso_timestamp(value: str) -> Optional[datetime]:
     return dt.astimezone(timezone.utc)
 
 
-def load_point(path: Path) -> Optional[TrackPoint]:
+def load_point(path: Path) -> TrackPoint | None:
     try:
         data = json.loads(path.read_text())
     except json.JSONDecodeError:
@@ -101,7 +101,7 @@ def iter_telemetry_files(input_dir: Path) -> Iterable[Path]:
         yield path
 
 
-def collect_points(files: Iterable[Path]) -> List[TrackPoint]:
+def collect_points(files: Iterable[Path]) -> list[TrackPoint]:
     points: List[TrackPoint] = []
     for path in files:
         point = load_point(path)
@@ -111,7 +111,7 @@ def collect_points(files: Iterable[Path]) -> List[TrackPoint]:
     return points
 
 
-def split_into_sequences(points: List[TrackPoint], max_gap: timedelta) -> List[List[TrackPoint]]:
+def split_into_sequences(points: list[TrackPoint], max_gap: timedelta) -> list[list[TrackPoint]]:
     if not points:
         return []
     sequences = [[points[0]]]
@@ -123,7 +123,7 @@ def split_into_sequences(points: List[TrackPoint], max_gap: timedelta) -> List[L
     return sequences
 
 
-def clamp_points(points: List[TrackPoint], start: Optional[datetime], end: Optional[datetime]) -> List[TrackPoint]:
+def clamp_points(points: list[TrackPoint], start: datetime | None, end: datetime | None) -> list[TrackPoint]:
     if start:
         points = [p for p in points if p.timestamp >= start]
     if end:
@@ -136,7 +136,7 @@ def format_timestamp(dt: datetime) -> str:
     return dt.replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def write_csv(points: List[TrackPoint], output: Path, delimiter: str) -> None:
+def write_csv(points: list[TrackPoint], output: Path, delimiter: str) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     with output.open("w", newline="") as handle:
         writer = csv.writer(handle, delimiter=delimiter)
@@ -149,7 +149,7 @@ def write_csv(points: List[TrackPoint], output: Path, delimiter: str) -> None:
             ])
 
 
-def write_gpx(points: List[TrackPoint], output: Path, name: str) -> None:
+def write_gpx(points: list[TrackPoint], output: Path, name: str) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     gpx = ET.Element(
         "gpx",

@@ -36,12 +36,30 @@ SNAPSHOT_PATH_WHITELIST: frozenset[str] = frozenset({
     "navigation", "environment", "electrical", "tanks", "propulsion", "internet"
 })
 
-# Privacy exclusion zones: (lat, lon, radius_metres).
-# Positions inside these circles are redacted from all stored/published data.
-# All other telemetry for those samples is retained as normal.
-PRIVACY_EXCLUSION_ZONES: list[tuple[float, float, float]] = [
+# Fallback privacy zone used when none are defined in info.yaml.
+_FALLBACK_PRIVACY_ZONES: list[tuple[float, float, float]] = [
     (37.7802069, -122.3858040, 200.0),  # South Beach Harbor, San Francisco
 ]
+
+# Active exclusion zones — populated from info.yaml by load_vessel_data().
+# Each entry is (lat, lon, radius_metres).
+PRIVACY_EXCLUSION_ZONES: list[tuple[float, float, float]] = list(_FALLBACK_PRIVACY_ZONES)
+
+
+def _load_privacy_zones(vessel_data: dict[str, Any]) -> list[tuple[float, float, float]]:
+    """Parse privacy_zones from vessel config; fall back to built-in default."""
+    raw = vessel_data.get("privacy_zones", [])
+    if not isinstance(raw, list) or not raw:
+        return list(_FALLBACK_PRIVACY_ZONES)
+    zones = []
+    for z in raw:
+        if not isinstance(z, dict):
+            continue
+        try:
+            zones.append((float(z["lat"]), float(z["lon"]), float(z["radius_m"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return zones or list(_FALLBACK_PRIVACY_ZONES)
 
 
 def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -69,10 +87,12 @@ def _is_position_private(lat: float, lon: float) -> bool:
 
 def load_vessel_data() -> dict:
     """Load vessel configuration from YAML or JSON file."""
+    global PRIVACY_EXCLUSION_ZONES
     try:
         # Try to load config (will try YAML first, then JSON)
         vessel_data = load_vessel_info("data/vessel/info.yaml")
         if vessel_data:
+            PRIVACY_EXCLUSION_ZONES = _load_privacy_zones(vessel_data)
 
             # Construct SignalK URL from vessel data
             signalk = vessel_data.get("signalk", {})

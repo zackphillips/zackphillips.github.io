@@ -27,9 +27,26 @@ TELEMETRY_DIR = Path("data/telemetry")
 TRACKS_DIR = TELEMETRY_DIR / "tracks"
 TRACKS_INDEX_FILE = TELEMETRY_DIR / "tracks_index.json"
 
-HARBOR_LAT = 37.7802069
-HARBOR_LON = -122.3858040
-HARBOR_RADIUS_M = 200.0
+# Fallback privacy zone when none are defined in info.yaml.
+_FALLBACK_ZONES: list[tuple[float, float, float]] = [
+    (37.7802069, -122.3858040, 200.0),  # South Beach Harbor, San Francisco
+]
+
+
+def _load_privacy_zones(vessel_info: dict[str, Any]) -> list[tuple[float, float, float]]:
+    """Parse privacy_zones from vessel config; fall back to built-in default."""
+    raw = vessel_info.get("privacy_zones", [])
+    if not isinstance(raw, list) or not raw:
+        return list(_FALLBACK_ZONES)
+    zones: list[tuple[float, float, float]] = []
+    for z in raw:
+        if not isinstance(z, dict):
+            continue
+        try:
+            zones.append((float(z["lat"]), float(z["lon"]), float(z["radius_m"])))
+        except (KeyError, TypeError, ValueError):
+            continue
+    return zones or list(_FALLBACK_ZONES)
 
 _NS_GPX = "http://www.topografix.com/GPX/1/1"
 _NS_GPXTPX = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
@@ -172,7 +189,10 @@ def main() -> int:
         vessel_info = load_vessel_info("data/vessel/info.yaml")
         vessel_name = vessel_info.get("name", "Vessel")
     except Exception:
+        vessel_info = {}
         vessel_name = "Vessel"
+
+    privacy_zones = _load_privacy_zones(vessel_info)
 
     # Collect all timestamped snapshot files (skip index/latest files)
     skip = {"signalk_latest.json", "positions_index.json", "snapshots_index.json",
@@ -191,7 +211,10 @@ def main() -> int:
         if pt is None:
             skipped += 1
             continue
-        if _haversine_m(pt["latitude"], pt["longitude"], HARBOR_LAT, HARBOR_LON) <= HARBOR_RADIUS_M:
+        if any(
+            _haversine_m(pt["latitude"], pt["longitude"], zlat, zlon) <= zr
+            for zlat, zlon, zr in privacy_zones
+        ):
             continue
         date_str = pt["timestamp"][:10]
         by_day.setdefault(date_str, []).append(pt)
