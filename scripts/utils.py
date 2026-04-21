@@ -6,7 +6,6 @@ Provides common functions for configuration management, error handling, and vali
 
 import json
 import logging
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,11 +16,6 @@ logger = logging.getLogger(__name__)
 
 class VesselConfigError(Exception):
     """Raised when vessel configuration is invalid or missing."""
-    pass
-
-
-class SensorConfigError(Exception):
-    """Raised when sensor configuration is invalid or missing."""
     pass
 
 
@@ -40,54 +34,6 @@ def setup_logging(level: str = "INFO", format_string: str = None) -> None:
         level=getattr(logging, level.upper()),
         format=format_string
     )
-
-
-def create_signalk_delta(values: list[dict], source_label: str, source_type: str, source_src: str) -> dict:
-    """
-    Create a SignalK delta message.
-
-    Args:
-        values: List of value dictionaries with 'path' and 'value' keys
-        source_label: Human-readable source label
-        source_type: Source type identifier
-        source_src: Source identifier
-    Returns:
-        SignalK delta message dictionary
-    """
-    return {
-        "context": "vessels.self",
-        "updates": [
-            {
-                "source": {
-                    "label": source_label,
-                    "type": source_type,
-                    "src": source_src,
-                    "$source": source_src,
-                },
-                "timestamp": datetime.now(UTC).isoformat(),
-                "values": values,
-            }
-        ],
-    }
-
-
-def encode_signalk_udp_message(delta: dict) -> bytes:
-    """
-    Encode a SignalK delta for UDP transport.
-
-    Ensures messages are newline-terminated as expected by SignalK UDP input.
-    """
-    return (json.dumps(delta) + "\n").encode("utf-8")
-
-
-def send_delta_over_udp(udp_socket, host: str, port: int, delta: dict) -> int:
-    """
-    Send a SignalK delta over an existing UDP socket.
-
-    Returns the number of bytes sent.
-    """
-    message_bytes = encode_signalk_udp_message(delta)
-    return udp_socket.sendto(message_bytes, (host, port))
 
 
 def get_project_root() -> Path:
@@ -294,19 +240,6 @@ def validate_signalk_config(config: dict[str, Any]) -> None:
         raise VesselConfigError(f"Invalid SignalK protocol: {protocol} (must be 'http' or 'https')")
 
 
-def get_sensor_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
-    """
-    Get sensor configuration from vessel info.
-
-    Args:
-        vessel_info: Dictionary containing vessel configuration
-
-    Returns:
-        Dictionary containing sensor configuration
-    """
-    return vessel_info.get("sensors", {})
-
-
 def get_signalk_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
     """
     Get SignalK configuration from vessel info.
@@ -318,29 +251,6 @@ def get_signalk_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
         Dictionary containing SignalK configuration
     """
     return vessel_info.get("signalk", {})
-
-
-def validate_sensor_config(sensor_config: dict[str, Any]) -> None:
-    """
-    Validate sensor configuration.
-
-    Args:
-        sensor_config: Dictionary containing sensor configuration
-
-    Raises:
-        SensorConfigError: If sensor configuration is invalid
-    """
-    # Validate heading correction offset if present (under mmc5603.calibration)
-    mmc5603_config = sensor_config.get("mmc5603", {})
-    calibration = mmc5603_config.get("calibration", {})
-    if "heading_correction_offset_rad" in calibration:
-        offset = calibration["heading_correction_offset_rad"]
-        if not isinstance(offset, (int, float)):
-            raise SensorConfigError(f"Invalid heading correction offset: {offset} (must be numeric)")
-
-        # Check if offset is reasonable (within ±2π radians)
-        if abs(offset) > 2 * 3.14159:
-            raise SensorConfigError(f"Unreasonable heading correction offset: {offset} (should be within +/-2*pi radians)")
 
 
 def create_default_vessel_config() -> dict[str, Any]:
@@ -360,13 +270,6 @@ def create_default_vessel_config() -> dict[str, Any]:
             "port": "3000",
             "protocol": "https"
         },
-        "sensors": {
-            "mmc5603": {
-                "calibration": {
-                    "heading_correction_offset_rad": 0.0
-                }
-            }
-        }
     }
 
 
