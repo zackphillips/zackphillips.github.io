@@ -55,7 +55,6 @@ Data freshness depends on the Pi's update interval and internet connectivity fro
 ```bash
 git clone <repository-url>
 cd zackphillips.github.io
-make check-uv
 make pre-commit-install
 ```
 
@@ -70,11 +69,11 @@ This runs an interactive wizard that writes `data/vessel/info.yaml` with your ve
 ### Run as a system service
 
 ```bash
-make install-service          # Install and start the updater as a systemd service
-make check-service-status     # Check it's running
-make logs                     # Stream live logs
-make change-server-update-period RESTART_SEC=300  # Change update interval (seconds)
-make uninstall-service        # Remove the service
+make install              # Install and start all services
+make status               # Check service statuses
+make show-logs-website    # Stream website service logs
+make show-logs-polars     # Stream polar accumulation service logs
+make uninstall            # Remove all services
 ```
 
 ---
@@ -82,9 +81,9 @@ make uninstall-service        # Remove the service
 ## Development
 
 ```bash
-make server       # Local dev server at http://localhost:8000
-make test         # Run Python + JavaScript tests
-make pre-commit-run  # Run linters and formatters
+make server    # Local dev server at http://localhost:8000
+make test      # Run Python + JavaScript tests
+make lint      # Run ruff linter and auto-fix
 ```
 
 ### Tech stack
