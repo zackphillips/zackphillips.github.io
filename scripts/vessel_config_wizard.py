@@ -53,6 +53,7 @@ class VesselConfigWizard:
         return {
             "name": "S.V. Vessel",
             "mmsi": "123456789",
+            "marinetraffic_ship_id": "",
             "uscg_number": "1234567",
             "hull_number": "ABC12345",
             "signalk": {"host": "192.168.1.100", "port": "3000", "protocol": "https"},
@@ -92,6 +93,11 @@ class VesselConfigWizard:
 
         self.config["mmsi"] = self.get_input(
             "MMSI (Maritime Mobile Service Identity)", self.config.get("mmsi", "")
+        )
+
+        self.config["marinetraffic_ship_id"] = self.get_input(
+            "MarineTraffic ship ID (find at marinetraffic.com, e.g. shipid:XXXXXXX in the URL)",
+            self.config.get("marinetraffic_ship_id", ""),
         )
 
         self.config["uscg_number"] = self.get_input(

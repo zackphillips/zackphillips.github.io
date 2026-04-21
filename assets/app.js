@@ -25,8 +25,9 @@ let anchorLayer = null;    // Leaflet circle for anchor swing radius
 let anchorMarker = null;   // ⚓ icon at anchor drop position
 let anchorLine = null;     // dashed line from anchor to vessel
 let trackLegend = null;    // Leaflet control for day-colour legend
-let trackHistoryMode = 'none'; // 'none' | '+5' | '+10' | 'all'
-let trackByDay = new Map();    // Cached track data keyed by YYYY-MM-DD
+let recentTrackCount = 3;      // Number of most-recent tracks to colour (rest shown pale white)
+let trackByDay = new Map();    // Cached track data keyed by YYYY-MM-DD (local)
+let tracksIndex = [];          // Metadata from tracks_index.json (all sailing days ever)
 let olderTrackLayer = null;    // Leaflet layer for older tracks shown in white
 let lat, lon; // Global variables for coordinates
 let vesselState = ''; // 'underway' | 'at anchor' | ''
@@ -281,7 +282,6 @@ const DAY_TRACK_COLORS = [
 const HARBOR_CENTER_LAT = 37.7802069;
 const HARBOR_CENTER_LON = -122.3858040;
 const HARBOR_RADIUS_M = 200;
-const RECENT_TRACK_COUNT = 10;
 
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -326,6 +326,24 @@ function parsePositionPoint(point) {
   };
 }
 
+function _gpxLinkForDay(localDay) {
+  // Find the tracks_index entry whose start timestamp maps to this local day.
+  for (const track of tracksIndex) {
+    if (!track.file) continue;
+    const startLocal = track.start
+      ? (() => { const d = new Date(track.start); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()
+      : null;
+    if (track.date === localDay || startLocal === localDay) {
+      const vesselSlug = (vesselData?.name || 'vessel').replace(/[^a-z0-9]/gi, '-');
+      return {
+        url: `data/telemetry/${track.file}`,
+        filename: `${vesselSlug}-${track.date}.gpx`,
+      };
+    }
+  }
+  return null;
+}
+
 function renderTracks() {
   if (!map || !trackByDay.size) return;
 
@@ -345,22 +363,23 @@ function renderTracks() {
     olderTrackLayer = null;
   }
 
-  // Sort newest-first; recent = first RECENT_TRACK_COUNT, older = remainder.
+  // Sort newest-first; recent = first recentTrackCount coloured, older = all remainder.
   const days = [...trackByDay.keys()].sort().reverse();
-  const recentDays = days.slice(0, RECENT_TRACK_COUNT);
+  const recentDays = days.slice(0, recentTrackCount);
+  const olderDays = days.slice(recentTrackCount);
 
-  let extraCount = 0;
-  if (trackHistoryMode === '+5') extraCount = 5;
-  else if (trackHistoryMode === '+10') extraCount = 10;
-  else if (trackHistoryMode === 'all') extraCount = Infinity;
+  // Draw older tracks first (pale white) so coloured recent tracks appear on top.
+  if (olderDays.length) {
+    const segments = olderDays.map((day) =>
+      trackByDay.get(day).map((p) => [p.latitude, p.longitude])
+    );
+    olderTrackLayer = L.polyline(segments, { color: '#ffffff', weight: 2, opacity: 0.35 }).addTo(map);
+  }
 
-  const olderDays = extraCount > 0
-    ? days.slice(RECENT_TRACK_COUNT, extraCount === Infinity ? undefined : RECENT_TRACK_COUNT + extraCount)
-    : [];
-
-  // Draw recent tracks with per-day colours.
+  // Draw recent tracks with per-day colours, oldest-to-newest so newest is on top.
   const lines = [];
-  recentDays.forEach((day, idx) => {
+  [...recentDays].reverse().forEach((day) => {
+    const idx = recentDays.indexOf(day);
     const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
     const pts = trackByDay.get(day);
     const latlngs = pts.map((p) => [p.latitude, p.longitude]);
@@ -383,14 +402,6 @@ function renderTracks() {
   });
   trackLine = lines;
 
-  // Draw older tracks together in white (multi-segment polyline).
-  if (olderDays.length) {
-    const segments = olderDays.map((day) =>
-      trackByDay.get(day).map((p) => [p.latitude, p.longitude])
-    );
-    olderTrackLayer = L.polyline(segments, { color: '#ffffff', weight: 2, opacity: 0.6 }).addTo(map);
-  }
-
   // Build / rebuild the day-colour legend.
   if (trackLegend) { trackLegend.remove(); trackLegend = null; }
   if (!days.length || !map) return;
@@ -401,50 +412,84 @@ function renderTracks() {
     const legendItems = recentDays.map((day, idx) => {
       const color = DAY_TRACK_COLORS[idx % DAY_TRACK_COLORS.length];
       const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const gpxLink = _gpxLinkForDay(day);
+      const dlBtn = gpxLink
+        ? `<a class="track-gpx-dl" href="${gpxLink.url}" download="${gpxLink.filename}" title="Download GPX">↓</a>`
+        : '';
       return `<div class="track-legend-item">
         <span class="track-legend-swatch" style="background:${color}"></span>
-        <span>${label}</span>
+        <span>${label}</span>${dlBtn}
       </div>`;
     }).join('');
 
-    const olderCount = days.length - RECENT_TRACK_COUNT;
     let olderSwatchHtml = '';
     if (olderDays.length > 0) {
       olderSwatchHtml = `<div class="track-legend-item track-legend-item--muted">
         <span class="track-legend-swatch track-legend-swatch--past"></span>
-        <span>Past (${olderDays.length} day${olderDays.length === 1 ? '' : 's'})</span>
+        <span>Older (${olderDays.length} day${olderDays.length === 1 ? '' : 's'})</span>
+        <button class="track-gpx-dl track-older-dl" title="Download an older track">↓</button>
       </div>`;
     }
 
-    const showing = recentDays.length + olderDays.length;
-    const summaryHtml = `<div class="track-legend-summary">Showing ${showing} of ${days.length} day${days.length === 1 ? '' : 's'}</div>`;
-
-    const histModes = [
-      { mode: '+5',  label: '+5',  count: 5 },
-      { mode: '+10', label: '+10', count: 10 },
-      { mode: 'all', label: 'All', count: Infinity },
-    ].filter(({ count }) => count === Infinity || olderCount > count);
-    const btns = histModes.map(({ mode, label }) =>
-      `<button class="track-hist-btn${trackHistoryMode === mode ? ' active' : ''}" data-mode="${mode}">${label}</button>`
+    const trackCounts = [3, 5, 10].filter((count) => count <= days.length);
+    const btns = trackCounts.map((count) =>
+      `<button class="track-hist-btn${recentTrackCount === count ? ' active' : ''}" data-count="${count}">${count} Tracks</button>`
     ).join('');
-    const historyHtml = `<div class="track-hist-row"><span class="track-hist-label">History:</span>${btns}</div>`;
+    const historyHtml = trackCounts.length
+      ? `<div class="track-hist-row"><span class="track-hist-label">Show</span>${btns}</div>`
+      : '';
 
-    div.innerHTML = legendItems + olderSwatchHtml + summaryHtml + historyHtml;
+    div.innerHTML = legendItems + olderSwatchHtml + historyHtml;
 
     L.DomEvent.disableClickPropagation(div);
     L.DomEvent.disableScrollPropagation(div);
 
     div.querySelectorAll('.track-hist-btn').forEach((btn) => {
       L.DomEvent.on(btn, 'click', () => {
-        const mode = btn.dataset.mode;
-        trackHistoryMode = trackHistoryMode === mode ? 'none' : mode;
+        recentTrackCount = parseInt(btn.dataset.count, 10);
         renderTracks();
       });
     });
 
+    const olderDlBtn = div.querySelector('.track-older-dl');
+    if (olderDlBtn) {
+      L.DomEvent.on(olderDlBtn, 'click', () => {
+        showOlderTracksDialog(olderDays);
+      });
+    }
+
     return div;
   };
   trackLegend.addTo(map);
+}
+
+function showOlderTracksDialog(olderDays) {
+  const existing = document.getElementById('older-tracks-dialog');
+  if (existing) { existing.remove(); return; }
+
+  const dialog = document.createElement('div');
+  dialog.id = 'older-tracks-dialog';
+  dialog.className = 'older-tracks-dialog';
+
+  const rows = olderDays.map((day) => {
+    const label = new Date(`${day}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+    const gpxLink = _gpxLinkForDay(day);
+    const dlBtn = gpxLink
+      ? `<a class="older-tracks-dialog-dl" href="${gpxLink.url}" download="${gpxLink.filename}" title="Download GPX">↓ GPX</a>`
+      : `<span class="older-tracks-no-gpx">No file</span>`;
+    return `<div class="older-tracks-dialog-row"><span class="older-tracks-dialog-date">${label}</span>${dlBtn}</div>`;
+  }).join('');
+
+  dialog.innerHTML = `
+    <div class="older-tracks-dialog-header">
+      <span>Download Older Tracks</span>
+      <button class="older-tracks-dialog-close" title="Close">✕</button>
+    </div>
+    <div class="older-tracks-dialog-list">${rows}</div>
+  `;
+
+  document.body.appendChild(dialog);
+  dialog.querySelector('.older-tracks-dialog-close').addEventListener('click', () => dialog.remove());
 }
 
 async function loadTrack() {
@@ -480,9 +525,92 @@ async function loadTrack() {
 
     trackByDay = byDay;
     renderTracks();
+    // Load historical tracks (GPX files) without blocking the initial render.
+    loadHistoricalTracks();
   } catch (error) {
     console.warn('Unable to load track data:', error);
   }
+}
+
+function parseGpxText(gpxText) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(gpxText, 'application/xml');
+  if (doc.querySelector('parsererror')) return [];
+  const points = [];
+  doc.querySelectorAll('trkpt').forEach((trkpt) => {
+    const lat = parseFloat(trkpt.getAttribute('lat'));
+    const lon = parseFloat(trkpt.getAttribute('lon'));
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const timeEl = trkpt.querySelector('time');
+    const timestamp = timeEl ? timeEl.textContent.trim() : null;
+    const speedEl = trkpt.querySelector('speed');
+    const courseEl = trkpt.querySelector('course');
+    const speedMs = speedEl ? parseFloat(speedEl.textContent) : NaN;
+    const courseDeg = courseEl ? parseFloat(courseEl.textContent) : NaN;
+    points.push({
+      latitude: lat,
+      longitude: lon,
+      timestamp,
+      speedOverGround: Number.isFinite(speedMs) ? speedMs : NaN,
+      // Convert degrees → radians to match positions_index format
+      courseOverGroundTrue: Number.isFinite(courseDeg) ? courseDeg * Math.PI / 180 : NaN,
+    });
+  });
+  return points;
+}
+
+async function loadHistoricalTracks() {
+  try {
+    const resp = await fetch(`data/telemetry/tracks_index.json?ts=${Date.now()}`);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    tracksIndex = Array.isArray(data) ? data : (data.tracks ?? []);
+  } catch (e) {
+    console.warn('Unable to load tracks index:', e);
+    return;
+  }
+
+  // Fetch all GPX files in parallel, skip days already covered by positions_index.
+  const covered = new Set(trackByDay.keys());
+  const toFetch = tracksIndex.filter((track) => {
+    // A track's UTC date might map to a different local day. Check both.
+    const utcDate = track.date;
+    const localDate = track.start
+      ? (() => { const d = new Date(track.start); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })()
+      : null;
+    return !covered.has(utcDate) && !(localDate && covered.has(localDate));
+  });
+
+  if (!toFetch.length) return;
+
+  const results = await Promise.all(toFetch.map(async (track) => {
+    try {
+      const r = await fetch(`data/telemetry/${track.file}?ts=${Date.now()}`);
+      if (!r.ok) return null;
+      return { track, text: await r.text() };
+    } catch {
+      return null;
+    }
+  }));
+
+  let added = false;
+  for (const result of results) {
+    if (!result) continue;
+    const points = parseGpxText(result.text);
+    if (!points.length) continue;
+    // Group by local calendar day (same logic as loadTrack)
+    for (const p of points) {
+      if (!p.timestamp) continue;
+      const dt = new Date(p.timestamp);
+      const dayKey = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+      if (!trackByDay.has(dayKey)) {
+        trackByDay.set(dayKey, []);
+        added = true;
+      }
+      trackByDay.get(dayKey).push(p);
+    }
+  }
+  if (added) renderTracks();
 }
 
 // Get all tide stations from loaded JSON data
@@ -749,23 +877,18 @@ function updateVesselLinks() {
     vesselData.signalk.websocket_url = `${wsUrl}/signalk/v1/stream`;
   }
 
-  // Construct external tracking links using MMSI
-  if (vesselData.mmsi) {
+  // Construct external tracking links
+  if (vesselData.marinetraffic_ship_id) {
     vesselData.links = {
-      marinetraffic: `https://www.marinetraffic.com/en/ais/details/ships/mmsi:${vesselData.mmsi}`,
-      myshiptracking: `https://www.myshiptracking.com/vessels/mmsi-${vesselData.mmsi}`
+      marinetraffic: `https://www.marinetraffic.com/en/ais/details/ships/shipid:${vesselData.marinetraffic_ship_id}`
     };
   }
 
   // Update AIS links
   const marinetrafficLink = document.getElementById('marinetraffic-link');
-  const myshiptrackingLink = document.getElementById('myshiptracking-link');
 
   if (marinetrafficLink && vesselData.links?.marinetraffic) {
     marinetrafficLink.href = vesselData.links.marinetraffic;
-  }
-  if (myshiptrackingLink && vesselData.links?.myshiptracking) {
-    myshiptrackingLink.href = vesselData.links.myshiptracking;
   }
 }
 let themeChangeTimeout = null; // Timeout for theme change debouncing
