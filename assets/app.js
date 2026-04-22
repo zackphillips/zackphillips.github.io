@@ -2,6 +2,10 @@ const vesselUtils = window.vesselUtils;
 if (!vesselUtils) {
   throw new Error('vesselUtils must be loaded before app.js');
 }
+if (!window.VESSEL_CONSTANTS) {
+  throw new Error('constants.js must be loaded before app.js');
+}
+const C = window.VESSEL_CONSTANTS;
 const { haversine, getAnchorDistanceColor, getWindDirection } = vesselUtils;
 
 Chart.defaults.font.family = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -25,7 +29,7 @@ let anchorLayer = null;    // Leaflet circle for anchor swing radius
 let anchorMarker = null;   // ⚓ icon at anchor drop position
 let anchorLine = null;     // dashed line from anchor to vessel
 let trackLegend = null;    // Leaflet control for day-colour legend
-let recentTrackCount = 3;      // Number of most-recent tracks to colour (rest shown pale white)
+let recentTrackCount = C.DEFAULT_RECENT_TRACK_COUNT; // Number of most-recent tracks to colour (rest shown pale white)
 let trackByDay = new Map();    // Cached track data keyed by YYYY-MM-DD (local)
 let tracksIndex = [];          // Metadata from tracks_index.json (all sailing days ever)
 let olderTrackLayer = null;    // Leaflet layer for older tracks shown in white
@@ -50,9 +54,9 @@ function setCached(key, data) {
 }
 let tideStations = null; // Global tide stations data
 const DEFAULT_TIDE_LOCATION = {
-  lat: 37.806,
-  lon: -122.465,
-  label: 'San Francisco Bay',
+  lat:   C.DEFAULT_TIDE_LAT,
+  lon:   C.DEFAULT_TIDE_LON,
+  label: C.DEFAULT_TIDE_LABEL,
 };
 
 const PANEL_SKELETONS = {
@@ -69,44 +73,44 @@ const PANEL_SKELETONS = {
 
 function classifyBatteryStatus(percent) {
   if (!Number.isFinite(percent)) return null;
-  if (percent >= 75) return { level: 'ok', label: 'Charged' };
-  if (percent >= 45) return { level: 'warn', label: 'Low' };
+  if (percent >= C.BATTERY_OK_PCT)   return { level: 'ok',    label: 'Charged' };
+  if (percent >= C.BATTERY_WARN_PCT) return { level: 'warn',  label: 'Low' };
   return { level: 'alert', label: 'Critical' };
 }
 
 function classifyBatteryTime(hours) {
   if (!Number.isFinite(hours)) return null;
-  if (hours >= 6) return { level: 'ok', label: 'Plenty' };
-  if (hours >= 2) return { level: 'warn', label: 'Soon' };
+  if (hours >= C.BATTERY_TIME_OK_H)   return { level: 'ok',   label: 'Plenty' };
+  if (hours >= C.BATTERY_TIME_WARN_H) return { level: 'warn', label: 'Soon' };
   return { level: 'alert', label: 'Short' };
 }
 
 function classifyAnchorStatus(current, max) {
   if (!Number.isFinite(current) || !Number.isFinite(max) || max <= 0) return null;
-  if (current <= max * 0.85) return { level: 'ok', label: 'Safe' };
-  if (current <= max * 1.05) return { level: 'warn', label: 'Edge' };
+  if (current <= max * C.ANCHOR_WARN_RATIO) return { level: 'ok',   label: 'Safe' };
+  if (current <= max * C.ANCHOR_EDGE_RATIO) return { level: 'warn', label: 'Edge' };
   return { level: 'alert', label: 'Drifting' };
 }
 
 function classifyPacketLoss(loss) {
   if (!Number.isFinite(loss)) return null;
   const percentage = loss <= 1 ? loss * 100 : loss;
-  if (percentage < 1) return { level: 'ok', label: 'Clean' };
-  if (percentage < 3) return { level: 'warn', label: 'Lossy' };
+  if (percentage < C.PACKET_LOSS_OK_PCT)   return { level: 'ok',   label: 'Clean' };
+  if (percentage < C.PACKET_LOSS_WARN_PCT) return { level: 'warn', label: 'Lossy' };
   return { level: 'alert', label: 'Dropping' };
 }
 
 function classifyTankLevel(level) {
   if (!Number.isFinite(level)) return null;
-  if (level >= 0.35) return { level: 'ok', label: 'Healthy' };
-  if (level >= 0.2) return { level: 'warn', label: 'Low' };
+  if (level >= C.TANK_OK_RATIO)   return { level: 'ok',   label: 'Healthy' };
+  if (level >= C.TANK_WARN_RATIO) return { level: 'warn', label: 'Low' };
   return { level: 'alert', label: 'Refill' };
 }
 
 function classifyWasteTank(level) {
   if (!Number.isFinite(level)) return null;
-  if (level <= 0.4) return { level: 'ok', label: 'Clear' };
-  if (level <= 0.7) return { level: 'warn', label: 'Rising' };
+  if (level <= C.WASTE_WARN_RATIO)  return { level: 'ok',   label: 'Clear' };
+  if (level <= C.WASTE_ALERT_RATIO) return { level: 'warn', label: 'Rising' };
   return { level: 'alert', label: 'Full' };
 }
 
@@ -222,11 +226,11 @@ function renderEmptyState(containerId, title, subtitle = '') {
 
 async function updateMapLocation(lat, lon) {
   try {
-    // If inside the harbor geofence, look up the geofence center so we get a
-    // proper landmark name instead of an open-water result.
-    const inHarbor = haversineMeters(lat, lon, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) <= HARBOR_RADIUS_M;
-    const lookupLat = inHarbor ? HARBOR_CENTER_LAT : lat;
-    const lookupLon = inHarbor ? HARBOR_CENTER_LON : lon;
+    // If inside a privacy zone, snap the geocoding lookup to the zone center
+    // so we get a proper landmark name rather than an open-water coordinate.
+    const zone = getPrivacyZoneCenter(lat, lon);
+    const lookupLat = zone ? zone.lat : lat;
+    const lookupLon = zone ? zone.lon : lon;
     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lookupLat}&lon=${lookupLon}&format=json&zoom=10&addressdetails=1`);
     const data = await response.json();
 
@@ -279,9 +283,30 @@ const DAY_TRACK_COLORS = [
   '#009688', '#2196f3', '#ff4081', '#76ff03', '#40c4ff', '#ea80fc',
 ];
 
-const HARBOR_CENTER_LAT = 37.7802069;
-const HARBOR_CENTER_LON = -122.3858040;
-const HARBOR_RADIUS_M = 200;
+// Privacy zones — populated from vesselData.privacy_zones after YAML loads.
+// Falls back to the South Beach Harbor constant when vesselData is unavailable.
+function getPrivacyZones() {
+  const zones = vesselData?.privacy_zones;
+  if (Array.isArray(zones) && zones.length) return zones;
+  return [{
+    lat:      C.FALLBACK_PRIVACY_ZONE_LAT,
+    lon:      C.FALLBACK_PRIVACY_ZONE_LON,
+    radius_m: C.FALLBACK_PRIVACY_ZONE_RADIUS_M,
+  }];
+}
+
+function isInPrivacyZone(lat, lon) {
+  return getPrivacyZones().some(
+    (z) => haversineMeters(lat, lon, z.lat, z.lon) <= z.radius_m
+  );
+}
+
+// Return the center of the first zone containing (lat, lon), or null.
+function getPrivacyZoneCenter(lat, lon) {
+  return getPrivacyZones().find(
+    (z) => haversineMeters(lat, lon, z.lat, z.lon) <= z.radius_m
+  ) ?? null;
+}
 
 function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
@@ -507,7 +532,7 @@ async function loadTrack() {
       .filter((p) => p
         && Number.isFinite(p.latitude)
         && Number.isFinite(p.longitude)
-        && haversineMeters(p.latitude, p.longitude, HARBOR_CENTER_LAT, HARBOR_CENTER_LON) > HARBOR_RADIUS_M);
+        && !isInPrivacyZone(p.latitude, p.longitude));
 
     if (!positions.length) return;
 
@@ -630,8 +655,8 @@ let currentNav = null; // Global navigation data
 let currentPropulsion = null; // Global propulsion data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
-const SNAPSHOT_INDEX_URL = 'data/telemetry/snapshots_index.json';
-const SPARKLINE_POINTS = 60;
+const SNAPSHOT_INDEX_URL = C.SNAPSHOT_INDEX_URL;
+const SPARKLINE_POINTS = C.SPARKLINE_POINTS;
 let seriesByPath = null;
 let seriesPromise = null;
 let refreshSparklines = null; // set once initInlineSparklines is ready
@@ -755,6 +780,51 @@ function resolveTidePosition(currentLat, currentLon) {
   };
 }
 
+// ── Voyage statistics ────────────────────────────────────────────────────────
+
+async function loadVoyageStats() {
+  const panel = document.getElementById('voyage-stats-panel');
+  if (!panel) return;
+
+  try {
+    const resp = await fetch(`${C.TRACKS_INDEX_URL}?ts=${Date.now()}`);
+    if (!resp.ok) { panel.style.display = 'none'; return; }
+    const data = await resp.json();
+    const tracks = Array.isArray(data) ? data : (data.tracks ?? []);
+    if (!tracks.length) { panel.style.display = 'none'; return; }
+
+    const totalDays     = tracks.length;
+    const totalNm       = tracks.reduce((s, t) => s + (t.distance_nm  ?? 0), 0);
+    const totalHours    = tracks.reduce((s, t) => s + (t.duration_hours ?? 0), 0);
+    const maxSpeed      = tracks.reduce((m, t) => Math.max(m, t.max_speed_kts ?? 0), 0);
+    const firstDate     = tracks[0]?.date ?? '';
+    const lastDate      = tracks[tracks.length - 1]?.date ?? '';
+
+    const fmt = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+
+    const grid = document.getElementById('voyage-stats-grid');
+    if (!grid) return;
+
+    grid.innerHTML = [
+      { label: 'Sailing Days',   value: totalDays },
+      { label: 'Total Distance', value: `${totalNm.toFixed(1)} nm` },
+      { label: 'Total Underway', value: `${totalHours.toFixed(1)} hr` },
+      { label: 'Top Speed',      value: `${maxSpeed.toFixed(1)} kts` },
+      { label: 'First Sail',     value: fmt(firstDate) },
+      { label: 'Last Sail',      value: fmt(lastDate) },
+    ].map(({ label, value }) => `
+      <div class="info-item">
+        <div class="label">${label}</div>
+        <div class="value">${value}</div>
+      </div>`).join('');
+
+    panel.style.display = '';
+  } catch (e) {
+    console.warn('Voyage stats unavailable:', e);
+    panel.style.display = 'none';
+  }
+}
+
 // Load vessel information from YAML file
 async function loadVesselData() {
   try {
@@ -773,9 +843,9 @@ async function loadVesselData() {
     // Add default_location if not present
     if (!vesselData.default_location) {
       vesselData.default_location = {
-        lat: 37.806,
-        lon: -122.465,
-        label: 'San Francisco Bay'
+        lat:   C.DEFAULT_TIDE_LAT,
+        lon:   C.DEFAULT_TIDE_LON,
+        label: C.DEFAULT_TIDE_LABEL,
       };
     }
     
@@ -790,10 +860,10 @@ async function loadVesselData() {
       uscg_number: "1024168",
       hull_number: "BEY57004E494",
       default_location: {
-        lat: 37.806,
-        lon: -122.465,
-        label: 'San Francisco Bay'
-      }
+        lat:   C.DEFAULT_TIDE_LAT,
+        lon:   C.DEFAULT_TIDE_LON,
+        label: C.DEFAULT_TIDE_LABEL,
+      },
     };
     updateVesselLinks();
   }
@@ -992,8 +1062,8 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
 
   try {
     let res;
-    // Serve from cache if fresh (3-hour TTL — tide predictions don't change within a day)
-    let json = (() => { const c = getCached(tideCacheKey, 3 * 60 * 60 * 1000); return c ? { predictions: c } : null; })();
+    // Serve from cache if fresh — tide predictions don't change within a day
+    let json = (() => { const c = getCached(tideCacheKey, C.TIDE_CACHE_TTL_MS); return c ? { predictions: c } : null; })();
 
     // Try primary station (skipped when cache hit)
     if (!json) console.debug('Tide fetch: attempting station', {
@@ -1269,77 +1339,36 @@ async function loadData() {
     return description;
   };
 
-  const toSnapshotFilename = (timestamp) => {
-    if (!timestamp) return null;
-    const normalized = timestamp.replace('Z', '+00:00');
-    const datePart = normalized.split('+')[0];
-    if (!datePart) return null;
-    return `${datePart.replace(/:/g, '-')}Z.json`;
-  };
-
-  const buildSeriesFromSnapshots = (snapshots) => {
+  // Build a Map<path, [{t, v}]> from instrument_log.json entries.
+  // Each entry is {timestamp, values: {path: number}}.
+  const buildSeriesFromLog = (entries) => {
     const map = new Map();
-    for (const snapshot of snapshots) {
-      if (!snapshot || typeof snapshot !== 'object') continue;
-
-      // Support both formats:
-      //   New: SignalK delta  → { context, updates: [{ timestamp, values: [{path, value}] }] }
-      //   Legacy:             → { timestamp, numericValues: { path: value } }
-      const update = snapshot.updates?.[0];
-      const timestamp = update?.timestamp || snapshot.timestamp || snapshot.time || null;
-      const date = timestamp ? new Date(timestamp) : null;
+    for (const entry of entries) {
+      if (!entry || typeof entry !== 'object') continue;
+      const date = entry.timestamp ? new Date(entry.timestamp) : null;
       if (!date || Number.isNaN(date.getTime())) continue;
-
-      if (Array.isArray(update?.values)) {
-        // New SignalK format
-        for (const { path, value } of update.values) {
-          if (typeof value === 'number' && Number.isFinite(value)) {
-            const list = map.get(path) || [];
-            list.push({ t: date, v: value });
-            map.set(path, list);
-          }
-        }
-      } else {
-        // Legacy numericValues format
-        const values = snapshot.numericValues;
-        if (!values || typeof values !== 'object') continue;
-        Object.entries(values).forEach(([path, value]) => {
-          if (typeof value !== 'number' || !Number.isFinite(value)) return;
-          const list = map.get(path) || [];
-          list.push({ t: date, v: value });
-          map.set(path, list);
-        });
+      const values = entry.values;
+      if (!values || typeof values !== 'object') continue;
+      for (const [path, value] of Object.entries(values)) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+        const list = map.get(path) || [];
+        list.push({ t: date, v: value });
+        map.set(path, list);
       }
     }
-    for (const list of map.values()) {
-      list.sort((a, b) => a.t - b.t);
-    }
+    for (const list of map.values()) list.sort((a, b) => a.t - b.t);
     return map;
   };
 
   const loadSeries = async () => {
     if (seriesByPath) return seriesByPath;
     if (seriesPromise) return seriesPromise;
-    seriesPromise = fetch(`${SNAPSHOT_INDEX_URL}?ts=${Date.now()}`)
+    seriesPromise = fetch(`${C.INSTRUMENT_LOG_URL}?ts=${Date.now()}`)
       .then((res) => (res.ok ? res.json() : null))
-      .then(async (payload) => {
-        const positions = Array.isArray(payload) ? payload : payload?.positions;
-        if (!Array.isArray(positions) || !positions.length) {
-          seriesByPath = new Map();
-          return seriesByPath;
-        }
-        const recent = positions.slice(-SPARKLINE_POINTS);
-        const files = recent
-          .map((entry) => entry?.file || toSnapshotFilename(entry?.timestamp))
-          .filter(Boolean);
-        const snapshots = await Promise.all(
-          files.map((file) =>
-            fetch(`data/telemetry/${file}?ts=${Date.now()}`)
-              .then((res) => (res.ok ? res.json() : null))
-              .catch(() => null)
-          )
-        );
-        seriesByPath = buildSeriesFromSnapshots(snapshots);
+      .then((payload) => {
+        const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+        const recent = entries.slice(-SPARKLINE_POINTS);
+        seriesByPath = buildSeriesFromLog(recent);
         return seriesByPath;
       })
       .catch(() => {
@@ -2452,7 +2481,7 @@ async function loadConditionsForecast() {
     // ── Atmospheric (Open-Meteo) ──────────────────────────────────────────
     (async () => {
       const key = `cond_atmos2_${latR}_${lonR}_${today}`;
-      const hit = getCached(key, 60 * 60 * 1000);
+      const hit = getCached(key, C.FORECAST_CACHE_TTL_MS);
       if (hit) return hit;
       const url = `https://api.open-meteo.com/v1/forecast` +
         `?latitude=${tidePos.lat}&longitude=${tidePos.lon}` +
@@ -2470,7 +2499,7 @@ async function loadConditionsForecast() {
     // ── Marine (Open-Meteo Marine) ────────────────────────────────────────
     (async () => {
       const key = `cond_marine_${latR}_${lonR}_${today}`;
-      const hit = getCached(key, 60 * 60 * 1000);
+      const hit = getCached(key, C.FORECAST_CACHE_TTL_MS);
       if (hit) return hit;
       const url = `https://marine-api.open-meteo.com/v1/marine` +
         `?latitude=${tidePos.lat}&longitude=${tidePos.lon}` +
@@ -2489,7 +2518,7 @@ async function loadConditionsForecast() {
       const begin   = utcDateStr(windowStart);
       const end     = utcDateStr(windowEnd);
       const key     = `cond_tide_${station.id}_${begin}_${end}`;
-      const hit     = getCached(key, 3 * 60 * 60 * 1000);
+      const hit     = getCached(key, C.TIDE_CACHE_TTL_MS);
       if (hit) return { station, predictions: hit };
       const params = new URLSearchParams({
         product: 'predictions', application: 'vessel-tracker',
@@ -3302,6 +3331,7 @@ function updateChartsForTheme(theme) {
   initDarkMode();
   loadPolarData();
   initPolarToggle();
+  loadVoyageStats();
   loadData();
 
   // Real-time SignalK updates removed; using static data only
@@ -3337,8 +3367,7 @@ function updateChartsForTheme(theme) {
     if (refreshSparklines) refreshSparklines();
   });
 
-  // Update conditions forecast every hour
   setInterval(() => {
     loadConditionsForecast().catch(err => console.error('Conditions forecast error:', err));
-  }, 60 * 60 * 1000);
+  }, C.FORECAST_CACHE_TTL_MS);
 });
