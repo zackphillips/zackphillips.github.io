@@ -6,7 +6,7 @@
 //     known state is shown when the device is offline
 //   CDN resources → stale-while-revalidate
 
-const SHELL_CACHE   = 'mermug-shell-v1';
+const SHELL_CACHE   = 'mermug-shell-v2';
 const DATA_CACHE    = 'mermug-data-v1';
 
 const SHELL_ASSETS = [
