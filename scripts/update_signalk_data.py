@@ -17,8 +17,10 @@ from .utils import get_project_root, load_vessel_info
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
 STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
-POSITION_RETENTION_HOURS = (24 * 24)  # 24 days
+POSITION_RETENTION_HOURS = 24  # keep raw snapshot files for 24 hours only
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
+INSTRUMENT_LOG_FILE = "./data/telemetry/instrument_log.json"
+INSTRUMENT_LOG_ENTRIES = 120  # ~5 hours at the default 2.5-min update cadence
 TRACKS_DIR = "./data/telemetry/tracks"
 TRACKS_INDEX_FILE = "./data/telemetry/tracks_index.json"
 
@@ -391,6 +393,28 @@ def _update_snapshot_index(output_dir: Path, filename: str, timestamp: datetime)
     index_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
 
 
+def _update_instrument_log(output_dir: Path, timestamp: datetime, blob: dict[str, Any]) -> None:
+    """Append a compact numeric reading to instrument_log.json and trim to the last N entries.
+
+    The log replaces the old pattern of fetching N individual snapshot files for sparklines.
+    Each entry is {timestamp, values: {signalk.path: float}} — only numeric leaf values.
+    """
+    log_path = output_dir / Path(INSTRUMENT_LOG_FILE).name
+    try:
+        existing: list[dict[str, Any]] = json.loads(log_path.read_text(encoding="utf-8")).get("entries", []) if log_path.exists() else []
+        if not isinstance(existing, list):
+            existing = []
+    except (json.JSONDecodeError, OSError, AttributeError):
+        existing = []
+
+    numeric: dict[str, float] = {}
+    _collect_numeric_values(blob, "", values=numeric)
+
+    existing.append({"timestamp": timestamp.isoformat(), "values": numeric})
+    trimmed = existing[-INSTRUMENT_LOG_ENTRIES:]
+    log_path.write_text(json.dumps({"entries": trimmed}, separators=(",", ":")), encoding="utf-8")
+
+
 def _prune_old_position_files(output_dir: Path) -> None:
     """Delete timestamped position snapshot files older than the retention window."""
     cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
@@ -660,6 +684,7 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
         vessel_name,
     )
 
+    _update_instrument_log(output_dir, timestamp, blob)
     _prune_old_position_files(output_dir)
 
 

@@ -1339,77 +1339,36 @@ async function loadData() {
     return description;
   };
 
-  const toSnapshotFilename = (timestamp) => {
-    if (!timestamp) return null;
-    const normalized = timestamp.replace('Z', '+00:00');
-    const datePart = normalized.split('+')[0];
-    if (!datePart) return null;
-    return `${datePart.replace(/:/g, '-')}Z.json`;
-  };
-
-  const buildSeriesFromSnapshots = (snapshots) => {
+  // Build a Map<path, [{t, v}]> from instrument_log.json entries.
+  // Each entry is {timestamp, values: {path: number}}.
+  const buildSeriesFromLog = (entries) => {
     const map = new Map();
-    for (const snapshot of snapshots) {
-      if (!snapshot || typeof snapshot !== 'object') continue;
-
-      // Support both formats:
-      //   New: SignalK delta  → { context, updates: [{ timestamp, values: [{path, value}] }] }
-      //   Legacy:             → { timestamp, numericValues: { path: value } }
-      const update = snapshot.updates?.[0];
-      const timestamp = update?.timestamp || snapshot.timestamp || snapshot.time || null;
-      const date = timestamp ? new Date(timestamp) : null;
+    for (const entry of entries) {
+      if (!entry || typeof entry !== 'object') continue;
+      const date = entry.timestamp ? new Date(entry.timestamp) : null;
       if (!date || Number.isNaN(date.getTime())) continue;
-
-      if (Array.isArray(update?.values)) {
-        // New SignalK format
-        for (const { path, value } of update.values) {
-          if (typeof value === 'number' && Number.isFinite(value)) {
-            const list = map.get(path) || [];
-            list.push({ t: date, v: value });
-            map.set(path, list);
-          }
-        }
-      } else {
-        // Legacy numericValues format
-        const values = snapshot.numericValues;
-        if (!values || typeof values !== 'object') continue;
-        Object.entries(values).forEach(([path, value]) => {
-          if (typeof value !== 'number' || !Number.isFinite(value)) return;
-          const list = map.get(path) || [];
-          list.push({ t: date, v: value });
-          map.set(path, list);
-        });
+      const values = entry.values;
+      if (!values || typeof values !== 'object') continue;
+      for (const [path, value] of Object.entries(values)) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+        const list = map.get(path) || [];
+        list.push({ t: date, v: value });
+        map.set(path, list);
       }
     }
-    for (const list of map.values()) {
-      list.sort((a, b) => a.t - b.t);
-    }
+    for (const list of map.values()) list.sort((a, b) => a.t - b.t);
     return map;
   };
 
   const loadSeries = async () => {
     if (seriesByPath) return seriesByPath;
     if (seriesPromise) return seriesPromise;
-    seriesPromise = fetch(`${SNAPSHOT_INDEX_URL}?ts=${Date.now()}`)
+    seriesPromise = fetch(`${C.INSTRUMENT_LOG_URL}?ts=${Date.now()}`)
       .then((res) => (res.ok ? res.json() : null))
-      .then(async (payload) => {
-        const positions = Array.isArray(payload) ? payload : payload?.positions;
-        if (!Array.isArray(positions) || !positions.length) {
-          seriesByPath = new Map();
-          return seriesByPath;
-        }
-        const recent = positions.slice(-SPARKLINE_POINTS);
-        const files = recent
-          .map((entry) => entry?.file || toSnapshotFilename(entry?.timestamp))
-          .filter(Boolean);
-        const snapshots = await Promise.all(
-          files.map((file) =>
-            fetch(`data/telemetry/${file}?ts=${Date.now()}`)
-              .then((res) => (res.ok ? res.json() : null))
-              .catch(() => null)
-          )
-        );
-        seriesByPath = buildSeriesFromSnapshots(snapshots);
+      .then((payload) => {
+        const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+        const recent = entries.slice(-SPARKLINE_POINTS);
+        seriesByPath = buildSeriesFromLog(recent);
         return seriesByPath;
       })
       .catch(() => {

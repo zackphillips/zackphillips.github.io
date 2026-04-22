@@ -39,7 +39,9 @@ const VESSEL_CONSTANTS = Object.freeze({
   DEFAULT_TIDE_LABEL: 'San Francisco Bay',
 
   // ── Data URLs ────────────────────────────────────────────────────────────
-  SNAPSHOT_INDEX_URL:  'data/telemetry/snapshots_index.json',
-  TRACKS_INDEX_URL:    'data/telemetry/tracks_index.json',
-  POSITIONS_INDEX_URL: 'data/telemetry/positions_index.json',
+  SNAPSHOT_INDEX_URL:   'data/telemetry/snapshots_index.json',  // legacy, kept for reference
+  TRACKS_INDEX_URL:     'data/telemetry/tracks_index.json',
+  POSITIONS_INDEX_URL:  'data/telemetry/positions_index.json',
+  INSTRUMENT_LOG_URL:   'data/telemetry/instrument_log.json',
+  INSTRUMENT_LOG_ENTRIES: 120,  // must match backend INSTRUMENT_LOG_ENTRIES
 });
