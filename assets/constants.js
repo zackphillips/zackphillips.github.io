@@ -1,7 +1,9 @@
 // Shared constants for the vessel tracker frontend.
 // Magic numbers extracted here so thresholds are easy to find and tune.
+// Must be loaded before app.js. Uses var (not const) so it is accessible
+// as window.VESSEL_CONSTANTS from other scripts in the same page.
 
-const VESSEL_CONSTANTS = Object.freeze({
+var VESSEL_CONSTANTS = Object.freeze({
   // ── Classification thresholds ────────────────────────────────────────────
   BATTERY_OK_PCT:       75,    // % state-of-charge → ok
   BATTERY_WARN_PCT:     45,    // % → warn (below is alert)
