@@ -805,18 +805,20 @@ async function loadVoyageStats() {
     const grid = document.getElementById('voyage-stats-grid');
     if (!grid) return;
 
+    const totalNmSI   = totalNm * 1852;          // nm → metres (SI for distance group)
+    const maxSpeedSI  = maxSpeed / 1.94384;       // kts → m/s (SI for speed group)
+
     grid.innerHTML = [
-      { label: 'Sailing Days',   value: totalDays },
-      { label: 'Total Distance', value: `${totalNm.toFixed(1)} nm` },
-      { label: 'Total Underway', value: `${totalHours.toFixed(1)} hr` },
-      { label: 'Top Speed',      value: `${maxSpeed.toFixed(1)} kts` },
-      { label: 'First Sail',     value: fmt(firstDate) },
-      { label: 'Last Sail',      value: fmt(lastDate) },
-    ].map(({ label, value }) => `
-      <div class="info-item">
-        <div class="label">${label}</div>
-        <div class="value">${value}</div>
-      </div>`).join('');
+      { label: 'Sailing Days',   value: `${totalDays}`,                         unitGroup: null,       raw: null },
+      { label: 'Total Distance', value: fmtUnit('distance', totalNmSI),          unitGroup: 'distance', raw: totalNmSI },
+      { label: 'Total Underway', value: `${totalHours.toFixed(1)} hr`,      unitGroup: null,       raw: null },
+      { label: 'Top Speed',      value: fmtUnit('speed', maxSpeedSI),            unitGroup: 'speed',    raw: maxSpeedSI },
+      { label: 'First Sail',     value: fmt(firstDate),                          unitGroup: null,       raw: null },
+      { label: 'Last Sail',      value: fmt(lastDate),                           unitGroup: null,       raw: null },
+    ].map(({ label, value, unitGroup, raw }) => {
+      const unitAttr = unitGroup ? ` data-unit-group="${unitGroup}" data-raw="${raw}"` : '';
+      return `<div class="info-item"${unitAttr}><div class="label">${label}</div><div class="value">${value}</div></div>`;
+    }).join('');
 
     panel.style.display = '';
   } catch (e) {
@@ -954,13 +956,50 @@ function updateVesselLinks() {
     };
   }
 
-  // Update AIS links
+  // Update AIS links and show marine-traffic panel when a link is available
   const marinetrafficLink = document.getElementById('marinetraffic-link');
+  const marineTrafficPanel = document.getElementById('marine-traffic-panel');
 
   if (marinetrafficLink && vesselData.links?.marinetraffic) {
     marinetrafficLink.href = vesselData.links.marinetraffic;
+    if (marineTrafficPanel) marineTrafficPanel.style.display = '';
+  }
+
+  // Apply panel order from config
+  if (vesselData.panel_order) {
+    applyPanelOrder(vesselData.panel_order);
   }
 }
+
+// Maps config panel names → DOM element IDs
+const PANEL_ID_MAP = {
+  'marine-traffic': 'marine-traffic-panel',
+  'alerts':         'alert-summary',
+  'navigation':     'navigation-panel',
+  'wind':           'wind-panel',
+  'tide':           'tide-panel',
+  'weather':        'conditions-forecast-panel',
+  'environment':    'environment-panel',
+  'tanks':          'tanks-panel',
+  'power':          'power-panel',
+  'propulsion':     'propulsion-panel',
+  'internet':       'internet-panel',
+  'vessel':         'vessel-panel',
+  'voyage':         'voyage-stats-panel',
+  'polars':         'polars-panel',
+};
+
+function applyPanelOrder(order) {
+  const container = document.querySelector('.content-panels');
+  if (!container || !Array.isArray(order) || !order.length) return;
+  order.forEach(name => {
+    const id = PANEL_ID_MAP[name];
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (el) container.appendChild(el);
+  });
+}
+
 let themeChangeTimeout = null; // Timeout for theme change debouncing
 let isThemeChanging = false; // Flag to prevent multiple theme changes
 
