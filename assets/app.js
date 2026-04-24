@@ -534,8 +534,6 @@ async function loadTrack() {
         && Number.isFinite(p.longitude)
         && !isInPrivacyZone(p.latitude, p.longitude));
 
-    if (!positions.length) return;
-
     // Group by LOCAL calendar day (YYYY-MM-DD) so one day's track is one color.
     const byDay = new Map();
     for (const p of positions) {
@@ -549,8 +547,9 @@ async function loadTrack() {
     }
 
     trackByDay = byDay;
-    renderTracks();
+    if (positions.length) renderTracks();
     // Load historical tracks (GPX files) without blocking the initial render.
+    // Always runs even when all recent positions are in a privacy zone.
     loadHistoricalTracks();
   } catch (error) {
     console.warn('Unable to load track data:', error);
