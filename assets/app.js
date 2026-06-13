@@ -62,7 +62,7 @@ const DEFAULT_TIDE_LOCATION = {
 const PANEL_SKELETONS = {
   'navigation-grid': 6,
   'wind-grid': 4,
-  'power-grid': 4,
+  'power-grid': 9,
   'vessel-grid': 4,
   'environment-grid': 6,
   'internet-grid': 4,
@@ -1421,6 +1421,10 @@ async function loadData() {
     'tanks.propane.b.currentLevel':                      { transform: v => v * 100,                        unit: '%'     },
     'tanks.blackwater.bow.currentLevel':                 { transform: v => v * 100,                        unit: '%'     },
     'tanks.liveWell.0.currentLevel':                     { transform: v => v * 100,                        unit: '%'     },
+    'electrical.solar.bimini.panelPower':                { transform: v => v,                              unit: 'W'     },
+    'electrical.solar.bimini.current':                   { transform: v => v,                              unit: 'A'     },
+    'electrical.solar.bimini.voltage':                   { transform: v => v,                              unit: 'V'     },
+    'electrical.solar.bimini.yieldToday':                { transform: v => v / 3600,                       unit: 'Wh'    },
   };
 
   const renderSparkline = (canvas, points, displayConfig = {}, colors = {}) => {
@@ -1917,6 +1921,10 @@ async function loadData() {
       <div class="info-item" data-path="electrical.batteries.house.power" data-label="Battery Power" title="${withUpdated('House battery bank power consumption or generation', elec.batteries?.house?.power)}"><div class="label">Battery Power</div><div class="value">${elec.batteries?.house?.power?.value?.toFixed(1) ?? 'N/A'} W</div></div>
       <div class="info-item" data-path="electrical.batteries.house.capacity.stateOfCharge" data-label="SOC" title="${withUpdated('State of Charge - percentage of battery capacity remaining', elec.batteries?.house?.capacity?.stateOfCharge)}"><div class="label">SOC</div>${socValueHtml}</div>
       <div class="info-item" data-path="electrical.batteries.house.capacity.timeRemaining" data-label="Battery Time Remaining" title="${withUpdated('Estimated time remaining until battery depletion', elec.batteries?.house?.capacity?.timeRemaining)}"><div class="label">Battery Time Remaining</div>${timeRemainingHtml}</div>
+      <div class="info-item" data-path="electrical.solar.bimini.panelPower" data-label="Solar Power" title="${withUpdated('Solar panel output power from bimini array (Victron MPPT)', elec.solar?.bimini?.panelPower)}"><div class="label">Solar Power</div><div class="value">${elec.solar?.bimini?.panelPower?.value?.toFixed(1) ?? 'N/A'} W</div></div>
+      <div class="info-item" data-path="electrical.solar.bimini.current" data-label="Solar Current" title="${withUpdated('Solar charging current from bimini array', elec.solar?.bimini?.current)}"><div class="label">Solar Current</div><div class="value">${elec.solar?.bimini?.current?.value?.toFixed(2) ?? 'N/A'} A</div></div>
+      <div class="info-item" data-path="electrical.solar.bimini.voltage" data-label="Solar Voltage" title="${withUpdated('Solar panel voltage from bimini array', elec.solar?.bimini?.voltage)}"><div class="label">Solar Voltage</div><div class="value">${elec.solar?.bimini?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
+      <div class="info-item" data-path="electrical.solar.bimini.yieldToday" data-label="Solar Yield Today" title="${withUpdated('Total solar energy generated today from bimini array', elec.solar?.bimini?.yieldToday)}"><div class="label">Solar Yield Today</div><div class="value">${elec.solar?.bimini?.yieldToday?.value != null ? (elec.solar.bimini.yieldToday.value / 3600).toFixed(0) + ' Wh' : 'N/A'}</div></div>
     `;
 
     // Update the vessel information with static vessel data
