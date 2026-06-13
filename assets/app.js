@@ -61,11 +61,12 @@ const DEFAULT_TIDE_LOCATION = {
 
 const PANEL_SKELETONS = {
   'navigation-grid': 6,
-  'wind-grid': 4,
-  'power-grid': 9,
+  'wind-grid': 7,
+  'power-grid': 11,
   'vessel-grid': 4,
   'environment-grid': 6,
   'internet-grid': 4,
+  'system-grid': 5,
   'propulsion-grid': 2,
   'tanks-grid': 6,
 };
@@ -725,8 +726,13 @@ const PATH_TO_UNIT_GROUP = {
   'navigation.magneticVariation':    'angle',
   'steering.rudderAngle':            'angle',
   'environment.wind.angleTrue':      'angle',
-  'environment.wind.angleApparent':  'angle',
-  'propulsion.port.revolutions':     'rotation',
+  'environment.wind.angleApparent':     'angle',
+  'propulsion.port.revolutions':        'rotation',
+  'environment.wind.oneMinute.gustTrue':   'speed',
+  'environment.wind.fiveMinutes.gustTrue': 'speed',
+  'environment.wind.oneHour.gustTrue':     'speed',
+  'environment.rpi.gpu.temperature':       'temperature',
+  'environment.rpi.cpu.temperature':       'temperature',
 };
 
 // Persisted unit preferences: { groupName: cycleIndex }
@@ -1425,6 +1431,15 @@ async function loadData() {
     'electrical.solar.bimini.current':                   { transform: v => v,                              unit: 'A'     },
     'electrical.solar.bimini.voltage':                   { transform: v => v,                              unit: 'V'     },
     'electrical.solar.bimini.yieldToday':                { transform: v => v / 3600,                       unit: 'Wh'    },
+    'electrical.batteries.house.capacity.dischargeSinceFull': { transform: v => v / 3600,                  unit: 'Ah'    },
+    'environment.wind.oneMinute.gustTrue':               { transform: v => v * 1.94384,                    unit: 'kts'   },
+    'environment.wind.fiveMinutes.gustTrue':             { transform: v => v * 1.94384,                    unit: 'kts'   },
+    'environment.wind.oneHour.gustTrue':                 { transform: v => v * 1.94384,                    unit: 'kts'   },
+    'environment.rpi.gpu.temperature':                   { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
+    'environment.rpi.cpu.temperature':                   { transform: v => (v - 273.15) * 9/5 + 32,       unit: '°F'    },
+    'environment.rpi.cpu.utilisation':                   { transform: v => v * 100,                        unit: '%'     },
+    'environment.rpi.memory.utilisation':                { transform: v => v * 100,                        unit: '%'     },
+    'environment.rpi.sd.utilisation':                    { transform: v => v * 100,                        unit: '%'     },
   };
 
   const renderSparkline = (canvas, points, displayConfig = {}, colors = {}) => {
@@ -1912,6 +1927,9 @@ async function loadData() {
       <div class="info-item" data-path="environment.wind.angleTrue" data-label="Wind Dir" data-unit-group="angle" data-raw="${env.wind?.angleTrue?.value ?? ''}" title="${withUpdated('True wind direction - actual wind direction relative to true north', env.wind?.angleTrue)}"><div class="label">True Wind Dir</div><div class="value">${fmtUnit('angle', env.wind?.angleTrue?.value)}</div></div>
       <div class="info-item" data-path="environment.wind.angleApparent" data-label="Apparent Wind Angle" data-unit-group="angle" data-raw="${data.environment?.wind?.angleApparent?.value ?? ''}" title="${withUpdated('Apparent wind angle - wind direction relative to vessel heading', data.environment?.wind?.angleApparent)}"><div class="label">Apparent Angle</div><div class="value">${fmtUnit('angle', data.environment?.wind?.angleApparent?.value)}</div></div>
       <div class="info-item" data-path="environment.wind.speedApparent" data-label="Apparent Wind Speed" data-unit-group="speed" data-raw="${data.environment?.wind?.speedApparent?.value ?? ''}" title="${withUpdated('Apparent wind speed - wind speed as felt on the vessel', data.environment?.wind?.speedApparent)}"><div class="label">Apparent Speed</div><div class="value">${fmtUnit('speed', data.environment?.wind?.speedApparent?.value)}</div></div>
+      <div class="info-item" data-path="environment.wind.oneMinute.gustTrue" data-label="1-Min Gust" data-unit-group="speed" data-raw="${env.wind?.oneMinute?.gustTrue?.value ?? ''}" title="${withUpdated('Maximum true wind gust over the past 1 minute', env.wind?.oneMinute?.gustTrue)}"><div class="label">1-Min Gust</div><div class="value">${fmtUnit('speed', env.wind?.oneMinute?.gustTrue?.value)}</div></div>
+      <div class="info-item" data-path="environment.wind.fiveMinutes.gustTrue" data-label="5-Min Gust" data-unit-group="speed" data-raw="${env.wind?.fiveMinutes?.gustTrue?.value ?? ''}" title="${withUpdated('Maximum true wind gust over the past 5 minutes', env.wind?.fiveMinutes?.gustTrue)}"><div class="label">5-Min Gust</div><div class="value">${fmtUnit('speed', env.wind?.fiveMinutes?.gustTrue?.value)}</div></div>
+      <div class="info-item" data-path="environment.wind.oneHour.gustTrue" data-label="1-Hour Gust" data-unit-group="speed" data-raw="${env.wind?.oneHour?.gustTrue?.value ?? ''}" title="${withUpdated('Maximum true wind gust over the past 1 hour', env.wind?.oneHour?.gustTrue)}"><div class="label">1-Hour Gust</div><div class="value">${fmtUnit('speed', env.wind?.oneHour?.gustTrue?.value)}</div></div>
     `;
 
     // Update power data
@@ -1925,6 +1943,8 @@ async function loadData() {
       <div class="info-item" data-path="electrical.solar.bimini.current" data-label="Solar Current" title="${withUpdated('Solar charging current from bimini array', elec.solar?.bimini?.current)}"><div class="label">Solar Current</div><div class="value">${elec.solar?.bimini?.current?.value?.toFixed(2) ?? 'N/A'} A</div></div>
       <div class="info-item" data-path="electrical.solar.bimini.voltage" data-label="Solar Voltage" title="${withUpdated('Solar panel voltage from bimini array', elec.solar?.bimini?.voltage)}"><div class="label">Solar Voltage</div><div class="value">${elec.solar?.bimini?.voltage?.value?.toFixed(2) ?? 'N/A'} V</div></div>
       <div class="info-item" data-path="electrical.solar.bimini.yieldToday" data-label="Solar Yield Today" title="${withUpdated('Total solar energy generated today from bimini array', elec.solar?.bimini?.yieldToday)}"><div class="label">Solar Yield Today</div><div class="value">${elec.solar?.bimini?.yieldToday?.value != null ? (elec.solar.bimini.yieldToday.value / 3600).toFixed(0) + ' Wh' : 'N/A'}</div></div>
+      <div class="info-item" data-path="electrical.batteries.house.capacity.dischargeSinceFull" data-label="Discharge Since Full" title="${withUpdated('Amp-hours drawn from the house bank since last full charge', elec.batteries?.house?.capacity?.dischargeSinceFull)}"><div class="label">Discharge Since Full</div><div class="value">${elec.batteries?.house?.capacity?.dischargeSinceFull?.value != null ? (elec.batteries.house.capacity.dischargeSinceFull.value / 3600).toFixed(1) + ' Ah' : 'N/A'}</div></div>
+      <div class="info-item" title="${withUpdated('Solar charge controller mode (off / bulk / absorption / float)', elec.solar?.bimini?.chargingMode)}"><div class="label">Solar Mode</div><div class="value value-text">${elec.solar?.bimini?.chargingMode?.value ?? 'N/A'}</div></div>
     `;
 
     // Update the vessel information with static vessel data
@@ -1971,6 +1991,18 @@ async function loadData() {
       <div class="info-item" data-path="internet.ping.latency" data-label="Latency" title="${withUpdated('Ping latency', internet.ping?.latency)}"><div class="label">Latency</div><div class="value">${isNumericValue(internet.ping?.latency?.value) ? internet.ping.latency.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
       <div class="info-item" data-path="internet.ping.jitter" data-label="Jitter" title="${withUpdated('Ping jitter', internet.ping?.jitter)}"><div class="label">Jitter</div><div class="value">${isNumericValue(internet.ping?.jitter?.value) ? internet.ping.jitter.value.toFixed(1) + ' ms' : 'N/A'}</div></div>
       <div class="info-item" data-path="internet.packetLoss" data-label="Packet Loss" title="${withUpdated('Packet loss percentage', internet.packetLoss)}"><div class="label">Packet Loss</div>${packetLossHtml}</div>
+    `;
+
+    // Update system health (RPi)
+    const rpi = env.rpi || {};
+    const fmtCelsius = (k) => Number.isFinite(k) ? `${(k - 273.15).toFixed(1)} °C` : 'N/A';
+    const fmtPercent = (v) => Number.isFinite(v) ? `${(v * 100).toFixed(0)}%` : 'N/A';
+    document.getElementById('system-grid').innerHTML = `
+      <div class="info-item" data-path="environment.rpi.cpu.temperature" data-label="CPU Temp" data-unit-group="temperature" data-raw="${rpi.cpu?.temperature?.value ?? ''}" title="${withUpdated('Raspberry Pi CPU temperature', rpi.cpu?.temperature)}"><div class="label">CPU Temp</div><div class="value">${fmtCelsius(rpi.cpu?.temperature?.value)}</div></div>
+      <div class="info-item" data-path="environment.rpi.gpu.temperature" data-label="GPU Temp" data-unit-group="temperature" data-raw="${rpi.gpu?.temperature?.value ?? ''}" title="${withUpdated('Raspberry Pi GPU temperature', rpi.gpu?.temperature)}"><div class="label">GPU Temp</div><div class="value">${fmtCelsius(rpi.gpu?.temperature?.value)}</div></div>
+      <div class="info-item" data-path="environment.rpi.cpu.utilisation" data-label="CPU Use" title="${withUpdated('Raspberry Pi CPU utilisation', rpi.cpu?.utilisation)}"><div class="label">CPU Use</div><div class="value">${fmtPercent(rpi.cpu?.utilisation?.value)}</div></div>
+      <div class="info-item" data-path="environment.rpi.memory.utilisation" data-label="RAM Use" title="${withUpdated('Raspberry Pi memory utilisation', rpi.memory?.utilisation)}"><div class="label">RAM Use</div><div class="value">${fmtPercent(rpi.memory?.utilisation?.value)}</div></div>
+      <div class="info-item" data-path="environment.rpi.sd.utilisation" data-label="SD Use" title="${withUpdated('Raspberry Pi SD card utilisation', rpi.sd?.utilisation)}"><div class="label">SD Use</div><div class="value">${fmtPercent(rpi.sd?.utilisation?.value)}</div></div>
     `;
 
     const propulsion = data.propulsion?.port || {};
