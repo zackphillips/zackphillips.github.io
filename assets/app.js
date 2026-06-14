@@ -953,17 +953,24 @@ function updateVesselLinks() {
   }
 
   // Construct external tracking links
+  vesselData.links = vesselData.links || {};
   if (vesselData.marinetraffic_ship_id) {
-    vesselData.links = {
-      marinetraffic: `https://www.marinetraffic.com/en/ais/details/ships/shipid:${vesselData.marinetraffic_ship_id}`
-    };
+    vesselData.links.marinetraffic = `https://www.marinetraffic.com/en/ais/details/ships/shipid:${vesselData.marinetraffic_ship_id}`;
+  }
+  if (vesselData.postgsail_logs_url) {
+    vesselData.links.postgsail = vesselData.postgsail_logs_url;
   }
 
   // Update AIS links
   const marinetrafficLink = document.getElementById('marinetraffic-link');
-
   if (marinetrafficLink && vesselData.links?.marinetraffic) {
     marinetrafficLink.href = vesselData.links.marinetraffic;
+  }
+
+  const postgsailLink = document.getElementById('postgsail-link');
+  if (postgsailLink && vesselData.links?.postgsail) {
+    postgsailLink.href = vesselData.links.postgsail;
+    postgsailLink.style.display = '';
   }
 }
 let themeChangeTimeout = null; // Timeout for theme change debouncing
