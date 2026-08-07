@@ -6,17 +6,19 @@
 //     known state is shown when the device is offline
 //   CDN resources → stale-while-revalidate
 
-const SHELL_CACHE   = 'mermug-shell-v2';
+const SHELL_CACHE   = 'mermug-shell-v3';
 const DATA_CACHE    = 'mermug-data-v1';
 
 const SHELL_ASSETS = [
   '/',
   '/index.html',
+  '/docs.html',
   '/manifest.json',
   '/assets/styles.css',
   '/assets/utils.js',
   '/assets/constants.js',
   '/assets/app.js',
+  '/assets/docs.js',
   '/data/vessel/info.yaml',
   '/data/vessel/logo.png',
   '/data/tide_stations.json',
@@ -63,6 +65,14 @@ self.addEventListener('fetch', (event) => {
 
   // Telemetry / data JSON — network-first with data-cache fallback
   if (url.pathname.startsWith('/data/telemetry/')) {
+    event.respondWith(networkFirstWithCache(request, DATA_CACHE));
+    return;
+  }
+
+  // Ship's docs (Markdown + index) — network-first so an edit published from
+  // the GitHub UI shows up immediately, but cached so the SOPs stay readable
+  // offshore with no signal. docs.js pre-fetches every document to fill this.
+  if (url.pathname.startsWith('/docs/')) {
     event.respondWith(networkFirstWithCache(request, DATA_CACHE));
     return;
   }

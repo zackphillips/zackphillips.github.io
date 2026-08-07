@@ -661,8 +661,10 @@ let refreshSparklines = null; // set once initInlineSparklines is ready
 let bannerState = 'ok'; // 'ok' | 'error' — persists across theme switches
 
 // ── Theme cycling ──────────────────────────────────────────────────────────
-const THEMES = ['marine', 'mermug', 'bright'];
-const DARK_THEMES = new Set(['marine', 'mermug']);
+// The lists live in constants.js so docs.html gets the same cycle without
+// pulling in this whole file.
+const THEMES = C.THEMES;
+const DARK_THEMES = new Set(C.DARK_THEMES);
 function isDarkTheme(theme) { return DARK_THEMES.has(theme); }
 
 // ── Unit-toggle configuration ──────────────────────────────────────────────

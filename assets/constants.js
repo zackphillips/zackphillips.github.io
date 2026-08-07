@@ -40,6 +40,18 @@ var VESSEL_CONSTANTS = Object.freeze({
   DEFAULT_TIDE_LON: -122.465,
   DEFAULT_TIDE_LABEL: 'San Francisco Bay',
 
+  // ── Theming ──────────────────────────────────────────────────────────────
+  // Cycle order for the floating theme button. Shared by index.html and
+  // docs.html so the two pages never drift apart.
+  THEMES:      ['marine', 'mermug', 'bright'],
+  DARK_THEMES: ['marine', 'mermug'],
+
+  // ── Ship's docs (docs.html) ──────────────────────────────────────────────
+  DOCS_INDEX_URL: 'docs/index.json',
+  // Checklist ticks are per-device UI state, not vessel data — they live in
+  // localStorage under this prefix and are never committed anywhere.
+  DOCS_CHECKLIST_PREFIX: 'mermug.checklist.',
+
   // ── Data URLs ────────────────────────────────────────────────────────────
   TRACKS_INDEX_URL:     'data/telemetry/tracks_index.json',
   POSITIONS_INDEX_URL:  'data/telemetry/positions_index.json',

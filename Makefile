@@ -107,6 +107,8 @@ help:
 	@echo "  make lint                       - Run ruff linter with auto-fix"
 	@echo "  make sync-dev                   - Sync dev Python dependencies"
 	@echo "  make pre-commit-install         - Install pre-commit hooks"
+	@echo "  make docs-index                 - Rebuild docs/index.json for docs.html"
+	@echo "  make docs-index-check           - Verify docs/index.json is up to date"
 	@echo ""
 	@echo "Manual execution:"
 	@echo "  make run-website-update         - Fetch SignalK data once"
@@ -213,3 +215,11 @@ config:
 	$(require-uv)
 	@echo "Starting Vessel Configuration Wizard..."
 	@"$(UV_BIN)" run python -m scripts.vessel_config_wizard
+
+docs-index:
+	$(require-uv)
+	@"$(UV_BIN)" run python -m scripts.build_docs_index
+
+docs-index-check:
+	$(require-uv)
+	@"$(UV_BIN)" run python -m scripts.build_docs_index --check
