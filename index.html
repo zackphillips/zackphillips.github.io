@@ -45,7 +45,7 @@
   <button id="darkModeToggle" class="floating-dark-mode-btn">Dark Mode</button>
   <div class="container">
 
-    <!-- STATUS HERO -->
+    <!-- STATUS HERO (pinned above tabs on every screen) -->
     <div id="status-hero">
       <div class="status-hero__left">
         <img src="data/vessel/logo.png" alt="Vessel Logo" class="status-hero__logo" />
@@ -57,259 +57,324 @@
       </div>
     </div>
 
-    <!-- LINKS -->
-    <div class="links-section">
-      <div class="button-row">
-        <a href="#" id="marinetraffic-link" target="_blank" class="action-btn ais-btn">MarineTraffic</a>
-        <a href="#" id="postgsail-link" target="_blank" class="action-btn ais-btn" style="display:none;">PostgSail Logs</a>
-      </div>
-    </div>
-
-    <!-- MAP -->
-    <div class="map-section">
-      <div id="map"></div>
-    </div>
-
-    <!-- PASSAGE BANNER (shown only when passage is set in info.yaml) -->
+    <!-- PASSAGE BANNER (shown only when passage is set in info.yaml; pinned above tabs) -->
     <div id="passage-banner" class="passage-banner" style="display:none;"></div>
 
-    <div class="content-panels">
-
-    <!-- ALERT SUMMARY -->
+    <!-- ALERT SUMMARY (cross-cutting; pinned above tabs so it's visible regardless of active tab) -->
     <div id="alert-summary" class="info-panel" style="display:none;"></div>
 
-    <!-- NAVIGATION -->
-    <div class="info-panel" id="navigation-panel">
-      <div class="panel-title">Navigation</div>
-      <div class="data-grid" id="navigation-grid"></div>
-    </div>
+    <!-- TAB BAR -->
+    <nav class="tab-bar" id="tab-bar" aria-label="Sections">
+      <button class="tab-btn active" data-tab="map" aria-current="page">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        <span class="tab-label">Map</span>
+      </button>
+      <button class="tab-btn" data-tab="voyages">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        <span class="tab-label">Voyages</span>
+      </button>
+      <button class="tab-btn" data-tab="environment">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        <span class="tab-label">Environment</span>
+      </button>
+      <button class="tab-btn" data-tab="data">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <span class="tab-label">Data</span>
+      </button>
+      <button class="tab-btn" data-tab="links">
+        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <span class="tab-label">Links</span>
+      </button>
+    </nav>
 
-    <!-- WIND -->
-    <div class="info-panel" id="wind-panel">
-      <div class="panel-title">Wind</div>
-      <div class="data-grid" id="wind-grid"></div>
-    </div>
+    <!-- TAB PANELS -->
+    <div class="tab-panels">
 
-    <!-- TIDE CHART -->
-    <div class="info-panel" id="tide-panel">
-      <div id="tideHeader" class="panel-title"></div>
-      <canvas id="tideChart"></canvas>
-    </div>
+      <!-- MAP TAB -->
+      <section class="tab-panel active" data-tab-panel="map">
+        <div class="map-section">
+          <div id="map"></div>
+        </div>
+      </section>
 
-    <!-- CONDITIONS FORECAST (48-hr unified) -->
-    <div class="info-panel conditions-forecast-panel" id="conditions-forecast-panel">
-      <div class="conditions-header">
-        <span class="panel-title">Conditions Forecast</span>
-        <span class="conditions-date-range" id="conditions-date-range"></span>
-      </div>
-      <div class="conditions-loading" id="conditions-loading">Waiting for GPS position…</div>
-      <div class="conditions-chart-stack" id="conditions-chart-stack" style="display:none;">
-        <!-- Row: Wind -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Wind</span>
-            <span class="cr-value" id="cr-wind-val">--</span>
-            <span class="cr-unit">kts</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condWindChart"></canvas>
+      <!-- VOYAGES TAB -->
+      <section class="tab-panel" data-tab-panel="voyages">
+
+        <!-- VOYAGE STATS -->
+        <div class="info-panel" id="voyage-stats-panel" style="display:none;">
+          <div class="panel-title">Voyage Stats</div>
+          <div class="data-grid" id="voyage-stats-grid"></div>
+        </div>
+
+        <!-- VOYAGE LOG (per-day list, click a row to view that day's track on the map) -->
+        <div class="info-panel" id="voyage-list-panel">
+          <div class="panel-title">Voyage Log</div>
+          <div class="voyage-list" id="voyage-list">
+            <div class="voyage-list-empty">Loading voyages…</div>
           </div>
         </div>
-        <!-- Row: Wind direction -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Wind Dir</span>
-            <span class="cr-value" id="cr-winddir-val">--</span>
-            <span class="cr-unit">compass</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condWindDirChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Swell height -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Swell Ht</span>
-            <span class="cr-value" id="cr-swell-val">--</span>
-            <span class="cr-unit">ft</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condSwellChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Swell period -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Swell Period</span>
-            <span class="cr-value" id="cr-period-val">--</span>
-            <span class="cr-unit">sec</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condPeriodChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Swell direction -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Swell Dir</span>
-            <span class="cr-value" id="cr-swelldir-val">--</span>
-            <span class="cr-unit">compass</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condSwellDirChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Tide -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Tide</span>
-            <span class="cr-value" id="cr-tide-val">--</span>
-            <span class="cr-unit">ft MLLW</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condTideChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Current -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Current</span>
-            <span class="cr-value" id="cr-current-val">--</span>
-            <span class="cr-unit">kts</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condCurrentChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Current direction -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Current Dir</span>
-            <span class="cr-value" id="cr-curdir-val">--</span>
-            <span class="cr-unit">compass</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condCurrentDirChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Temperature -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Temp</span>
-            <span class="cr-value" id="cr-temp-val">--</span>
-            <span class="cr-unit">°F</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condTempChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Precipitation probability -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Precip</span>
-            <span class="cr-value" id="cr-precip-val">--</span>
-            <span class="cr-unit">%</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condPrecipChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Cloud cover -->
-        <div class="conditions-row">
-          <div class="conditions-row-label">
-            <span class="cr-name">Cloud</span>
-            <span class="cr-value" id="cr-cloud-val">--</span>
-            <span class="cr-unit">%</span>
-          </div>
-          <div class="conditions-canvas-wrap">
-            <canvas id="condCloudChart"></canvas>
-          </div>
-        </div>
-        <!-- Row: Pressure (last — shows x-axis) -->
-        <div class="conditions-row conditions-row--last">
-          <div class="conditions-row-label">
-            <span class="cr-name">Pressure</span>
-            <span class="cr-value" id="cr-pressure-val">--</span>
-            <span class="cr-unit">hPa</span>
-          </div>
-          <div class="conditions-canvas-wrap conditions-canvas-wrap--last">
-            <canvas id="condPressureChart"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- ENVIRONMENT -->
-    <div class="info-panel" id="environment-panel">
-      <div class="panel-title">Environment</div>
-      <div class="data-grid" id="environment-grid"></div>
-    </div>
+      </section>
 
-    <!-- TANKS -->
-    <div class="info-panel" id="tanks-panel">
-      <div class="panel-title">Tanks</div>
-      <div class="data-grid" id="tanks-grid"></div>
-    </div>
+      <!-- ENVIRONMENT TAB (internet-sourced, location-based data) -->
+      <section class="tab-panel" data-tab-panel="environment">
 
-    <!-- POWER -->
-    <div class="info-panel" id="power-panel">
-      <div class="panel-title">Power</div>
-      <div class="data-grid" id="power-grid"></div>
-    </div>
+        <!-- TIDE CHART -->
+        <div class="info-panel" id="tide-panel">
+          <div id="tideHeader" class="panel-title"></div>
+          <canvas id="tideChart"></canvas>
+        </div>
 
-    <!-- PROPULSION -->
-    <div class="info-panel" id="propulsion-panel">
-      <div class="panel-title">Propulsion</div>
-      <div class="data-grid" id="propulsion-grid"></div>
-    </div>
-
-    <!-- INTERNET -->
-    <div class="info-panel" id="internet-panel">
-      <div class="panel-title">Internet</div>
-      <div class="data-grid" id="internet-grid"></div>
-    </div>
-
-    <!-- SYSTEM HEALTH -->
-    <div class="info-panel" id="system-panel">
-      <div class="panel-title">System Health</div>
-      <div class="data-grid" id="system-grid"></div>
-    </div>
-
-    <!-- VESSEL INFORMATION -->
-    <div class="info-panel" id="vessel-panel">
-      <div class="panel-title">Vessel Information</div>
-      <div class="data-grid" id="vessel-grid"></div>
-    </div>
-
-    <!-- VOYAGE STATS -->
-    <div class="info-panel" id="voyage-stats-panel" style="display:none;">
-      <div class="panel-title">Voyage Stats</div>
-      <div class="data-grid" id="voyage-stats-grid"></div>
-    </div>
-
-    <!-- POLAR PERFORMANCE -->
-    <div class="info-panel">
-      <div class="panel-title">Polar Performance</div>
-      <div class="polar-performance-grid" id="polar-performance-grid">
-        <div class="polar-data-col">
-          <div class="polar-sub-card">
-            <div class="polar-sub-title">Current Performance</div>
-            <div id="polar-performance" class="polar-sub-body">
-              <div>Loading polar data...</div>
+        <!-- CONDITIONS FORECAST (48-hr unified) -->
+        <div class="info-panel conditions-forecast-panel" id="conditions-forecast-panel">
+          <div class="conditions-header">
+            <span class="panel-title">Conditions Forecast</span>
+            <span class="conditions-date-range" id="conditions-date-range"></span>
+          </div>
+          <div class="conditions-loading" id="conditions-loading">Waiting for GPS position…</div>
+          <div class="conditions-chart-stack" id="conditions-chart-stack" style="display:none;">
+            <!-- Row: Wind -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Wind</span>
+                <span class="cr-value" id="cr-wind-val">--</span>
+                <span class="cr-unit">kts</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condWindChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Wind direction -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Wind Dir</span>
+                <span class="cr-value" id="cr-winddir-val">--</span>
+                <span class="cr-unit">compass</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condWindDirChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Swell height -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Swell Ht</span>
+                <span class="cr-value" id="cr-swell-val">--</span>
+                <span class="cr-unit">ft</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condSwellChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Swell period -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Swell Period</span>
+                <span class="cr-value" id="cr-period-val">--</span>
+                <span class="cr-unit">sec</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condPeriodChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Swell direction -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Swell Dir</span>
+                <span class="cr-value" id="cr-swelldir-val">--</span>
+                <span class="cr-unit">compass</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condSwellDirChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Tide -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Tide</span>
+                <span class="cr-value" id="cr-tide-val">--</span>
+                <span class="cr-unit">ft MLLW</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condTideChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Current -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Current</span>
+                <span class="cr-value" id="cr-current-val">--</span>
+                <span class="cr-unit">kts</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condCurrentChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Current direction -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Current Dir</span>
+                <span class="cr-value" id="cr-curdir-val">--</span>
+                <span class="cr-unit">compass</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condCurrentDirChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Temperature -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Temp</span>
+                <span class="cr-value" id="cr-temp-val">--</span>
+                <span class="cr-unit">°F</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condTempChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Precipitation probability -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Precip</span>
+                <span class="cr-value" id="cr-precip-val">--</span>
+                <span class="cr-unit">%</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condPrecipChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Cloud cover -->
+            <div class="conditions-row">
+              <div class="conditions-row-label">
+                <span class="cr-name">Cloud</span>
+                <span class="cr-value" id="cr-cloud-val">--</span>
+                <span class="cr-unit">%</span>
+              </div>
+              <div class="conditions-canvas-wrap">
+                <canvas id="condCloudChart"></canvas>
+              </div>
+            </div>
+            <!-- Row: Pressure (last — shows x-axis) -->
+            <div class="conditions-row conditions-row--last">
+              <div class="conditions-row-label">
+                <span class="cr-name">Pressure</span>
+                <span class="cr-value" id="cr-pressure-val">--</span>
+                <span class="cr-unit">hPa</span>
+              </div>
+              <div class="conditions-canvas-wrap conditions-canvas-wrap--last">
+                <canvas id="condPressureChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
-        <div class="polar-sub-card">
-          <div class="polar-sub-title">Polar Chart</div>
-          <div class="polar-chart-container">
-            <div id="polar-engine-indicator" class="polar-engine-indicator" style="display:none;"></div>
-            <canvas id="polarChart"></canvas>
+
+      </section>
+
+      <!-- DATA TAB (curated instrument panels, then raw JSON at the bottom) -->
+      <section class="tab-panel" data-tab-panel="data">
+
+        <!-- NAVIGATION -->
+        <div class="info-panel" id="navigation-panel">
+          <div class="panel-title">Navigation</div>
+          <div class="data-grid" id="navigation-grid"></div>
+        </div>
+
+        <!-- WIND -->
+        <div class="info-panel" id="wind-panel">
+          <div class="panel-title">Wind</div>
+          <div class="data-grid" id="wind-grid"></div>
+        </div>
+
+        <!-- SENSORS (onboard SignalK readings — water/inside temp, humidity, air quality, sun times) -->
+        <div class="info-panel" id="sensors-panel">
+          <div class="panel-title">Sensors</div>
+          <div class="data-grid" id="sensors-grid"></div>
+        </div>
+
+        <!-- TANKS -->
+        <div class="info-panel" id="tanks-panel">
+          <div class="panel-title">Tanks</div>
+          <div class="data-grid" id="tanks-grid"></div>
+        </div>
+
+        <!-- POWER -->
+        <div class="info-panel" id="power-panel">
+          <div class="panel-title">Power</div>
+          <div class="data-grid" id="power-grid"></div>
+        </div>
+
+        <!-- PROPULSION -->
+        <div class="info-panel" id="propulsion-panel">
+          <div class="panel-title">Propulsion</div>
+          <div class="data-grid" id="propulsion-grid"></div>
+        </div>
+
+        <!-- INTERNET -->
+        <div class="info-panel" id="internet-panel">
+          <div class="panel-title">Internet</div>
+          <div class="data-grid" id="internet-grid"></div>
+        </div>
+
+        <!-- SYSTEM HEALTH -->
+        <div class="info-panel" id="system-panel">
+          <div class="panel-title">System Health</div>
+          <div class="data-grid" id="system-grid"></div>
+        </div>
+
+        <!-- VESSEL INFORMATION -->
+        <div class="info-panel" id="vessel-panel">
+          <div class="panel-title">Vessel Information</div>
+          <div class="data-grid" id="vessel-grid"></div>
+        </div>
+
+        <!-- POLAR PERFORMANCE -->
+        <div class="info-panel">
+          <div class="panel-title">Polar Performance</div>
+          <div class="polar-performance-grid" id="polar-performance-grid">
+            <div class="polar-data-col">
+              <div class="polar-sub-card">
+                <div class="polar-sub-title">Current Performance</div>
+                <div id="polar-performance" class="polar-sub-body">
+                  <div>Loading polar data...</div>
+                </div>
+              </div>
+            </div>
+            <div class="polar-sub-card">
+              <div class="polar-sub-title">Polar Chart</div>
+              <div class="polar-chart-container">
+                <div id="polar-engine-indicator" class="polar-engine-indicator" style="display:none;"></div>
+                <canvas id="polarChart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    </div><!-- /.content-panels -->
+        <!-- RAW DATA -->
+        <div class="info-panel raw-data-panel">
+          <div class="panel-title">Raw Data</div>
+          <details class="raw-data-block">
+            <summary>SignalK Latest Snapshot</summary>
+            <pre id="raw-signalk-latest">Loading…</pre>
+          </details>
+          <details class="raw-data-block">
+            <summary>Instrument Log (rolling)</summary>
+            <pre id="raw-instrument-log">Loading…</pre>
+          </details>
+        </div>
+
+      </section>
+
+      <!-- LINKS TAB -->
+      <section class="tab-panel" data-tab-panel="links">
+        <div class="links-section">
+          <div class="button-row">
+            <a href="#" id="marinetraffic-link" target="_blank" class="action-btn ais-btn">MarineTraffic</a>
+            <a href="#" id="postgsail-link" target="_blank" class="action-btn ais-btn" style="display:none;">PostgSail Logs</a>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.tab-panels -->
   </div><!-- /.container -->
 
   <div class="footer">
@@ -321,6 +386,7 @@
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="assets/utils.js"></script>
   <script src="assets/constants.js"></script>
-  <script src="assets/app.js?v=3"></script>
+  <script src="assets/tabs.js?v=1"></script>
+  <script src="assets/app.js?v=4"></script>
 </body>
 </html>

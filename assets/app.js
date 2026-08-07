@@ -64,7 +64,7 @@ const PANEL_SKELETONS = {
   'wind-grid': 7,
   'power-grid': 11,
   'vessel-grid': 4,
-  'environment-grid': 6,
+  'sensors-grid': 6,
   'internet-grid': 4,
   'system-grid': 5,
   'propulsion-grid': 2,
@@ -223,6 +223,18 @@ function renderEmptyState(containerId, title, subtitle = '') {
       <strong>${title}</strong>
       <span>${subtitle}</span>
     </div>`;
+}
+
+// Pretty-print an already-fetched object into the Data tab's raw-data <pre>
+// blocks. No new network calls — callers pass data this app already fetched.
+function setRawDataPre(id, obj) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  try {
+    el.textContent = JSON.stringify(obj, null, 2);
+  } catch (e) {
+    el.textContent = 'Unable to render raw data.';
+  }
 }
 
 async function updateMapLocation(lat, lon) {
@@ -592,6 +604,7 @@ async function loadHistoricalTracks() {
     tracksIndex = Array.isArray(data) ? data : (data.tracks ?? []);
   } catch (e) {
     console.warn('Unable to load tracks index:', e);
+    renderVoyageList();
     return;
   }
 
@@ -606,7 +619,7 @@ async function loadHistoricalTracks() {
     return !covered.has(utcDate) && !(localDate && covered.has(localDate));
   });
 
-  if (!toFetch.length) return;
+  if (!toFetch.length) { renderVoyageList(); return; }
 
   const results = await Promise.all(toFetch.map(async (track) => {
     try {
@@ -636,7 +649,59 @@ async function loadHistoricalTracks() {
     }
   }
   if (added) renderTracks();
+  renderVoyageList();
 }
+
+// Build the Voyages-tab log list from tracks_index.json metadata (already
+// fetched above into `tracksIndex`) — no additional network calls.
+function renderVoyageList() {
+  const container = document.getElementById('voyage-list');
+  if (!container) return;
+
+  if (!tracksIndex.length) {
+    container.innerHTML = '<div class="voyage-list-empty">No voyages recorded yet.</div>';
+    return;
+  }
+
+  const rows = [...tracksIndex].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+  const fmtNum = (v, digits, suffix) => Number.isFinite(v) ? `${v.toFixed(digits)} ${suffix}` : '—';
+
+  container.innerHTML = rows.map((t) => `
+    <button class="voyage-row" data-date="${t.date}" title="View this day's track on the map">
+      <span class="voyage-row-date">${fmtDate(t.date)}</span>
+      <span class="voyage-row-stat">${fmtNum(t.distance_nm, 1, 'nm')}</span>
+      <span class="voyage-row-stat">${fmtNum(t.duration_hours, 1, 'hr')}</span>
+      <span class="voyage-row-stat">${fmtNum(t.max_speed_kts, 1, 'kts')}</span>
+    </button>`).join('');
+}
+
+// Zoom the map to a single day's track and bring it into the "recent"
+// coloured set (rather than the pale "older" styling) — called from the
+// Voyages tab list via tabs.js. Reuses renderTracks()'s existing per-day
+// colouring instead of drawing a separate highlight layer.
+function focusTrackDay(date) {
+  if (!map || !date) return;
+  const pts = trackByDay.get(date);
+  if (!pts || !pts.length) {
+    console.warn('Track points for', date, 'are not loaded yet.');
+    return;
+  }
+  const latlngs = pts
+    .map((p) => [p.latitude, p.longitude])
+    .filter(([la, lo]) => Number.isFinite(la) && Number.isFinite(lo));
+  if (!latlngs.length) return;
+
+  const days = [...trackByDay.keys()].sort().reverse();
+  const idx = days.indexOf(date);
+  if (idx >= 0 && idx >= recentTrackCount) {
+    recentTrackCount = idx + 1;
+    renderTracks();
+  }
+
+  requestAnimationFrame(() => map.fitBounds(latlngs, { padding: [30, 30], maxZoom: 15 }));
+}
+window.focusTrackDay = focusTrackDay;
 
 // Get all tide stations from loaded JSON data
 function getAllStations() {
@@ -1377,6 +1442,7 @@ async function loadData() {
       .then((res) => (res.ok ? res.json() : null))
       .then((payload) => {
         const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+        setRawDataPre('raw-instrument-log', entries);
         const recent = entries.slice(-SPARKLINE_POINTS);
         seriesByPath = buildSeriesFromLog(recent);
         return seriesByPath;
@@ -1696,6 +1762,7 @@ async function loadData() {
     }
 
     console.log('Fetch response status:', res?.status);
+    setRawDataPre('raw-signalk-latest', data);
     const nav = data.navigation || {};
     const elec = data.electrical || {};
     const env = data.environment || {};
@@ -1775,6 +1842,7 @@ async function loadData() {
     if (hasGpsFix) {
       if (!map) {
         map = L.map('map').setView([lat, lon], 13);
+        window.mermugMap = map; // exposed for tabs.js to call invalidateSize() on tab switch
         const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
         const tileLayer = isDark
           ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -1976,8 +2044,8 @@ async function loadData() {
       }
       return levelDisplay !== 'N/A' ? levelDisplay : (volumeDisplay || 'N/A');
     };
-    // Update the environment with environmental data
-    document.getElementById('environment-grid').innerHTML = `
+    // Update onboard sensor readings (water/inside temp, humidity, air quality, sun times)
+    document.getElementById('sensors-grid').innerHTML = `
       <div class="info-item" data-path="environment.water.temperature" data-label="Water Temp" data-unit-group="temperature" data-raw="${env.water?.temperature?.value ?? ''}" title="${withUpdated('Water temperature at the surface', env.water?.temperature)}"><div class="label">Water Temp</div><div class="value">${fmtUnit('temperature', env.water?.temperature?.value)}</div></div>
       <div class="info-item" data-path="environment.inside.temperature" data-label="Inside Temp" data-unit-group="temperature" data-raw="${data.environment?.inside?.temperature?.value ?? ''}" title="${withUpdated('Inside air temperature from BME280 sensor', data.environment?.inside?.temperature)}"><div class="label">Inside Temp</div><div class="value">${fmtUnit('temperature', data.environment?.inside?.temperature?.value)}</div></div>
       <div class="info-item" data-path="environment.inside.humidity" data-label="Inside Humidity" title="${withUpdated('Inside humidity from BME280 sensor', data.environment?.inside?.humidity)}"><div class="label">Inside Humidity</div><div class="value">${data.environment?.inside?.humidity?.value ? (data.environment.inside.humidity.value * 100).toFixed(1) + '%' : 'N/A'}</div></div>

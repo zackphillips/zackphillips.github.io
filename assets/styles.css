@@ -222,9 +222,71 @@ body {
   transition: background-color 0.3s ease;
 }
 
-/* All panels are wrapped in .content-panels, which adds the top gap */
-.content-panels {
+/* ─────────────────────────────────────────────────────────────────────────
+   Tab bar + tab panels
+   ───────────────────────────────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 13px 6px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.85em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.tab-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+@media (hover: hover) {
+  .tab-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--accent-light);
+  }
+}
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Each tab panel holds a stack of .info-panel cards; give the stack the
+   same top gap the old single-scroll .content-panels wrapper provided. */
+.tab-panel {
+  display: none;
   padding-top: 20px;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+/* The map should sit flush under the tab bar, not inset. */
+.tab-panel[data-tab-panel="map"] {
+  padding-top: 0;
+}
+
+#alert-summary {
+  margin-top: 20px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -596,6 +658,85 @@ body {
 .ais-btn { background-color: var(--accent); }
 
 /* ─────────────────────────────────────────────────────────────────────────
+   Voyage list (Voyages tab)
+   ───────────────────────────────────────────────────────────────────────── */
+.voyage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.voyage-list-empty {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  padding: 8px 4px;
+}
+
+.voyage-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--bg-quaternary);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.85em;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .voyage-row:hover { background-color: var(--accent-light); }
+}
+
+.voyage-row-date {
+  flex: 1 1 auto;
+  font-weight: 600;
+}
+
+.voyage-row-stat {
+  flex: 0 0 auto;
+  min-width: 56px;
+  text-align: right;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Raw data (Data tab)
+   ───────────────────────────────────────────────────────────────────────── */
+.raw-data-block {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.raw-data-block summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9em;
+  background: var(--bg-quaternary);
+}
+
+.raw-data-block pre {
+  margin: 0;
+  padding: 12px 14px;
+  max-height: 420px;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78em;
+  line-height: 1.5;
+  white-space: pre;
+  color: var(--text-secondary);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
    Map + charts
    ───────────────────────────────────────────────────────────────────────── */
 #map {
@@ -775,7 +916,7 @@ body {
 #wind-panel        { border-left-color: #00b4d8; }
 #power-panel       { border-left-color: #f59e0b; }
 #vessel-panel      { border-left-color: #8b5cf6; }
-#environment-panel { border-left-color: #10b981; }
+#sensors-panel { border-left-color: #10b981; }
 #internet-panel    { border-left-color: #f97316; }
 #propulsion-panel  { border-left-color: #ef4444; }
 #tanks-panel       { border-left-color: #a78bfa; }
@@ -1123,6 +1264,33 @@ body {
   .container {
     border-radius: 0;
     box-shadow: none;
+    padding-bottom: calc(58px + env(safe-area-inset-bottom));
+  }
+
+  .tab-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 900;
+    border-bottom: none;
+    border-top: 1px solid var(--border-color);
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -2px 10px var(--shadow-color);
+  }
+
+  .tab-btn {
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 4px;
+    border-bottom: none;
+    border-top: 2px solid transparent;
+    font-size: 0.68em;
+  }
+
+  .tab-btn.active {
+    border-top-color: var(--accent);
+    border-bottom-color: transparent;
   }
 
   .info-panel { margin: 0 16px 16px; }
