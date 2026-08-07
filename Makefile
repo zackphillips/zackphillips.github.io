@@ -137,7 +137,7 @@ uninstall: check-linux
 	@echo "All services uninstalled successfully!"
 
 install-website-service: check-linux
-	$(call install-service,vesselwebsite,Vessel Tracker Data Updater,scripts.update_signalk_data,--interval 300,300,$(CURDIR)/services/systemd.service.tpl)
+	$(call install-service,vesselwebsite,Vessel Tracker Data Updater,scripts.update_signalk_data,--auto-interval,300,$(CURDIR)/services/systemd.service.tpl)
 
 uninstall-website-service: check-linux
 	$(call uninstall-service,vesselwebsite)

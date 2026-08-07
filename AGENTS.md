@@ -12,7 +12,9 @@ SignalK (onboard) → scripts/update_signalk_data.py (Raspberry Pi)
 ```
 
 - **No backend server.** The site is 100% static HTML/CSS/JS served by GitHub Pages.
-- The Raspberry Pi runs a systemd service that commits new data every ~2.5 minutes.
+- The Raspberry Pi runs a systemd service that commits new data every 2 minutes
+  while away from the home port, dropping to hourly while docked at the home
+  port privacy zone (see `--auto-interval` in `update_signalk_data.py`).
 - The browser fetches committed JSON files directly from the repo.
 - The Pi auto-pushes; code changes go through normal PRs from a laptop/agent.
 
@@ -147,13 +149,17 @@ privacy_zones:
 
 ### `scripts/update_signalk_data.py`
 
-The main Pi daemon. Every ~150 seconds it:
+The main Pi daemon. Run with `--auto-interval`, it paces itself off the vessel's
+position each cycle: every 2 minutes while away from the home port, dropping to
+every hour while parked inside the home port privacy zone (see
+`_get_privacy_zone_center` / `PRIVACY_EXCLUSION_ZONES`). A plain `--interval N`
+keeps the old fixed-cadence behavior instead. Each cycle:
 
 1. Fetches the full SignalK vessel tree via HTTP (with a mandatory timeout).
 2. Drops any positions inside privacy zones.
 3. Writes `data/telemetry/signalk_latest.json` (latest state).
 4. Appends one entry to `data/telemetry/instrument_log.json` (rolling 120-entry
-   sparkline log — keeps ~5 hours at the default cadence).
+   sparkline log).
 5. Updates `data/telemetry/positions_index.json` with the new position; purges entries
    older than `POSITION_RETENTION_HOURS = 24`.
 6. Regenerates today's GPX track from that index (past days are written once).
@@ -167,8 +173,10 @@ Key constants (top of file):
 
 | Constant | Default | Purpose |
 |---|---|---|
+| `UPDATE_INTERVAL_AWAY_SECONDS` | 120 | `--auto-interval` cadence while away from home port |
+| `UPDATE_INTERVAL_HOME_SECONDS` | 3600 | `--auto-interval` cadence while at home port |
 | `POSITION_RETENTION_HOURS` | 24 | How long raw positions are kept |
-| `INSTRUMENT_LOG_ENTRIES` | 120 | Max sparkline entries (~5 hours) |
+| `INSTRUMENT_LOG_ENTRIES` | 120 | Max sparkline entries |
 | `INSTRUMENT_LOG_FILE` | `data/telemetry/instrument_log.json` | Sparkline data |
 
 ## Data files — what to touch and what not to
