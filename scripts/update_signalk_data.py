@@ -21,6 +21,10 @@ FETCH_TIMEOUT = (5, 30)
 GIT_NETWORK_TIMEOUT = 120
 STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
+# Auto-pacing cadence for --auto-interval: fast updates while underway, slow
+# updates while sitting at the home port privacy zone (see PRIVACY_EXCLUSION_ZONES).
+UPDATE_INTERVAL_AWAY_SECONDS = 120  # 2 minutes
+UPDATE_INTERVAL_HOME_SECONDS = 3600  # 1 hour
 POSITION_RETENTION_HOURS = 24  # how long positions stay in positions_index.json
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
 INSTRUMENT_LOG_FILE = "./data/telemetry/instrument_log.json"
@@ -138,7 +142,19 @@ def parse_args() -> SimpleNamespace:
         dest="interval",
         type=int,
         default=int(os.getenv("INTERVAL", "0")),
-        help="Update interval in seconds (0 for one-shot)",
+        help="Fixed update interval in seconds (0 for one-shot). Ignored if --auto-interval is set.",
+    )
+    parser.add_argument(
+        "--auto-interval",
+        dest="auto_interval",
+        action="store_true",
+        default=os.getenv("AUTO_INTERVAL", "false").lower() == "true",
+        help=(
+            "Run continuously with automatic pacing: "
+            f"{UPDATE_INTERVAL_AWAY_SECONDS}s while away from the home port "
+            f"privacy zone, {UPDATE_INTERVAL_HOME_SECONDS}s while inside it. "
+            "Overrides --interval."
+        ),
     )
     parser.add_argument(
         "--use-https",
@@ -648,7 +664,12 @@ def run_update(
     output_path: str,
     use_https: bool,
     no_push: bool,
-) -> Path:
+) -> tuple[Path, bool]:
+    """Fetch, persist, and push one SignalK snapshot.
+
+    Returns the output file path and whether the vessel's position fell inside
+    a home-port privacy zone this cycle (used by the caller to pace updates).
+    """
     # Modify SignalK URL if use_https is specified
     if use_https and signalk_url.startswith("http://"):
         signalk_url = signalk_url.replace("http://", "https://", 1)
@@ -664,6 +685,7 @@ def run_update(
     blob = fetch_blob(signalk_url=signalk_url)
 
     # Replace position with zone center in the blob if inside a privacy zone.
+    at_home_port = False
     nav = blob.get("navigation") if isinstance(blob, dict) else None
     if isinstance(nav, dict):
         pos = nav.get("position")
@@ -674,6 +696,7 @@ def run_update(
             if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
                 zone_center = _get_privacy_zone_center(lat, lon)
                 if zone_center is not None:
+                    at_home_port = True
                     print(
                         f"Privacy: replacing position with zone center in {output_file.name}"
                     )
@@ -684,7 +707,7 @@ def run_update(
     print(f"Wrote SignalK blob to {output_file}")
     update_position_cache(blob, output_file)
     git_commit_and_push(no_push=no_push, remote=remote, branch=branch)
-    return output_file
+    return output_file, at_home_port
 
 
 def main() -> int:
@@ -694,13 +717,16 @@ def main() -> int:
         print(f"Error: {exc}")
         return 1
 
+    continuous = args.auto_interval or args.interval != 0
+
     while True:
         # A failed cycle must not kill the daemon. Anything transient — SignalK
         # returning 502, a truncated JSON body, a held git lock — should skip
         # this round and retry on the next one. Exiting here would mean waiting
         # out systemd's RestartSec (300s) for every hiccup.
+        at_home_port = False
         try:
-            run_update(
+            _, at_home_port = run_update(
                 branch=args.branch,
                 remote=args.remote,
                 signalk_url=args.signalk_url,
@@ -710,11 +736,23 @@ def main() -> int:
             )
         except Exception as exc:  # noqa: BLE001 - keep the loop alive
             print(f"Update cycle failed (will retry): {exc}")
-            if args.interval == 0:
+            if not continuous:
                 return 1
-        if args.interval == 0:
+        if not continuous:
             return 0
-        time.sleep(args.interval)
+        if args.auto_interval:
+            sleep_seconds = (
+                UPDATE_INTERVAL_HOME_SECONDS
+                if at_home_port
+                else UPDATE_INTERVAL_AWAY_SECONDS
+            )
+            print(
+                f"Next update in {sleep_seconds}s "
+                f"({'at home port' if at_home_port else 'away from home port'})"
+            )
+        else:
+            sleep_seconds = args.interval
+        time.sleep(sleep_seconds)
 
 
 if __name__ == "__main__":
