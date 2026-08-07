@@ -29,7 +29,45 @@ Data freshness depends on the Pi's update interval and internet connectivity fro
 - **Weather forecasts** — wind and swell forecasts at the vessel's current position
 - **Electrical status** — battery state of charge and power draw
 - **Sailing performance** — actual vs. theoretical polar performance
+- **Ship's docs** — operating procedures, systems reference and checklists, at [mermug.com/docs.html](https://mermug.com/docs.html)
 - **Dark/light mode** with persistent preference
+
+---
+
+## Ship's docs
+
+Every Markdown file in [`docs/`](docs/) is published at
+[mermug.com/docs.html](https://mermug.com/docs.html) — browsable, searchable, and
+readable on a phone. Adding a document is just adding a `.md` file, including
+straight from the GitHub web UI: a workflow rebuilds the index on push, so no
+local checkout or build step is needed.
+
+Front matter is optional. Without it the title comes from the first `# heading`,
+the category from the subdirectory, and the summary from the first paragraph:
+
+```markdown
+---
+title: Man Overboard
+category: Emergency
+order: 10
+---
+
+# Man Overboard
+
+- [ ] Shout "man overboard", point, keep eyes on them
+- [ ] Hit MOB on the chartplotter
+```
+
+Details worth knowing:
+
+- `- [ ]` items become checkboxes you can actually tick; the state is saved in
+  that browser, so a pre-departure checklist survives closing the tab.
+- Documents are cached for offline reading — the whole set is pre-fetched on
+  first visit, so the procedures stay available with no signal.
+- Files starting with `_` are drafts and stay off the site. Start a new document
+  by copying [`docs/_template.md`](docs/_template.md).
+- Editing locally? `make docs-index` regenerates `docs/index.json` (a pre-commit
+  hook does it for you).
 
 ---
 

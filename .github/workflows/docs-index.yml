@@ -1,0 +1,67 @@
+# Regenerates docs/index.json whenever a Markdown doc changes.
+#
+# docs.html needs a manifest of docs/**/*.md because a static site cannot list a
+# directory. Running this in CI is what makes "add a file in the GitHub web UI"
+# enough to publish a new SOP — no local checkout, no build step.
+#
+# Pushes made with GITHUB_TOKEN do not trigger workflows, so the commit this job
+# makes cannot re-trigger this job.
+name: docs-index
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**.md'
+      - 'scripts/build_docs_index.py'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-index
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # build_docs_index.py reads `git log` for each doc's last-modified
+          # date; a shallow clone would report every file as never committed.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install pyyaml
+
+      - name: Rebuild docs/index.json
+        run: python -m scripts.build_docs_index
+
+      - name: Commit and push if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- docs/index.json; then
+            echo "index.json already up to date"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/index.json
+          git commit -m "Rebuild docs index"
+          # The Pi pushes telemetry to main every ~2.5 minutes, so a push here
+          # loses the race often enough to need a retry.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              exit 0
+            fi
+            echo "push rejected (attempt $attempt) — rebasing onto origin/main"
+            git pull --rebase origin main
+            sleep 5
+          done
+          echo "could not push docs/index.json after 5 attempts" >&2
+          exit 1

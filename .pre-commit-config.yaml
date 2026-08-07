@@ -26,3 +26,18 @@ repos:
       - id: check-docstring-first
       - id: check-json
       - id: debug-statements
+
+  - repo: local
+    hooks:
+      # docs.html reads docs/index.json to list the Markdown files; regenerate
+      # it locally so a commit that adds an SOP also publishes it. Pushes made
+      # through the GitHub web UI are covered by the docs-index workflow.
+      - id: docs-index
+        name: rebuild docs/index.json
+        # Via uv, not bare `python`: the interpreter on PATH is whatever the
+        # machine happens to have (3.8 here), and this script needs 3.11+ for
+        # datetime.UTC plus pyyaml from the project environment.
+        entry: uv run python -m scripts.build_docs_index
+        language: system
+        pass_filenames: false
+        files: '^docs/.*\.md$'
