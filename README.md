@@ -72,7 +72,6 @@ This runs an interactive wizard that writes `data/vessel/info.yaml` with your ve
 make install              # Install and start all services
 make status               # Check service statuses
 make show-logs-website    # Stream website service logs
-make show-logs-polars     # Stream polar accumulation service logs
 make uninstall            # Remove all services
 ```
 

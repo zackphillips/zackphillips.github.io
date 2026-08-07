@@ -1,6 +1,5 @@
 .PHONY: server help install uninstall test test-py test-js js-install pre-commit-install lint config sync-dev status
 .PHONY: install-website-service uninstall-website-service check-service-status-website show-logs-website run-website-update
-.PHONY: install-polars-service uninstall-polars-service check-service-status-polars show-logs-polars run-polar-update
 
 .DEFAULT_GOAL := help
 
@@ -96,7 +95,7 @@ help:
 	@echo "General:"
 	@echo "  make install                    - Install all system services (Linux only)"
 	@echo "  make uninstall                  - Remove all system services (Linux only)"
-	@echo "  make status                     - Report website and polars service statuses"
+	@echo "  make status                     - Report website service status"
 	@echo "  make config                     - Interactive vessel configuration wizard"
 	@echo ""
 	@echo "Development:"
@@ -111,17 +110,12 @@ help:
 	@echo ""
 	@echo "Manual execution:"
 	@echo "  make run-website-update         - Fetch SignalK data once"
-	@echo "  make run-polar-update           - Run one polar accumulation sample"
 	@echo ""
 	@echo "Service management:"
 	@echo "  make install-website-service    - Install website data updater service"
-	@echo "  make install-polars-service     - Install polar accumulation service"
 	@echo "  make uninstall-website-service  - Uninstall website updater service"
-	@echo "  make uninstall-polars-service   - Uninstall polar accumulation service"
 	@echo "  make check-service-status-website - Check website service status"
-	@echo "  make check-service-status-polars  - Check polar accumulation service status"
 	@echo "  make show-logs-website          - Stream website service logs"
-	@echo "  make show-logs-polars           - Stream polar accumulation service logs"
 
 server:
 	@echo "Open http://localhost:$(SERVER_PORT) in your browser"
@@ -134,35 +128,22 @@ install: check-linux
 	@echo "Installing all vessel tracker services..."
 	@$(MAKE) install-website-service
 	@echo ""
-	@$(MAKE) install-polars-service
-	@echo ""
 	@echo "All services installed successfully!"
 
 uninstall: check-linux
 	@echo "Uninstalling all vessel tracker services..."
 	@$(MAKE) uninstall-website-service
 	@echo ""
-	@$(MAKE) uninstall-polars-service
-	@echo ""
 	@echo "All services uninstalled successfully!"
 
 install-website-service: check-linux
 	$(call install-service,vesselwebsite,Vessel Tracker Data Updater,scripts.update_signalk_data,--interval 300,300,$(CURDIR)/services/systemd.service.tpl)
 
-install-polars-service: check-linux
-	$(call install-service,vesselpolars,Vessel Polar Performance Accumulator,scripts.update_polar_data,--interval 10,15,$(CURDIR)/services/polars.service.tpl)
-
 uninstall-website-service: check-linux
 	$(call uninstall-service,vesselwebsite)
 
-uninstall-polars-service: check-linux
-	$(call uninstall-service,vesselpolars)
-
 check-service-status-website: check-linux
 	$(call check-service-status,vesselwebsite)
-
-check-service-status-polars: check-linux
-	$(call check-service-status,vesselpolars)
 
 status: check-linux
 	@echo "=========================================="
@@ -178,35 +159,15 @@ status: check-linux
 		echo "Status: ✗ Not installed"; \
 	fi
 	@echo ""
-	@echo "--- Polar Accumulation Service ---"
-	@if [ -f "/etc/systemd/system/vesselpolars.service" ]; then \
-		echo "Service: vesselpolars"; \
-		sudo systemctl is-active vesselpolars >/dev/null 2>&1 && echo "Status: ✓ Active" || echo "Status: ✗ Inactive"; \
-		sudo systemctl is-enabled vesselpolars >/dev/null 2>&1 && echo "Enabled: ✓ Yes" || echo "Enabled: ✗ No"; \
-	else \
-		echo "Status: ✗ Not installed"; \
-	fi
-	@echo ""
 	@echo "=========================================="
 
 show-logs-website: check-linux
 	$(call show-service-logs,vesselwebsite)
 
-show-logs-polars: check-linux
-	$(call show-service-logs,vesselpolars)
-
 run-website-update:
 	$(require-uv)
 	@echo "Running one website telemetry update..."
 	@"$(UV_BIN)" run python -m scripts.update_signalk_data --signalk-url "http://$(SIGNALK_HOST):$(SIGNALK_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
-
-run-polar-update:
-	$(require-uv)
-	@echo "Running one polar accumulation sample..."
-	@"$(UV_BIN)" run python -m scripts.update_polar_data --interval 0 --signalk-url "http://$(SIGNALK_HOST):$(SIGNALK_PORT)/signalk/v1/api/vessels/self"
-
-
-
 
 test: test-py test-js
 

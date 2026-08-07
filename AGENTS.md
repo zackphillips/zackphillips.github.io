@@ -12,7 +12,7 @@ SignalK (onboard) → scripts/update_signalk_data.py (Raspberry Pi)
 ```
 
 - **No backend server.** The site is 100% static HTML/CSS/JS served by GitHub Pages.
-- The Raspberry Pi runs two systemd services that commit new data every ~2.5 minutes.
+- The Raspberry Pi runs a systemd service that commits new data every ~2.5 minutes.
 - The browser fetches committed JSON files directly from the repo.
 - The Pi auto-pushes; code changes go through normal PRs from a laptop/agent.
 
@@ -41,7 +41,6 @@ data/
     tracks_index.json    # Metadata index for GPX tracks
 scripts/
   update_signalk_data.py # Pi daemon: fetch SignalK → commit telemetry
-  update_polar_data.py   # Pi daemon: accumulate polar performance samples
   utils.py               # Shared helpers: load/save_vessel_info, get_project_root,
                          #   atomic_write_text (crash-safe writes)
   vessel_config_wizard.py # Interactive setup wizard
@@ -171,11 +170,6 @@ Key constants (top of file):
 | `POSITION_RETENTION_HOURS` | 24 | How long raw positions are kept |
 | `INSTRUMENT_LOG_ENTRIES` | 120 | Max sparkline entries (~5 hours) |
 | `INSTRUMENT_LOG_FILE` | `data/telemetry/instrument_log.json` | Sparkline data |
-
-### `scripts/update_polar_data.py`
-
-Accumulates polar performance samples by comparing actual SOG/TWA against ORC polars.
-Runs as a separate service every ~15 seconds. Writes to `data/vessel/polars_*.json`.
 
 ## Data files — what to touch and what not to
 

@@ -245,15 +245,14 @@ def _rebase_in_progress() -> bool:
 
 
 def git_commit_and_push(no_push: bool, remote: str, branch: str) -> None:
-    # Only stage paths that exist. `git add` on a missing pathspec exits
+    # Only stage the path if it exists. `git add` on a missing pathspec exits
     # non-zero, and with the retry handler now inside the daemon loop that
     # would turn one missing directory into an endless failing-cycle loop
-    # rather than a single crash. Paths are resolved against the working
-    # directory because that is what git itself resolves them against
+    # rather than a single crash. The path is resolved against the working
+    # directory because that is what git itself resolves it against
     # (systemd sets WorkingDirectory to the repo root).
-    for rel in ("data/telemetry", "data/vessel/polars_calculated.csv"):
-        if Path(rel).exists():
-            subprocess.run(["git", "add", rel], check=True)
+    if Path("data/telemetry").exists():
+        subprocess.run(["git", "add", "data/telemetry"], check=True)
     nothing_staged = (
         subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0
     )
