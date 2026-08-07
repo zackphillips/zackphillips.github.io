@@ -655,7 +655,6 @@ let currentNav = null; // Global navigation data
 let currentPropulsion = null; // Global propulsion data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
-const SNAPSHOT_INDEX_URL = C.SNAPSHOT_INDEX_URL;
 const SPARKLINE_POINTS = C.SPARKLINE_POINTS;
 let seriesByPath = null;
 let seriesPromise = null;
@@ -838,13 +837,13 @@ async function loadVesselData() {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const yamlText = await response.text();
-    
+
     // Parse YAML using js-yaml library
     if (typeof jsyaml === 'undefined') {
       throw new Error('js-yaml library not loaded');
     }
     vesselData = jsyaml.load(yamlText);
-    
+
     // Add default_location if not present
     if (!vesselData.default_location) {
       vesselData.default_location = {
@@ -853,7 +852,7 @@ async function loadVesselData() {
         label: C.DEFAULT_TIDE_LABEL,
       };
     }
-    
+
     console.log('Vessel data loaded:', vesselData);
     updateVesselLinks();
   } catch (error) {
@@ -984,7 +983,7 @@ async function findNearestNOAAStation(lat, lon) {
   if (!stations || stations.length === 0) {
     throw new Error('No tide stations available in lookup table');
   }
-  
+
   // For San Francisco Bay area, prefer San Francisco station (9414290) which reliably supports predictions
   // South Beach Harbor and most SF locations should use SF station
   const isSFBayArea = lat >= 37.7 && lat <= 37.9 && lon >= -122.5 && lon <= -122.3;
@@ -995,12 +994,12 @@ async function findNearestNOAAStation(lat, lon) {
       return sfStation;
     }
   }
-  
+
   // For other areas, find nearest station using haversine distance
   const nearest = stations.reduce((a, b) =>
     haversine(lat, lon, a.lat, a.lon) < haversine(lat, lon, b.lat, b.lon) ? a : b
   );
-  
+
   return nearest;
 }
 
@@ -1009,7 +1008,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
     usingFallback = false,
     label: fallbackLabel = 'default location',
   } = tidePositionMeta;
-  
+
   // Find nearest station using NOAA Metadata API
   let nearest;
   try {
@@ -1065,7 +1064,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
     });
     return `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${params.toString()}`;
   };
-  
+
   let targetStation = nearest;
   let url = buildUrl(targetStation.id);
   const fallbackStation = { id: '9414290', name: 'San Francisco', lat: 37.806, lon: -122.465 };
@@ -1121,7 +1120,7 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
           name: targetStation.name,
           url
         });
-        
+
         try {
           res = await fetch(url);
           if (res.ok) {

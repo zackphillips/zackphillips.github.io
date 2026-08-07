@@ -1,4 +1,5 @@
-"""Tests for per-day GPX track generation and backfill script."""
+"""Tests for per-day GPX track generation in the SignalK daemon."""
+
 from __future__ import annotations
 
 import json
@@ -11,7 +12,6 @@ from unittest.mock import patch
 import pytest
 
 import scripts.update_signalk_data as usd
-import scripts.backfill_tracks as bt
 
 # ---------------------------------------------------------------------------
 # Helpers / shared fixtures
@@ -28,8 +28,10 @@ OUTSIDE_LON = -122.4373
 INSIDE_LAT = HARBOR_LAT
 INSIDE_LON = HARBOR_LON
 
-NS = {"gpx": "http://www.topografix.com/GPX/1/1",
-      "gpxtpx": "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"}
+NS = {
+    "gpx": "http://www.topografix.com/GPX/1/1",
+    "gpxtpx": "http://www.garmin.com/xmlschemas/TrackPointExtension/v1",
+}
 
 
 def _make_index_entry(
@@ -39,23 +41,40 @@ def _make_index_entry(
     speed: float | None = 2.5,
     course: float | None = 1.57,
 ) -> dict:
-    values = [{"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}]
+    values = [
+        {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}
+    ]
     if speed is not None:
         values.append({"path": "navigation.speedOverGround", "value": speed})
     if course is not None:
         values.append({"path": "navigation.courseOverGroundTrue", "value": course})
-    return {"timestamp": ts, "file": f"{ts[:10]}T00-00-00.000000Z.json", "values": values}
+    return {
+        "timestamp": ts,
+        "file": f"{ts[:10]}T00-00-00.000000Z.json",
+        "values": values,
+    }
 
 
-def _make_snapshot_file(tmp_path: Path, ts: str, lat: float, lon: float,
-                         speed: float | None = None, course: float | None = None) -> Path:
+def _make_snapshot_file(
+    tmp_path: Path,
+    ts: str,
+    lat: float,
+    lon: float,
+    speed: float | None = None,
+    course: float | None = None,
+) -> Path:
     """Write a fake SignalK snapshot file in the expected format."""
-    values = [{"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}]
+    values = [
+        {"path": "navigation.position", "value": {"latitude": lat, "longitude": lon}}
+    ]
     if speed is not None:
         values.append({"path": "navigation.speedOverGround", "value": speed})
     if course is not None:
         values.append({"path": "navigation.courseOverGroundTrue", "value": course})
-    payload = {"context": "vessels.self", "updates": [{"timestamp": ts, "values": values}]}
+    payload = {
+        "context": "vessels.self",
+        "updates": [{"timestamp": ts, "values": values}],
+    }
     # Filename must match the timestamp pattern
     fname = ts.replace(":", "-").replace("+00:00", "Z").replace(".", ".") + ".json"
     # Simplify: use a known-good filename format
@@ -68,6 +87,7 @@ def _make_snapshot_file(tmp_path: Path, ts: str, lat: float, lon: float,
 # ---------------------------------------------------------------------------
 # _fmt_gpx_time
 # ---------------------------------------------------------------------------
+
 
 def test_fmt_gpx_time_utc_offset():
     result = usd._fmt_gpx_time("2026-04-11T15:00:15+00:00")
@@ -93,9 +113,13 @@ def test_fmt_gpx_time_passthrough_on_bad_value():
 # _extract_pos_from_values
 # ---------------------------------------------------------------------------
 
+
 def test_extract_pos_full():
     values = [
-        {"path": "navigation.position", "value": {"latitude": 37.82, "longitude": -122.44}},
+        {
+            "path": "navigation.position",
+            "value": {"latitude": 37.82, "longitude": -122.44},
+        },
         {"path": "navigation.speedOverGround", "value": 2.5},
         {"path": "navigation.courseOverGroundTrue", "value": 1.57},
     ]
@@ -108,7 +132,10 @@ def test_extract_pos_full():
 
 def test_extract_pos_missing_speed_course():
     values = [
-        {"path": "navigation.position", "value": {"latitude": 37.82, "longitude": -122.44}},
+        {
+            "path": "navigation.position",
+            "value": {"latitude": 37.82, "longitude": -122.44},
+        },
     ]
     lat, lon, speed, course = usd._extract_pos_from_values(values)
     assert lat == pytest.approx(37.82)
@@ -133,6 +160,7 @@ def test_extract_pos_empty():
 # ---------------------------------------------------------------------------
 # _build_day_gpx
 # ---------------------------------------------------------------------------
+
 
 def _sample_points(n: int = 3) -> list[dict]:
     return [
@@ -162,9 +190,15 @@ def test_build_day_gpx_correct_point_count():
 
 
 def test_build_day_gpx_lat_lon_correct():
-    pts = [{"timestamp": "2026-04-11T15:00:00+00:00",
-            "latitude": 37.822875, "longitude": -122.437270,
-            "speed_ms": 2.5, "course_rad": 1.57}]
+    pts = [
+        {
+            "timestamp": "2026-04-11T15:00:00+00:00",
+            "latitude": 37.822875,
+            "longitude": -122.437270,
+            "speed_ms": 2.5,
+            "course_rad": 1.57,
+        }
+    ]
     xml_str = usd._build_day_gpx(pts, "2026-04-11", "S.V. Test")
     root = ET.fromstring(xml_str)
     trkpt = root.find(".//gpx:trkpt", NS)
@@ -173,9 +207,15 @@ def test_build_day_gpx_lat_lon_correct():
 
 
 def test_build_day_gpx_speed_extension():
-    pts = [{"timestamp": "2026-04-11T15:00:00+00:00",
-            "latitude": 37.82, "longitude": -122.44,
-            "speed_ms": 4.0, "course_rad": 0.0}]
+    pts = [
+        {
+            "timestamp": "2026-04-11T15:00:00+00:00",
+            "latitude": 37.82,
+            "longitude": -122.44,
+            "speed_ms": 4.0,
+            "course_rad": 0.0,
+        }
+    ]
     xml_str = usd._build_day_gpx(pts, "2026-04-11", "S.V. Test")
     root = ET.fromstring(xml_str)
     speed_el = root.find(".//gpxtpx:speed", NS)
@@ -184,9 +224,15 @@ def test_build_day_gpx_speed_extension():
 
 
 def test_build_day_gpx_course_extension_in_degrees():
-    pts = [{"timestamp": "2026-04-11T15:00:00+00:00",
-            "latitude": 37.82, "longitude": -122.44,
-            "speed_ms": 2.0, "course_rad": math.pi}]  # π rad = 180°
+    pts = [
+        {
+            "timestamp": "2026-04-11T15:00:00+00:00",
+            "latitude": 37.82,
+            "longitude": -122.44,
+            "speed_ms": 2.0,
+            "course_rad": math.pi,
+        }
+    ]  # π rad = 180°
     xml_str = usd._build_day_gpx(pts, "2026-04-11", "S.V. Test")
     root = ET.fromstring(xml_str)
     course_el = root.find(".//gpxtpx:course", NS)
@@ -195,9 +241,15 @@ def test_build_day_gpx_course_extension_in_degrees():
 
 
 def test_build_day_gpx_no_extension_when_no_speed_course():
-    pts = [{"timestamp": "2026-04-11T15:00:00+00:00",
-            "latitude": 37.82, "longitude": -122.44,
-            "speed_ms": None, "course_rad": None}]
+    pts = [
+        {
+            "timestamp": "2026-04-11T15:00:00+00:00",
+            "latitude": 37.82,
+            "longitude": -122.44,
+            "speed_ms": None,
+            "course_rad": None,
+        }
+    ]
     xml_str = usd._build_day_gpx(pts, "2026-04-11", "S.V. Test")
     root = ET.fromstring(xml_str)
     assert root.find(".//gpx:extensions", NS) is None
@@ -216,12 +268,23 @@ def test_build_day_gpx_track_name_contains_date():
 # _make_track_meta
 # ---------------------------------------------------------------------------
 
+
 def test_make_track_meta_basic_fields():
     pts = [
-        {"timestamp": "2026-04-11T15:00:00+00:00", "latitude": 37.82, "longitude": -122.44,
-         "speed_ms": 3.0, "course_rad": 1.0},
-        {"timestamp": "2026-04-11T16:00:00+00:00", "latitude": 37.83, "longitude": -122.43,
-         "speed_ms": 5.0, "course_rad": 1.1},
+        {
+            "timestamp": "2026-04-11T15:00:00+00:00",
+            "latitude": 37.82,
+            "longitude": -122.44,
+            "speed_ms": 3.0,
+            "course_rad": 1.0,
+        },
+        {
+            "timestamp": "2026-04-11T16:00:00+00:00",
+            "latitude": 37.83,
+            "longitude": -122.43,
+            "speed_ms": 5.0,
+            "course_rad": 1.1,
+        },
     ]
     meta = usd._make_track_meta("2026-04-11", pts)
     assert meta["date"] == "2026-04-11"
@@ -233,10 +296,20 @@ def test_make_track_meta_basic_fields():
 
 def test_make_track_meta_duration():
     pts = [
-        {"timestamp": "2026-04-11T12:00:00+00:00", "latitude": 37.82, "longitude": -122.44,
-         "speed_ms": 3.0, "course_rad": 0.0},
-        {"timestamp": "2026-04-11T14:30:00+00:00", "latitude": 37.83, "longitude": -122.43,
-         "speed_ms": 4.0, "course_rad": 0.0},
+        {
+            "timestamp": "2026-04-11T12:00:00+00:00",
+            "latitude": 37.82,
+            "longitude": -122.44,
+            "speed_ms": 3.0,
+            "course_rad": 0.0,
+        },
+        {
+            "timestamp": "2026-04-11T14:30:00+00:00",
+            "latitude": 37.83,
+            "longitude": -122.43,
+            "speed_ms": 4.0,
+            "course_rad": 0.0,
+        },
     ]
     meta = usd._make_track_meta("2026-04-11", pts)
     assert meta["duration_hours"] == pytest.approx(2.5, abs=0.01)
@@ -244,10 +317,20 @@ def test_make_track_meta_duration():
 
 def test_make_track_meta_max_speed_kts():
     pts = [
-        {"timestamp": "2026-04-11T12:00:00+00:00", "latitude": 37.82, "longitude": -122.44,
-         "speed_ms": 5.144, "course_rad": 0.0},   # ≈ 10 kts
-        {"timestamp": "2026-04-11T12:05:00+00:00", "latitude": 37.83, "longitude": -122.43,
-         "speed_ms": 2.572, "course_rad": 0.0},   # ≈ 5 kts
+        {
+            "timestamp": "2026-04-11T12:00:00+00:00",
+            "latitude": 37.82,
+            "longitude": -122.44,
+            "speed_ms": 5.144,
+            "course_rad": 0.0,
+        },  # ≈ 10 kts
+        {
+            "timestamp": "2026-04-11T12:05:00+00:00",
+            "latitude": 37.83,
+            "longitude": -122.43,
+            "speed_ms": 2.572,
+            "course_rad": 0.0,
+        },  # ≈ 5 kts
     ]
     meta = usd._make_track_meta("2026-04-11", pts)
     assert meta["max_speed_kts"] == pytest.approx(10.0, abs=0.1)
@@ -255,10 +338,20 @@ def test_make_track_meta_max_speed_kts():
 
 def test_make_track_meta_distance_positive():
     pts = [
-        {"timestamp": "2026-04-11T12:00:00+00:00", "latitude": 37.80, "longitude": -122.44,
-         "speed_ms": 3.0, "course_rad": 0.0},
-        {"timestamp": "2026-04-11T12:10:00+00:00", "latitude": 37.85, "longitude": -122.44,
-         "speed_ms": 3.0, "course_rad": 0.0},
+        {
+            "timestamp": "2026-04-11T12:00:00+00:00",
+            "latitude": 37.80,
+            "longitude": -122.44,
+            "speed_ms": 3.0,
+            "course_rad": 0.0,
+        },
+        {
+            "timestamp": "2026-04-11T12:10:00+00:00",
+            "latitude": 37.85,
+            "longitude": -122.44,
+            "speed_ms": 3.0,
+            "course_rad": 0.0,
+        },
     ]
     meta = usd._make_track_meta("2026-04-11", pts)
     assert meta["distance_nm"] > 0
@@ -267,6 +360,7 @@ def test_make_track_meta_distance_positive():
 # ---------------------------------------------------------------------------
 # _load_tracks_index / _write_tracks_index round-trip
 # ---------------------------------------------------------------------------
+
 
 def test_tracks_index_round_trip(tmp_path):
     entries = [
@@ -296,6 +390,7 @@ def test_load_tracks_index_malformed_json(tmp_path):
 # _update_track_files (integration)
 # ---------------------------------------------------------------------------
 
+
 def _make_outside_entries(date_prefix: str, count: int = 3) -> list[dict]:
     return [
         _make_index_entry(
@@ -322,8 +417,9 @@ def test_update_track_files_creates_gpx(tmp_path):
 
 
 def test_update_track_files_skips_harbor_positions(tmp_path):
-    harbor_entry = _make_index_entry("2026-04-11T12:00:00+00:00",
-                                      lat=INSIDE_LAT, lon=INSIDE_LON)
+    harbor_entry = _make_index_entry(
+        "2026-04-11T12:00:00+00:00", lat=INSIDE_LAT, lon=INSIDE_LON
+    )
     tracks_dir = tmp_path / "tracks"
     index_path = tmp_path / "tracks_index.json"
 
@@ -390,100 +486,3 @@ def test_update_track_files_index_has_correct_metadata(tmp_path):
     assert track["date"] == "2026-04-11"
     assert track["points"] == 5
     assert track["file"] == "tracks/2026-04-11.gpx"
-
-
-# ---------------------------------------------------------------------------
-# backfill_tracks._parse_snapshot
-# ---------------------------------------------------------------------------
-
-def test_parse_snapshot_valid_file(tmp_path):
-    path = _make_snapshot_file(tmp_path, "2026-04-11T15:00:00+00:00",
-                                lat=OUTSIDE_LAT, lon=OUTSIDE_LON, speed=3.0, course=1.57)
-    result = bt._parse_snapshot(path)
-    assert result is not None
-    assert result["latitude"] == pytest.approx(OUTSIDE_LAT, abs=1e-4)
-    assert result["longitude"] == pytest.approx(OUTSIDE_LON, abs=1e-4)
-    assert result["speed_ms"] == pytest.approx(3.0, abs=0.01)
-    assert result["course_rad"] == pytest.approx(1.57, abs=0.01)
-    assert result["timestamp"] == "2026-04-11T15:00:00+00:00"
-
-
-def test_parse_snapshot_minimal_no_speed_course(tmp_path):
-    path = _make_snapshot_file(tmp_path, "2026-04-11T15:00:00+00:00",
-                                lat=OUTSIDE_LAT, lon=OUTSIDE_LON)
-    result = bt._parse_snapshot(path)
-    assert result is not None
-    assert result["speed_ms"] is None
-    assert result["course_rad"] is None
-
-
-def test_parse_snapshot_invalid_json(tmp_path):
-    path = tmp_path / "bad.json"
-    path.write_text("{ not json }", encoding="utf-8")
-    assert bt._parse_snapshot(path) is None
-
-
-def test_parse_snapshot_missing_position(tmp_path):
-    payload = {"context": "vessels.self",
-               "updates": [{"timestamp": "2026-04-11T15:00:00+00:00", "values": []}]}
-    path = tmp_path / "2026-04-11T15-00-00.000000Z.json"
-    path.write_text(json.dumps(payload), encoding="utf-8")
-    assert bt._parse_snapshot(path) is None
-
-
-# ---------------------------------------------------------------------------
-# backfill_tracks.main (end-to-end)
-# ---------------------------------------------------------------------------
-
-def test_backfill_main_creates_gpx_and_index(tmp_path):
-    # Build a fake telemetry directory with a couple of outside-harbor snapshots
-    tel_dir = tmp_path / "telemetry"
-    tel_dir.mkdir()
-    _make_snapshot_file(tel_dir, "2026-03-21T14:00:00+00:00", OUTSIDE_LAT, OUTSIDE_LON, 5.0, 1.0)
-    _make_snapshot_file(tel_dir, "2026-03-21T16:00:00+00:00", OUTSIDE_LAT + 0.01, OUTSIDE_LON, 4.0, 1.1)
-    # Add a harbor position that should be filtered
-    _make_snapshot_file(tel_dir, "2026-03-22T10:00:00+00:00", INSIDE_LAT, INSIDE_LON, 0.1, 0.0)
-
-    tracks_dir = tel_dir / "tracks"
-
-    with (
-        patch("scripts.backfill_tracks.TELEMETRY_DIR", tel_dir),
-        patch("scripts.backfill_tracks.TRACKS_DIR", tracks_dir),
-        patch("scripts.backfill_tracks.TRACKS_INDEX_FILE", tel_dir / "tracks_index.json"),
-        patch("scripts.backfill_tracks.load_vessel_info", return_value={"name": "S.V. Test"}),
-    ):
-        # Patch get_project_root so the script uses our tmp directory
-        with patch("scripts.backfill_tracks.get_project_root", return_value=tmp_path):
-            result = bt.main()
-
-    assert result == 0
-    assert (tracks_dir / "2026-03-21.gpx").exists()
-    # Harbor-only day should not produce a GPX
-    assert not (tracks_dir / "2026-03-22.gpx").exists()
-
-    index = json.loads((tel_dir / "tracks_index.json").read_text())
-    dates = [t["date"] for t in index["tracks"]]
-    assert "2026-03-21" in dates
-    assert "2026-03-22" not in dates
-
-
-def test_backfill_main_does_not_overwrite_existing_gpx(tmp_path):
-    tel_dir = tmp_path / "telemetry"
-    tel_dir.mkdir()
-    _make_snapshot_file(tel_dir, "2026-03-21T14:00:00+00:00", OUTSIDE_LAT, OUTSIDE_LON)
-
-    tracks_dir = tel_dir / "tracks"
-    tracks_dir.mkdir()
-    sentinel = "SENTINEL"
-    (tracks_dir / "2026-03-21.gpx").write_text(sentinel)
-
-    with (
-        patch("scripts.backfill_tracks.TELEMETRY_DIR", tel_dir),
-        patch("scripts.backfill_tracks.TRACKS_DIR", tracks_dir),
-        patch("scripts.backfill_tracks.TRACKS_INDEX_FILE", tel_dir / "tracks_index.json"),
-        patch("scripts.backfill_tracks.load_vessel_info", return_value={"name": "S.V. Test"}),
-        patch("scripts.backfill_tracks.get_project_root", return_value=tmp_path),
-    ):
-        bt.main()
-
-    assert (tracks_dir / "2026-03-21.gpx").read_text() == sentinel

@@ -21,7 +21,7 @@ FETCH_TIMEOUT = (5, 30)
 GIT_NETWORK_TIMEOUT = 120
 STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
-POSITION_RETENTION_HOURS = 24  # keep raw snapshot files for 24 hours only
+POSITION_RETENTION_HOURS = 24  # how long positions stay in positions_index.json
 POSITION_INDEX_FILE = "./data/telemetry/positions_index.json"
 INSTRUMENT_LOG_FILE = "./data/telemetry/instrument_log.json"
 INSTRUMENT_LOG_ENTRIES = 120  # ~5 hours at the default 2.5-min update cadence
@@ -32,16 +32,6 @@ _NS_GPX = "http://www.topografix.com/GPX/1/1"
 _NS_GPXTPX = "http://www.garmin.com/xmlschemas/TrackPointExtension/v1"
 ET.register_namespace("", _NS_GPX)
 ET.register_namespace("gpxtpx", _NS_GPXTPX)
-# All snapshot files (timestamp + filename only, no position — safe to publish).
-# Used by the frontend sparkline feature to load historical telemetry for all paths.
-SNAPSHOT_INDEX_FILE = "./data/telemetry/snapshots_index.json"
-
-# Top-level SignalK keys to include in compressed position archives.
-# Excludes static design data, raw sensor hardware keys, and AIS bounding boxes.
-SNAPSHOT_PATH_WHITELIST: frozenset[str] = frozenset(
-    {"navigation", "environment", "electrical", "tanks", "propulsion", "internet"}
-)
-
 # Fallback privacy zone used when none are defined in info.yaml.
 _FALLBACK_PRIVACY_ZONES: list[tuple[float, float, float]] = [
     (37.7802069, -122.3858040, 200.0),  # South Beach Harbor, San Francisco
@@ -308,22 +298,6 @@ def _parse_timestamp(value: Any) -> datetime | None:
         return None
 
 
-def _format_position_filename(timestamp: datetime) -> str:
-    return f"{timestamp.strftime('%Y-%m-%dT%H-%M-%S.%f')}Z.json"
-
-
-def _parse_position_filename(name: str) -> datetime | None:
-    if not name.endswith("Z.json"):
-        return None
-    stem = name[
-        :-6
-    ]  # strip trailing "Z.json"; the rest is a %Y-%m-%dT%H-%M-%S.%f stamp
-    try:
-        return datetime.strptime(stem, "%Y-%m-%dT%H-%M-%S.%f")
-    except ValueError:
-        return None
-
-
 def _load_position_index(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
@@ -341,52 +315,6 @@ def _load_position_index(path: Path) -> list[dict[str, Any]]:
 def _write_position_index(path: Path, entries: list[dict[str, Any]]) -> None:
     payload = {"positions": entries}
     atomic_write_text(path, json.dumps(payload, indent=2))
-
-
-def _collect_signalk_values(
-    node: Any,
-    path: str,
-    *,
-    values: list[dict[str, Any]],
-    whitelist: frozenset[str] | None = None,
-) -> None:
-    """Collect SignalK paths and values as a list of {path, value} dicts.
-
-    At the top level (path="") the optional *whitelist* restricts which
-    top-level keys are traversed.  Object-valued nodes whose every leaf is
-    numeric (e.g. navigation.position) are emitted as a single object entry
-    rather than being flattened into individual scalar entries.
-    """
-    if not isinstance(node, dict):
-        return
-
-    # Top-level: optionally restrict to whitelisted keys only.
-    if not path:
-        keys = (k for k in node if not whitelist or k in whitelist)
-        for key in keys:
-            child = node[key]
-            if isinstance(child, dict):
-                _collect_signalk_values(child, key, values=values)
-        return
-
-    value = node.get("value")
-    if isinstance(value, (int, float)):
-        values.append({"path": path, "value": float(value)})
-    elif isinstance(value, dict):
-        # If every leaf is numeric, emit as a compact object (e.g. position).
-        numeric_leaves = {k: v for k, v in value.items() if isinstance(v, (int, float))}
-        if numeric_leaves and len(numeric_leaves) == len(value):
-            values.append({"path": path, "value": numeric_leaves})
-        else:
-            for k, v in value.items():
-                if isinstance(v, (int, float)):
-                    values.append({"path": f"{path}.{k}", "value": float(v)})
-
-    for key, child in node.items():
-        if key in {"value", "meta", "values", "pgn", "$source", "source"}:
-            continue
-        if isinstance(child, dict):
-            _collect_signalk_values(child, f"{path}.{key}", values=values)
 
 
 def _collect_numeric_values(
@@ -416,46 +344,12 @@ def _collect_numeric_values(
             _collect_numeric_values(child, child_path, values=values)
 
 
-def _update_snapshot_index(
-    output_dir: Path, filename: str, timestamp: datetime
-) -> None:
-    """Add a new entry to snapshots_index.json and prune expired entries.
-
-    The snapshot index contains {timestamp, file} pairs for every saved
-    telemetry snapshot — including privacy-redacted ones — so the frontend
-    sparkline feature can load historical data for all SignalK paths.
-    """
-    index_path = output_dir / Path(SNAPSHOT_INDEX_FILE).name
-    try:
-        existing = (
-            json.loads(index_path.read_text(encoding="utf-8"))
-            if index_path.exists()
-            else []
-        )
-        if not isinstance(existing, list):
-            existing = []
-    except json.JSONDecodeError:
-        existing = []
-
-    cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
-    existing = [
-        e
-        for e in existing
-        if isinstance(e, dict)
-        and (_parse_timestamp(e.get("timestamp")) or datetime.min.replace(tzinfo=UTC))
-        >= cutoff
-    ]
-    existing.append({"timestamp": timestamp.isoformat(), "file": filename})
-    existing.sort(key=lambda e: e.get("timestamp") or "")
-    index_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
-
-
 def _update_instrument_log(
     output_dir: Path, timestamp: datetime, blob: dict[str, Any]
 ) -> None:
     """Append a compact numeric reading to instrument_log.json and trim to the last N entries.
 
-    The log replaces the old pattern of fetching N individual snapshot files for sparklines.
+    The frontend reads this one file for every sparkline.
     Each entry is {timestamp, values: {signalk.path: float}} — only numeric leaf values.
     """
     log_path = output_dir / Path(INSTRUMENT_LOG_FILE).name
@@ -476,22 +370,6 @@ def _update_instrument_log(
     existing.append({"timestamp": timestamp.isoformat(), "values": numeric})
     trimmed = existing[-INSTRUMENT_LOG_ENTRIES:]
     atomic_write_text(log_path, json.dumps({"entries": trimmed}, separators=(",", ":")))
-
-
-def _prune_old_position_files(output_dir: Path) -> None:
-    """Delete timestamped position snapshot files older than the retention window."""
-    cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
-    for file_path in output_dir.iterdir():
-        if not file_path.is_file():
-            continue
-        ts = _parse_position_filename(file_path.name)
-        if ts is None:
-            continue
-        if ts.replace(tzinfo=UTC) < cutoff:
-            file_path.unlink(missing_ok=True)
-
-
-# ── Per-day GPX track files ────────────────────────────────────────────────
 
 
 def _load_tracks_index(path: Path) -> list[dict[str, Any]]:
@@ -706,37 +584,6 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    filename = _format_position_filename(timestamp)
-    position_file = output_dir / filename
-
-    # --- Snapshot file: full SignalK delta format, whitelisted paths only ---
-    signalk_values: list[dict[str, Any]] = []
-    _collect_signalk_values(
-        blob, "", values=signalk_values, whitelist=SNAPSHOT_PATH_WHITELIST
-    )
-    # Always strip any auto-collected navigation.position (may need replacing).
-    signalk_values = [v for v in signalk_values if v["path"] != "navigation.position"]
-    display_lat, display_lon = zone_center if zone_center is not None else (lat, lon)
-    pos_entry = {
-        "path": "navigation.position",
-        "value": {"latitude": display_lat, "longitude": display_lon},
-    }
-    signalk_values.insert(0, pos_entry)
-
-    snapshot_payload = {
-        "context": "vessels.self",
-        "updates": [
-            {
-                "timestamp": timestamp.isoformat(),
-                "values": signalk_values,
-            }
-        ],
-    }
-    position_file.write_text(json.dumps(snapshot_payload, indent=2), encoding="utf-8")
-
-    # Always update the all-snapshots index (no position data — privacy safe).
-    _update_snapshot_index(output_dir, filename, timestamp)
-
     # --- Index entry: use zone center when inside a privacy zone ---
     display_lat, display_lon = zone_center if zone_center is not None else (lat, lon)
     index_values: list[dict[str, Any]] = [
@@ -760,7 +607,6 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
 
     index_entry: dict[str, Any] = {
         "timestamp": timestamp.isoformat(),
-        "file": filename,
         "values": index_values,
     }
 
@@ -789,7 +635,6 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     )
 
     _update_instrument_log(output_dir, timestamp, blob)
-    _prune_old_position_files(output_dir)
 
 
 def run_update(

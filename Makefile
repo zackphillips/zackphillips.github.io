@@ -1,4 +1,4 @@
-.PHONY: server help install uninstall test test-py test-js js-install pre-commit-install lint config sync-dev status prune-telemetry prune-telemetry-dry compact-history
+.PHONY: server help install uninstall test test-py test-js js-install pre-commit-install lint config sync-dev status
 .PHONY: install-website-service uninstall-website-service check-service-status-website show-logs-website run-website-update
 .PHONY: install-polars-service uninstall-polars-service check-service-status-polars show-logs-polars run-polar-update
 
@@ -108,11 +108,6 @@ help:
 	@echo "  make run-website-update         - Fetch SignalK data once"
 	@echo "  make run-polar-update           - Run one polar accumulation sample"
 	@echo ""
-	@echo "Repo maintenance:"
-	@echo "  make prune-telemetry-dry        - Preview snapshot-delta cleanup (no changes)"
-	@echo "  make prune-telemetry            - Backfill GPX then delete redundant snapshots"
-	@echo "  make compact-history            - One-time git history shrink (ARGS=--run)"
-	@echo ""
 	@echo "Service management:"
 	@echo "  make install-website-service    - Install website data updater service"
 	@echo "  make install-polars-service     - Install polar accumulation service"
@@ -221,22 +216,8 @@ run-polar-update:
 	@echo "Running one polar accumulation sample..."
 	@"$(UV_BIN)" run python -m scripts.update_polar_data --interval 0 --signalk-url "http://$(SIGNALK_HOST):$(SIGNALK_PORT)/signalk/v1/api/vessels/self"
 
-prune-telemetry:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
-	@echo "Backfilling GPX tracks, then pruning redundant snapshot deltas..."
-	@"$(UV_BIN)" run python -m scripts.prune_telemetry $(ARGS)
 
-prune-telemetry-dry:
-	@"$(UV_BIN)" run python -m scripts.prune_telemetry --dry-run
 
-compact-history:
-	@echo "One-time DESTRUCTIVE git history rewrite. Runs in dry-run mode;"
-	@echo "pass ARGS=--run to actually rewrite. Stop the Pi service first."
-	@bash scripts/compact_history.sh $(ARGS)
 
 test: test-py test-js
 

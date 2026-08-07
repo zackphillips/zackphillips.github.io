@@ -100,8 +100,8 @@ make lint      # Run ruff linter and auto-fix
 | `data/vessel/info.yaml` | Vessel configuration (name, MMSI, SignalK host/port) |
 | `data/vessel/polars.csv` | ORC polar performance data — download from [jieter.github.io/orc-data](https://jieter.github.io/orc-data/site/) |
 | `data/telemetry/signalk_latest.json` | Latest snapshot from SignalK |
-| `data/telemetry/positions_index.json` | Position history for track rendering |
-| `data/telemetry/snapshots_index.json` | Index of all timestamped snapshots |
+| `data/telemetry/positions_index.json` | Rolling 24h position history for track rendering |
+| `data/telemetry/tracks/*.gpx` | Per-day GPX tracks, generated from the position index |
 
 ### Privacy
 

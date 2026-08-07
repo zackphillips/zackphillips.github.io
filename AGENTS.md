@@ -34,19 +34,15 @@ data/
     logo.png
     polars.csv           # ORC polar data — download from jieter.github.io/orc-data
   telemetry/             # AUTO-GENERATED — do not hand-edit
-    signalk_latest.json  # Most recent SignalK snapshot (Pi-managed)
+    signalk_latest.json  # Most recent SignalK state (Pi-managed)
     positions_index.json # Rolling 24-hour position history for map track
     instrument_log.json  # Rolling 120-entry sparkline data (~5 hours)
-    tracks/              # Per-day GPX files (backfill_tracks.py)
+    tracks/              # Per-day GPX files (written by the daemon)
     tracks_index.json    # Metadata index for GPX tracks
 scripts/
   update_signalk_data.py # Pi daemon: fetch SignalK → commit telemetry
   update_polar_data.py   # Pi daemon: accumulate polar performance samples
-  backfill_tracks.py     # One-shot: generate GPX files from snapshot history
-  telemetry_to_jibset.py # Export telemetry to JibSet format
-  prune_telemetry.py     # Maintenance: backfill GPX then delete redundant snapshot deltas
-  compact_history.sh     # One-time git history shrink (git filter-repo) — DESTRUCTIVE
-  utils.py               # Shared Python helpers (load_vessel_info, etc.)
+  utils.py               # Shared Python helpers (load_vessel_info, atomic_write_text)
   vessel_config_wizard.py # Interactive setup wizard
 services/                # systemd service templates
 tests/                   # Python (pytest) + JavaScript (vitest) tests
@@ -148,19 +144,24 @@ privacy_zones:
 
 The main Pi daemon. Every ~150 seconds it:
 
-1. Fetches the full SignalK vessel tree via HTTP.
+1. Fetches the full SignalK vessel tree via HTTP (with a mandatory timeout).
 2. Drops any positions inside privacy zones.
 3. Writes `data/telemetry/signalk_latest.json` (latest state).
 4. Appends one entry to `data/telemetry/instrument_log.json` (rolling 120-entry
    sparkline log — keeps ~5 hours at the default cadence).
 5. Updates `data/telemetry/positions_index.json` with the new position; purges entries
    older than `POSITION_RETENTION_HOURS = 24`.
-6. Commits and pushes all changed files.
+6. Regenerates today's GPX track from that index (past days are written once).
+7. Commits and pushes all changed files.
+
+Every state file is written via `utils.atomic_write_text()` (temp file + fsync +
+rename), so a power cut mid-write cannot truncate an index and silently wipe a
+day of history.
 
 Key constants (top of file):
 
 | Constant | Default | Purpose |
-|---|---|---| 
+|---|---|---|
 | `POSITION_RETENTION_HOURS` | 24 | How long raw positions are kept |
 | `INSTRUMENT_LOG_ENTRIES` | 120 | Max sparkline entries (~5 hours) |
 | `INSTRUMENT_LOG_FILE` | `data/telemetry/instrument_log.json` | Sparkline data |
@@ -169,19 +170,6 @@ Key constants (top of file):
 
 Accumulates polar performance samples by comparing actual SOG/TWA against ORC polars.
 Runs as a separate service every ~15 seconds. Writes to `data/vessel/polars_*.json`.
-
-### `scripts/backfill_tracks.py`
-
-One-shot script. Run it after a passage to generate per-day GPX files from any
-existing snapshot history:
-
-```bash
-uv run python -m scripts.backfill_tracks
-```
-
-Reads privacy zones from `info.yaml`. Safe to re-run — never overwrites existing GPX.
-
----
 
 ## Data files — what to touch and what not to
 
@@ -192,8 +180,8 @@ Reads privacy zones from `info.yaml`. Safe to re-run — never overwrites existi
 | `data/telemetry/signalk_latest.json` | Pi daemon | No — overwritten each cycle |
 | `data/telemetry/positions_index.json` | Pi daemon | No |
 | `data/telemetry/instrument_log.json` | Pi daemon | No |
-| `data/telemetry/tracks/*.gpx` | `backfill_tracks.py` | No (generated) |
-| `data/telemetry/tracks_index.json` | `backfill_tracks.py` | No (generated) |
+| `data/telemetry/tracks/*.gpx` | Pi daemon | No (generated) |
+| `data/telemetry/tracks_index.json` | Pi daemon | No (generated) |
 
 The Pi is always running and will overwrite any manual edits to telemetry files on its
 next push.
@@ -204,7 +192,7 @@ next push.
 
 1. Develop on a feature branch; the Pi pushes to `main` continuously.
 2. Open a PR; merge via GitHub (the Pi's next push will land on top cleanly).
-3. If you need to force-push `main` (rare — only after history rewrites):
+3. If you need to force-push `main` (rare):
    ```bash
    TOKEN=$(cat ~/.claude/remote/.session_ingress_token)
    git -c "http.extraHeader=Authorization: Bearer $TOKEN" push origin main --force
@@ -220,15 +208,21 @@ next push.
   create a `window.*` property. Use `var` for any global the app accesses via
   `window.SomeName`. This caught us once and blanked the entire site.
 
-- **`git filter-repo` removes remotes**: After running `git filter-repo`, re-add with
-  `git remote add origin <url>`. `scripts/compact_history.sh` does this automatically.
+- **Do not re-introduce per-cycle snapshot files.** The daemon used to write one
+  `*Z.json` SignalK delta per cycle plus a `snapshots_index.json`. Nothing on the
+  frontend ever fetched them — the map reads `positions_index.json` and `tracks/*.gpx`
+  — and an off-by-one in the prune let ~32k of them accumulate, which is what grew
+  `.git` to over a gigabyte and required a `git filter-repo` rewrite to undo. GPX
+  tracks are now built directly from `positions_index.json` in the same cycle.
 
-- **Snapshot deltas balloon the repo**: the Pi writes one `*Z.json` snapshot per
-  cycle. Nothing on the frontend reads them (only GPX / index files are fetched), so
-  they are safe to delete once backfilled to GPX. Run `make prune-telemetry`
-  regularly to keep the working tree lean; `make compact-history` reclaims the history.
-  (A `name[:-5]` off-by-one once made the daemon's own 24h prune a silent no-op, which
-  is how ~32k of them accumulated — fixed to `name[:-6]`.)
+- **Every network call needs a timeout.** `requests.get` and the `git push`/`fetch`
+  subprocesses all take explicit timeouts (`FETCH_TIMEOUT`, `GIT_NETWORK_TIMEOUT`). A
+  call without one blocks forever on a half-open connection; the process stays alive,
+  so `Restart=always` never fires and the site silently freezes on stale data.
+
+- **Keep the retry handler inside the loop.** `main()` catches per-cycle so a
+  transient error skips one update instead of exiting and burning a `RestartSec=300`
+  window.
 
 - **Pi is always pushing**: if your `git push` is rejected with "fetch first", run
   `git pull --rebase origin main` then push again.
