@@ -12,9 +12,13 @@ from typing import Any
 
 import requests
 
-from .utils import get_project_root, load_vessel_info
+from .utils import atomic_write_text, get_project_root, load_vessel_info
 
 DEFAULT_OUTPUT_FILE = "./data/telemetry/signalk_latest.json"
+# (connect timeout, read timeout) in seconds for every SignalK HTTP call.
+FETCH_TIMEOUT = (5, 30)
+# Wall-clock cap on network git operations (push/fetch/rebase), in seconds.
+GIT_NETWORK_TIMEOUT = 120
 STALE_MAX_AGE_MINUTES = 60
 STALE_FILTER_KEYS = ("environment", "navigation", "entertainment")
 POSITION_RETENTION_HOURS = 24  # keep raw snapshot files for 24 hours only
@@ -34,9 +38,9 @@ SNAPSHOT_INDEX_FILE = "./data/telemetry/snapshots_index.json"
 
 # Top-level SignalK keys to include in compressed position archives.
 # Excludes static design data, raw sensor hardware keys, and AIS bounding boxes.
-SNAPSHOT_PATH_WHITELIST: frozenset[str] = frozenset({
-    "navigation", "environment", "electrical", "tanks", "propulsion", "internet"
-})
+SNAPSHOT_PATH_WHITELIST: frozenset[str] = frozenset(
+    {"navigation", "environment", "electrical", "tanks", "propulsion", "internet"}
+)
 
 # Fallback privacy zone used when none are defined in info.yaml.
 _FALLBACK_PRIVACY_ZONES: list[tuple[float, float, float]] = [
@@ -45,10 +49,14 @@ _FALLBACK_PRIVACY_ZONES: list[tuple[float, float, float]] = [
 
 # Active exclusion zones — populated from info.yaml by load_vessel_data().
 # Each entry is (lat, lon, radius_metres).
-PRIVACY_EXCLUSION_ZONES: list[tuple[float, float, float]] = list(_FALLBACK_PRIVACY_ZONES)
+PRIVACY_EXCLUSION_ZONES: list[tuple[float, float, float]] = list(
+    _FALLBACK_PRIVACY_ZONES
+)
 
 
-def _load_privacy_zones(vessel_data: dict[str, Any]) -> list[tuple[float, float, float]]:
+def _load_privacy_zones(
+    vessel_data: dict[str, Any],
+) -> list[tuple[float, float, float]]:
     """Parse privacy_zones from vessel config; fall back to built-in default."""
     raw = vessel_data.get("privacy_zones", [])
     if not isinstance(raw, list) or not raw:
@@ -70,7 +78,10 @@ def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)
     dlam = math.radians(lon2 - lon1)
-    a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2) ** 2
+    a = (
+        math.sin(dphi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(dlam / 2) ** 2
+    )
     return R * 2 * math.asin(math.sqrt(a))
 
 
@@ -156,7 +167,11 @@ def parse_args() -> SimpleNamespace:
 
 
 def fetch_blob(signalk_url: str) -> dict:
-    response = requests.get(signalk_url)
+    # Timeouts are mandatory: without them a SignalK server that accepts the
+    # connection but never answers (wedged process, half-open link over marina
+    # wifi) blocks this call forever. The daemon then hangs without exiting, so
+    # systemd's Restart=always never fires and the site silently freezes.
+    response = requests.get(signalk_url, timeout=FETCH_TIMEOUT)
     response.raise_for_status()
     return response.json()
 
@@ -191,7 +206,9 @@ def filter_stale_data(
             timestamp = node.get("timestamp")
             ts = parse_timestamp(timestamp)
             if ts is not None and ts < cutoff:
-                node = {k: v for k, v in node.items() if k not in {"value", "timestamp"}}
+                node = {
+                    k: v for k, v in node.items() if k not in {"value", "timestamp"}
+                }
 
             cleaned: dict[str, Any] = {}
             for key, value in node.items():
@@ -223,12 +240,28 @@ def filter_stale_data(
     return blob
 
 
+def _rebase_in_progress() -> bool:
+    """True if a rebase is mid-flight (so `rebase --abort` is meaningful)."""
+    git_dir = Path(
+        subprocess.run(
+            ["git", "rev-parse", "--git-dir"],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout.strip()
+        or ".git"
+    )
+    return (git_dir / "rebase-merge").exists() or (git_dir / "rebase-apply").exists()
+
+
 def git_commit_and_push(no_push: bool, remote: str, branch: str) -> None:
     subprocess.run(["git", "add", "data/telemetry"], check=True)
     polar_csv = get_project_root() / "data/vessel/polars_calculated.csv"
     if polar_csv.exists():
         subprocess.run(["git", "add", str(polar_csv)], check=True)
-    nothing_staged = subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0
+    nothing_staged = (
+        subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0
+    )
     if nothing_staged:
         return
     subprocess.run(
@@ -239,16 +272,29 @@ def git_commit_and_push(no_push: bool, remote: str, branch: str) -> None:
         return
     push_cmd = ["git", "push", remote, branch]
     try:
-        subprocess.run(push_cmd, check=True)
-    except subprocess.CalledProcessError:
+        # Network git operations need a timeout for the same reason the HTTP
+        # fetch does: a stalled TCP connection makes them block indefinitely,
+        # which hangs the daemon without ever exiting.
+        subprocess.run(push_cmd, check=True, timeout=GIT_NETWORK_TIMEOUT)
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         # Push failed — fetch latest and rebase queued commits on top, then retry.
-        # If that also fails (offline or genuine conflict), defer and continue.
+        # If that also fails (offline or genuine conflict), defer and continue;
+        # the commits stay queued locally and go up on a later cycle.
         try:
-            subprocess.run(["git", "fetch", remote], check=True)
-            subprocess.run(["git", "rebase", "-X", "theirs", f"{remote}/{branch}"], check=True)
-            subprocess.run(push_cmd, check=True)
-        except subprocess.CalledProcessError as e:
-            subprocess.run(["git", "rebase", "--abort"], check=False)
+            subprocess.run(
+                ["git", "fetch", remote], check=True, timeout=GIT_NETWORK_TIMEOUT
+            )
+            subprocess.run(
+                ["git", "rebase", "-X", "theirs", f"{remote}/{branch}"],
+                check=True,
+                timeout=GIT_NETWORK_TIMEOUT,
+            )
+            subprocess.run(push_cmd, check=True, timeout=GIT_NETWORK_TIMEOUT)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            # Only abort if a rebase is actually in progress — calling abort
+            # unconditionally spews an error whenever it was the fetch that failed.
+            if _rebase_in_progress():
+                subprocess.run(["git", "rebase", "--abort"], check=False)
             print(f"Push deferred (offline or merge conflict): {e}")
 
 
@@ -269,7 +315,9 @@ def _format_position_filename(timestamp: datetime) -> str:
 def _parse_position_filename(name: str) -> datetime | None:
     if not name.endswith("Z.json"):
         return None
-    stem = name[:-6]  # strip trailing "Z.json"; the rest is a %Y-%m-%dT%H-%M-%S.%f stamp
+    stem = name[
+        :-6
+    ]  # strip trailing "Z.json"; the rest is a %Y-%m-%dT%H-%M-%S.%f stamp
     try:
         return datetime.strptime(stem, "%Y-%m-%dT%H-%M-%S.%f")
     except ValueError:
@@ -292,7 +340,7 @@ def _load_position_index(path: Path) -> list[dict[str, Any]]:
 
 def _write_position_index(path: Path, entries: list[dict[str, Any]]) -> None:
     payload = {"positions": entries}
-    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    atomic_write_text(path, json.dumps(payload, indent=2))
 
 
 def _collect_signalk_values(
@@ -368,7 +416,9 @@ def _collect_numeric_values(
             _collect_numeric_values(child, child_path, values=values)
 
 
-def _update_snapshot_index(output_dir: Path, filename: str, timestamp: datetime) -> None:
+def _update_snapshot_index(
+    output_dir: Path, filename: str, timestamp: datetime
+) -> None:
     """Add a new entry to snapshots_index.json and prune expired entries.
 
     The snapshot index contains {timestamp, file} pairs for every saved
@@ -377,7 +427,11 @@ def _update_snapshot_index(output_dir: Path, filename: str, timestamp: datetime)
     """
     index_path = output_dir / Path(SNAPSHOT_INDEX_FILE).name
     try:
-        existing = json.loads(index_path.read_text(encoding="utf-8")) if index_path.exists() else []
+        existing = (
+            json.loads(index_path.read_text(encoding="utf-8"))
+            if index_path.exists()
+            else []
+        )
         if not isinstance(existing, list):
             existing = []
     except json.JSONDecodeError:
@@ -385,15 +439,20 @@ def _update_snapshot_index(output_dir: Path, filename: str, timestamp: datetime)
 
     cutoff = datetime.now(UTC) - timedelta(hours=POSITION_RETENTION_HOURS)
     existing = [
-        e for e in existing
-        if isinstance(e, dict) and (_parse_timestamp(e.get("timestamp")) or datetime.min.replace(tzinfo=UTC)) >= cutoff
+        e
+        for e in existing
+        if isinstance(e, dict)
+        and (_parse_timestamp(e.get("timestamp")) or datetime.min.replace(tzinfo=UTC))
+        >= cutoff
     ]
     existing.append({"timestamp": timestamp.isoformat(), "file": filename})
     existing.sort(key=lambda e: e.get("timestamp") or "")
     index_path.write_text(json.dumps(existing, indent=2), encoding="utf-8")
 
 
-def _update_instrument_log(output_dir: Path, timestamp: datetime, blob: dict[str, Any]) -> None:
+def _update_instrument_log(
+    output_dir: Path, timestamp: datetime, blob: dict[str, Any]
+) -> None:
     """Append a compact numeric reading to instrument_log.json and trim to the last N entries.
 
     The log replaces the old pattern of fetching N individual snapshot files for sparklines.
@@ -401,7 +460,11 @@ def _update_instrument_log(output_dir: Path, timestamp: datetime, blob: dict[str
     """
     log_path = output_dir / Path(INSTRUMENT_LOG_FILE).name
     try:
-        existing: list[dict[str, Any]] = json.loads(log_path.read_text(encoding="utf-8")).get("entries", []) if log_path.exists() else []
+        existing: list[dict[str, Any]] = (
+            json.loads(log_path.read_text(encoding="utf-8")).get("entries", [])
+            if log_path.exists()
+            else []
+        )
         if not isinstance(existing, list):
             existing = []
     except (json.JSONDecodeError, OSError, AttributeError):
@@ -412,7 +475,7 @@ def _update_instrument_log(output_dir: Path, timestamp: datetime, blob: dict[str
 
     existing.append({"timestamp": timestamp.isoformat(), "values": numeric})
     trimmed = existing[-INSTRUMENT_LOG_ENTRIES:]
-    log_path.write_text(json.dumps({"entries": trimmed}, separators=(",", ":")), encoding="utf-8")
+    atomic_write_text(log_path, json.dumps({"entries": trimmed}, separators=(",", ":")))
 
 
 def _prune_old_position_files(output_dir: Path) -> None:
@@ -430,6 +493,7 @@ def _prune_old_position_files(output_dir: Path) -> None:
 
 # ── Per-day GPX track files ────────────────────────────────────────────────
 
+
 def _load_tracks_index(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
@@ -442,7 +506,7 @@ def _load_tracks_index(path: Path) -> list[dict[str, Any]]:
 
 
 def _write_tracks_index(path: Path, entries: list[dict[str, Any]]) -> None:
-    path.write_text(json.dumps({"tracks": entries}, indent=2), encoding="utf-8")
+    atomic_write_text(path, json.dumps({"tracks": entries}, indent=2))
 
 
 def _fmt_gpx_time(ts: str) -> str:
@@ -475,20 +539,28 @@ def _extract_pos_from_values(
     return lat, lon, speed, course
 
 
-def _build_day_gpx(points: list[dict[str, Any]], date_str: str, vessel_name: str) -> str:
+def _build_day_gpx(
+    points: list[dict[str, Any]], date_str: str, vessel_name: str
+) -> str:
     """Serialise one sailing day's points to a GPX XML string (no XML declaration)."""
     g = ET.Element(f"{{{_NS_GPX}}}gpx", {"version": "1.1", "creator": vessel_name})
     meta = ET.SubElement(g, f"{{{_NS_GPX}}}metadata")
     ET.SubElement(meta, f"{{{_NS_GPX}}}name").text = f"{vessel_name} \u2014 {date_str}"
-    ET.SubElement(meta, f"{{{_NS_GPX}}}time").text = _fmt_gpx_time(points[0]["timestamp"])
+    ET.SubElement(meta, f"{{{_NS_GPX}}}time").text = _fmt_gpx_time(
+        points[0]["timestamp"]
+    )
     trk = ET.SubElement(g, f"{{{_NS_GPX}}}trk")
     ET.SubElement(trk, f"{{{_NS_GPX}}}name").text = f"{vessel_name} \u2014 {date_str}"
     seg = ET.SubElement(trk, f"{{{_NS_GPX}}}trkseg")
     for p in points:
-        trkpt = ET.SubElement(seg, f"{{{_NS_GPX}}}trkpt", {
-            "lat": f"{p['latitude']:.6f}",
-            "lon": f"{p['longitude']:.6f}",
-        })
+        trkpt = ET.SubElement(
+            seg,
+            f"{{{_NS_GPX}}}trkpt",
+            {
+                "lat": f"{p['latitude']:.6f}",
+                "lon": f"{p['longitude']:.6f}",
+            },
+        )
         ET.SubElement(trkpt, f"{{{_NS_GPX}}}time").text = _fmt_gpx_time(p["timestamp"])
         speed = p.get("speed_ms")
         course = p.get("course_rad")
@@ -498,7 +570,9 @@ def _build_day_gpx(points: list[dict[str, Any]], date_str: str, vessel_name: str
             if speed is not None:
                 ET.SubElement(tpe, f"{{{_NS_GPXTPX}}}speed").text = f"{speed:.3f}"
             if course is not None:
-                ET.SubElement(tpe, f"{{{_NS_GPXTPX}}}course").text = f"{math.degrees(course) % 360:.1f}"
+                ET.SubElement(
+                    tpe, f"{{{_NS_GPXTPX}}}course"
+                ).text = f"{math.degrees(course) % 360:.1f}"
     ET.indent(g, space="  ")
     return ET.tostring(g, encoding="unicode")
 
@@ -512,9 +586,12 @@ def _make_track_meta(date_str: str, points: list[dict[str, Any]]) -> dict[str, A
             max_spd_kts = max(max_spd_kts, spd * 1.94384)
         if i > 0:
             prev = points[i - 1]
-            total_nm += _haversine_m(
-                prev["latitude"], prev["longitude"], p["latitude"], p["longitude"]
-            ) / 1852.0
+            total_nm += (
+                _haversine_m(
+                    prev["latitude"], prev["longitude"], p["latitude"], p["longitude"]
+                )
+                / 1852.0
+            )
     start_ts, end_ts = points[0]["timestamp"], points[-1]["timestamp"]
     try:
         start_dt = datetime.fromisoformat(start_ts).astimezone(UTC)
@@ -547,7 +624,6 @@ def _update_track_files(
     GPX files from earlier backfills are never deleted.
     """
     today_utc = datetime.now(UTC).strftime("%Y-%m-%d")
-    harbor_lat, harbor_lon, harbor_radius = PRIVACY_EXCLUSION_ZONES[0]
 
     by_day: dict[str, list[dict[str, Any]]] = {}
     for entry in all_entries:
@@ -555,16 +631,21 @@ def _update_track_files(
         lat, lon, speed, course = _extract_pos_from_values(entry.get("values", []))
         if lat is None or lon is None or not ts:
             continue
-        if _haversine_m(lat, lon, harbor_lat, harbor_lon) <= harbor_radius:
+        # Must check EVERY zone, not just PRIVACY_EXCLUSION_ZONES[0]. Checking
+        # only the first zone redacted the map track but wrote positions from
+        # every other zone straight into the published GPX files.
+        if _is_position_private(lat, lon):
             continue
         date_str = ts[:10]
-        by_day.setdefault(date_str, []).append({
-            "timestamp": ts,
-            "latitude": lat,
-            "longitude": lon,
-            "speed_ms": speed,
-            "course_rad": course,
-        })
+        by_day.setdefault(date_str, []).append(
+            {
+                "timestamp": ts,
+                "latitude": lat,
+                "longitude": lon,
+                "speed_ms": speed,
+                "course_rad": course,
+            }
+        )
 
     if not by_day:
         return
@@ -578,10 +659,14 @@ def _update_track_files(
             existing.setdefault(date_str, _make_track_meta(date_str, points))
             continue
         gpx_xml = _build_day_gpx(points, date_str, vessel_name)
-        gpx_path.write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n{gpx_xml}\n', encoding="utf-8")
+        atomic_write_text(
+            gpx_path, f'<?xml version="1.0" encoding="UTF-8"?>\n{gpx_xml}\n'
+        )
         existing[date_str] = _make_track_meta(date_str, points)
 
-    _write_tracks_index(tracks_index_path, sorted(existing.values(), key=lambda t: t["date"]))
+    _write_tracks_index(
+        tracks_index_path, sorted(existing.values(), key=lambda t: t["date"])
+    )
 
 
 def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
@@ -614,7 +699,9 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     # Check privacy: use zone center if inside an exclusion zone.
     zone_center = _get_privacy_zone_center(lat, lon)
     if zone_center is not None:
-        print(f"Privacy: showing zone center ({zone_center[0]:.6f}, {zone_center[1]:.6f}) - vessel within exclusion zone")
+        print(
+            f"Privacy: showing zone center ({zone_center[0]:.6f}, {zone_center[1]:.6f}) - vessel within exclusion zone"
+        )
 
     output_dir = output_path.parent
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -624,19 +711,26 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
 
     # --- Snapshot file: full SignalK delta format, whitelisted paths only ---
     signalk_values: list[dict[str, Any]] = []
-    _collect_signalk_values(blob, "", values=signalk_values, whitelist=SNAPSHOT_PATH_WHITELIST)
+    _collect_signalk_values(
+        blob, "", values=signalk_values, whitelist=SNAPSHOT_PATH_WHITELIST
+    )
     # Always strip any auto-collected navigation.position (may need replacing).
     signalk_values = [v for v in signalk_values if v["path"] != "navigation.position"]
     display_lat, display_lon = zone_center if zone_center is not None else (lat, lon)
-    pos_entry = {"path": "navigation.position", "value": {"latitude": display_lat, "longitude": display_lon}}
+    pos_entry = {
+        "path": "navigation.position",
+        "value": {"latitude": display_lat, "longitude": display_lon},
+    }
     signalk_values.insert(0, pos_entry)
 
     snapshot_payload = {
         "context": "vessels.self",
-        "updates": [{
-            "timestamp": timestamp.isoformat(),
-            "values": signalk_values,
-        }],
+        "updates": [
+            {
+                "timestamp": timestamp.isoformat(),
+                "values": signalk_values,
+            }
+        ],
     }
     position_file.write_text(json.dumps(snapshot_payload, indent=2), encoding="utf-8")
 
@@ -646,13 +740,23 @@ def update_position_cache(blob: dict[str, Any], output_path: Path) -> None:
     # --- Index entry: use zone center when inside a privacy zone ---
     display_lat, display_lon = zone_center if zone_center is not None else (lat, lon)
     index_values: list[dict[str, Any]] = [
-        {"path": "navigation.position", "value": {"latitude": display_lat, "longitude": display_lon}},
+        {
+            "path": "navigation.position",
+            "value": {"latitude": display_lat, "longitude": display_lon},
+        },
     ]
     if zone_center is None:
         if speed_over_ground is not None:
-            index_values.append({"path": "navigation.speedOverGround", "value": speed_over_ground})
+            index_values.append(
+                {"path": "navigation.speedOverGround", "value": speed_over_ground}
+            )
         if course_over_ground_true is not None:
-            index_values.append({"path": "navigation.courseOverGroundTrue", "value": course_over_ground_true})
+            index_values.append(
+                {
+                    "path": "navigation.courseOverGroundTrue",
+                    "value": course_over_ground_true,
+                }
+            )
 
     index_entry: dict[str, Any] = {
         "timestamp": timestamp.isoformat(),
@@ -721,11 +825,13 @@ def run_update(
             if isinstance(lat, (int, float)) and isinstance(lon, (int, float)):
                 zone_center = _get_privacy_zone_center(lat, lon)
                 if zone_center is not None:
-                    print(f"Privacy: replacing position with zone center in {output_file.name}")
+                    print(
+                        f"Privacy: replacing position with zone center in {output_file.name}"
+                    )
                     pos_val["latitude"] = zone_center[0]
                     pos_val["longitude"] = zone_center[1]
 
-    output_file.write_text(json.dumps(blob, indent=2), encoding="utf-8")
+    atomic_write_text(output_file, json.dumps(blob, indent=2))
     print(f"Wrote SignalK blob to {output_file}")
     update_position_cache(blob, output_file)
     git_commit_and_push(no_push=no_push, remote=remote, branch=branch)
@@ -735,7 +841,16 @@ def run_update(
 def main() -> int:
     try:
         args = parse_args()
-        while True:
+    except Exception as exc:  # noqa: BLE001 - startup failure is genuinely fatal
+        print(f"Error: {exc}")
+        return 1
+
+    while True:
+        # A failed cycle must not kill the daemon. Anything transient — SignalK
+        # returning 502, a truncated JSON body, a held git lock — should skip
+        # this round and retry on the next one. Exiting here would mean waiting
+        # out systemd's RestartSec (300s) for every hiccup.
+        try:
             run_update(
                 branch=args.branch,
                 remote=args.remote,
@@ -744,13 +859,13 @@ def main() -> int:
                 use_https=args.use_https,
                 no_push=args.no_push,
             )
+        except Exception as exc:  # noqa: BLE001 - keep the loop alive
+            print(f"Update cycle failed (will retry): {exc}")
             if args.interval == 0:
-                break
-            time.sleep(args.interval)
-        return 0
-    except Exception as exc:  # noqa: BLE001 - top-level safety
-        print(f"Error: {exc}")
-        return 1
+                return 1
+        if args.interval == 0:
+            return 0
+        time.sleep(args.interval)
 
 
 if __name__ == "__main__":

@@ -6,6 +6,8 @@ Provides common functions for configuration management, error handling, and vali
 
 import json
 import logging
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -14,8 +16,32 @@ import yaml
 logger = logging.getLogger(__name__)
 
 
+def atomic_write_text(path: Path, text: str, *, encoding: str = "utf-8") -> None:
+    """Write *text* to *path* atomically.
+
+    The Pi can lose power mid-write. A partial write leaves truncated JSON,
+    which the index loaders treat as "no data" — silently discarding a day of
+    history. Writing to a temp file in the same directory and renaming makes
+    the update all-or-nothing: readers see either the old file or the new one.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(
+        dir=str(path.parent), prefix=f".{path.name}.", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding=encoding, newline="\n") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp_name, path)
+    except BaseException:
+        Path(tmp_name).unlink(missing_ok=True)
+        raise
+
+
 class VesselConfigError(Exception):
     """Raised when vessel configuration is invalid or missing."""
+
     pass
 
 
@@ -30,10 +56,7 @@ def setup_logging(level: str = "INFO", format_string: str = None) -> None:
     if format_string is None:
         format_string = "%(asctime)s - %(levelname)s - %(message)s"
 
-    logging.basicConfig(
-        level=getattr(logging, level.upper()),
-        format=format_string
-    )
+    logging.basicConfig(level=getattr(logging, level.upper()), format=format_string)
 
 
 def get_project_root() -> Path:
@@ -62,21 +85,23 @@ def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]
         project_root = get_project_root()
 
         # Try YAML first (preferred format)
-        yaml_path = project_root / info_path.replace('.json', '.yaml')
-        json_path = project_root / info_path.replace('.yaml', '.json')
+        yaml_path = project_root / info_path.replace(".json", ".yaml")
+        json_path = project_root / info_path.replace(".yaml", ".json")
 
         # If explicit path given, use it; otherwise try both formats
-        if info_path.endswith('.yaml') or info_path.endswith('.yml'):
+        if info_path.endswith(".yaml") or info_path.endswith(".yml"):
             # Explicit YAML path
             full_path = project_root / info_path
             if full_path.exists():
                 return _load_yaml_file(full_path)
             # Fallback to JSON version
-            json_fallback = full_path.with_suffix('.json')
+            json_fallback = full_path.with_suffix(".json")
             if json_fallback.exists():
-                logger.info(f"YAML file not found, falling back to JSON: {json_fallback}")
+                logger.info(
+                    f"YAML file not found, falling back to JSON: {json_fallback}"
+                )
                 return _load_json_file(json_fallback)
-        elif info_path.endswith('.json'):
+        elif info_path.endswith(".json"):
             # Explicit JSON path
             full_path = project_root / info_path
             if full_path.exists():
@@ -100,13 +125,15 @@ def load_vessel_info(info_path: str = "data/vessel/info.yaml") -> dict[str, Any]
     except Exception as e:
         if isinstance(e, VesselConfigError):
             raise
-        raise VesselConfigError(f"Failed to load vessel info from {info_path}: {e}") from e
+        raise VesselConfigError(
+            f"Failed to load vessel info from {info_path}: {e}"
+        ) from e
 
 
 def _load_yaml_file(file_path: Path) -> dict[str, Any]:
     """Load and parse a YAML file."""
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             info = yaml.safe_load(f)
 
         if info is None:
@@ -121,7 +148,7 @@ def _load_yaml_file(file_path: Path) -> dict[str, Any]:
 def _load_json_file(file_path: Path) -> dict[str, Any]:
     """Load and parse a JSON file."""
     try:
-        with open(file_path, encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             info = json.load(f)
 
         logger.info(f"Loaded vessel info from JSON: {file_path}")
@@ -131,9 +158,7 @@ def _load_json_file(file_path: Path) -> dict[str, Any]:
 
 
 def save_vessel_info(
-    info: dict[str, Any],
-    info_path: str = "data/vessel/info.yaml",
-    format: str = "yaml"
+    info: dict[str, Any], info_path: str = "data/vessel/info.yaml", format: str = "yaml"
 ) -> bool:
     """
     Save vessel information to YAML or JSON file.
@@ -150,16 +175,16 @@ def save_vessel_info(
         project_root = get_project_root()
 
         # Determine output format from path extension or format parameter
-        if info_path.endswith('.json'):
-            output_format = 'json'
+        if info_path.endswith(".json"):
+            output_format = "json"
             full_path = project_root / info_path
-        elif info_path.endswith('.yaml') or info_path.endswith('.yml'):
-            output_format = 'yaml'
+        elif info_path.endswith(".yaml") or info_path.endswith(".yml"):
+            output_format = "yaml"
             full_path = project_root / info_path
         else:
             # Use format parameter to determine extension
             output_format = format.lower()
-            if output_format == 'yaml':
+            if output_format == "yaml":
                 full_path = project_root / f"{info_path}.yaml"
             else:
                 full_path = project_root / f"{info_path}.json"
@@ -167,11 +192,11 @@ def save_vessel_info(
         # Ensure directory exists
         full_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if output_format == 'yaml':
-            with open(full_path, 'w', encoding='utf-8') as f:
+        if output_format == "yaml":
+            with open(full_path, "w", encoding="utf-8") as f:
                 yaml.dump(info, f, default_flow_style=False, sort_keys=False, indent=2)
         else:
-            with open(full_path, 'w', encoding='utf-8') as f:
+            with open(full_path, "w", encoding="utf-8") as f:
                 json.dump(info, f, indent=2)
 
         logger.info(f"Saved vessel info to {full_path} ({output_format.upper()})")
@@ -199,7 +224,9 @@ def validate_vessel_config(config: dict[str, Any]) -> None:
             raise VesselConfigError(f"Missing required field: {field}")
 
         if not config[field] or not isinstance(config[field], str):
-            raise VesselConfigError(f"Invalid value for field '{field}': must be non-empty string")
+            raise VesselConfigError(
+                f"Invalid value for field '{field}': must be non-empty string"
+            )
 
     # Validate MMSI format (9 digits)
     mmsi = config["mmsi"]
@@ -232,12 +259,16 @@ def validate_signalk_config(config: dict[str, Any]) -> None:
         if not (1 <= port <= 65535):
             raise VesselConfigError(f"Invalid SignalK port: {port} (must be 1-65535)")
     except ValueError as e:
-        raise VesselConfigError(f"Invalid SignalK port format: {config['port']} (must be numeric)") from e
+        raise VesselConfigError(
+            f"Invalid SignalK port format: {config['port']} (must be numeric)"
+        ) from e
 
     # Validate protocol
     protocol = config.get("protocol", "https")
     if protocol not in ["http", "https"]:
-        raise VesselConfigError(f"Invalid SignalK protocol: {protocol} (must be 'http' or 'https')")
+        raise VesselConfigError(
+            f"Invalid SignalK protocol: {protocol} (must be 'http' or 'https')"
+        )
 
 
 def get_signalk_config(vessel_info: dict[str, Any]) -> dict[str, Any]:
@@ -265,15 +296,13 @@ def create_default_vessel_config() -> dict[str, Any]:
         "mmsi": "123456789",
         "uscg_number": "1234567",
         "hull_number": "ABC12345",
-        "signalk": {
-            "host": "192.168.1.100",
-            "port": "3000",
-            "protocol": "https"
-        },
+        "signalk": {"host": "192.168.1.100", "port": "3000", "protocol": "https"},
     }
 
 
-def safe_get_nested_value(data: dict[str, Any], keys: tuple[str, ...], default: Any = None) -> Any:
+def safe_get_nested_value(
+    data: dict[str, Any], keys: tuple[str, ...], default: Any = None
+) -> Any:
     """
     Safely get a nested value from a dictionary.
 
@@ -292,4 +321,3 @@ def safe_get_nested_value(data: dict[str, Any], keys: tuple[str, ...], default: 
         else:
             return default
     return current
-

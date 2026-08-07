@@ -3,8 +3,9 @@ import os
 import subprocess
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
-from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 import scripts.update_signalk_data as usd
 
@@ -69,7 +70,7 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             return FakeResp()
 
     calls = []
@@ -78,6 +79,7 @@ def test_run_on_dev_branch_writes_file_and_calls_git(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
+            stdout = ""
             returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
@@ -116,7 +118,7 @@ def test_https_conversion(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             assert url.startswith("https://")
             return FakeResp()
 
@@ -126,6 +128,7 @@ def test_https_conversion(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
+            stdout = ""
             returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
@@ -161,7 +164,7 @@ def test_no_push_mode(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             return FakeResp()
 
     calls = []
@@ -170,6 +173,7 @@ def test_no_push_mode(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
+            stdout = ""
             returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
@@ -206,7 +210,7 @@ def test_no_commit_when_data_unchanged(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             return FakeResp()
 
     calls = []
@@ -215,6 +219,7 @@ def test_no_commit_when_data_unchanged(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
+            stdout = ""
             returncode = 0  # diff returns 0 → nothing staged
 
         return R()
@@ -251,7 +256,7 @@ def test_push_deferred_when_offline(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             return FakeResp()
 
     calls = []
@@ -262,6 +267,7 @@ def test_push_deferred_when_offline(tmp_path, test_branch):
             raise subprocess.CalledProcessError(1, cmd)
 
         class R:
+            stdout = ""
             returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
@@ -301,7 +307,7 @@ def test_push_rebases_on_diverged_remote(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             return FakeResp()
 
     first_push_done = [False]
@@ -314,6 +320,7 @@ def test_push_rebases_on_diverged_remote(tmp_path, test_branch):
             raise subprocess.CalledProcessError(1, cmd)
 
         class R:
+            stdout = ""
             returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
@@ -352,10 +359,16 @@ def test_push_aborts_rebase_on_conflict(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             return FakeResp()
 
     calls = []
+
+    # Simulate a genuinely interrupted rebase: git reports this dir as the git
+    # dir, and it contains rebase-merge/, which is how git itself records that
+    # a rebase is mid-flight.
+    fake_git_dir = tmp_path / "fakegit"
+    (fake_git_dir / "rebase-merge").mkdir(parents=True)
 
     def fake_run(cmd, check=True, **kwargs):
         calls.append(cmd)
@@ -365,6 +378,7 @@ def test_push_aborts_rebase_on_conflict(tmp_path, test_branch):
             raise subprocess.CalledProcessError(1, cmd)
 
         class R:
+            stdout = str(fake_git_dir) if "--git-dir" in cmd else ""
             returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
@@ -389,12 +403,67 @@ def test_push_aborts_rebase_on_conflict(tmp_path, test_branch):
         assert len(abort_calls) == 1
 
 
+def test_push_does_not_abort_when_no_rebase_in_progress(tmp_path, test_branch):
+    """A failed fetch leaves no rebase to abort, so abort must not be called.
+
+    Calling `git rebase --abort` unconditionally printed a spurious error on
+    every offline cycle, which is the common case on a boat.
+    """
+
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeRequests:
+        @staticmethod
+        def get(url, **kwargs):
+            return FakeResp()
+
+    calls = []
+    fake_git_dir = tmp_path / "fakegit"
+    fake_git_dir.mkdir()  # no rebase-merge/ or rebase-apply/ → nothing in flight
+
+    def fake_run(cmd, check=True, **kwargs):
+        calls.append(cmd)
+        if cmd[:2] == ["git", "push"]:
+            raise subprocess.CalledProcessError(1, cmd)
+        if cmd[:2] == ["git", "fetch"]:
+            raise subprocess.CalledProcessError(1, cmd)  # offline
+
+        class R:
+            stdout = str(fake_git_dir) if "--git-dir" in cmd else ""
+            returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
+
+        return R()
+
+    with (
+        patch("scripts.update_signalk_data.requests", FakeRequests),
+        patch("scripts.update_signalk_data.subprocess.run", side_effect=fake_run),
+    ):
+        out = tmp_path / "signalk_latest.json"
+
+        usd.run_update(
+            branch=test_branch,
+            remote="origin",
+            signalk_url="http://example",
+            output_path=str(out),
+            use_https=False,
+            no_push=False,
+        )
+
+        assert out.exists()
+        assert not [cmd for cmd in calls if cmd == ["git", "rebase", "--abort"]]
+
+
 def test_requests_error_handling(tmp_path, test_branch):
     """Test that requests errors are properly handled."""
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             raise Exception("Network error")
 
     calls = []
@@ -403,6 +472,7 @@ def test_requests_error_handling(tmp_path, test_branch):
         calls.append(cmd)
 
         class R:
+            stdout = ""
             returncode = 1 if cmd[:3] == ["git", "diff", "--cached"] else 0
 
         return R()
@@ -481,7 +551,7 @@ def test_integration_updates_test_branch(tmp_path, test_branch):
 
     class FakeRequests:
         @staticmethod
-        def get(url):
+        def get(url, **kwargs):
             return FakeResp()
 
     with patch("scripts.update_signalk_data.requests", FakeRequests):
@@ -512,3 +582,54 @@ def test_integration_updates_test_branch(tmp_path, test_branch):
         assert (
             before_after
         ), f"{test_branch} branch should exist on origin and have a commit"
+
+
+def test_fetch_blob_always_passes_a_timeout():
+    """A SignalK fetch without a timeout hangs the daemon forever.
+
+    The process stays alive, so systemd's Restart=always never fires and the
+    site silently freezes on stale data. This is the single most important
+    guarantee in the daemon, so it is pinned by a test.
+    """
+    seen = {}
+
+    class FakeResp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"ok": True}
+
+    class FakeRequests:
+        @staticmethod
+        def get(url, **kwargs):
+            seen.update(kwargs)
+            return FakeResp()
+
+    with patch("scripts.update_signalk_data.requests", FakeRequests):
+        usd.fetch_blob("http://example/api")
+
+    assert "timeout" in seen, "fetch_blob must pass a timeout to requests.get"
+    connect, read = seen["timeout"]
+    assert connect > 0 and read > 0
+
+
+def test_atomic_write_leaves_original_intact_on_failure(tmp_path):
+    """A crash mid-write must not truncate the previous good file."""
+    from scripts.utils import atomic_write_text
+
+    target = tmp_path / "positions_index.json"
+    target.write_text('{"positions": [1, 2, 3]}', encoding="utf-8")
+
+    class Boom(Exception):
+        pass
+
+    # Fail after the temp file is written but before the rename — this is the
+    # window a power cut would land in.
+    with patch("scripts.utils.os.replace", side_effect=Boom()):
+        with pytest.raises(Boom):
+            atomic_write_text(target, "garbage that must never land")
+
+    # Old content survives, and no .tmp litter is left behind.
+    assert target.read_text(encoding="utf-8") == '{"positions": [1, 2, 3]}'
+    assert not list(tmp_path.glob("*.tmp"))

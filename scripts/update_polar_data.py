@@ -21,7 +21,7 @@ from types import SimpleNamespace
 
 import requests
 
-from .utils import get_project_root, load_vessel_info
+from .utils import atomic_write_text, get_project_root, load_vessel_info
 
 ACCUMULATOR_FILE = "data/vessel/polars_accumulated.json"
 POLAR_CSV_FILE = "data/vessel/polars_calculated.csv"
@@ -37,9 +37,9 @@ TWS_BIN_SIZE = 2  # knots
 # Quality-filter thresholds
 MIN_TWS_KTS = 2.0
 MIN_STW_KTS = 0.5
-MAX_STW_KTS = 9.5        # generous hull-speed ceiling for a 42ft displacement boat
+MAX_STW_KTS = 9.5  # generous hull-speed ceiling for a 42ft displacement boat
 MAX_SPEED_WIND_RATIO = 1.5  # STW can't exceed 1.5× TWS (catches motoring in light air)
-MIN_TWA_DEG = 30         # no displacement sailboat points within 30° of true wind
+MIN_TWA_DEG = 30  # no displacement sailboat points within 30° of true wind
 
 
 def _twa_bin(twa_deg: float) -> int:
@@ -65,8 +65,7 @@ def load_accumulator(path: Path) -> dict:
 
 
 def save_accumulator(acc: dict, path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(acc, indent=2))
+    atomic_write_text(path, json.dumps(acc, indent=2))
 
 
 def _fold_twa(twa_deg: float) -> float:
@@ -75,7 +74,9 @@ def _fold_twa(twa_deg: float) -> float:
     return 360 - twa if twa > 180 else twa
 
 
-def update_accumulator(acc: dict, twa_deg: float, tws_kts: float, stw_kts: float) -> bool:
+def update_accumulator(
+    acc: dict, twa_deg: float, tws_kts: float, stw_kts: float
+) -> bool:
     """Update the max-speed bin; return True if any bin was improved."""
     if tws_kts < MIN_TWS_KTS or stw_kts < MIN_STW_KTS:
         return False
@@ -113,13 +114,9 @@ def write_polar_csv(acc: dict, path: Path) -> None:
     """Write polars_calculated.csv as a drop-in replacement for polars.csv."""
     lines = ["twa/tws;" + ";".join(str(t) for t in OUTPUT_TWS)]
     for twa in OUTPUT_TWA:
-        row = [
-            f"{_best_speed(acc, float(twa), float(tws)):.2f}"
-            for tws in OUTPUT_TWS
-        ]
+        row = [f"{_best_speed(acc, float(twa), float(tws)):.2f}" for tws in OUTPUT_TWS]
         lines.append(f"{twa};" + ";".join(row))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text("\n".join(lines) + "\n")
+    atomic_write_text(path, "\n".join(lines) + "\n")
 
 
 def _get_value(node: dict, *path: str) -> float | None:
@@ -182,7 +179,9 @@ def parse_args() -> SimpleNamespace:
     parser = argparse.ArgumentParser(
         description="Accumulate polar performance data from SignalK"
     )
-    parser.add_argument("--signalk-url", dest="signalk_url", default=_load_signalk_url())
+    parser.add_argument(
+        "--signalk-url", dest="signalk_url", default=_load_signalk_url()
+    )
     parser.add_argument(
         "--interval",
         type=int,
