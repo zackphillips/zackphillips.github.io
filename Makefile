@@ -12,6 +12,15 @@ SIGNALK_PORT ?= 3000
 UV_BIN ?= $(shell command -v uv 2>/dev/null || true)
 CURRENT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
 
+# Every uv-backed target repeats the same availability guard; define it once.
+define require-uv
+@if [ -z "$(UV_BIN)" ]; then \
+	echo "Error: 'uv' is not installed. Please install uv first."; \
+	echo "Visit: https://github.com/astral-sh/uv"; \
+	exit 1; \
+fi
+endef
+
 # Install a systemd service from a template.
 # Args: (1) service name, (2) description, (3) python module, (4) module args, (5) restart sec, (6) template path
 define install-service
@@ -21,11 +30,7 @@ define install-service
 		sudo systemctl stop $(1) 2>/dev/null || true; \
 		sudo systemctl disable $(1) 2>/dev/null || true; \
 	fi
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Rendering $(1) service template..."
 	@sed -e "s|{{DESCRIPTION}}|$(2)|g" \
 		-e "s|{{USER}}|$$(whoami)|g" \
@@ -121,19 +126,11 @@ help:
 server:
 	@echo "Open http://localhost:$(SERVER_PORT) in your browser"
 	@echo "Press Ctrl+C to stop the server"
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@"$(UV_BIN)" run python -m http.server $(SERVER_PORT)
 
 install: check-linux
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Installing all vessel tracker services..."
 	@$(MAKE) install-website-service
 	@echo ""
@@ -199,20 +196,12 @@ show-logs-polars: check-linux
 	$(call show-service-logs,vesselpolars)
 
 run-website-update:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Running one website telemetry update..."
 	@"$(UV_BIN)" run python -m scripts.update_signalk_data --signalk-url "http://$(SIGNALK_HOST):$(SIGNALK_PORT)/signalk/v1/api/vessels/self" --output data/telemetry/signalk_latest.json
 
 run-polar-update:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Running one polar accumulation sample..."
 	@"$(UV_BIN)" run python -m scripts.update_polar_data --interval 0 --signalk-url "http://$(SIGNALK_HOST):$(SIGNALK_PORT)/signalk/v1/api/vessels/self"
 
@@ -222,11 +211,7 @@ run-polar-update:
 test: test-py test-js
 
 test-py:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Running Python tests..."
 	@PYTHONPATH="$(CURDIR):$(CURDIR)/scripts" "$(UV_BIN)" run pytest -q
 
@@ -249,37 +234,21 @@ js-install:
 	@npm install
 
 pre-commit-install:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Installing pre-commit hooks..."
 	@uvx pre-commit install
 
 lint:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Running ruff linter with auto-fix..."
 	@uvx ruff check --fix .
 
 sync-dev:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Syncing dev dependencies..."
 	@"$(UV_BIN)" sync --extra dev
 
 config:
-	@if [ -z "$(UV_BIN)" ]; then \
-		echo "Error: 'uv' is not installed. Please install uv first."; \
-		echo "Visit: https://github.com/astral-sh/uv"; \
-		exit 1; \
-	fi
+	$(require-uv)
 	@echo "Starting Vessel Configuration Wizard..."
 	@"$(UV_BIN)" run python -m scripts.vessel_config_wizard

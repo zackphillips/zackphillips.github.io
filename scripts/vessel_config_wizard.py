@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .utils import load_vessel_info, save_vessel_info
+from .utils import VesselConfigError, load_vessel_info, save_vessel_info
 
 
 class VesselConfigWizard:
@@ -18,35 +18,16 @@ class VesselConfigWizard:
         self.config = self.load_config()
 
     def load_config(self) -> dict[str, Any]:
-        """Load vessel configuration from YAML or JSON file."""
+        """Load vessel configuration, falling back to defaults if absent."""
         try:
-            # Try to load config (will try YAML first, then JSON)
-            try:
-                config = load_vessel_info(str(self.config_file))
-                if config:
-                    return config
-            except Exception:
-                # If loading fails, check if file exists
-                if not self.config_file.exists():
-                    # Try .yaml extension if .json was given, or vice versa
-                    alt_file = self.config_file.with_suffix('.yaml' if self.config_file.suffix == '.json' else '.json')
-                    if alt_file.exists():
-                        config = load_vessel_info(str(alt_file))
-                        if config:
-                            return config
-
-                # If still no config, create default
-                print(f"Configuration file not found: {self.config_file}")
-                print("Creating default configuration...")
-                return self.create_default_config()
-
-            # Fallback to default if load_vessel_info returned None
-            print(f"Configuration file not found: {self.config_file}")
-            print("Creating default configuration...")
+            config = load_vessel_info(str(self.config_file))
+        except VesselConfigError as e:
+            print(f"{e}\nCreating default configuration...")
             return self.create_default_config()
-        except Exception as e:
-            print(f"Error loading configuration: {e}")
-            sys.exit(1)
+        if not config:
+            print(f"{self.config_file} is empty. Creating default configuration...")
+            return self.create_default_config()
+        return config
 
     def create_default_config(self) -> dict[str, Any]:
         """Create a default vessel configuration."""
@@ -60,9 +41,8 @@ class VesselConfigWizard:
         }
 
     def save_config(self) -> None:
-        """Save vessel configuration to YAML or JSON file."""
+        """Save vessel configuration to YAML."""
         try:
-            # Use utils.save_vessel_info for YAML/JSON support
             if save_vessel_info(self.config, str(self.config_file)):
                 print("Configuration saved successfully!")
             else:

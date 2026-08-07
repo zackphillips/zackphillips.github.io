@@ -42,7 +42,8 @@ data/
 scripts/
   update_signalk_data.py # Pi daemon: fetch SignalK → commit telemetry
   update_polar_data.py   # Pi daemon: accumulate polar performance samples
-  utils.py               # Shared Python helpers (load_vessel_info, atomic_write_text)
+  utils.py               # Shared helpers: load/save_vessel_info, get_project_root,
+                         #   atomic_write_text (crash-safe writes)
   vessel_config_wizard.py # Interactive setup wizard
 services/                # systemd service templates
 tests/                   # Python (pytest) + JavaScript (vitest) tests
@@ -60,6 +61,11 @@ make test-js   # JavaScript only (vitest) — requires npm
 make lint      # ruff check --fix
 make sync-dev  # uv sync --extra dev (refresh Python dev dependencies)
 ```
+
+Dependencies are deliberately minimal: `requests` and `pyyaml` at runtime,
+`pytest`/`ruff`/`pre-commit` for development. Before adding one, check it is
+actually imported — the project previously carried numpy, scipy, PyJWT, geomag,
+websocket-client and aider with zero import sites between them.
 
 Always run `make test` before committing code changes. Pre-commit hooks run ruff
 automatically if installed (`make pre-commit-install`).

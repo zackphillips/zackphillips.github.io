@@ -45,7 +45,7 @@ Data freshness depends on the Pi's update interval and internet connectivity fro
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.11+
 - [`uv`](https://docs.astral.sh/uv/) package manager
 - SignalK server running on the local vessel network
 - Git configured with push access to this repository
@@ -89,7 +89,7 @@ make lint      # Run ruff linter and auto-fix
 ### Tech stack
 
 - **Frontend**: Vanilla JS, HTML/CSS — [Leaflet](https://leafletjs.com/) for maps, [Chart.js](https://www.chartjs.org/) for polar charts
-- **Backend**: Python 3.12+, [`uv`](https://docs.astral.sh/uv/), [`ruff`](https://docs.astral.sh/ruff/)
+- **Backend**: Python 3.11+, [`uv`](https://docs.astral.sh/uv/), [`ruff`](https://docs.astral.sh/ruff/)
 - **Data**: Static JSON committed to git, served via GitHub Pages
 - **External APIs**: NOAA Tides, Open-Meteo, OpenStreetMap Nominatim
 

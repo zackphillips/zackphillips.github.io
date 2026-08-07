@@ -8,7 +8,6 @@ import pytest
 import requests
 import yaml
 
-
 SIGNALK_CHECK_ENV = os.getenv("SIGNALK_VERIFY_FOR_TESTS", "").lower() in {
     "1",
     "true",

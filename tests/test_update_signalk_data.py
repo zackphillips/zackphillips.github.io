@@ -579,9 +579,9 @@ def test_integration_updates_test_branch(tmp_path, test_branch):
             .decode()
             .strip()
         )
-        assert (
-            before_after
-        ), f"{test_branch} branch should exist on origin and have a commit"
+        assert before_after, (
+            f"{test_branch} branch should exist on origin and have a commit"
+        )
 
 
 def test_fetch_blob_always_passes_a_timeout():

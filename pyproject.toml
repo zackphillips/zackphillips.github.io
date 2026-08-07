@@ -1,17 +1,12 @@
 [project]
 name = "zackphillips-github-io"
 version = "0.2.0"
-description = "Add your description here"
+description = "Static voyage tracker for S.V. Mermug, fed by a Raspberry Pi aboard."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.32.4",
-    "websocket-client>=1.6.4",
-    "PyJWT>=2.8.0",
-    "geomag>=0.9.2015",
     "pyyaml>=6.0.1",
-    "numpy>=1.26.0",
-    "scipy>=1.11.0",
 ]
 
 [project.optional-dependencies]
@@ -19,7 +14,6 @@ dev = [
     "pytest>=8.4.1",
     "pre-commit>=3.6.0",
     "ruff>=0.3.4",
-    "aider>=0.2.6",
 ]
 
 [tool.ruff]
@@ -39,11 +33,6 @@ select = [
 ignore = [
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
-    # isinstance(x, (int, float)) — UP038 wants the `int | float` form, but that
-    # is measurably slower at runtime and the rule is deprecated in current ruff.
-    # Without this the pre-commit ruff hook fails on 14 pre-existing call sites
-    # and blocks every commit.
-    "UP038",
 ]
 
 [tool.ruff.format]

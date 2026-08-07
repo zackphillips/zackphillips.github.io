@@ -1,18 +1,26 @@
+# Generated telemetry is written by the Pi daemon every couple of minutes and is
+# never hand-edited. Whitespace/format hooks must leave it alone, or a human
+# commit rewrites files the daemon immediately rewrites back.
+exclude: '^data/telemetry/'
+
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.4
+    rev: v0.16.2
     hooks:
-      - id: ruff
+      - id: ruff-check
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
+      # instrument_log.json and logo.png both exceed the 500 KB default, and
+      # both are committed intentionally.
       - id: check-added-large-files
+        args: [--maxkb=4096]
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: check-docstring-first
