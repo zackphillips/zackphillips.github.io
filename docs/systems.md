@@ -10,9 +10,7 @@ description: What is installed aboard, where it lives, how it works, and what to
 1994 Beneteau First 42s7, Hull #BEY57004E494
 This document describes the major onboard systems: what's installed, where it is, how it works, and what to watch out for.
 
-Specifications and equipment marked *(survey 2025)* come from the
-[March 2025 marine survey](survey.md); anything still shown as `—` or in
-[brackets] has not been confirmed aboard yet.
+Anything still shown as `—` or in [brackets] has not been confirmed aboard yet.
 
 ---
 
@@ -52,23 +50,21 @@ Specifications and equipment marked *(survey 2025)* come from the
 | Mast / boom | Selden aluminum |
 | Steering | Edson rack and pinion, single helm station, aluminum rudder stock, dripless rudder seals |
 
-*(All of the above per survey 2025.)*
-
 ### Standing Rigging
 - **Type**: 1×19 stainless **rod** rigging throughout, with open stainless turnbuckles, stainless toggles, clevis and cotter pins.
 - **Chainplates**: internal stainless rod-type, mounted to steel toggles embedded in the FRP.
 - **Reported replaced**: 2012.
-- Monitor and tune as necessary; the survey observed the tangs from deck level only.
+- Monitor and tune as necessary; the tangs have only ever been observed from deck level.
 
 ### Last Rig Inspection
 Date: — (none on record)
 Inspector: —
-Notes: The 2025 survey did **not** include a rig inspection. A full inspection by a qualified rigger is recommended before going offshore.
+Notes: No rig inspection is on record. A full inspection by a qualified rigger is recommended before going offshore.
 
 ### Known Hull Findings
-- **Keel trailing edge separated from the hull** (survey finding B-5) — set on the hard with the keel just touching, torque the keel bolts, re-caulk the keel/hull seam. See [2025 survey](survey.md#3-b-secondary-priority-timely-attention).
-- **Loose stanchion bases leaking below** (B-7) and a missing transom lifeline (B-9).
-- No moisture-meter testing was possible at survey (rain). No osmotic blisters were found; percussion sounding revealed no delamination on the accessible wetted surfaces.
+- **Keel trailing edge separated from the hull** — set on the hard with the keel just touching, torque the keel bolts, re-caulk the keel/hull seam.
+- **Loose stanchion bases leaking below**, and a missing transom lifeline.
+- No moisture-meter testing has been done. No osmotic blisters have been found; percussion sounding revealed no delamination on the accessible wetted surfaces.
 
 ---
 
@@ -82,7 +78,7 @@ Notes: The 2025 survey did **not** include a rig inspection. A full inspection b
 | HP | 46 metric HP @ 3400 RPM |
 | Cylinders | Four (4), in line |
 | Fuel | Diesel |
-| Hours | 6,376 at survey (March 2025, analog meter) |
+| Hours | 6,376 as of March 2025 (analog meter) |
 | Raw water pump impeller | — (carry a spare) |
 | Oil spec | — |
 | Oil capacity | — |
@@ -120,12 +116,12 @@ Audible and visual alarms with analog gauges at the helm.
 - **Low oil pressure**: [describe]
 - **Alternator fault**: [describe]
 
-### Watch Items (2025 survey)
+### Watch Items
 - The **shaft coupler is not safety-wired**. Apply corrosion inhibitor to the coupler bolts.
 - Mild surface corrosion on the pulleys and motor mounts.
 - The strut's **cutless bearing shows slight wear** — monitor, replace as needed.
 - The dripless shaft seal and dripless rudder seals should be monitored frequently.
-- No mechanical/engine survey has been performed; one is recommended.
+- No mechanical inspection of the engine has been done; one is recommended.
 
 ---
 
@@ -152,7 +148,7 @@ Audible and visual alarms with analog gauges at the helm.
 | Tank vent | Port hull side, below the fill |
 
 ### Fuel Gauge
-At the engine instrument panel in the cockpit. Accuracy: not verified at survey — [note if gauge proves unreliable].
+At the engine instrument panel in the cockpit. Accuracy: not verified — [note if gauge proves unreliable].
 
 ### Bleeding the Engine
 If air enters the fuel system (e.g., ran tank dry):
@@ -164,7 +160,7 @@ If air enters the fuel system (e.g., ran tank dry):
 - Fill before offshore passages; diesel stores well.
 - Treat with biocide if boat sits unused for extended periods.
 - Log fuel additions in the [engine hours log / ship's log].
-- **Survey finding B-10**: the Racor sight bowl has no approved heat shield. Install a metallic shield meeting ASTM F1201.
+- **Open item**: the Racor sight bowl has no approved heat shield. Install a metallic shield meeting ASTM F1201.
 
 ---
 
@@ -181,7 +177,7 @@ System voltage: **12 V DC**.
 
 **Switching**: five energizing solenoid switches in the aft cabin.
 
-> **Survey finding B-11**: the engine start battery terminals have no protective
+> **Open item**: the engine start battery terminals have no protective
 > insulating covers. Required per 33 CFR 183.420 to prevent accidental shorting.
 
 ### Battery Monitor
@@ -198,13 +194,13 @@ System voltage: **12 V DC**.
 | Shore power charger | 40+ A | Xantrex Tru-Charge 12 V |
 | Engine alternator | 120 A | Balmar 12 V, belt driven |
 | Solar | 120 W | One Kyocera KC120-1 panel, Blue Sky Solar Boost controller/regulator |
-| Wind gen | — | Air-X Marine — **control panel missing** (survey finding B-12) |
+| Wind gen | — | Air-X Marine — **control panel missing** |
 
 ### Shore Power
 - **Inlet**: 30 A / 125 V, single phase, 120 V @ 60 Hz
 - **Cord**: 30 A vinyl
 - **Charger**: Xantrex Tru-Charge, [location]
-- Main AC breaker and branch breakers in the main cabin AC panel. Outlet polarity was verified correct at survey.
+- Main AC breaker and branch breakers in the main cabin AC panel. Outlet polarity has been verified correct.
 - **No galvanic isolator is installed** — highly recommended (ABYC A-28).
 - Connects to dock pedestal via shore power cord; confirm polarity light is green.
 
@@ -228,11 +224,11 @@ Main cabin AC electrical panel.
 ### Inverter
 - **Make/Model**: Outbound
 - Capacity: 1500 W
-- Location: well secured with adequate ventilation (per survey)
+- Location: well secured with adequate ventilation
 - Note: do not run high-draw appliances (microwave, kettle) without engine running unless battery is at ≥80%.
 
 ### Bonding
-**No bonding system is installed** (ABYC E-2 / E-11), as noted in the 2025 survey.
+**No bonding system is installed** (ABYC E-2 / E-11).
 
 ---
 
@@ -252,11 +248,11 @@ Main cabin AC electrical panel.
 | Fill deck plates | Port aft side deck and starboard mid side deck, marked for water |
 | Tank vents | Port and starboard hull sides, below the fill pipes |
 
-The galley also has a **Whale mechanical foot pump for salt water** — disconnected
-and non-operational at survey (finding B-13).
+The galley also has a **Whale mechanical foot pump for salt water** — currently
+disconnected and non-operational.
 
-Clean the freshwater inline strainer regularly; it was found fouled at survey
-(finding B-14). Sanitize the tankage and delivery system periodically.
+Clean the freshwater inline strainer regularly; it has been found fouled.
+Sanitize the tankage and delivery system periodically.
 
 ### Freshwater Conservation
 Typical consumption underway: ~[X] gallons/day. Fill at marina before any offshore passage.
@@ -288,9 +284,9 @@ have integral showers whose sumps drain via two Jabsco Par diaphragm pumps.
 
 - **Automatic bilge pump**: one Jabsco 12 V diaphragm pump, [location], float switch — activates automatically.
 - **Manual bilge pump**: Whale Gulper hand pump, [location].
-- **No high-water alarm is installed** — highly recommended (2025 survey).
+- **No high-water alarm is installed** — highly recommended.
 - **Test weekly**: run the pump, confirm dewatering, clear any debris.
-- **Inspection**: check bilge level on every departure; some accumulation (rain, condensation) is normal. The bilges are gelcoated; limber holes were clear at survey.
+- **Inspection**: check bilge level on every departure; some accumulation (rain, condensation) is normal. The bilges are gelcoated; limber holes were clear when last checked.
 
 ### Seacocks & Through-Hulls
 
@@ -308,7 +304,7 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 > Know every seacock. Be able to close them all in the dark.
 
 - Service all seacocks and sea strainers annually: disassemble, inspect, clean, lubricate.
-- **Attach a properly sized wooden emergency plug at every below- and near-waterline through-hull** — none were fitted at survey.
+- **Attach a properly sized wooden emergency plug at every below- and near-waterline through-hull** — none are currently fitted.
 
 ---
 
@@ -318,7 +314,7 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 - **Make/Model**: Furuno NavNet — GPS chartplotter, radar and sonar in one display
 - **Location**: Helm / nav station
 - Charts loaded: —
-- **Survey finding B-15**: the sonar function did not fully work. Investigate and trace.
+- **Open item**: the sonar function does not fully work. Investigate and trace.
 
 ### VHF Radio
 - **Make/Model**: Icom IC-M504 at the nav station, plus an Icom RAM mic in the cockpit
@@ -327,17 +323,17 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 
 ### SSB
 - **Make/Model**: Icom IC-706MKIIG
-- Powered up at survey but never fully tested — verify the antenna, tuner and ground plane before relying on it.
+- Powers up but has never been fully tested — verify the antenna, tuner and ground plane before relying on it.
 
 ### AIS
 - **Type**: Class B transponder (transmit + receive)
-- **Make/Model**: — (no AIS was listed in the 2025 survey; confirm what is actually installed)
+- **Make/Model**: — (confirm what is actually installed)
 - Integrated with chartplotter; MMSI: **338543654**
 - Verify targets visible on chartplotter on departure.
 
 ### Depth Sounder
 - **Displays**: TackTick MN-100-2 solar depth display; two Robertson Dateline depth/speed displays
-- **Survey finding B-16**: neither Robertson display powered up when tested.
+- **Open item**: neither Robertson display powers up when tested.
 - Transducer location: [under hull, forward/aft of keel]
 - **Offset**: keel is 7' 07" below the waterline — displayed depth is from the transducer, not the keel. [Confirm the transducer offset.]
 - Alarm: set for 10 ft below keel minimum.
@@ -345,11 +341,11 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 ### Wind Instruments
 - **Masthead unit**: TackTick (MN-100-2 solar wind display)
 - Displays: apparent wind angle, apparent wind speed; converts to true wind via boat speed/COG.
-- The TackTick depth, speed and wind displays were not proven at survey.
+- The TackTick depth, speed and wind displays have not been proven.
 - Note any calibration offsets here when determined.
 
 ### Autopilot
-- **Make/Model**: Simrad AP22 — powered up and demonstrated at survey
+- **Make/Model**: Simrad AP22 — powers up and has been demonstrated
 - **Type**: [below-decks ram / wheel drive]
 - **Control head location**: helm
 - Provides the rudder angle indication (there is no separate rudder position indicator).
@@ -361,7 +357,7 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 - **Deviation card**: [on file / not yet swung]
 
 ### Radar
-- **Installed**: yes — demonstrated at survey
+- **Installed**: yes
 - **Make/Model**: Furuno, 24-mile
 - **Type**: closed array antenna, mounted on the stainless radar mast at the transom
 
@@ -375,33 +371,33 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 
 ## 7. Safety Equipment
 
-Inventory as recorded in the [March 2025 survey](survey.md).
+Inventory as last recorded in March 2025.
 
 | Item | Quantity | Location | Expiry/Service |
 |------|----------|----------|----------------|
 | Life jackets (USCG approved Type III, adult) | 6 | [location] | Inspect annually |
 | Horseshoe ring (Type IV throwable) | 1 | Stern rail | — |
-| Handheld flares | — | [location] | In date at survey |
-| Rocket parachute flares | — | [location] | In date at survey |
+| Handheld flares | — | [location] | In date as of March 2025 |
+| Rocket parachute flares | — | [location] | In date as of March 2025 |
 | Smoke signals | — | [location] | [date] |
-| EPIRB — ACR Global-Fix 406 | 1 | [location] | Not tested at survey; **re-register under new ownership** |
+| EPIRB — ACR Global-Fix 406 | 1 | [location] | Not tested; **re-register under new ownership** |
 | PLB(s) | — | [location] | — |
-| Fire extinguishers — Type ABC-I, 2.5 lb dry chemical | 3 | [locations] | **No current inspection tags** (finding A-2) |
+| Fire extinguishers — Type ABC-I, 2.5 lb dry chemical | 3 | [locations] | **No current inspection tags** |
 | MOB gear — Lalizas Life Link retrieval sling + inflatable MOB system | 1 ea. | [location] | — |
-| CO detector | 1 (aft accommodation) | Aft cabin | Test sounded; **none forward** (finding A-5) |
-| Life raft | Reported aboard | Not sighted at survey | **Currently out of service** |
+| CO detector | 1 (aft accommodation) | Aft cabin | Test sounded; **none forward** |
+| Life raft | Reported aboard | Not sighted | **Currently out of service** |
 | Ditch bag | 1 | [location] | Contents current: [date] |
 | Tethers / jacklines | — | [location] | — |
 | Harnesses | — | [location] | — |
 
-### Known Gaps (2025 survey)
+### Known Gaps
 
-Required or strongly recommended equipment that was **not** aboard:
+Required or strongly recommended equipment that is **not** aboard:
 
-- [ ] Sound signalling device — required (finding A-3)
-- [ ] Port and starboard navigation lights — removed/uninstalled (finding A-4)
-- [ ] Smoke detectors in the accommodation spaces (finding A-6)
-- [ ] Trash disposal placard, written waste management plan, USCG Nav Rules handbook (findings B-1, B-2, B-3)
+- [ ] Sound signalling device — required
+- [ ] Port and starboard navigation lights — removed/uninstalled
+- [ ] Smoke detectors in the accommodation spaces
+- [ ] Trash disposal placard, written waste management plan, USCG Nav Rules handbook
 - [ ] First aid / medical kit
 - [ ] Fixed fire suppression system in the engine space
 - [ ] Bilge high-water alarm
@@ -433,15 +429,15 @@ Required or strongly recommended equipment that was **not** aboard:
 - **Storage**: bow anchor locker; chain locker drains overboard at the port lower bow
 
 ### Secondary Anchor
-None aboard at survey. The surveyor recommends **at least one spare anchor and
-rode** for emergencies and for added anchoring options.
+None aboard. **At least one spare anchor and rode** is recommended for
+emergencies and for added anchoring options.
 - **Type**: —
 - **Weight**: —
 - **Rode**: —
 - **Storage**: —
 
 ### Windlass
-- **Make/Model**: Quick Eagle, 12 V / 1400 W (powered up and demonstrated at survey)
+- **Make/Model**: Quick Eagle, 12 V / 1400 W
 - **Type**: electric, foot switches at bow
 - **Breaker**: nav station, [circuit label]
 - **Manual override**: [location]
@@ -453,7 +449,7 @@ rode** for emergencies and for added anchoring options.
 
 ### Inventory
 
-Per the 2025 survey. Seams, battens and batten pockets all appeared serviceable;
+Seams, battens and batten pockets all appeared serviceable when last checked;
 none of the sails have been inspected by a sailmaker.
 
 | Sail | Type | Area (sq ft) | Condition | Notes |
@@ -472,7 +468,7 @@ none of the sails have been inspected by a sailmaker.
 ### Running Rigging Summary
 
 Hardware: Lewmar mainsheet traveler, tracks and cars, and line clutches (all
-clutches held under hand weight at survey). Halyards are braided with no wire
+clutches hold under hand weight). Halyards are braided with no wire
 splices. Boom vang is a mechanical spring-loaded strut. **Slab reefing with
 three mainsail reef points.**
 
@@ -514,7 +510,7 @@ three mainsail reef points.**
 | Lines | Reinforced rubber LP gas line |
 | Locker ventilation | Adequate — **keep the drain hole clear** |
 
-> **Survey finding B-4**: the LPG tank was not secured in its locker. Fit a
+> **Open item**: the LPG tank is not secured in its locker. Fit a
 > proper mount. Perform a gas leak test (close the appliance valves, open the
 > tank valve, watch the gauge) before each use.
 
@@ -522,7 +518,7 @@ three mainsail reef points.**
 - Located to starboard, aft in the saloon.
 - **Stove**: Tesco three-burner propane with oven.
 - **Refrigeration**: Adler Barbour 12 V refrigerator/freezer, top and front load.
-- **Sink**: stainless steel, separate basins. Pressure water from the ParMax pump; a Whale foot pump for salt water is fitted but disconnected (finding B-13).
+- **Sink**: stainless steel, separate basins. Pressure water from the ParMax pump; a Whale foot pump for salt water is fitted but disconnected.
 
 ### Accommodation Layout
 
@@ -537,7 +533,7 @@ aft accommodation with queen berth and hanging locker.
 - **Headliner**: vinyl.
 - **Ventilation**: opening deck hatches on the coachroof and foredeck, opening portlights, companionway hatch boards, and three 12 V cabin fans.
 - **Cockpit**: aft cockpit with Edson pedestal and wheel, folding table, bench seating port/starboard/aft, Sunbrella dodger and bimini, teak overlays on the seats and swim platform.
-- **Known damage**: wood damage on the athwartship bulkheads in the forward accommodation (finding C-1); general desilvering of the interior mirrors.
+- **Known damage**: wood damage on the athwartship bulkheads in the forward accommodation; general desilvering of the interior mirrors.
 
 ---
 

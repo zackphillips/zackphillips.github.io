@@ -136,7 +136,7 @@ no blower to run.
 
 ### Gear
 - Primary: **45 lb Manson Supreme** on galvanized chain + ~3/8" stranded nylon rode, on the bow roller chute *(lengths TBD)*
-- Secondary: **none aboard** — a spare anchor and rode is the surveyor's standing recommendation
+- Secondary: **none aboard** — a spare anchor and rode is recommended
 - Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker at nav station
 
 ### Procedure
@@ -214,8 +214,8 @@ ABC dry chemical extinguishers (2.5 lb) are aboard.
 ### Taking on Water
 1. Locate source immediately.
 2. Deploy bilge pump — Jabsco 12 V diaphragm (electric) plus the Whale Gulper hand pump.
-3. Plug with rags, softwood plugs, seacock plug if a through-hull failure. *(No wooden plugs were fitted at the through-hulls as of the 2025 survey — fit them.)*
-4. If uncontrolled: call Mayday; prepare life raft and ditch bag. **The life raft was reported out of service at the 2025 survey — confirm its status before relying on it.**
+3. Plug with rags, softwood plugs, seacock plug if a through-hull failure. *(No wooden plugs are currently fitted at the through-hulls — fit them.)*
+4. If uncontrolled: call Mayday; prepare life raft and ditch bag. **The life raft is reported out of service — confirm its status before relying on it.**
 
 ---
 
