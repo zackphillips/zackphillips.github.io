@@ -7,8 +7,8 @@ description: Pre-departure checklist, engine start, sail handling, anchoring and
 
 # S.V. Mermug — Operations Guide
 
-42.7-ft sloop, Hull #BEY57004E494 | MMSI 338543654 | USCG 1024168
-Home berth: South Beach Harbor, San Francisco
+1994 Beneteau First 42s7 — 42' 06" sloop, Hull #BEY57004E494 | MMSI 338543654 | USCG 1024168
+Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 
 ---
 
@@ -60,9 +60,12 @@ Home berth: South Beach Harbor, San Francisco
 
 ## Engine Start Procedure
 
+Yanmar 4JH2E, 46 HP diesel. The engine space is naturally ventilated — there is
+no blower to run.
+
 1. Open raw water seacock (under companion way steps, starboard side).
-2. Turn ignition key to **ON** — gauges come alive, blower runs for 30 sec.
-3. Confirm fuel is on (main valve at tank, should always be open).
+2. Turn ignition key to **ON** — gauges and alarms come alive.
+3. Confirm fuel is on (ball valve at the tank, should always be open).
 4. Shift to neutral if not already.
 5. Turn key to **START** — do not crank more than 10 seconds at a stretch.
 6. Once running: confirm raw water exhaust flowing at transom (within ~20 sec).
@@ -70,6 +73,8 @@ Home berth: South Beach Harbor, San Francisco
 8. Confirm oil pressure in normal range on gauge.
 
 > If raw water flow does not appear within 30 seconds of startup, shut down immediately and check the strainer and seacock.
+
+**Emergency shutdown**: pull the engine stop cable at the helm.
 
 ---
 
@@ -130,9 +135,9 @@ Home berth: South Beach Harbor, San Francisco
 ## Anchoring
 
 ### Gear
-- Primary: **35 lb Delta** on **200 ft 5/16" chain** + **150 ft 5/8" nylon rode**
-- Secondary: **[secondary anchor TBD]**
-- Windlass: **[windlass model TBD]**, foot switches at bow, breaker at nav station
+- Primary: **45 lb Manson Supreme** on galvanized chain + ~3/8" stranded nylon rode, on the bow roller chute *(lengths TBD)*
+- Secondary: **none aboard** — a spare anchor and rode is the surveyor's standing recommendation
+- Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker at nav station
 
 ### Procedure
 1. Select anchorage — check chart for depth, swinging room, bottom type (sand/mud preferred).
@@ -189,7 +194,7 @@ Home berth: South Beach Harbor, San Francisco
 3. Throw the horseshoe buoy and/or any floating object.
 4. **Quick-stop maneuver**: tack immediately without releasing sheets → heave to → return on a reach.
 5. Approach MOB from downwind; stop with them at the beam, windward side.
-6. Deploy boarding ladder or use spinnaker halyard + bosun's chair to recover.
+6. Recover with the Lalizas Life Link sling / inflatable MOB system, or use a spinnaker halyard and the electric 44ST-2 winch. **There is no boarding ladder aboard** — do not plan on one.
 7. Call **USCG Ch 16 — MAYDAY** if recovery is delayed.
 
 ### Engine Failure
@@ -199,15 +204,18 @@ Home berth: South Beach Harbor, San Francisco
 4. Diagnose: fuel, overheating, raw water, belt failure.
 
 ### Fire
-1. **Engine compartment**: shut off fuel at tank, CO₂ extinguisher through the inspection port — do **not** open the hatch.
+There is **no fixed fire suppression system** in the engine space. Three portable
+ABC dry chemical extinguishers (2.5 lb) are aboard.
+
+1. **Engine compartment**: shut off fuel at the tank ball valve, discharge an extinguisher through the smallest opening you can — do **not** open the hatch and feed it air.
 2. **Cabin**: evacuate, deploy extinguisher, prepare to abandon ship if needed.
 3. **Mayday on Ch 16** — give position, vessel description, nature of emergency, souls aboard.
 
 ### Taking on Water
 1. Locate source immediately.
-2. Deploy bilge pump (electric + manual).
-3. Plug with rags, softwood plugs, seacock plug if a through-hull failure.
-4. If uncontrolled: call Mayday; prepare life raft and ditch bag.
+2. Deploy bilge pump — Jabsco 12 V diaphragm (electric) plus the Whale Gulper hand pump.
+3. Plug with rags, softwood plugs, seacock plug if a through-hull failure. *(No wooden plugs were fitted at the through-hulls as of the 2025 survey — fit them.)*
+4. If uncontrolled: call Mayday; prepare life raft and ditch bag. **The life raft was reported out of service at the 2025 survey — confirm its status before relying on it.**
 
 ---
 

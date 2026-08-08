@@ -63,29 +63,38 @@
     <!-- ALERT SUMMARY (cross-cutting; pinned above tabs so it's visible regardless of active tab) -->
     <div id="alert-summary" class="info-panel" style="display:none;"></div>
 
-    <!-- TAB BAR -->
-    <nav class="tab-bar" id="tab-bar" aria-label="Sections">
-      <button class="tab-btn active" data-tab="map" aria-current="page">
-        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-        <span class="tab-label">Map</span>
-      </button>
-      <button class="tab-btn" data-tab="voyages">
-        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-        <span class="tab-label">Voyages</span>
-      </button>
-      <button class="tab-btn" data-tab="environment">
-        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-        <span class="tab-label">Environment</span>
-      </button>
-      <button class="tab-btn" data-tab="data">
-        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span class="tab-label">Data</span>
-      </button>
-      <button class="tab-btn" data-tab="links">
-        <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-        <span class="tab-label">Links</span>
-      </button>
-    </nav>
+    <!-- TAB STRIP: section tabs plus the external-link cluster. The links are a
+         sibling of <nav>, not a child, because the nav becomes a fixed bottom
+         bar on phones and the links must stay in normal flow. -->
+    <div class="tab-strip">
+      <nav class="tab-bar" id="tab-bar" aria-label="Sections">
+        <button class="tab-btn active" data-tab="map" aria-current="page">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+          <span class="tab-label">Map</span>
+        </button>
+        <button class="tab-btn" data-tab="voyages">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          <span class="tab-label">Voyages</span>
+        </button>
+        <button class="tab-btn" data-tab="environment">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          <span class="tab-label">Environment</span>
+        </button>
+        <button class="tab-btn" data-tab="data">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span class="tab-label">Data</span>
+        </button>
+        <button class="tab-btn" data-tab="polars">
+          <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4.5"/><line x1="12" y1="12" x2="19" y2="7"/></svg>
+          <span class="tab-label">Polars</span>
+        </button>
+      </nav>
+      <div class="tab-links">
+        <a href="docs.html" class="tab-link">Ship's Docs</a>
+        <a href="#" id="postgsail-link" target="_blank" rel="noopener" class="tab-link" style="display:none;">Ship's Log</a>
+        <a href="#" id="marinetraffic-link" target="_blank" rel="noopener" class="tab-link">MarineTraffic</a>
+      </div>
+    </div>
 
     <!-- TAB PANELS -->
     <div class="tab-panels">
@@ -327,6 +336,20 @@
           <div class="data-grid" id="vessel-grid"></div>
         </div>
 
+        <!-- RAW DATA -->
+        <div class="info-panel raw-data-panel">
+          <div class="panel-title">Raw Data</div>
+          <details class="raw-data-block">
+            <summary>SignalK Latest Snapshot</summary>
+            <pre id="raw-signalk-latest">Loading…</pre>
+          </details>
+        </div>
+
+      </section>
+
+      <!-- POLARS TAB -->
+      <section class="tab-panel" data-tab-panel="polars">
+
         <!-- POLAR PERFORMANCE -->
         <div class="info-panel">
           <div class="panel-title">Polar Performance</div>
@@ -349,30 +372,6 @@
           </div>
         </div>
 
-        <!-- RAW DATA -->
-        <div class="info-panel raw-data-panel">
-          <div class="panel-title">Raw Data</div>
-          <details class="raw-data-block">
-            <summary>SignalK Latest Snapshot</summary>
-            <pre id="raw-signalk-latest">Loading…</pre>
-          </details>
-          <details class="raw-data-block">
-            <summary>Instrument Log (rolling)</summary>
-            <pre id="raw-instrument-log">Loading…</pre>
-          </details>
-        </div>
-
-      </section>
-
-      <!-- LINKS TAB -->
-      <section class="tab-panel" data-tab-panel="links">
-        <div class="links-section">
-          <div class="button-row">
-            <a href="docs.html" class="action-btn ais-btn">Ship's Docs</a>
-            <a href="#" id="marinetraffic-link" target="_blank" class="action-btn ais-btn">MarineTraffic</a>
-            <a href="#" id="postgsail-link" target="_blank" class="action-btn ais-btn" style="display:none;">PostgSail Logs</a>
-          </div>
-        </div>
       </section>
 
     </div><!-- /.tab-panels -->
@@ -387,7 +386,7 @@
   <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
   <script src="assets/utils.js"></script>
   <script src="assets/constants.js"></script>
-  <script src="assets/tabs.js?v=1"></script>
-  <script src="assets/app.js?v=4"></script>
+  <script src="assets/tabs.js?v=2"></script>
+  <script src="assets/app.js?v=5"></script>
 </body>
 </html>

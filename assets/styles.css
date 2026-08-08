@@ -197,14 +197,6 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Links section
-   ───────────────────────────────────────────────────────────────────────── */
-.links-section {
-  padding: 20px 28px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
    Info panels
    ───────────────────────────────────────────────────────────────────────── */
 .info-panel {
@@ -225,10 +217,50 @@ body {
 /* ─────────────────────────────────────────────────────────────────────────
    Tab bar + tab panels
    ───────────────────────────────────────────────────────────────────────── */
-.tab-bar {
+.tab-strip {
   display: flex;
+  align-items: stretch;
+  gap: 12px;
   border-bottom: 1px solid var(--border-color);
   background-color: var(--bg-secondary);
+}
+
+.tab-bar {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  background-color: var(--bg-secondary);
+}
+
+/* External destinations ride alongside the tabs rather than owning one. */
+.tab-links {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  padding-right: 16px;
+}
+
+.tab-link {
+  padding: 6px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--bg-quaternary);
+  text-decoration: none;
+  font-size: 0.76em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .tab-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
 }
 
 .tab-btn {
@@ -283,6 +315,36 @@ body {
 /* The map should sit flush under the tab bar, not inset. */
 .tab-panel[data-tab-panel="map"] {
   padding-top: 0;
+}
+
+/* ── Map tab: the map claims every pixel the viewport has left over ──
+   tabs.js toggles `.map-fills` on <body>. The chain of flex containers
+   hands the leftover height down from .container to #map; `min-height: 0`
+   at each level stops flex items refusing to shrink below their content. */
+body.map-fills .container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 40px); /* 40px = the 20px body padding, doubled */
+}
+
+body.map-fills .tab-panels,
+body.map-fills .tab-panel.active,
+body.map-fills .map-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+body.map-fills #map {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 320px; /* keep it usable when a tall hero eats the viewport */
+}
+
+/* The footer would otherwise push the map into a scroll. */
+body.map-fills .footer {
+  display: none;
 }
 
 #alert-summary {
@@ -619,45 +681,6 @@ body {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Action buttons
-   ───────────────────────────────────────────────────────────────────────── */
-.button-row {
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  margin-top: auto;
-  justify-content: flex-end;
-}
-
-.action-btn {
-  padding: 9px 18px;
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  font-size: 0.82em;
-  font-family: inherit;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  text-align: center;
-  cursor: pointer;
-  color: #fff;
-  transition: opacity 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
-}
-
-.action-btn:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
-}
-
-.action-btn:active {
-  transform: translateY(0);
-  opacity: 1;
-  box-shadow: none;
-}
-
-.ais-btn { background-color: var(--accent); }
-
-/* ─────────────────────────────────────────────────────────────────────────
    Voyage list (Voyages tab)
    ───────────────────────────────────────────────────────────────────────── */
 .voyage-list {
@@ -704,6 +727,116 @@ body {
   text-align: right;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+.voyage-row-chevron {
+  flex: 0 0 auto;
+  width: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.voyage-row-chevron::before { content: '\25B8'; }
+
+.voyage-item.is-open .voyage-row-chevron { transform: rotate(90deg); }
+
+.voyage-item.is-open .voyage-row {
+  background-color: var(--accent-light);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+/* ── Expanded voyage detail card ── */
+.voyage-detail {
+  padding: 14px;
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--bg-quaternary);
+}
+
+.voyage-detail[hidden] { display: none; }
+
+.voyage-detail-map {
+  height: 260px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-tertiary);
+}
+
+.voyage-detail-map--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.82em;
+}
+
+.voyage-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.voyage-detail-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+}
+
+.voyage-detail-stat-label {
+  font-size: 0.62em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.voyage-detail-stat-value {
+  font-size: 0.95em;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.voyage-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.voyage-detail-btn {
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.8em;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.voyage-detail-btn:hover { opacity: 0.88; }
+
+.voyage-detail-btn--ghost {
+  background: transparent;
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.voyage-detail-btn--ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 1;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -1267,6 +1400,13 @@ body {
     padding-bottom: calc(58px + env(safe-area-inset-bottom));
   }
 
+  /* The strip stops being a row: the nav pins to the bottom of the screen and
+     the link cluster stays in flow as a scrollable row under the hero. */
+  .tab-strip {
+    display: block;
+    gap: 0;
+  }
+
   .tab-bar {
     position: fixed;
     left: 0;
@@ -1278,6 +1418,15 @@ body {
     padding-bottom: env(safe-area-inset-bottom);
     box-shadow: 0 -2px 10px var(--shadow-color);
   }
+
+  .tab-links {
+    padding: 10px 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tab-links::-webkit-scrollbar { display: none; }
 
   .tab-btn {
     flex-direction: column;
@@ -1297,12 +1446,8 @@ body {
 
   .data-grid { grid-template-columns: repeat(2, 1fr); }
 
-  .button-row {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .action-btn { text-align: center; }
+  /* body padding is 0 here, and the fixed nav already gets its own inset. */
+  body.map-fills .container { min-height: 100vh; }
 
   .wind-forecast-grid,
   .wave-forecast-grid {
@@ -1322,8 +1467,6 @@ body {
   }
 
   .polar-chart-container { height: 360px !important; }
-
-  .links-section { padding: 16px; }
 }
 
 @media (max-width: 600px) {
@@ -1339,6 +1482,8 @@ body {
   #status-sentence { white-space: normal; }
 
   #map { height: 320px; }
+
+  .voyage-detail-map { height: 200px; }
 
   .polar-chart-container { height: 320px !important; }
 

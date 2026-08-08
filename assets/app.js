@@ -364,6 +364,25 @@ function parsePositionPoint(point) {
   };
 }
 
+// YYYY-MM-DD in the viewer's local timezone — the key format trackByDay uses.
+function localDayKey(dateish) {
+  const d = dateish instanceof Date ? dateish : new Date(dateish);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Base map tiles for the current theme. Shared by the main map, the theme
+// switcher, and the per-voyage mini maps so they never drift apart.
+function tileLayerForTheme(isDark) {
+  return isDark
+    ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap contributors © CARTO'
+      })
+    : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      });
+}
+
 function _gpxLinkForDay(localDay) {
   // Find the tracks_index entry whose start timestamp maps to this local day.
   for (const track of tracksIndex) {
@@ -652,6 +671,9 @@ async function loadHistoricalTracks() {
   renderVoyageList();
 }
 
+const fmtVoyageDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+const fmtVoyageNum = (v, digits, suffix) => Number.isFinite(v) ? `${v.toFixed(digits)} ${suffix}` : '—';
+
 // Build the Voyages-tab log list from tracks_index.json metadata (already
 // fetched above into `tracksIndex`) — no additional network calls.
 function renderVoyageList() {
@@ -664,16 +686,162 @@ function renderVoyageList() {
   }
 
   const rows = [...tracksIndex].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-  const fmtDate = (d) => d ? new Date(`${d}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-  const fmtNum = (v, digits, suffix) => Number.isFinite(v) ? `${v.toFixed(digits)} ${suffix}` : '—';
 
   container.innerHTML = rows.map((t) => `
-    <button class="voyage-row" data-date="${t.date}" title="View this day's track on the map">
-      <span class="voyage-row-date">${fmtDate(t.date)}</span>
-      <span class="voyage-row-stat">${fmtNum(t.distance_nm, 1, 'nm')}</span>
-      <span class="voyage-row-stat">${fmtNum(t.duration_hours, 1, 'hr')}</span>
-      <span class="voyage-row-stat">${fmtNum(t.max_speed_kts, 1, 'kts')}</span>
-    </button>`).join('');
+    <div class="voyage-item" data-date="${t.date}">
+      <button class="voyage-row" type="button" aria-expanded="false" title="Show voyage details">
+        <span class="voyage-row-date">${fmtVoyageDate(t.date)}</span>
+        <span class="voyage-row-stat">${fmtVoyageNum(t.distance_nm, 1, 'nm')}</span>
+        <span class="voyage-row-stat">${fmtVoyageNum(t.duration_hours, 1, 'hr')}</span>
+        <span class="voyage-row-stat">${fmtVoyageNum(t.max_speed_kts, 1, 'kts')}</span>
+        <span class="voyage-row-chevron" aria-hidden="true"></span>
+      </button>
+      <div class="voyage-detail" hidden></div>
+    </div>`).join('');
+
+  bindVoyageListOnce(container);
+}
+
+// One delegated listener on the list survives every renderVoyageList() rerender.
+let voyageListBound = false;
+function bindVoyageListOnce(container) {
+  if (voyageListBound) return;
+  voyageListBound = true;
+
+  container.addEventListener('click', (e) => {
+    const item = e.target.closest('.voyage-item');
+    if (!item) return;
+
+    if (e.target.closest('.voyage-show-on-map')) {
+      const date = item.dataset.date;
+      if (typeof window.mermugActivateTab === 'function') window.mermugActivateTab('map');
+      focusTrackDay(date);
+      return;
+    }
+
+    if (e.target.closest('.voyage-row')) toggleVoyageDetail(item);
+  });
+}
+
+// tracks_index keys on the track's UTC date, trackByDay on the viewer's local
+// calendar day — an evening sail lands under tomorrow's UTC date, so try both.
+function trackDayKeyFor(date) {
+  const entry = tracksIndex.find((t) => t.date === date);
+  const keys = [date];
+  if (entry?.start) keys.push(localDayKey(entry.start));
+  for (const key of keys) {
+    const pts = key && trackByDay.get(key);
+    if (pts && pts.length) return key;
+  }
+  return null;
+}
+
+function trackPointsForDate(date) {
+  const key = trackDayKeyFor(date);
+  return key ? trackByDay.get(key) : null;
+}
+
+function closeVoyageDetail(item) {
+  const detail = item.querySelector('.voyage-detail');
+  if (!detail || detail.hidden) return;
+  // Leaflet leaks handlers if the container is torn out from under it.
+  if (item._voyageMap) {
+    item._voyageMap.remove();
+    item._voyageMap = null;
+  }
+  detail.hidden = true;
+  detail.innerHTML = '';
+  item.classList.remove('is-open');
+  item.querySelector('.voyage-row')?.setAttribute('aria-expanded', 'false');
+}
+
+// Accordion: at most one voyage open, so at most one mini map is ever alive.
+function toggleVoyageDetail(item) {
+  const wasOpen = item.classList.contains('is-open');
+  item.parentElement.querySelectorAll('.voyage-item.is-open').forEach(closeVoyageDetail);
+  if (wasOpen) return;
+
+  const entry = tracksIndex.find((t) => t.date === item.dataset.date);
+  if (!entry) return;
+
+  const detail = item.querySelector('.voyage-detail');
+  detail.innerHTML = voyageDetailHtml(entry);
+  detail.hidden = false;
+  item.classList.add('is-open');
+  item.querySelector('.voyage-row')?.setAttribute('aria-expanded', 'true');
+
+  renderVoyageMiniMap(item, entry);
+}
+
+function voyageDetailHtml(entry) {
+  const fmtTime = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+  const avgKts = Number.isFinite(entry.distance_nm) && entry.duration_hours > 0
+    ? entry.distance_nm / entry.duration_hours
+    : NaN;
+
+  const stats = [
+    ['Start',     fmtTime(entry.start)],
+    ['End',       fmtTime(entry.end)],
+    ['Distance',  fmtVoyageNum(entry.distance_nm, 2, 'nm')],
+    ['Duration',  fmtVoyageNum(entry.duration_hours, 2, 'hr')],
+    ['Max speed', fmtVoyageNum(entry.max_speed_kts, 1, 'kts')],
+    ['Avg speed', fmtVoyageNum(avgKts, 1, 'kts')],
+    ['Fixes',     Number.isFinite(entry.points) ? String(entry.points) : '—'],
+  ];
+
+  const gpx = _gpxLinkForDay(entry.date)
+    || (entry.file ? { url: `data/telemetry/${entry.file}`, filename: `${entry.date}.gpx` } : null);
+
+  return `
+    <div class="voyage-detail-map"></div>
+    <div class="voyage-detail-stats">
+      ${stats.map(([label, value]) => `
+        <div class="voyage-detail-stat">
+          <span class="voyage-detail-stat-label">${label}</span>
+          <span class="voyage-detail-stat-value">${value}</span>
+        </div>`).join('')}
+    </div>
+    <div class="voyage-detail-actions">
+      <button type="button" class="voyage-detail-btn voyage-show-on-map">Show on main map</button>
+      ${gpx ? `<a class="voyage-detail-btn voyage-detail-btn--ghost" href="${gpx.url}" download="${gpx.filename}">Download GPX</a>` : ''}
+    </div>`;
+}
+
+function renderVoyageMiniMap(item, entry) {
+  const el = item.querySelector('.voyage-detail-map');
+  if (!el || typeof L === 'undefined') return;
+
+  const pts = trackPointsForDate(entry.date);
+  const latlngs = (pts || [])
+    .map((p) => [p.latitude, p.longitude])
+    .filter(([la, lo]) => Number.isFinite(la) && Number.isFinite(lo));
+
+  if (!latlngs.length) {
+    el.classList.add('voyage-detail-map--empty');
+    el.textContent = 'Track for this day is still loading.';
+    return;
+  }
+
+  const mini = L.map(el, {
+    attributionControl: false,
+    // The card sits in a scrolling list; wheel-zoom would hijack the scroll.
+    scrollWheelZoom: false,
+  });
+  tileLayerForTheme(isDarkTheme(document.documentElement.getAttribute('data-theme'))).addTo(mini);
+  L.polyline(latlngs, { color: DAY_TRACK_COLORS[0], weight: 3, opacity: 0.9 }).addTo(mini);
+  L.circleMarker(latlngs[0], { radius: 5, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 1, weight: 1 })
+    .bindTooltip('Start', { direction: 'top' }).addTo(mini);
+  L.circleMarker(latlngs[latlngs.length - 1], { radius: 5, color: '#ef4444', fillColor: '#ef4444', fillOpacity: 1, weight: 1 })
+    .bindTooltip('End', { direction: 'top' }).addTo(mini);
+  mini.fitBounds(latlngs, { padding: [18, 18], maxZoom: 15 });
+
+  item._voyageMap = mini;
+  // The card was `hidden` a tick ago; Leaflet needs a laid-out container.
+  requestAnimationFrame(() => mini.invalidateSize());
 }
 
 // Zoom the map to a single day's track and bring it into the "recent"
@@ -682,7 +850,7 @@ function renderVoyageList() {
 // colouring instead of drawing a separate highlight layer.
 function focusTrackDay(date) {
   if (!map || !date) return;
-  const pts = trackByDay.get(date);
+  const pts = trackPointsForDate(date);
   if (!pts || !pts.length) {
     console.warn('Track points for', date, 'are not loaded yet.');
     return;
@@ -693,7 +861,7 @@ function focusTrackDay(date) {
   if (!latlngs.length) return;
 
   const days = [...trackByDay.keys()].sort().reverse();
-  const idx = days.indexOf(date);
+  const idx = days.indexOf(trackDayKeyFor(date));
   if (idx >= 0 && idx >= recentTrackCount) {
     recentTrackCount = idx + 1;
     renderTracks();
@@ -1026,7 +1194,7 @@ function updateVesselLinks() {
     vesselData.links.postgsail = vesselData.postgsail_logs_url;
   }
 
-  // Update AIS links
+  // Update the link cluster in the tab bar
   const marinetrafficLink = document.getElementById('marinetraffic-link');
   if (marinetrafficLink && vesselData.links?.marinetraffic) {
     marinetrafficLink.href = vesselData.links.marinetraffic;
@@ -1359,8 +1527,10 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
               text: "Tide Height (ft)",
               color: isDark ? '#ffffff' : '#2c3e50'
             },
-            min: Math.min(...heights) - 1,
-            max: Math.max(...heights) + 1
+            // 2 ft of headroom either side so the peak/trough annotation
+            // labels have somewhere to sit without clipping.
+            min: Math.min(...heights) - 2,
+            max: Math.max(...heights) + 2
           }
         }
       },
@@ -1444,7 +1614,6 @@ async function loadData() {
       .then((res) => (res.ok ? res.json() : null))
       .then((payload) => {
         const entries = Array.isArray(payload?.entries) ? payload.entries : [];
-        setRawDataPre('raw-instrument-log', entries);
         const recent = entries.slice(-SPARKLINE_POINTS);
         seriesByPath = buildSeriesFromLog(recent);
         return seriesByPath;
@@ -1846,14 +2015,7 @@ async function loadData() {
         map = L.map('map').setView([lat, lon], 13);
         window.mermugMap = map; // exposed for tabs.js to call invalidateSize() on tab switch
         const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
-        const tileLayer = isDark
-          ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-              attribution: '© OpenStreetMap contributors © CARTO'
-            })
-          : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '© OpenStreetMap contributors'
-          });
-        tileLayer.addTo(map);
+        tileLayerForTheme(isDark).addTo(map);
         marker = L.marker([lat, lon]).addTo(map);
 
         // Privacy exclusion zone indicator — mirrors PRIVACY_EXCLUSION_ZONES in Python.
@@ -3353,14 +3515,7 @@ function updateChartsForTheme(theme) {
       }
     });
 
-    const newTileLayer = isDark
-      ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '© OpenStreetMap contributors © CARTO'
-        })
-      : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        });
-    newTileLayer.addTo(map);
+    tileLayerForTheme(isDark).addTo(map);
 
     // Re-add marker if it exists
     if (marker) {

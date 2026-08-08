@@ -1,13 +1,13 @@
 // Tab bar wiring for the S.V. Mermug tracker.
 //
 // Owns switching between the five top-level tabs (map / voyages /
-// environment / data / links). Deliberately kept separate from app.js:
+// environment / data / polars). Deliberately kept separate from app.js:
 // it only touches DOM visibility and layout-refresh glue, never the data
 // pipeline. Panels are never removed from the DOM — only shown/hidden via
 // a `.active` class — so every existing render function in app.js keeps
 // targeting the same element IDs regardless of which tab is open.
 (function () {
-  var TAB_IDS = ['map', 'voyages', 'environment', 'data', 'links'];
+  var TAB_IDS = ['map', 'voyages', 'environment', 'data', 'polars'];
   var DEFAULT_TAB = 'map';
   var STORAGE_KEY = 'mermug-active-tab';
 
@@ -52,6 +52,10 @@
       }
     });
 
+    // The map tab is full-bleed: the container stretches to the viewport and
+    // the footer steps aside so #map can claim every remaining pixel.
+    document.body.classList.toggle('map-fills', tabId === 'map');
+
     try { localStorage.setItem(STORAGE_KEY, tabId); } catch (e) {}
 
     if (opts.updateHash !== false && window.location.hash !== '#' + tabId) {
@@ -62,11 +66,14 @@
     // their container was `display:none`. Fix up on every switch instead
     // of touching every chart-creation call site in app.js.
     if (tabId === 'map' && window.mermugMap) {
-      // Let the display:block take effect before measuring.
+      // Let the display:block + .map-fills reflow land before measuring.
       requestAnimationFrame(function () { window.mermugMap.invalidateSize(); });
     }
     window.dispatchEvent(new Event('resize'));
   }
+
+  // app.js needs this to honour "Show on main map" from a voyage detail card.
+  window.mermugActivateTab = activateTab;
 
   if (tabBar) {
     tabBar.addEventListener('click', function (e) {
@@ -81,18 +88,8 @@
     if (id) activateTab(id, { updateHash: false });
   });
 
-  // Voyages tab: clicking a logged day jumps to the Map tab and zooms to
-  // that day's track. renderVoyageList()/focusTrackDay() live in app.js;
-  // this is just the cross-tab wiring.
-  document.addEventListener('click', function (e) {
-    var row = e.target.closest('.voyage-row');
-    if (!row) return;
-    var date = row.dataset.date;
-    activateTab('map');
-    if (date && typeof window.focusTrackDay === 'function') {
-      window.focusTrackDay(date);
-    }
-  });
+  // Voyage rows expand in place on the Voyages tab (see app.js); no cross-tab
+  // navigation happens here any more.
 
   activateTab(tabFromHash() || tabFromStorage() || DEFAULT_TAB, { updateHash: false });
 })();
