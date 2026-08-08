@@ -2311,50 +2311,7 @@ async function loadPolarData() {
     }
   } catch (error) {
     console.error('Error loading polar data:', error);
-    document.getElementById('polar-performance').innerHTML = `
-      <div style="color: #e74c3c;">Error loading polar data: ${error.message}</div>
-    `;
   }
-}
-
-function getPolarSpeed(twa, tws) {
-  if (!polarData) return 0;
-
-  // Find closest wind speed
-  const windSpeeds = [4, 6, 8, 10, 12, 14, 16, 20, 24];
-  let speedIndex = 0;
-
-  // Find the closest wind speed index
-  for (let i = 0; i < windSpeeds.length; i++) {
-    if (tws <= windSpeeds[i]) {
-      speedIndex = i;
-      break;
-    }
-  }
-
-  // If wind speed is higher than all available speeds, use the last one
-  if (speedIndex === 0 && tws > windSpeeds[0]) {
-    speedIndex = windSpeeds.length - 1;
-  }
-
-  // Find closest TWA, but avoid 0° if possible since it has zero speed
-  let closestAngle = polarData[0];
-  let minDiff = Math.abs(twa - polarData[0].twa);
-
-  for (const angle of polarData) {
-    const diff = Math.abs(twa - angle.twa);
-    if (diff < minDiff) {
-      // Prefer non-zero speeds when possible
-      if (angle.twa === 0 && twa > 10) {
-        // Skip 0° angle if we're not very close to it
-        continue;
-      }
-      minDiff = diff;
-      closestAngle = angle;
-    }
-  }
-
-  return closestAngle.speeds[speedIndex] || 0;
 }
 
 function calculateVMG(bearingToDest, bsp) {
@@ -2399,32 +2356,11 @@ function updatePolarPerformance() {
   const bsp = boatSpeed ? boatSpeed * 1.94384 : 0; // Default to 0 knots (center of bullseye)
   const tws = windSpeed ? windSpeed * 1.94384 : 10; // Default to 10 knots
 
-  const polarSpeed = getPolarSpeed(twa, tws);
-  const performancePercent = polarSpeed > 0 ? (bsp / polarSpeed * 100).toFixed(1) : 0;
-
   // Engine / propulsion state
   const engineState = currentPropulsion?.state?.value;
   const engineHz    = currentPropulsion?.revolutions?.value;
   const rpm         = engineHz != null ? Math.round(engineHz * 60) : null;
   const engineOn    = engineState === 'started' || (rpm != null && rpm > 100);
-  const engineColor = engineOn ? '#ef4444' : '#22c55e';
-  const engineLabel = engineOn
-    ? `Running${rpm != null ? ` · ${rpm} RPM` : ''}`
-    : (engineState ? 'Off' : 'N/A');
-
-  // Update performance display
-  const windAngleDisplay = windAngle ? `${twa.toFixed(1)}°` : 'N/A';
-  const boatSpeedDisplay = boatSpeed ? `${bsp.toFixed(1)} kts` : 'N/A';
-  const windSpeedDisplay = windSpeed ? `${tws.toFixed(1)} kts` : 'N/A';
-
-  document.getElementById('polar-performance').innerHTML = `
-    <div><strong>True Wind Angle:</strong> ${windAngleDisplay}</div>
-    <div><strong>True Wind Speed:</strong> ${windSpeedDisplay}</div>
-    <div><strong>Boat Speed:</strong> ${boatSpeedDisplay}</div>
-    <div><strong>Polar Speed:</strong> ${polarSpeed.toFixed(1)} kts</div>
-    <div><strong>Performance:</strong> <span style="color: ${performancePercent >= 95 ? '#27ae60' : performancePercent >= 85 ? '#f39c12' : '#e74c3c'}">${performancePercent}%</span></div>
-    <div><strong>Engine:</strong> <span style="color: ${engineColor}">${engineLabel}</span></div>
-  `;
 
   // Show/hide motoring badge over the polar chart
   const indicator = document.getElementById('polar-engine-indicator');
@@ -3160,7 +3096,11 @@ async function loadConditionsForecast() {
   // Render a direction row as evenly-spaced arrow glyphs instead of a line.
   // A hidden line dataset is still used so Chart.js handles axes, layout,
   // and hover tooltips identically to all other rows.
-  function renderDirectionChart(canvasId, dirData, label, accentColor, isLast, source) {
+  // `comesFrom` marks data reported in the meteorological "coming from"
+  // convention (Open-Meteo wind_direction_10m, wave_direction). The arrows show
+  // where it is headed, so those bearings are flipped 180° before drawing.
+  // Ocean current direction is already a "flowing toward" bearing — no flip.
+  function renderDirectionChart(canvasId, dirData, label, accentColor, isLast, source, comesFrom = false) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
     if (conditionsChartInstances[canvasId]) {
@@ -3193,8 +3133,10 @@ async function loadConditionsForecast() {
           const dir = dirData[i];
           if (dir == null) continue;
           const px = left + (i / 48) * plotW;
+          // Arrows point the way it is going, so flip "coming from" bearings.
+          const headingTo = comesFrom ? dir + 180 : dir;
           // 0° = N = "up" on screen → subtract 90° to convert to canvas angle
-          const rad = ((dir - 90) * Math.PI) / 180;
+          const rad = ((headingTo - 90) * Math.PI) / 180;
 
           ctx.save();
           ctx.translate(px, centerY);
@@ -3256,7 +3198,8 @@ async function loadConditionsForecast() {
                 const dir = dirData[Math.round(ctx.parsed.x)];
                 if (dir == null) return null;
                 const cardinal = dirs16[Math.round(dir / 22.5) % 16];
-                return `${label}: ${cardinal} (${dir.toFixed(0)}°)`;
+                const sense = comesFrom ? 'from ' : 'toward ';
+                return `${label}: ${sense}${cardinal} (${dir.toFixed(0)}°)`;
               },
               footer() { return source ? `Source: ${source}` : undefined; }
             },
@@ -3307,7 +3250,7 @@ async function loadConditionsForecast() {
 
   // Wind direction — arrows
   const windDirAccent = isDark ? '#7dd3fc' : '#0369a1';
-  renderDirectionChart('condWindDirChart', windDir, 'Wind Dir', windDirAccent, false, OM_FORECAST);
+  renderDirectionChart('condWindDirChart', windDir, 'Wind Dir', windDirAccent, false, OM_FORECAST, true);
 
   // Swell height (emerald)
   const swellAccent = isDark ? '#34d399' : '#059669';
@@ -3331,7 +3274,7 @@ async function loadConditionsForecast() {
 
   // Swell direction — arrows
   const swellDirAccent = isDark ? '#2dd4bf' : '#0d9488';
-  renderDirectionChart('condSwellDirChart', swellDir, 'Swell Dir', swellDirAccent, false, OM_MARINE);
+  renderDirectionChart('condSwellDirChart', swellDir, 'Swell Dir', swellDirAccent, false, OM_MARINE, true);
 
   // Tide (indigo) — may have nulls at start/end; use spanGaps
   const tideAccent = isDark ? '#818cf8' : '#4f46e5';
