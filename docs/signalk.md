@@ -62,7 +62,7 @@ ID 4. Output goes to `seatalkOut`.
 | Source | What it provides |
 |---|---|
 | NMEA 2000 network (`can0`) | Engine (port only), tanks, GPS/AIS, depth, wind |
-| [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble) | Two Victron devices over BLE: house battery monitor, and a second device ("bimini") reporting solar charger power/voltage — see [Systems §4](systems.md#4-electrical-system) |
+| [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble) | Two Victron devices over BLE: house battery monitor, and a second device ("bimini") reporting solar charger power/voltage — this is the controller that replaced the original Blue Sky Solar Boost in June 2026, see [Systems §4](systems.md#4-electrical-system) |
 | [bt-sensors-plugin-sk](https://github.com/naugehyde/bt-sensors-plugin-sk) (Mopeka ultrasonic, BLE) | `fuel.reserve` (diesel, 400 mm tank height), `propane.a` / `propane.b` (230 mm each), `blackwater.stern` (355.6 mm) |
 | I2C bus | BME280 environmental sensor — chip-ID readout configured; presumably also feeds temp/humidity/pressure through the `i2c-sensors` bridge above |
 | [signalk-rpi-monitor](https://github.com/sberl/signalk-rpi-monitor) | Pi CPU temp/utilization, GPU temp, memory, SD card utilization — polled every 30 s |
