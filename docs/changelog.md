@@ -147,7 +147,7 @@ Reference table for planned maintenance intervals. Update "Last Done" column aft
 | Coolant flush | 2 years | June 2025 | Freshwater pump, gaskets, thermostat replaced |
 | Engine zincs | Annually | — | |
 | Drive belt(s) | Inspect annually / replace as needed | — | Carry spare |
-| Standing rigging inspection | Annually | May 8, 2025 | Visual only (mast ascended), no haul; Keiser Marine pre-purchase survey. Rod rigging reported replaced **2012** here, but that survey reported it as ~10 yrs old at the time (i.e. ~2015) — discrepancy not reconciled |
+| Standing rigging inspection | Annually | May 8, 2025 | Visual only (mast ascended), no haul; Keiser Marine pre-purchase survey. Rod rigging reported replaced 2015 (corrected from a previous 2012 record) |
 | Keel bolt torque / keel seam | Haulout | February 2026 | Seam repaired, adhesive applied, bolts torqued — see changelog |
 | Running rigging inspection | Annually | May 8, 2025 | Same pre-purchase survey |
 | Sail inspection | Annually | — | Formally not inspected (sails not raised during May 2025 survey); ad hoc repairs July 2026 (new jib, mainsail clew/rips) |
@@ -191,7 +191,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Headsail furler | Profurl | — | |
 | Jib | — new jib, 2026 | — | Replaces the sail with the chafed Sunbrella UV cover (May 2025 survey finding) |
 | Mast / boom | Selden aluminum | — | Keel stepped, double spreader |
-| Standing rigging | 1×19 stainless rod | — | Replaced 2012 (site record); May 2025 survey reported it as ~10 yrs old at the time (~2015) — discrepancy not reconciled |
+| Standing rigging | 1×19 stainless rod | — | Replaced 2015 (corrected from a previous 2012 record; matches the May 2025 survey's ~10-years-old estimate) |
 | VHF radio | Icom IC-M504 + RAM mic | — | |
 | SSB radio | Icom IC-706MKIIG | — | |
 | Chartplotter / MFD | Furuno NavNet | — | GPS, radar, sonar (sonar faulty) |

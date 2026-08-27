@@ -40,7 +40,7 @@ Anything still shown as `—` or in [brackets] has not been confirmed aboard yet
 | Beam | 13' 06" |
 | Draft | 7' 07" |
 | Displacement | 18,220 lb |
-| Ballast | 6,263 lb external lead keel, bolted to hull (Keiser Marine's May 2025 survey described this as a single-piece **cast iron** ballast of 6,283 lb — differs on both material and weight; not reconciled) |
+| Ballast | 6,283 lb external cast iron keel, bolted to hull (confirmed cast iron, matching Keiser Marine's May 2025 survey; site previously listed this as lead — corrected. Weight corrected to the survey's 6,283 lb, from 6,263 lb) |
 | Gross / net tonnage | 17 / 15 |
 | Hull | FRP — solid below the waterline, end-grain balsa core above |
 | Deck / superstructure | Cored FRP, white gelcoat, textured non-skid; deck and house molded seamlessly |
@@ -53,7 +53,7 @@ Anything still shown as `—` or in [brackets] has not been confirmed aboard yet
 ### Standing Rigging
 - **Type**: 1×19 stainless **rod** rigging throughout, with open stainless turnbuckles, stainless toggles, clevis and cotter pins.
 - **Chainplates**: internal stainless rod-type, mounted to steel toggles embedded in the FRP.
-- **Reported replaced**: 2012.
+- **Reported replaced**: 2015 (corrected from a previous "2012" record — matches the May 2025 survey's estimate of ~10 years old at the time).
 - Monitor and tune as necessary; the tangs have only ever been observed from deck level.
 
 ### Last Rig Inspection
@@ -407,17 +407,16 @@ Inventory as last recorded in March 2025.
 | Tethers / jacklines | — | [location] | — |
 | Harnesses | — | [location] | — |
 
-**Note (May 2025 survey conflict):** the pre-purchase survey stated "all
-appropriate navigational lights are present... and powered up" — this
-contradicts the "nav lights removed/uninstalled" Known Gap below. Not
-reconciled; verify in person.
+Navigation lights are confirmed **present** (port/starboard, powered up),
+consistent with the May 2025 survey. The "nav lights removed/uninstalled"
+Known Gap below was incorrect and has been resolved.
 
 ### Known Gaps
 
 Required or strongly recommended equipment that is **not** aboard:
 
 - [ ] Sound signalling device — required
-- [ ] Port and starboard navigation lights — removed/uninstalled (see survey conflict note above)
+- [x] ~~Port and starboard navigation lights — removed/uninstalled~~ — incorrect; confirmed present and powered up, matching the May 2025 survey
 - [x] ~~Smoke detectors in the accommodation spaces~~ — added 2026, see Safety Equipment table
 - [x] ~~Trash disposal placard, written waste management plan, USCG Nav Rules handbook~~ — trash placard was already aboard per the May 2025 survey; waste management plan and Nav Rules book added 2026 (nav station desk / under the AIS transceiver)
 - [ ] First aid / medical kit
