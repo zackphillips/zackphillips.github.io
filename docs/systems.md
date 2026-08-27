@@ -195,11 +195,12 @@ the May 2025 engine survey).
 > insulating covers. Required per 33 CFR 183.420 to prevent accidental shorting.
 
 ### Battery Monitor
-- **Make/Model**: [e.g., Victron BMV-712]
+- **Make/Model**: Victron (specific model unconfirmed) — reports to SignalK over Bluetooth LE via [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble), not wired.
 - **Location**: Nav station / helm
 - Monitors house bank state of charge, voltage, current draw, and time-to-empty.
 - The main DC panel also carries **analog voltage and amperage gauges**.
 - SignalK reports SOC and draw — visible on [mermug.com](https://mermug.com).
+- The same BLE plugin also reads a second Victron device labeled "bimini" — this is the solar charge controller that replaced the original Blue Sky Solar Boost in June 2026 (see the Solar row below), not a second panel.
 
 ### Charging Sources
 
@@ -207,7 +208,7 @@ the May 2025 engine survey).
 |--------|----------|-------|
 | Shore power charger | 40+ A | Xantrex Tru-Charge 12 V |
 | Engine alternator | 120 A | Balmar 12 V, belt driven |
-| Solar | 120 W | One Kyocera KC120-1 panel. Original Blue Sky Solar Boost controller replaced June 2026 (loose ground wire was causing poor output). Measured 380 Wh/day (~30 W avg) with new controller. Bimini shade reduces output significantly |
+| Solar | 120 W | One Kyocera KC120-1 panel. Original Blue Sky Solar Boost controller replaced June 2026 (loose ground wire was causing poor output) — almost certainly the "bimini" charge controller now reporting to SignalK over BLE via [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble) (see Battery Monitor above). Measured 380 Wh/day (~30 W avg) with the new controller; bimini shade reduces output significantly. |
 | Wind gen | — | Air-X Marine — **control panel missing** |
 
 ### Shore Power
@@ -336,10 +337,16 @@ ball valves and fittings, resolving that finding.
 - **Current display unit**: Furuno RDP-143
 - **Location**: Helm / nav station
 - Charts loaded: —
+- Interfaces with SignalK over NMEA 0183 serial (`/dev/ttyOP_furuno`, 4800 baud, checksum validated); SignalK uses it as the fallback next-waypoint/course source behind its own `courseApi`.
 - **Open item**: the sonar function does not fully work. Investigate and trace.
 - **Note**: the bearing readout is derived from GPS course-over-ground (COG),
   not from a compass sensor — it reads incorrectly when stationary. A compass
   input is needed for accurate bearing and radar overlay on charts.
+
+### GPS
+- **Primary**: NMEA 0183 GPS "puck" over serial (`/dev/ttyOP_gpspuck`, 4800 baud, checksum validated, overrides timestamp).
+- SignalK's actual failover order for position/COG/SOG is: NMEA 2000 GPS sources (chained) → the GPS puck → derived-data as a last resort.
+- **Open item**: the antenna offset is recorded twice in the SignalK config and the two disagree — vessel identity data says 7.95 m from bow / 0.45 m from centerline, while the GNSS sensor settings say 6.5 m / 1.7 m. Needs a physical measurement to reconcile.
 
 ### VHF Radio
 - **Make/Model**: Icom IC-M504 at the nav station, plus an Icom RAM mic in the cockpit
@@ -361,7 +368,9 @@ ball valves and fittings, resolving that finding.
 
 ### Depth Sounder
 - **Current**: Garmin GNX depth/speed triducer, installed 2026 — depth and
-  paddle-wheel speed both working as expected.
+  paddle-wheel speed both working as expected. Reaches SignalK over the
+  NMEA 2000 network (`can0`, via canboatjs); SignalK's `signalk-derived-data`
+  plugin additionally computes depth-below-keel (variant 2) from the raw reading.
 - **Superseded**: TackTick MN-100-2 solar depth display and two Robertson
   Dateline depth/speed displays — the Robertson displays never powered up
   when tested; replaced rather than repaired.
@@ -378,11 +387,15 @@ ball valves and fittings, resolving that finding.
 
 ### Wind Instruments
 - **Current**: Garmin GNX wind instrument, installed 2026 — working as
-  expected.
+  expected. Reaches SignalK over the NMEA 2000 network (`can0`).
 - **Superseded**: TackTick (MN-100-2 solar wind display) — displayed
   apparent wind angle/speed, converted to true wind via boat speed/COG; had
   not been proven reliable. Original instrument chain was TackTick sensors →
-  wire → Micronet wireless → dash displays.
+  wire → Micronet wireless → dash displays. The Tacktick wireless pack is
+  still wired into SignalK over NMEA 0183 serial (`/dev/ttyOP_tacktick`,
+  4800 baud), but SignalK is explicitly configured to **ignore** its
+  wind/nav sentences (RMC/RMB/GLL/MWV/VWR) — so the hardware is present but
+  not the active source.
 - **Dependency**: the masthead wind sensor uses the depth sensor's
   accelerometer to correct for sensor angle. If the depth sensor is removed
   or repositioned, wind readings will be incorrect (diagnosed July 2026 —
@@ -395,7 +408,12 @@ ball valves and fittings, resolving that finding.
 - **Type**: [below-decks ram / wheel drive]
 - **Control head location**: helm
 - Provides the rudder angle indication (there is no separate rudder position indicator).
+- SignalK's Simrad v2 autopilot API is enabled (device ID 204, converter 115, Simrad ID 4); commands are routed out to the autopilot over `seatalkOut`.
 - Limits: [max sea state / wind it's trusted in]
+
+### Environmental Sensor (I2C)
+- **Make/Model**: BME280 temperature/humidity/pressure sensor, I2C bus 1, address `0x77`.
+- Bridged into SignalK via a local SignalK-over-UDP connection (`localhost:4123`); feeds the inside temp/humidity/pressure paths used by the SignalK alarm zones (see [SignalK Configuration](signalk.md)).
 
 ### Compass
 - **Make/Model**: Ritchie 4"
@@ -410,10 +428,10 @@ ball valves and fittings, resolving that finding.
   integrate with non-Furuno displays.
 
 ### SignalK Server
-- Running on Raspberry Pi at `192.168.8.50:3000`.
-- Aggregates all NMEA/instrument data onboard.
+- Running on Raspberry Pi at `192.168.8.50:3000`, no SSL, token-based security.
+- Aggregates all NMEA 2000 / NMEA 0183 / Bluetooth instrument data onboard.
 - Feeds the KIP display (main instrument dashboard) and the mermug.com tracker.
-- See the [mermug.com tracker repo](https://github.com/zackphillips/zackphillips.github.io) for the telemetry pipeline.
+- See [SignalK Configuration](signalk.md) for the full breakdown of data sources, sensors and enabled plugins, and the [mermug.com tracker repo](https://github.com/zackphillips/zackphillips.github.io) for the telemetry pipeline.
 
 ---
 
@@ -646,13 +664,15 @@ aft accommodation with queen berth and hanging locker.
 ## 11. Vessel Data / Automation
 
 ### SignalK
-- **Server**: Raspberry Pi at `192.168.8.50:3000`
-- Aggregates NMEA 2000 / NMEA 0183 instruments.
+- **Server**: Raspberry Pi at `192.168.8.50:3000`, no SSL, token-based security, mDNS disabled.
+- Aggregates NMEA 2000 / NMEA 0183 / Bluetooth LE instruments.
 - Web interface at `http://192.168.8.50:3000` on local vessel network.
+- See [SignalK Configuration](signalk.md) for the full plugin/data-source breakdown — data sources, derived data, alarms, automation, charts, weather, cloud integrations.
 
 ### KIP (Instrument Display)
-- Running on [tablet / dedicated display] at helm / nav station.
+- Running on [tablet / dedicated display] at helm / nav station; launched via `signalk-app-dock`'s local kiosk alongside Freeboard-SK (autostart) and the admin Settings page.
 - Connects to SignalK server; shows real-time wind, speed, depth, heading.
+- Its SQLite-backed history series is registered as a SignalK History API provider.
 
 ### Freeboard (Boat Software)
 - Capabilities confirmed working (July 2026): bottom depth display,
