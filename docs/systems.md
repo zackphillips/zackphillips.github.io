@@ -275,8 +275,8 @@ Main cabin AC electrical panel.
 | Fill deck plates | Port aft side deck and starboard mid side deck, marked for water |
 | Tank vents | Port and starboard hull sides, below the fill pipes |
 
-The galley also has a **Whale mechanical foot pump for salt water** — currently
-disconnected and non-operational.
+The galley also has a **Whale mechanical foot pump for salt water**. It was
+replaced in June 2026 and is fully operational — use it for washing dishes.
 
 Clean the freshwater inline strainer regularly; it has been found fouled.
 Sanitize the tankage and delivery system periodically.
@@ -632,7 +632,7 @@ three mainsail reef points.**
   connections). Replacement selected: **Isotherm 2017 Compact Classic**
   air-cooled system (~$1,100, Defender.com) — evaporator dimensions fit the
   existing fridge box. **Not yet installed.**
-- **Sink**: stainless steel, separate basins. Pressure water from the ParMax pump; a Whale foot pump for salt water is fitted but disconnected.
+- **Sink**: stainless steel, separate basins. Pressure water from the ParMax pump; a Whale foot pump for salt water was replaced June 2026 and is fully operational — use it for washing dishes.
 
 ### Accommodation Layout
 
