@@ -73,14 +73,19 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   the forward head discharge seacock seizure noted in the May 2025 survey.
 - Zincs/anodes replaced.
 
-### 2026-02-XX | Engine | Shaft seal replaced
+### 2026-02-05 | Engine | Shaft seal replaced
 - New Pro PSS dripless shaft seal installed (full unit replacement, beyond
-  the clamp serviced in June 2025). Change order to the Feb 2026 haul-out
-  above.
+  the clamp serviced in June 2025) — propeller and shaft coupling removed,
+  engine alignment checked/verified before and after, seal procured and
+  installed, shaft and coupling reconnected. Change order CO1 to the Feb
+  2026 haul-out above (WO #514953, Svendsen's Bay Marine), time & materials
+  @ $160/hr, estimated **$1,596.00**. Approved/signed 2026-02-06.
 
-### 2026-02-XX | Hull/Deck | Topsides buffed and waxed
-- Single-step buff and wax, waterline to deck edge. Change order to the
-  Feb 2026 haul-out above.
+### 2026-02-05 | Hull/Deck | Topsides buffed and waxed
+- Single-step buff and wax to topsides, waterline to deck edge, using super
+  duty rubbing compound and electric buffer. Change order CO2 to the Feb
+  2026 haul-out above (WO #514953), **$1,602.14**. Approved/signed
+  2026-02-06.
 
 ### 2026-XX-XX | Safety | Survey safety/deficiency items resolved
 - Steering-quadrant shelf: round latches added — fully resolved.
@@ -206,7 +211,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Oil cooler | — | — | Replaced June 2025 |
 | Freshwater pump | — | — | Pump, gaskets, and thermostat replaced June 2025 |
 | Exhaust hose (muffler to transom) | Vetus | — | Replaced June 2025 |
-| Shaft seal | PSS dripless | — | Rear clamp replaced (316 SS) June 2025; full unit (new Pro PSS) replaced February 2026 |
+| Shaft seal | PSS dripless | — | Rear clamp replaced (316 SS) June 2025; full unit (new Pro PSS) replaced 2026-02-05 (CO1, $1,596.00 T&M, WO #514953) |
 | Thru-hulls (2× head overboard, engine raw water intake) | 1-1/4" ball valves | — | Replaced February 2026 |
 | Battery charger | Xantrex Tru-Charge 12 V | — | 40+ A |
 | Inverter | Outbound | — | 1500 W |
