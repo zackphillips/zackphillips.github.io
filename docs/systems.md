@@ -166,8 +166,22 @@ the Mopeka smartphone app or on KIP at the nav station.
 
 ### Fuel Transfer Pump
 ITT Jabsco 12 V diaphragm pump, plumbed between the reserve and main tank
-(located and photographed May 2025). Activated by a manually operated switch
-behind the cabinet in the aft berth, near the reserve tank fuel flow valve.
+(located and photographed May 2025). Activated by a manually operated
+switch just below the reserve tank, in the same cabinet behind the aft
+berth as the reserve tank fuel flow valve.
+
+### Transferring Fuel (Reserve → Main)
+
+**Never overfill the main tank.** As a rule of thumb, don't transfer fuel
+until the main tank gauge at the helm is in the red.
+
+1. With the engine **off**, open the inline valve so its tab is aligned with the hose.
+2. Turn on the switch at the tank base to run the transfer pump.
+3. Watch the reserve tank level as it transfers — shine a flashlight in
+   laterally to check it. **Never let the level go below the bottom
+   line (tape) on the tank**, to avoid pulling debris into the engine.
+4. Once the transfer is complete, turn off the switch first, then close
+   the valve on the hose.
 
 ### Bleeding the Engine
 If air enters the fuel system (e.g., ran tank dry):
