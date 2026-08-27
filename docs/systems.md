@@ -40,7 +40,7 @@ Anything still shown as `—` or in [brackets] has not been confirmed aboard yet
 | Beam | 13' 06" |
 | Draft | 7' 07" |
 | Displacement | 18,220 lb |
-| Ballast | 6,263 lb external lead keel, bolted to hull |
+| Ballast | 6,263 lb external lead keel, bolted to hull (Keiser Marine's May 2025 survey described this as a single-piece **cast iron** ballast of 6,283 lb — differs on both material and weight; not reconciled) |
 | Gross / net tonnage | 17 / 15 |
 | Hull | FRP — solid below the waterline, end-grain balsa core above |
 | Deck / superstructure | Cored FRP, white gelcoat, textured non-skid; deck and house molded seamlessly |
@@ -57,14 +57,16 @@ Anything still shown as `—` or in [brackets] has not been confirmed aboard yet
 - Monitor and tune as necessary; the tangs have only ever been observed from deck level.
 
 ### Last Rig Inspection
-Date: — (none on record)
-Inspector: —
-Notes: No rig inspection is on record. A full inspection by a qualified rigger is recommended before going offshore.
+Date: May 8, 2025
+Inspector: Jeff Keiser, SAMS/AMS — Keiser Marine, Sausalito, CA (pre-purchase survey, visual only — mast ascended, no haul-out disassembly)
+Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sighted. Internal chain-plate connections were not accessible, so chain-plate integrity could not be fully assessed — no water intrusion or corrosion staining seen at the visible portions. Light surface corrosion on shrouds/stays, rated serviceable. This remains the only rig inspection on record; a full haul-out inspection by a qualified rigger (including chain plates) is still recommended before going offshore.
 
 ### Known Hull Findings
-- **Keel trailing edge separated from the hull** — set on the hard with the keel just touching, torque the keel bolts, re-caulk the keel/hull seam.
-- **Loose stanchion bases leaking below**, and a missing transom lifeline.
-- No moisture-meter testing has been done. No osmotic blisters have been found; percussion sounding revealed no delamination on the accessible wetted surfaces.
+- **Keel trailing edge separation — resolved February 2026.** Repaired at Svendsen's Bay Marine: reefed out the failed seam, cleaned out debris, applied flexible marine adhesive compound, and torqued the keel bolts. (Previously: set on the hard with the keel just touching; torque bolts, re-caulk seam.)
+- **Loose stanchion bases leaking below**, and a missing transom lifeline. Gelcoat cracks at the bow pulpit stanchions have since been patched (some remain); the loose base fittings themselves are not confirmed addressed.
+- **Cockpit teak decking weathered, sealant failing** (May 2025 survey) — still unresolved.
+- **~1/8" play in the rudder shaft bearing** (May 2025 survey) — still unresolved; survey recommended monitoring at haul-out and renewing if play increases.
+- No moisture-meter testing has been done. No osmotic blisters have been found; percussion sounding revealed no delamination on the accessible wetted surfaces (one small blister was noted on the starboard quarter ~1 ft below the waterline in the May 2025 survey).
 
 ---
 
@@ -78,7 +80,7 @@ Notes: No rig inspection is on record. A full inspection by a qualified rigger i
 | HP | 46 metric HP @ 3400 RPM |
 | Cylinders | Four (4), in line |
 | Fuel | Diesel |
-| Hours | 6,376 as of March 2025 (analog meter) |
+| Hours | 6,376 as of March 2025 (analog meter); 6,381.7 per Bay Marine Diesel's May 2025 survey |
 | Raw water pump impeller | — (carry a spare) |
 | Oil spec | — |
 | Oil capacity | — |
@@ -120,8 +122,8 @@ Audible and visual alarms with analog gauges at the helm.
 - The **shaft coupler is not safety-wired**. Apply corrosion inhibitor to the coupler bolts.
 - Mild surface corrosion on the pulleys and motor mounts.
 - The strut's **cutless bearing shows slight wear** — monitor, replace as needed.
-- The dripless shaft seal and dripless rudder seals should be monitored frequently.
-- No mechanical inspection of the engine has been done; one is recommended.
+- The dripless shaft seal and dripless rudder seals should be monitored frequently. The PSS shaft seal unit was fully replaced February 2026 (see changelog); rudder seals not separately addressed.
+- **Last engine survey**: May 2025, Marty Chin (Bay Marine Diesel) — 14 findings (exhaust hose, engine-box foam insulation, shaft-seal clamp, Racor filter assembly, mount corrosion, oil cooler, start battery, oil dipstick, freshwater pump). All actionable findings were addressed by the mechanic in June 2025 — see changelog. No further mechanical inspection has been done since.
 
 ---
 
@@ -160,7 +162,7 @@ If air enters the fuel system (e.g., ran tank dry):
 - Fill before offshore passages; diesel stores well.
 - Treat with biocide if boat sits unused for extended periods.
 - Log fuel additions in the [engine hours log / ship's log].
-- **Open item**: the Racor sight bowl has no approved heat shield. Install a metallic shield meeting ASTM F1201.
+- **Open item**: the Racor sight bowl has no approved heat shield. Install a metallic shield meeting ASTM F1201. (The Racor filter assembly and tank-to-engine hose were updated June 2025 — unconfirmed whether the heat-shielded bowl variant was installed as part of that fix.)
 
 ---
 
@@ -173,9 +175,12 @@ System voltage: **12 V DC**.
 | Bank | Type | Capacity | Location |
 |------|------|----------|----------|
 | House bank | 4-D AGM | — Ah | [location] |
-| Start battery | Group 27 sealed lead acid | — Ah | [location] |
+| Start battery | AGM (site previously listed Group 27 sealed lead acid — corrected) | — Ah | [location] |
 
 **Switching**: five energizing solenoid switches in the aft cabin.
+
+The start battery was replaced in June 2025 (health had dropped to 59% per
+the May 2025 engine survey).
 
 > **Open item**: the engine start battery terminals have no protective
 > insulating covers. Required per 33 CFR 183.420 to prevent accidental shorting.
@@ -284,7 +289,8 @@ have integral showers whose sumps drain via two Jabsco Par diaphragm pumps.
 
 - **Automatic bilge pump**: one Jabsco 12 V diaphragm pump, [location], float switch — activates automatically.
 - **Manual bilge pump**: Whale Gulper hand pump, [location].
-- **No high-water alarm is installed** — highly recommended.
+- **No high-water alarm is installed** — highly recommended. (Smoke detectors added in 2026 double as CO2 alarms, but there is still no dedicated high-water bilge alarm or combustible-gas/LPG detector confirmed.)
+- Both bilge float switches confirmed working in 2026 (previously not both functional). The bilge pump breaker now feeds a master auto/manual/off selector switch, located below/left of the breaker — **leave in AUTO**.
 - **Test weekly**: run the pump, confirm dewatering, clear any debris.
 - **Inspection**: check bilge level on every departure; some accumulation (rain, condensation) is normal. The bilges are gelcoated; limber holes were clear when last checked.
 
@@ -293,11 +299,16 @@ have integral showers whose sumps drain via two Jabsco Par diaphragm pumps.
 Raw water seacocks are **bronze alloy ball valve** type; drainage through-hulls
 are bronze. Self-bailing deck drains at the port and starboard aft cockpit corners.
 
+The forward head discharge seacock was found seized closed in the May 2025
+survey. In February 2026 both head-system overboard thru-hulls and the
+engine raw water intake thru-hull were replaced outright with new 1-1/4"
+ball valves and fittings, resolving that finding.
+
 | Location | Purpose | Normally |
 |----------|---------|---------|
-| Starboard under steps | Engine raw water intake | Open underway, closed at anchor/dock |
+| Starboard under steps | Engine raw water intake (replaced Feb 2026) | Open underway, closed at anchor/dock |
 | Forward [location] | Head intake | Open when using head |
-| [location] | Head discharge | Open when using head (offshore) |
+| [location] | Head discharge ×2 (both replaced Feb 2026) | Open when using head (offshore) |
 | [location] | Cockpit drains | Open |
 | [location] | Other | — |
 
@@ -332,16 +343,21 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 - Verify targets visible on chartplotter on departure.
 
 ### Depth Sounder
-- **Displays**: TackTick MN-100-2 solar depth display; two Robertson Dateline depth/speed displays
-- **Open item**: neither Robertson display powers up when tested.
+- **Current**: Garmin GNX depth/speed triducer, installed 2026 — depth and
+  paddle-wheel speed both working as expected.
+- **Superseded**: TackTick MN-100-2 solar depth display and two Robertson
+  Dateline depth/speed displays — the Robertson displays never powered up
+  when tested; replaced rather than repaired.
 - Transducer location: [under hull, forward/aft of keel]
 - **Offset**: keel is 7' 07" below the waterline — displayed depth is from the transducer, not the keel. [Confirm the transducer offset.]
 - Alarm: set for 10 ft below keel minimum.
 
 ### Wind Instruments
-- **Masthead unit**: TackTick (MN-100-2 solar wind display)
-- Displays: apparent wind angle, apparent wind speed; converts to true wind via boat speed/COG.
-- The TackTick depth, speed and wind displays have not been proven.
+- **Current**: Garmin GNX wind instrument, installed 2026 — working as
+  expected.
+- **Superseded**: TackTick (MN-100-2 solar wind display) — displayed
+  apparent wind angle/speed, converted to true wind via boat speed/COG; had
+  not been proven reliable.
 - Note any calibration offsets here when determined.
 
 ### Autopilot
@@ -379,28 +395,34 @@ Inventory as last recorded in March 2025.
 | Horseshoe ring (Type IV throwable) | 1 | Stern rail | — |
 | Handheld flares | — | [location] | In date as of March 2025 |
 | Rocket parachute flares | — | [location] | In date as of March 2025 |
+| Electronic flare (battery-powered, USCG-approved) | 1 | Port lazarette | Added 2026 |
 | Smoke signals | — | [location] | [date] |
-| EPIRB — ACR Global-Fix 406 | 1 | [location] | Not tested; **re-register under new ownership** |
+| EPIRB — ACR Global-Fix 406 | 1 | [location] | Registration updated 2026, registered to Christopher Lalau Keraly; battery replaced 2026 but **not yet tested** |
 | PLB(s) | — | [location] | — |
-| Fire extinguishers — Type ABC-I, 2.5 lb dry chemical | 3 | [locations] | **No current inspection tags** |
+| Fire extinguishers — Type ABC-I, 2.5 lb dry chemical | 4+ | Quarterberth, forward cabin, 2× food storage | Recalled Kidde unit (quarterberth) replaced 2026; 2 more added — now satisfies the 3-minimum requirement for this vessel length |
 | MOB gear — Lalizas Life Link retrieval sling + inflatable MOB system | 1 ea. | [location] | — |
-| CO detector | 1 (aft accommodation) | Aft cabin | Test sounded; **none forward** |
+| Smoke/CO2 detectors | 2+ | Aft cabin; port side, main cabin near speaker | Added/expanded 2026 — all units double as CO2 alarms |
 | Life raft | Reported aboard | Not sighted | **Currently out of service** |
 | Ditch bag | 1 | [location] | Contents current: [date] |
 | Tethers / jacklines | — | [location] | — |
 | Harnesses | — | [location] | — |
+
+**Note (May 2025 survey conflict):** the pre-purchase survey stated "all
+appropriate navigational lights are present... and powered up" — this
+contradicts the "nav lights removed/uninstalled" Known Gap below. Not
+reconciled; verify in person.
 
 ### Known Gaps
 
 Required or strongly recommended equipment that is **not** aboard:
 
 - [ ] Sound signalling device — required
-- [ ] Port and starboard navigation lights — removed/uninstalled
-- [ ] Smoke detectors in the accommodation spaces
-- [ ] Trash disposal placard, written waste management plan, USCG Nav Rules handbook
+- [ ] Port and starboard navigation lights — removed/uninstalled (see survey conflict note above)
+- [x] ~~Smoke detectors in the accommodation spaces~~ — added 2026, see Safety Equipment table
+- [x] ~~Trash disposal placard, written waste management plan, USCG Nav Rules handbook~~ — trash placard was already aboard per the May 2025 survey; waste management plan and Nav Rules book added 2026 (nav station desk / under the AIS transceiver)
 - [ ] First aid / medical kit
 - [ ] Fixed fire suppression system in the engine space
-- [ ] Bilge high-water alarm
+- [ ] Bilge high-water alarm (dedicated alarm — distinct from the bilge float switches, confirmed working 2026)
 - [ ] Emergency steering system
 - [ ] Searchlight
 - [ ] Boarding / swim ladder
@@ -439,9 +461,11 @@ emergencies and for added anchoring options.
 ### Windlass
 - **Make/Model**: Quick Eagle, 12 V / 1400 W
 - **Type**: electric, foot switches at bow
-- **Breaker**: nav station, [circuit label]
+- **Breaker**: nav station, [circuit label]. Was found unsecured to the hull
+  in the May 2025 survey — since secured.
 - **Manual override**: [location]
 - **Note**: do not run more than [X] minutes continuously; allow to cool.
+- Serviced May 2026.
 
 ---
 
@@ -454,9 +478,9 @@ none of the sails have been inspected by a sailmaker.
 
 | Sail | Type | Area (sq ft) | Condition | Notes |
 |------|------|-------------|-----------|-------|
-| Main | Battened | — | Serviceable | Set in a stack pack on the boom; runs on a Tides Marine Strong Track |
+| Main | Battened | — | Serviceable | Set in a stack pack on the boom; runs on a Tides Marine Strong Track. Clew eyelet (UV-damaged, sits outside the bag) snapped while racing and was replaced, July 2026; 2 minor rips repaired same time |
 | Headsail #1 (genoa) | 120% | — | Serviceable | Profurl roller furling |
-| Headsail #2 (working jib) | 100% | — | — | — |
+| Headsail #2 (working jib) | 100% | — | New (2026) | Replaces the jib whose Sunbrella UV cover had chafed 2–4 ft above the deck (May 2025 survey finding) |
 | Staysail | — | — | — | — |
 | Drifter | — | — | — | — |
 | Spinnaker #1 | Symmetric, 3/4 oz | — | — | — |
@@ -472,7 +496,7 @@ clutches hold under hand weight). Halyards are braided with no wire
 splices. Boom vang is a mechanical spring-loaded strut. **Slab reefing with
 three mainsail reef points.**
 
-**Winches** — all Lewmar: two 54ST-2 (primaries), three 44ST-2, one 44ST-2 **12 V electric** (halyard winch).
+**Winches** — all Lewmar: two 54ST-2 (primaries), three 44ST-2, one 44ST-2 **12 V electric** (halyard winch). All six serviced March 2026.
 
 | Line | Purpose | Color/ID | Clutch/Cleat |
 |------|---------|----------|-------------|
