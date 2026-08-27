@@ -463,7 +463,12 @@ Required or strongly recommended equipment that is **not** aboard:
 ### Primary Anchor
 - **Type**: Manson Supreme (plough)
 - **Weight**: 45 lb
-- **Rode**: galvanized chain plus approximately 3/8" stranded nylon line — [confirm chain and rode lengths]
+- **Rode**: 150 ft G4 5/16" galvanized chain spliced to 450 ft of 5/8"
+  three-strand nylon rope (rode ordered/delivered 2026-08-26 — see
+  [changelog](changelog.md)); previously listed as ~3/8" stranded nylon
+  line of unconfirmed length
+- **Hardware**: anchor swivel and HS galvanized bow shackle (5/16", 2,500 lb
+  WLL), added with the rode above
 - **Platform**: stainless fairlead anchor roller chute at the stem
 - **Storage**: bow anchor locker; chain locker drains overboard at the port lower bow
 
