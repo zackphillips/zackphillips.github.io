@@ -206,6 +206,10 @@ keeps the old fixed-cadence behavior instead. Each cycle:
 5. Updates `data/telemetry/positions_index.json` with the new position; purges entries
    older than `POSITION_RETENTION_HOURS = 24`.
 6. Regenerates today's GPX track from that index (past days are written once).
+   Days are grouped by `TRACK_TIMEZONE` (the vessel's home-port local time,
+   from `timezone` in `info.yaml`, default `America/Los_Angeles`), not by
+   the raw UTC date in each timestamp — grouping by UTC date would split a
+   voyage at UTC midnight, i.e. mid-afternoon on the US west coast.
 7. Commits and pushes all changed files.
 
 Every state file is written via `utils.atomic_write_text()` (temp file + fsync +

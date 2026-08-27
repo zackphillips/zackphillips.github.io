@@ -9,6 +9,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import requests
 
@@ -47,6 +48,17 @@ PRIVACY_EXCLUSION_ZONES: list[tuple[float, float, float]] = list(
     _FALLBACK_PRIVACY_ZONES
 )
 
+# Fallback local timezone (home port) used to decide which calendar day a
+# track/voyage belongs to. All stored timestamps are UTC; grouping tracks by
+# the raw UTC date splits a single sailing day at UTC midnight, which lands
+# in the middle of the afternoon on the US west coast. Grouping by local
+# calendar day instead keeps a voyage together and splits it at local
+# midnight, when the boat is normally at anchor.
+_FALLBACK_TIMEZONE_NAME = "America/Los_Angeles"
+
+# Active timezone — populated from info.yaml by load_vessel_data().
+TRACK_TIMEZONE: ZoneInfo = ZoneInfo(_FALLBACK_TIMEZONE_NAME)
+
 
 def _load_privacy_zones(
     vessel_data: dict[str, Any],
@@ -64,6 +76,20 @@ def _load_privacy_zones(
         except (KeyError, TypeError, ValueError):
             continue
     return zones or list(_FALLBACK_PRIVACY_ZONES)
+
+
+def _load_timezone(vessel_data: dict[str, Any]) -> ZoneInfo:
+    """Parse the vessel's home-port timezone from info.yaml; fall back to default."""
+    name = vessel_data.get("timezone")
+    if isinstance(name, str) and name:
+        try:
+            return ZoneInfo(name)
+        except (ZoneInfoNotFoundError, ValueError):
+            print(
+                f"Warning: unknown timezone '{name}' in vessel config; "
+                f"using {_FALLBACK_TIMEZONE_NAME}"
+            )
+    return ZoneInfo(_FALLBACK_TIMEZONE_NAME)
 
 
 def _haversine_m(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -94,12 +120,13 @@ def _is_position_private(lat: float, lon: float) -> bool:
 
 def load_vessel_data() -> dict:
     """Load vessel configuration from YAML or JSON file."""
-    global PRIVACY_EXCLUSION_ZONES
+    global PRIVACY_EXCLUSION_ZONES, TRACK_TIMEZONE
     try:
         # Try to load config (will try YAML first, then JSON)
         vessel_data = load_vessel_info("data/vessel/info.yaml")
         if vessel_data:
             PRIVACY_EXCLUSION_ZONES = _load_privacy_zones(vessel_data)
+            TRACK_TIMEZONE = _load_timezone(vessel_data)
 
             # Construct SignalK URL from vessel data
             signalk = vessel_data.get("signalk", {})
@@ -520,8 +547,13 @@ def _update_track_files(
     Past days are written once and never overwritten. Today's file is always
     refreshed so it accumulates points throughout the sailing day. Existing
     GPX files from earlier backfills are never deleted.
+
+    Days are grouped by TRACK_TIMEZONE (the vessel's home-port local time),
+    not by the raw UTC date in each timestamp — all stored timestamps are
+    UTC, and slicing the UTC date directly splits a voyage at UTC midnight,
+    which falls in the middle of the afternoon on the US west coast.
     """
-    today_utc = datetime.now(UTC).strftime("%Y-%m-%d")
+    today_local = datetime.now(UTC).astimezone(TRACK_TIMEZONE).strftime("%Y-%m-%d")
 
     by_day: dict[str, list[dict[str, Any]]] = {}
     for entry in all_entries:
@@ -534,7 +566,10 @@ def _update_track_files(
         # every other zone straight into the published GPX files.
         if _is_position_private(lat, lon):
             continue
-        date_str = ts[:10]
+        entry_dt = _parse_timestamp(ts)
+        if entry_dt is None:
+            continue
+        date_str = entry_dt.astimezone(TRACK_TIMEZONE).strftime("%Y-%m-%d")
         by_day.setdefault(date_str, []).append(
             {
                 "timestamp": ts,
@@ -553,7 +588,7 @@ def _update_track_files(
 
     for date_str, points in by_day.items():
         gpx_path = tracks_dir / f"{date_str}.gpx"
-        if gpx_path.exists() and date_str != today_utc:
+        if gpx_path.exists() and date_str != today_local:
             existing.setdefault(date_str, _make_track_meta(date_str, points))
             continue
         gpx_xml = _build_day_gpx(points, date_str, vessel_name)
