@@ -371,16 +371,19 @@ function localDayKey(dateish) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Base map tiles for the current theme. Shared by the main map, the theme
-// switcher, and the per-voyage mini maps so they never drift apart.
-function tileLayerForTheme(isDark) {
-  return isDark
-    ? L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '© OpenStreetMap contributors © CARTO'
-      })
-    : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
-      });
+// Base map tiles. Shared by the main map, the theme switcher, and the
+// per-voyage mini maps so they never drift apart.
+//
+// We used to swap in CARTO's free "dark_all" tiles for dark themes, but
+// CARTO now requires an API key for that endpoint — it doesn't fail, it
+// just serves a tile watermarked "API KEY REQUIRED" instead of the map.
+// Rather than take on a key to manage, we stick to the always-free OSM
+// tiles for every theme and fake the dark look with a CSS filter on the
+// tile pane (see the `.leaflet-tile-pane` rule in styles.css).
+function tileLayerForTheme() {
+  return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  });
 }
 
 function _gpxLinkForDay(localDay) {
@@ -831,7 +834,7 @@ function renderVoyageMiniMap(item, entry) {
     // The card sits in a scrolling list; wheel-zoom would hijack the scroll.
     scrollWheelZoom: false,
   });
-  tileLayerForTheme(isDarkTheme(document.documentElement.getAttribute('data-theme'))).addTo(mini);
+  tileLayerForTheme().addTo(mini);
   L.polyline(latlngs, { color: DAY_TRACK_COLORS[0], weight: 3, opacity: 0.9 }).addTo(mini);
   L.circleMarker(latlngs[0], { radius: 5, color: '#22c55e', fillColor: '#22c55e', fillOpacity: 1, weight: 1 })
     .bindTooltip('Start', { direction: 'top' }).addTo(mini);
@@ -2014,8 +2017,7 @@ async function loadData() {
       if (!map) {
         map = L.map('map').setView([lat, lon], 13);
         window.mermugMap = map; // exposed for tabs.js to call invalidateSize() on tab switch
-        const isDark = isDarkTheme(document.documentElement.getAttribute('data-theme'));
-        tileLayerForTheme(isDark).addTo(map);
+        tileLayerForTheme().addTo(map);
         marker = L.marker([lat, lon]).addTo(map);
 
         // Privacy exclusion zone indicator — mirrors PRIVACY_EXCLUSION_ZONES in Python.
@@ -3458,7 +3460,7 @@ function updateChartsForTheme(theme) {
       }
     });
 
-    tileLayerForTheme(isDark).addTo(map);
+    tileLayerForTheme().addTo(map);
 
     // Re-add marker if it exists
     if (marker) {
