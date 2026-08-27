@@ -122,6 +122,19 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   rounding a buoy while racing; replaced. Two minor rips elsewhere in the
   sail repaired at the same time.
 
+### 2026-08-26 | Ground Tackle | New anchor rode, swivel & shackle ordered and delivered
+- 450 ft of 5/8" three-strand nylon rope — $819.00 (450 × $1.82/ft).
+- 150 ft of G4 5/16" galvanized chain — $1,195.50 (150 × $7.97/ft).
+- Rope-to-chain splice — $60.00.
+- Whip & burn (rope end finish) — $15.00.
+- Anchor swivel — $210.82, plus $20.00 freight.
+- HS galvanized bow shackle, 5/16", 2,500 lb WLL — $8.26.
+- Labor: package for shipment and install swivel, 1.25 hrs @ $169/hr —
+  $211.25.
+- **Order total: $2,539.83.**
+- Confirms/updates the primary anchor rode length and materials — see
+  [Ground Tackle](systems.md#8-ground-tackle).
+
 <!-- Add entries above this line, newest first -->
 
 ---
@@ -190,6 +203,10 @@ Part numbers still need to be filled in as parts are ordered.
 | Drive belt | — | — | |
 | Alternator | Balmar 12 V / 120 A | — | Belt driven |
 | Anchor | Manson Supreme, 45 lb | — | |
+| Anchor rode — chain | G4 5/16" galvanized | — | 150 ft, ordered/delivered 2026-08-26 |
+| Anchor rode — rope | 5/8" three-strand nylon | — | 450 ft, spliced to chain; ordered/delivered 2026-08-26 |
+| Anchor swivel | — | — | Ordered/delivered 2026-08-26 |
+| Bow shackle | HS galvanized, 5/16", 2,500 lb WLL | — | Ordered/delivered 2026-08-26 |
 | Anchor windlass | Quick Eagle 12 V | — | 1400 W; serviced May 2026 |
 | Winches | Lewmar 54ST-2 ×2, 44ST-2 ×3, 44ST-2 electric ×1 | — | All six serviced March 2026 |
 | Mainsail track | Tides Marine Strong Track | — | |
