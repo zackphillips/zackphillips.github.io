@@ -265,9 +265,9 @@ Main cabin AC electrical panel.
 
 | Spec | Value |
 |------|-------|
-| Tank capacity | ~156 gallons across **three** tanks |
+| Tank capacity | 140 gallons across **two** tanks, 70 gallons each (corrected — the May 2025 survey's three-tank, ~156-gallon figure was wrong; the "centerline aft under the cockpit" tank does not exist) |
 | Tank material | Polyethylene and integral FRP |
-| Tank locations | Aft to port under the aft berth; centerline aft under the cockpit; forward to starboard under the berth |
+| Tank locations | Aft to port under the aft berth; forward to starboard under the berth |
 | Pump | ParMax 3.5, 12 V demand type, with an inline strainer |
 | Accumulator | Aquapress coated steel |
 | Plumbing | PEX tubing and rubber hose |
