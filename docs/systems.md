@@ -272,17 +272,59 @@ Main cabin AC electrical panel.
 | Accumulator | Aquapress coated steel |
 | Plumbing | PEX tubing and rubber hose |
 | Hot water heater | Raritan, 6 gal, marine grade **120 V element + engine heat exchanger**. **Watch item**: pressure relief valve may not release properly — after motoring stretches, water heats up and the hose can blow off, dumping water into the bilge (diagnosed August 2025). The hose uses half-inch tubing which may not be an exact fit for the likely-metric original fitting |
-| Fill deck plates | Port aft side deck and starboard mid side deck, marked for water |
+| Fill deck plates | **Forward tank**: starboard side deck, just forward of the mast — opens by hand, no tool needed. **Aft tank**: port side deck near the grill, marked "Water" — needs a tool from the drawer below the nav station |
 | Tank vents | Port and starboard hull sides, below the fill pipes |
-
-The galley also has a **Whale mechanical foot pump for salt water**. It was
-replaced in June 2026 and is fully operational — use it for washing dishes.
 
 Clean the freshwater inline strainer regularly; it has been found fouled.
 Sanitize the tankage and delivery system periodically.
 
-### Freshwater Conservation
-Typical consumption underway: ~[X] gallons/day. Fill at marina before any offshore passage.
+### Filling Freshwater Tanks
+
+Filling is straightforward — both tanks have an overflow valve — but try
+not to overfill them. Watch the tank level in SignalK while filling, since
+some water does overflow into the bilge if you go too far.
+
+- **Forward tank**: inlet is on the starboard side deck, just forward of
+  the mast. Opens by hand — no tool needed.
+- **Aft tank**: inlet is on the port side deck near the grill, marked
+  "Water." Needs a tool kept in the drawer below the nav station.
+  **Do NOT put fresh water into the diesel fill** — check the marking
+  before opening either one.
+
+We typically fill both tanks from the hose at the dock, and only do it
+occasionally.
+
+### Freshwater Tank Level Sensing
+
+Both freshwater tanks use non-visual resistive float sensors sized to their
+depth. Levels appear on the KIP dashboard at the nav station, and are
+available via SignalK at `tanks.freshWater.0.currentLevel` (aft tank) and
+`tanks.freshWater.1.currentLevel` (forward tank).
+
+The senders are read by the ActiSense EMU-1 and broadcast over NMEA 2000,
+but a limitation in the EMU-1 means it broadcasts **1/100th of the correct
+value**. SignalK corrects for this via the calibration plugin, which also
+computes the current tank volume — see [SignalK Configuration](signalk.md#calibration-raw-nmea-2000-tank-sender-curves).
+
+### Switching Freshwater Tanks
+
+Water tanks are switched using handles in a panel near the bow, inside the
+water heater compartment, under the couch base cushion closest to the
+stove. The handles are labeled **"F"** (forward) and **"A"** (aft). Exactly
+one valve should always be open (vertical) and the other closed
+(horizontal).
+
+**To switch tanks:**
+1. Turn off the fresh water pump breaker.
+2. Rotate both handles to select the other tank.
+3. Open both the galley sink and the aft head sink (cold water) so they can flow freely.
+4. Turn the fresh water pump breaker back on. It will need to pump air out of the line — wait for the water flow to become consistent.
+5. Close both faucets and wait for the pump to stop running. Once it stops, you're done.
+
+### Salt Water Foot Pump
+
+The galley has a **Whale mechanical foot pump for salt water**. It was
+replaced in June 2026 and is fully operational — use it for washing dishes.
 
 ### Head (Marine Toilet)
 
@@ -298,7 +340,7 @@ have integral showers whose sumps drain via two Jabsco Par diaphragm pumps.
 | Holding tank capacity | — gallons |
 | Tank vents | Plumbed overboard at the port and starboard hull sides |
 | Pump-out deck fitting | [location] |
-| Overboard discharge | Diaphragm pump with Y-valves — confirm legal (offshore only outside 3 nm) |
+| Overboard discharge | **Forward tank**: diaphragm pump with Y-valve — confirm legal (offshore only outside 3 nm). **Aft tank**: overboard discharge removed — see Aft Macerator below; pump-out only |
 | Aft head joker valve | Replaced August 2025 |
 
 **Operating the head:**
@@ -307,6 +349,30 @@ have integral showers whose sumps drain via two Jabsco Par diaphragm pumps.
 3. Close inlet seacock when done at anchor or in sensitive areas.
 
 **Pump-out**: at marina pump-out station or via [portable pump-out service].
+
+### Aft Macerator — Removed
+
+The aft holding tank's macerator pump has been **removed**; that tank now
+discharges by pump-out only.
+
+- The original macerator was defective and leaked raw black water into the
+  bilge for roughly a year before it was removed in **January 2026**.
+- Its hoses and pump are gone; the tank-side outlet and the seacock are
+  both **capped**.
+- The seacock itself was **replaced in February 2026** as part of removing
+  the macerator (see [Seacocks & Through-Hulls](#seacocks-through-hulls)).
+- Pumping out the aft tank at a pump-out station still works fine.
+- The macerator switch in the aft head (leftmost of the three switches) is
+  now **dead — it does nothing**.
+
+### Black Water Tank Level Sensing
+
+The two physical **TankWatch indicators do not work** — they're
+disconnected and should not be trusted for either holding tank. **Pump out
+both tanks frequently** rather than relying on a level reading.
+
+A Mopeka ultrasonic sensor on the aft tank separately reports to SignalK
+(`blackwater.stern`) — see [SignalK Configuration](signalk.md#sensors-instrumentation) — but this is independent of, and not a fix for, the broken TankWatch indicators.
 
 ### Bilge
 
@@ -325,13 +391,15 @@ are bronze. Self-bailing deck drains at the port and starboard aft cockpit corne
 The forward head discharge seacock was found seized closed in the May 2025
 survey. In February 2026 both head-system overboard thru-hulls and the
 engine raw water intake thru-hull were replaced outright with new 1-1/4"
-ball valves and fittings, resolving that finding.
+ball valves and fittings, resolving that finding. The aft head discharge
+seacock has since been capped — see [Aft Macerator — Removed](#aft-macerator-removed).
 
 | Location | Purpose | Normally |
 |----------|---------|---------|
 | Starboard under steps | Engine raw water intake (replaced Feb 2026) | Open underway, closed at anchor/dock |
 | Forward [location] | Head intake | Open when using head |
-| [location] | Head discharge ×2 (both replaced Feb 2026) | Open when using head (offshore) |
+| [location] | Forward head discharge (replaced Feb 2026) | Open when using head (offshore) |
+| [location] | Aft head discharge (replaced Feb 2026) | **Capped** — macerator removed, tank pumped out only |
 | [location] | Cockpit drains | Open |
 | [location] | Other | — |
 
