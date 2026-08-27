@@ -135,9 +135,18 @@ no blower to run.
 ## Anchoring
 
 ### Gear
-- Primary: **45 lb Manson Supreme** on galvanized chain + ~3/8" stranded nylon rode, on the bow roller chute *(lengths TBD)*
+- Primary: **55 lb Manson Supreme** on galvanized chain + ~3/8" stranded nylon rode, on the bow roller chute *(lengths TBD)* — upgraded from 44 lb after a shackle failure in August 2025
 - Secondary: **none aboard** — a spare anchor and rode is recommended
 - Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker at nav station
+
+### Anchoring Lessons Learned
+- **Inspect the shackle** before every anchoring — the original shackle
+  failed in 20-knot winds (August 2025), resulting in loss of the anchor.
+  The chain was fine; the shackle was the single point of failure.
+- In swells, use **more rope scope** — rope is elastic and absorbs shock
+  loads better than chain alone.
+- Keel draft is 7' 07" — verify depth at anchorage (e.g. Angel Island) is
+  sufficient before committing.
 
 ### Procedure
 1. Select anchorage — check chart for depth, swinging room, bottom type (sand/mud preferred).
@@ -204,8 +213,8 @@ no blower to run.
 4. Diagnose: fuel, overheating, raw water, belt failure.
 
 ### Fire
-There is **no fixed fire suppression system** in the engine space. Three portable
-ABC dry chemical extinguishers (2.5 lb) are aboard.
+There is **no fixed fire suppression system** in the engine space. Four or more
+portable ABC dry chemical extinguishers (2.5 lb) are aboard (updated 2026).
 
 1. **Engine compartment**: shut off fuel at the tank ball valve, discharge an extinguisher through the smallest opening you can — do **not** open the hatch and feed it air.
 2. **Cabin**: evacuate, deploy extinguisher, prepare to abandon ship if needed.
