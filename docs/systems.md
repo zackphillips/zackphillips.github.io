@@ -122,7 +122,7 @@ Audible and visual alarms with analog gauges at the helm.
 - The **shaft coupler is not safety-wired**. Apply corrosion inhibitor to the coupler bolts.
 - Mild surface corrosion on the pulleys and motor mounts.
 - The strut's **cutless bearing shows slight wear** — monitor, replace as needed.
-- The dripless shaft seal and dripless rudder seals should be monitored frequently. The PSS shaft seal unit was fully replaced February 2026 (see changelog); rudder seals not separately addressed.
+- The dripless shaft seal and dripless rudder seals should be monitored frequently. The PSS shaft seal unit was fully replaced 2026-02-05 (see changelog); rudder seals not separately addressed.
 - **Last engine survey**: May 2025, Marty Chin (Bay Marine Diesel) — 14 findings (exhaust hose, engine-box foam insulation, shaft-seal clamp, Racor filter assembly, mount corrosion, oil cooler, start battery, oil dipstick, freshwater pump). All actionable findings were addressed by the mechanic in June 2025 — see changelog. No further mechanical inspection has been done since.
 
 ---
