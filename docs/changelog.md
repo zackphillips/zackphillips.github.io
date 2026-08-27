@@ -278,6 +278,17 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   Defender.com). Evaporator element dimensions line up with existing
   fridge box.
 
+### 2026-08-26 | Ground Tackle | New anchor rode, swivel & shackle ordered and delivered
+- 450 ft of 5/8" three-strand nylon rope.
+- 150 ft of G4 5/16" galvanized chain.
+- Rope-to-chain splice.
+- Whip & burn (rope end finish).
+- Anchor swivel (plus freight).
+- HS galvanized bow shackle, 5/16", 2,500 lb WLL.
+- Labor: package for shipment and install swivel.
+- Confirms/updates the primary anchor rode length and materials — see
+  [Ground Tackle](systems.md#8-ground-tackle).
+
 <!-- Add entries above this line, newest first -->
 
 ---
@@ -347,6 +358,10 @@ Part numbers still need to be filled in as parts are ordered.
 | Drive belt | — | — | |
 | Alternator | Balmar 12 V / 120 A | — | Belt driven |
 | Anchor | Manson Supreme, 55 lb | — | Upgraded from 44 lb after shackle failure Aug 2025 (~$1,200, West Marine) |
+| Anchor rode — chain | G4 5/16" galvanized | — | 150 ft, ordered/delivered 2026-08-26 |
+| Anchor rode — rope | 5/8" three-strand nylon | — | 450 ft, spliced to chain; ordered/delivered 2026-08-26 |
+| Anchor swivel | — | — | Ordered/delivered 2026-08-26 |
+| Bow shackle | HS galvanized, 5/16", 2,500 lb WLL | — | Ordered/delivered 2026-08-26 |
 | Anchor windlass | Quick Eagle 12 V | — | 1400 W; serviced May 2026 |
 | Winches | Lewmar 54ST-2 ×2, 44ST-2 ×3, 44ST-2 electric ×1 | — | All six serviced March 2026 |
 | Mainsail track | Tides Marine Strong Track | — | |
