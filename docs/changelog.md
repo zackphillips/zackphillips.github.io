@@ -123,15 +123,13 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   sail repaired at the same time.
 
 ### 2026-08-26 | Ground Tackle | New anchor rode, swivel & shackle ordered and delivered
-- 450 ft of 5/8" three-strand nylon rope — $819.00 (450 × $1.82/ft).
-- 150 ft of G4 5/16" galvanized chain — $1,195.50 (150 × $7.97/ft).
-- Rope-to-chain splice — $60.00.
-- Whip & burn (rope end finish) — $15.00.
-- Anchor swivel — $210.82, plus $20.00 freight.
-- HS galvanized bow shackle, 5/16", 2,500 lb WLL — $8.26.
-- Labor: package for shipment and install swivel, 1.25 hrs @ $169/hr —
-  $211.25.
-- **Order total: $2,539.83.**
+- 450 ft of 5/8" three-strand nylon rope.
+- 150 ft of G4 5/16" galvanized chain.
+- Rope-to-chain splice.
+- Whip & burn (rope end finish).
+- Anchor swivel (plus freight).
+- HS galvanized bow shackle, 5/16", 2,500 lb WLL.
+- Labor: package for shipment and install swivel.
 - Confirms/updates the primary anchor rode length and materials — see
   [Ground Tackle](systems.md#8-ground-tackle).
 
