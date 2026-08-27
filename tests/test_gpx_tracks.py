@@ -486,3 +486,52 @@ def test_update_track_files_index_has_correct_metadata(tmp_path):
     assert track["date"] == "2026-04-11"
     assert track["points"] == 5
     assert track["file"] == "tracks/2026-04-11.gpx"
+
+
+def test_update_track_files_groups_by_local_day_not_utc_day(tmp_path):
+    """A single local sailing afternoon that straddles UTC midnight must stay
+    one track, not split into two (see TRACK_TIMEZONE / _load_timezone).
+
+    16:00 and 19:00 in America/Los_Angeles (the default TRACK_TIMEZONE, UTC-7
+    under PDT in April) both fall on 2026-04-11 local time, but their UTC
+    equivalents land on two different UTC calendar dates.
+    """
+    entries = [
+        _make_index_entry("2026-04-11T23:00:00+00:00"),  # 16:00 local Apr 11
+        _make_index_entry("2026-04-12T02:00:00+00:00"),  # 19:00 local Apr 11
+    ]
+    tracks_dir = tmp_path / "tracks"
+    index_path = tmp_path / "tracks_index.json"
+
+    with patch("scripts.update_signalk_data.datetime") as mock_dt:
+        mock_dt.now.return_value = datetime(2026, 4, 20, 12, 0, tzinfo=UTC)
+        mock_dt.fromisoformat = datetime.fromisoformat
+        usd._update_track_files(entries, tracks_dir, index_path, "S.V. Test")
+
+    assert (tracks_dir / "2026-04-11.gpx").exists()
+    assert not (tracks_dir / "2026-04-12.gpx").exists()
+
+    data = json.loads(index_path.read_text())
+    assert len(data["tracks"]) == 1
+    assert data["tracks"][0]["date"] == "2026-04-11"
+    assert data["tracks"][0]["points"] == 2
+
+
+# ---------------------------------------------------------------------------
+# _load_timezone
+# ---------------------------------------------------------------------------
+
+
+def test_load_timezone_defaults_when_unset():
+    tz = usd._load_timezone({})
+    assert str(tz) == usd._FALLBACK_TIMEZONE_NAME
+
+
+def test_load_timezone_uses_configured_name():
+    tz = usd._load_timezone({"timezone": "Pacific/Auckland"})
+    assert str(tz) == "Pacific/Auckland"
+
+
+def test_load_timezone_falls_back_on_unknown_name():
+    tz = usd._load_timezone({"timezone": "Not/A_Real_Zone"})
+    assert str(tz) == usd._FALLBACK_TIMEZONE_NAME
