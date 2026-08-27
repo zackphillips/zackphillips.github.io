@@ -59,6 +59,106 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   - Freshwater pump, gaskets, and thermostat replaced; front of engine
     repainted where antifreeze had gotten under the paint.
 
+### 2025-05-17 | Other | Vessel delivered to South Beach Harbor
+- First sail as new owners; motoring practice with surveyor Jeff.
+- Three co-owners: Zack Phillips, Christopher "Krug" Lalau Keraly, and
+  Brandon "Bug".
+
+### 2025-05-24 | Navigation | Navigation light compliance issue identified
+- Masthead tri-color light (red/green/white) is legal for sailing at night
+  but **not legal for motoring** — under power, the red/green lights must be
+  ~8 ft below the steaming light, so the combo atop the mast does not comply.
+- Bow-mounted red/green navigation light needed for motoring compliance.
+- Reference: Chapman's Piloting, Seamanship and Small Boat Handling.
+
+### 2025-05-25 | Engine | Reserve fuel tank and transfer pump located
+- Reserve diesel tank (30 gal, port cockpit storage locker) investigated.
+- Transfer pump between reserve and main tank located and photographed.
+- Fuel flow valve found in the cabinet aft of the aft berth.
+- Propane shutoff switch located in the port cabinet behind the helm.
+
+### 2025-05-28 | Electrical | Bow navigation light wire found degraded
+- Wire powering the bow navigation lights is degraded — cannot be stripped
+  without breaking the copper (tested with auto-stripper). Will need to run
+  new wire; drilling may be required (needs marina permission).
+
+### 2025-06-01 | Navigation | Boat touched bottom briefly
+- Boat briefly grounded on mud during a sail. No damage observed.
+
+### 2025-06-03 | Electronics | VHF radio diagnosed — receives but does not transmit
+- Radio check called on Ch 16 with no response; handheld VHF used as backup.
+- Mast-mounted antenna suspected as the issue.
+
+### 2025-06-03 | Electronics | Autopilot confirmed working
+- Simrad AP22 used extensively during sailing; working well.
+
+### 2025-06-03 | Electronics | Radar confirmed working; system fully proprietary
+- Furuno radar tested and working. Current display unit: **Furuno RDP-143**.
+- System is fully proprietary — cannot integrate with non-Furuno displays.
+- A compass is needed for radar overlay on charts (bearing derived from GPS
+  COG only, not from a compass sensor — reads incorrectly when stationary).
+
+### 2025-06-03 | Electronics | Wind instruments and SSB radio assessed
+- TackTick wireless wind instruments aboard but not working properly.
+- SSB radio (Icom IC-706MKIIG) identified at nav station bottom unit.
+- Wiring behind the nav station described as a "ratsnest" — previous owner(s)
+  added cables without removing old ones.
+
+### 2025-06-15 | Other | Cowl vents purchased and installed
+
+### 2025-06-16 | Plumbing | Head waste pipe clogged
+- Aft head waste pipe clogged. Drain snake purchased to attempt clearing.
+
+### 2025-06-20 | Electrical | 12V socket wired under nav table
+- New 12V socket installed under the table behind the drawer, connected to
+  an existing breaker circuit.
+
+### 2025-06-20 | Electronics | NMEA / instrument system architecture documented
+- Instrument chain: Raymarine TackTick sensors → wire → Micronet wireless →
+  dash displays.
+- Raymarine TackTick T122 converter identified as needed to make instrument
+  data available on the NMEA network.
+- OpenCPN on Raspberry Pi with spare monitor at nav station planned as a
+  navigation computer.
+- Yacht Devices Python Gateway YDPG-01 identified for NMEA conversion.
+
+### 2025-08-07 | Plumbing | Aft toilet joker valve replaced
+- Krug replaced the joker valve on the aft head.
+
+### 2025-08-07 | Electrical | Fridge compressor fan found broken
+- Adler Barbour refrigeration compressor fan discovered broken.
+
+### 2025-08-07 | Electrical | Bilge pump confirmed working — switch was off
+- Bilge pump was never broken; the switch had been left off.
+
+### 2025-08-10 | Plumbing | Hot water tank pressure relief issue diagnosed
+- Water found in bilge — hot water tank not releasing pressure properly,
+  causing a hose to blow off after motoring (engine heats the water tank).
+- Pressure relief valve located and exercised; it does release water.
+- Hose connection uses half-inch tubing which may not be an exact fit
+  (likely metric tubing on the original fitting).
+
+### 2025-08-11 | Software | ESP32 LoRa boards acquired for bilge water sensors
+- 2× Heltec ESP32 LoRa V3 development boards purchased for fore/aft
+  water-height sensors. Natively supported by SignalK. Stored under rug in
+  stern box.
+
+### 2025-08-24 | Software | BNO055 IMU acquired for swell measurement
+- Adafruit BNO055 absolute orientation sensor (IMU, SPI interface)
+  purchased for measuring swell.
+
+### 2025-08-29 | Other | First polar diagram from real sailing data
+- First true polar diagram generated from race analysis data.
+
+### 2025-08-31 | Ground Tackle | Anchor shackle failure; anchor lost; 55 lb replacement purchased
+- Anchor shackle failed while anchored in 20-knot winds at a beach;
+  boat stopped pointing into the wind, alerting crew.
+- Chain inspected and confirmed fine — the shackle was the failure point.
+- Original anchor (~44 lb) lost and could not be retrieved (murky water).
+- Replacement: **55 lb Manson Supreme** purchased from West Marine,
+  approximately **$1,200**.
+- Contributing factor: may have needed more rope scope to absorb swell.
+
 ### 2026-02-10 | Hull/Deck | Bottom paint, keel seam repair, thru-hull replacement
 - Haul-out at Svendsen's Bay Marine (Richmond, CA); Quote/Est #26-0026,
   WO #514953.
@@ -111,16 +211,72 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 
 ### 2026-03-XX | Rigging | All six winches serviced
 
+### 2026-04-27 | Hull/Deck | Hull professionally cleaned
+
+### 2026-04-29 | Ground Tackle | Windlass ball bearing failure
+- A ball bearing shattered and fused itself to the windlass shaft.
+- Bearing had to be cut off the shaft. Anchor was being hauled by hand
+  until this was resolved.
+
 ### 2026-05-XX | Ground Tackle | Windlass serviced
+- Serviced following the April 2026 ball bearing failure.
+
+### 2026-06-11 | Electrical | New solar charge controller installed
+- New solar charge controller installed, replacing the original.
+- Additional electrical work done to provide sufficient power to the
+  Raspberry Pi and its frame.
+- Electrical components aboard labeled.
+
+### 2026-06-12 | Electrical | Solar panel output measured; loose ground wire fixed
+- Previous poor solar performance traced to a **loose ground wire** on the
+  old controller — "the reading would triple when I shook the wire."
+- With the new controller and ground fixed, panel produced **380 Wh** total
+  over one day (~30 W average over 12 hours of sun).
+- Partial shade from the Bimini significantly reduces output.
+
+### 2026-06-27 | Sails | Mainsail ripped during Friday Night Sailing race
+- Mainsail ripped during an FNS (Friday Night Sailing) race; retired
+  from the race immediately.
+
+### 2026-07-07 | Electronics | Wind sensor 70 kt false reading diagnosed and fixed
+- Masthead wind sensor was erroneously reading 70 knots.
+- Root cause: the depth sensor (which contains an accelerometer) had been
+  pulled out and was sitting sideways. The wind sensor uses the depth
+  sensor's accelerometer to correct for sensor angle — with the depth
+  sensor sideways, the angle correction produced incorrect readings.
+- Reinstalling the depth sensor in its proper position fixed the wind
+  readings immediately.
+
+### 2026-07-07 | Electrical | Steaming light and spreader lights repaired
+- Both lights had been "wired in the most sketchy way (not by us)" — now
+  repaired and working.
 
 ### 2026-07-XX | Sails | New jib purchased
 - Replaces the roller-furling jib whose Sunbrella UV cover had chafed
   2–4 ft above the deck (May 2025 survey finding).
 
-### 2026-07-XX | Sails | Mainsail clew eyelet replaced; 2 rips repaired
-- Clew eyelet (UV-damaged — sits outside the sail bag/cover) snapped
-  rounding a buoy while racing; replaced. Two minor rips elsewhere in the
-  sail repaired at the same time.
+### 2026-07-15 | Sails | Mainsail removed for repair
+- Mainsail removed and dropped off at sailmaker (~July 17) for repair of
+  the race-day rip, the UV-damaged clew eyelet, and two additional minor
+  rips.
+
+### 2026-07-23 | Sails | Repaired mainsail reinstalled
+- Zack reinstalled the repaired mainsail solo.
+- Repairs: clew eyelet replaced, two minor rips repaired, race-day rip
+  repaired.
+
+### 2026-07-16 | Electrical | Refrigeration controller tested — working
+- Refrigeration controller tested and confirmed working as expected.
+
+### 2026-07-17 | Electrical | Refrigeration compressor diagnosed as failed
+- Adler Barbour compressor (original 1994 equipment) diagnosed as shot.
+- Old refrigerant has been banned by the EPA; evaporator plate replacement
+  requires bleeding the refrigerant line (professional technician needed).
+- Quick-disconnect pins exist on the refrigerant connections.
+- Replacement selected: **Isotherm 2017 Compact Classic** air-cooled
+  refrigeration component system, approximately **$1,100** (from
+  Defender.com). Evaporator element dimensions line up with existing
+  fridge box.
 
 <!-- Add entries above this line, newest first -->
 
@@ -144,7 +300,7 @@ Reference table for planned maintenance intervals. Update "Last Done" column aft
 
 | Item | Interval | Last Done | Notes |
 |------|----------|-----------|-------|
-| Engine oil & filter | 100 hrs or annually | — | |
+| Engine oil & filter | 100 hrs or annually | — | **Overdue** — annual maintenance identified as needed Aug 2026 |
 | Raw water impeller | Annually (spring) | — | Carry spare aboard |
 | Transmission fluid | 2 years | — | |
 | Fuel filter (primary) | Annually | — | |
@@ -167,6 +323,7 @@ Reference table for planned maintenance intervals. Update "Last Done" column aft
 | Flare expiration | Check annually | 2026 | Battery-powered USCG-approved electronic flare added (port lazarette) |
 | Life jacket inspection | Annually | — | |
 | Bilge pump test | Monthly | 2026 | Both float switches confirmed working; new auto/manual/off master switch installed (leave in AUTO) |
+| Hull cleaning (diver) | Quarterly or as needed | April 2026 | |
 | Engine raw water strainer | Monthly or as needed | — | |
 
 ---
@@ -189,7 +346,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Engine oil spec | — | — | |
 | Drive belt | — | — | |
 | Alternator | Balmar 12 V / 120 A | — | Belt driven |
-| Anchor | Manson Supreme, 45 lb | — | |
+| Anchor | Manson Supreme, 55 lb | — | Upgraded from 44 lb after shackle failure Aug 2025 (~$1,200, West Marine) |
 | Anchor windlass | Quick Eagle 12 V | — | 1400 W; serviced May 2026 |
 | Winches | Lewmar 54ST-2 ×2, 44ST-2 ×3, 44ST-2 electric ×1 | — | All six serviced March 2026 |
 | Mainsail track | Tides Marine Strong Track | — | |
@@ -215,12 +372,12 @@ Part numbers still need to be filled in as parts are ordered.
 | Thru-hulls (2× head overboard, engine raw water intake) | 1-1/4" ball valves | — | Replaced February 2026 |
 | Battery charger | Xantrex Tru-Charge 12 V | — | 40+ A |
 | Inverter | Outbound | — | 1500 W |
-| Solar panel | Kyocera KC120-1 | — | 120 W, Blue Sky Solar Boost controller |
+| Solar panel | Kyocera KC120-1 | — | 120 W; original Blue Sky Solar Boost controller replaced June 2026. Measured 380 Wh/day (~30 W avg over 12 hrs). Bimini shade reduces output |
 | Wind generator | Air-X Marine | — | Control panel missing |
 | Freshwater pump | ParMax 3.5, 12 V | — | Demand type |
 | Water heater | Raritan | — | 6 gal, 120 V + engine heat exchanger |
 | Heads | Jabsco manual ×2 | — | Type III MSD |
 | Bilge pump | Jabsco 12 V diaphragm | — | Manual backup: Whale Gulper |
-| Refrigeration | Adler Barbour 12 V | — | Top and front load |
+| Refrigeration | Adler Barbour 12 V | — | Top and front load. **Compressor failed** (original 1994); fan also broken. Replacement: Isotherm 2017 Compact Classic (~$1,100, Defender.com) — not yet installed |
 | Stove | Tesco 3-burner propane w/ oven | — | |
 | Steering | Edson rack and pinion | — | |
