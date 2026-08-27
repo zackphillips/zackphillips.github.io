@@ -74,7 +74,7 @@ no blower to run.
 
 > If raw water flow does not appear within 30 seconds of startup, shut down immediately and check the strainer and seacock.
 
-**Emergency shutdown**: pull the engine stop cable at the helm.
+**Emergency shutdown**: pull black handle below engine control panel on the port side, then turn key off.
 
 ---
 

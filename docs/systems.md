@@ -61,7 +61,7 @@ Anything still shown as `—` or in [brackets] has not been confirmed aboard yet
 ### Standing Rigging
 - **Type**: 1×19 stainless **rod** rigging throughout, with open stainless turnbuckles, stainless toggles, clevis and cotter pins.
 - **Chainplates**: internal stainless rod-type, mounted to steel toggles embedded in the FRP.
-- **Reported replaced**: 2015 (corrected from a previous "2012" record — matches the May 2025 survey's estimate of ~10 years old at the time).
+- **Reported replaced**: 2015.
 - Monitor and tune as necessary; the tangs have only ever been observed from deck level.
 - **No running backstay rigging** was received from the previous owner.
 
@@ -72,7 +72,7 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 
 ### Known Hull Findings
 - **Keel trailing edge separation — resolved February 2026.** Repaired at Svendsen's Bay Marine: reefed out the failed seam, cleaned out debris, applied flexible marine adhesive compound, and torqued the keel bolts. (Previously: set on the hard with the keel just touching; torque bolts, re-caulk seam.) Note: a keel-hull gap on the Beneteau First 42 has been [researched and determined normal](https://forums.sailboatowners.com/threads/beneteau-first-42-keel-hull-gap-normal.117295/) for the model.
-- **Loose stanchion bases leaking below**, and a missing transom lifeline. Gelcoat cracks at the bow pulpit stanchions have since been patched (some remain); the loose base fittings themselves are not confirmed addressed.
+- **Stanchion bases — tightened, aft head leak resolved.** Loose stanchion bases have been tightened all around the boat. The leaks near the aft head were resolved by removing the stanchion, adding marine sealant to the hole in the deck, and reinstalling it; this required removing the bathroom fiberglass wall panels and is likely to resolve the issue entirely. A missing transom lifeline is still outstanding. Gelcoat cracks at the bow pulpit stanchions have since been patched (some remain).
 - **Cockpit teak decking weathered, sealant failing** (May 2025 survey) — still unresolved.
 - **~1/8" play in the rudder shaft bearing** (May 2025 survey) — still unresolved; survey recommended monitoring at haul-out and renewing if play increases.
 - No moisture-meter testing has been done. No osmotic blisters have been found; percussion sounding revealed no delamination on the accessible wetted surfaces (one small blister was noted on the starboard quarter ~1 ft below the waterline in the May 2025 survey).
@@ -90,10 +90,10 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 | Cylinders | Four (4), in line |
 | Fuel | Diesel |
 | Hours | 6,376 as of March 2025 (analog meter); 6,381.7 per Bay Marine Diesel's May 2025 survey |
-| Raw water pump impeller | — (carry a spare) |
-| Oil spec | — |
-| Oil capacity | — |
-| Coolant type | — |
+| Raw water pump impeller | Yanmar 129470-42532 (12-blade rubber, 5/8" 12-spline shaft, 2.25"/57mm dia.) — carry a spare |
+| Oil spec | Factory spec SAE 20/30 (single-grade, per Yanmar service manual); commonly run today as SAE 15W-40, API CD/CF diesel oil, since single-grade 20/30 is largely obsolete |
+| Oil capacity | ~7.0 L (7.4 US qt) total including filter |
+| Coolant type | Ethylene glycol antifreeze/water mix (cast-iron/aluminum-safe); heat exchanger fresh-water side alone holds ~6.7 L per the service manual — total system capacity including the block is unconfirmed |
 | Drive | Direct shaft drive |
 | Transmission | Kanzaki KBW20 marine gear, 2.62:1, s/n 7735 |
 | Shaft | 1‑1/8" stainless steel, dripless seal, cast bronze I-beam strut |
@@ -116,16 +116,10 @@ Centerline, aft of the saloon, between the galley (starboard) and the aft head (
 
 ### Starting & Stopping
 See [Operations Guide — Engine Start Procedure](operations.md#engine-start-procedure).
-**Emergency shutdown**: pull cable at the helm.
+**Emergency shutdown**: pull black handle below engine control panel on the port side, then turn key off.
 
 ### Raw Water Cooling Circuit
-Closed reservoir (heat exchanger) cooling with a raw-water-cooled exhaust. Raw water enters via a bronze ball-valve seacock → plastic strainer with sight glass → impeller pump → heat exchanger → exhaust mixing riser → flexible hose → fiberglass surge pipe and muffler → transom discharge. **Check exhaust flow within 30 seconds of start.**
-
-### Engine Alarms
-Audible and visual alarms with analog gauges at the helm.
-- **High temp**: [alarm sound / light — describe]
-- **Low oil pressure**: [describe]
-- **Alternator fault**: [describe]
+Closed reservoir (heat exchanger) cooling with a raw-water-cooled exhaust. Raw water enters via a bronze ball-valve seacock → plastic strainer with sight glass → impeller pump → heat exchanger → exhaust mixing riser → flexible hose → fiberglass surge pipe and muffler → transom discharge. **Check exhaust water flow within 30 seconds of start.**
 
 ### Watch Items
 - The **shaft coupler is not safety-wired**. Apply corrosion inhibitor to the coupler bolts.
@@ -156,16 +150,34 @@ Audible and visual alarms with analog gauges at the helm.
 | Shut-off / manifold valves | Ball valves at the tanks. Reserve tank fuel flow valve is in the **cabinet aft of the aft berth** |
 | Transfer pump | ITT Jabsco 12 V (between reserve and main tank; located and photographed May 2025) |
 | Fill deck plate | Port aft side deck, marked for diesel |
-| Tank vent | Port hull side, below the fill |
+| Tank vent | Port hull side, below the fill — **both tanks share this one vent** |
 
-### Fuel Gauge
-At the engine instrument panel in the cockpit. Accuracy: not verified — [note if gauge proves unreliable].
+### Fuel Gauges
+
+**Main tank**: the gauge below the engine control panel is a resistive float
+sensor within the primary tank. It is reasonably accurate and can be read by
+turning the key on. The same sender is also read by the ActiSense EMU-1 and
+broadcast over the NMEA 2000 network, where it's calibrated in SignalK to the
+tank volume; this reading can also be seen in KIP via the nav station PC.
+
+**Reserve tank**: no built-in gauge. An ultrasonic Mopeka sensor puck is
+attached to the base of the reserve tank instead. Its level can be read via
+the Mopeka smartphone app or on KIP at the nav station.
+
+### Fuel Transfer Pump
+ITT Jabsco 12 V diaphragm pump, plumbed between the reserve and main tank
+(located and photographed May 2025). Activated by a manually operated switch
+behind the cabinet in the aft berth, near the reserve tank fuel flow valve.
 
 ### Bleeding the Engine
 If air enters the fuel system (e.g., ran tank dry):
 1. [Describe bleed procedure for this specific engine]
 2. Bleed Racor first — open bowl petcock, pump primer until fuel flows.
 3. Bleed injection pump at [location].
+
+**TODO**: this procedure hasn't actually been exercised — walk through and
+confirm/fill in the steps above (including the injection pump bleed
+location) the next time the tank genuinely runs dry.
 
 ### Fuel Management
 - Fill before offshore passages; diesel stores well.
