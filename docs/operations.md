@@ -74,7 +74,7 @@ no blower to run.
 
 > If raw water flow does not appear within 30 seconds of startup, shut down immediately and check the strainer and seacock.
 
-**Emergency shutdown**: pull the engine stop cable at the helm.
+**Emergency shutdown**: pull black handle below engine control panel on the port side, then turn key off.
 
 ---
 
@@ -177,6 +177,41 @@ no blower to run.
 6. Shut down engine: key to OFF; close raw water seacock.
 7. Connect shore power; confirm charging light on battery monitor.
 8. Log hours on the engine hour meter.
+
+---
+
+## Fueling
+
+**Never overfill.** Read levels before you start, and watch both tanks
+closely while fueling — don't walk away.
+
+1. Dock on the **port side** (both fuel deck plates are on the port aft side deck).
+2. Turn off the engine.
+3. **Before doing anything else**, note the current fuel levels:
+   - **Reserve tank**: shine a flashlight into the tank from the side to read the level.
+   - **Main tank**: turn the engine key **ON** (engine off) and read the fuel gauge.
+   - Total capacity is 40 gal (main) + 30 gal (reserve) = 70 gal, but when
+     both tanks are at their low marks, generally add **no more than ~28
+     gallons total** — both tanks retain a reserve margin even when "low."
+4. Open both fuel deck fills, aft port side:
+   - **Main tank**: star-style opener.
+   - **Reserve tank**: two-pronged opener (same type as the water tank fill) — marked "Diesel".
+   - Both opener tools live in the **top drawer under the nav station**.
+   - **⚠️ Do NOT put diesel in the water tank fill right next to these** — check the marking before opening either one.
+5. The tank vent is always open — nothing to do there before fueling.
+6. **Fuel the main tank first.** Insert the pump nozzle fully and watch for
+   backflow (it can happen — if it does, stop and restart the pump). **Do
+   not lock the pump handle and walk away — watch it continuously.**
+   Periodically turn the ignition key on to check the gauge. Fill until the
+   gauge reads full.
+7. **Fuel the reserve tank next.** Double-check you are not fueling the
+   water tank. Have a second person go to the cabinet behind the aft berth
+   and watch the tank level with a flashlight. Fill only to the top marker
+   tape — not above it.
+8. Watch the vent (hull side, below the tank inlets) for fuel escaping
+   while fueling. **Stop immediately** if fuel appears at the vent.
+9. When finished, close both tank fills and return both opener tools to
+   the nav station drawer.
 
 ---
 

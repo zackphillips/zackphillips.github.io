@@ -72,7 +72,7 @@ ID 4. Output goes to `seatalkOut`.
 
 ## Calibration (raw NMEA 2000 tank-sender curves)
 
-- Freshwater tanks 0 & 1: capacity fixed at 0.265 m³ each (~70 gal), level curve 0→0%, 0.1→100%
+- Freshwater tanks 0 & 1 (aft/forward): capacity fixed at 0.265 m³ each (~70 gal), level curve 0→0%, 0.1→100% — the `0.1→100%` breakpoint (rather than `1.0`) corrects for a limitation in the ActiSense EMU-1 reading these resistive float senders: it broadcasts 1/100th of the true level over NMEA 2000, see [Systems §5](systems.md#5-plumbing-freshwater)
 - Fuel tank 0: capacity 0.151 m³ (~40 gal), near-linear level curve
 - Live well: capacity curve, 0→0, 0.001→100%
 - Port engine shaft RPM correction table (raw sender Hz → true prop shaft RPM), e.g. 108.2 Hz → 48.33 RPM
