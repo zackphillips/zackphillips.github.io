@@ -1110,8 +1110,14 @@ and marine rail hardware:
 | Adafruit SGP30 | Air quality (TVOC / eCO2) | Aboard (see `info.yaml`) |
 
 ### Raspberry Pi
+- **Model**: Raspberry Pi 4, 16 GB
 - **Location**: [nav station / electrical compartment]
-- **OS**: Raspberry Pi OS (bookworm or later)
+- **OS**: OpenPlotter (built on Raspberry Pi OS, bookworm or later)
+- **HAT**: MacArthur HAT, with the following hardwired connections:
+  - TackTick — NMEA 0183 I/O
+  - Furuno — NMEA 0183 I/O
+  - NMEA 2000 bus
+  - One-wire temperature sensors: fridge, freezer, interior (nav station), exterior (stbd side panel)
 - **Services**: `mermug-website.service`, `mermug-polars.service`,
   `signalk-gitpush.service` (timer)
 - Manage via `make status`, `make show-logs-website`
