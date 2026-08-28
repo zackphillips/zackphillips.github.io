@@ -719,19 +719,21 @@ Required or strongly recommended equipment that is **not** aboard:
 ## 8. Ground Tackle
 
 ### Primary Anchor
-- **Type / history**: the anchor has been replaced **twice**:
-  1. **August 2025** — the original ~44 lb anchor was lost when its shackle
-     failed in 20-knot winds (chain was inspected and confirmed fine; the
-     shackle was the failure point). Replaced with a **55 lb Manson Supreme
-     (plough)**, ~$1,200, West Marine.
-  2. **May 2026** — per gear-purchase records, a further **55 lb galvanized
-     fixed-shank scoop anchor** (West Marine, purchased 2026-05-07, ~$978)
-     was installed and is in current use, alongside a new **stainless
-     screw-pin anchor shackle (4,000 lb SWL, West Marine)** and floating
-     buoy anchor-chain markers. Whether this superseded the Manson Supreme
-     outright or the "Manson Supreme" label above should instead refer to
-     this anchor is **unconfirmed — reconcile against the anchor actually
-     on the bow**.
+- **Type / history**: three anchors on record:
+  1. **Original** — a **Manson Supreme (plough)**, ~44 lb. Lost August 2025
+     when its shackle failed in 20-knot winds (chain was inspected and
+     confirmed fine; the shackle was the failure point).
+  2. **August 2025 replacement** — a **Rocna 20 (scoop/roll-bar type)**,
+     ~$1,200, West Marine. (Purchase records list this as "55 lb"; a Rocna
+     20 is nominally 20 kg / ~44 lb — worth reconciling if it matters for
+     windlass/rode sizing.)
+  3. **May 2026 replacement** — **another Rocna 20**, West Marine, purchased
+     2026-05-07 (~$978), installed alongside a new **stainless screw-pin
+     anchor shackle (4,000 lb SWL, West Marine)** and floating buoy
+     anchor-chain markers. Reason for swapping the second Rocna 20 out is
+     not recorded — confirm whether the second one was lost/damaged or is
+     kept as a spare.
+  - **Currently on the bow**: the anchor from replacement #3 (May 2026), a Rocna 20.
 - **Rode**: 150 ft G4 5/16" galvanized chain spliced to 450 ft of 5/8"
   three-strand nylon rope (ordered/delivered 2026-08-26 — see
   [changelog](changelog.md)); previously listed as ~3/8" stranded nylon

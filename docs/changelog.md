@@ -190,13 +190,14 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 ### 2025-08-29 | Other | First polar diagram from real sailing data
 - First true polar diagram generated from race analysis data.
 
-### 2025-08-31 | Ground Tackle | Anchor shackle failure; anchor lost; 55 lb replacement purchased
+### 2025-08-31 | Ground Tackle | Anchor shackle failure; anchor lost; Rocna 20 replacement purchased
 - Anchor shackle failed while anchored in 20-knot winds at a beach;
   boat stopped pointing into the wind, alerting crew.
 - Chain inspected and confirmed fine — the shackle was the failure point.
-- Original anchor (~44 lb) lost and could not be retrieved (murky water).
-- Replacement: **55 lb Manson Supreme** purchased from West Marine,
-  approximately **$1,200**.
+- Original anchor, a **Manson Supreme** (~44 lb), lost and could not be
+  retrieved (murky water).
+- Replacement: a **Rocna 20**, purchased from West Marine, approximately
+  **$1,200** (purchase records list this as "55 lb").
 - Contributing factor: may have needed more rope scope to absorb swell.
 
 ### 2025-09-24 | Electronics | Fusion NMEA 2000 wired remote installed
@@ -371,11 +372,10 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 - Serviced following the April 2026 ball bearing failure.
 
 ### 2026-05-07 | Ground Tackle | Primary anchor replaced again
-- A 55 lb galvanized fixed-shank scoop anchor (West Marine) installed,
-  along with a new stainless screw-pin anchor shackle (4,000 lb SWL) and
-  floating buoy anchor-chain markers. Relationship to the Manson Supreme
-  installed after the August 2025 loss is unconfirmed — reconcile against
-  the anchor actually on the bow.
+- A second **Rocna 20** (West Marine) installed, along with a new
+  stainless screw-pin anchor shackle (4,000 lb SWL) and floating buoy
+  anchor-chain markers, replacing the Rocna 20 installed after the August
+  2025 loss. Reason for the swap is not recorded.
 
 ### 2026-05-18 | Electrical | DC panel upgraded
 - Blue Sea Systems 8025 traditional metal DC panel (3 positions) installed,
@@ -556,7 +556,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Engine oil spec | — | — | |
 | Drive belt | — | — | |
 | Alternator | Balmar 12 V / 120 A | — | Belt driven |
-| Anchor | 55 lb galvanized fixed-shank scoop anchor (West Marine, May 2026) | — | Replaced the 44 lb original (shackle failure, Aug 2025) with a 55 lb Manson Supreme, then replaced again May 2026 — relationship between the two 55 lb anchors unconfirmed |
+| Anchor | Rocna 20 | — | Original Manson Supreme (~44 lb) lost to a shackle failure Aug 2025, replaced with a Rocna 20; that Rocna 20 was itself replaced with another Rocna 20 in May 2026 (reason not recorded) |
 | Anchor shackle | Stainless screw-pin, 4,000 lb SWL | — | West Marine, installed May 2026 |
 | Anchor rode — chain | G4 5/16" galvanized | — | 150 ft, ordered/delivered 2026-08-26 |
 | Anchor rode — rope | 5/8" three-strand nylon | — | 450 ft, spliced to chain; ordered/delivered 2026-08-26 |
