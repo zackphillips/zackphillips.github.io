@@ -18,6 +18,8 @@ This document describes the major onboard systems: what's installed, where it is
 
 Anything still shown as `—` or in [brackets] has not been confirmed aboard yet.
 
+**Status tags** mark the state of an item inline: <span class="doc-tag doc-tag--issue">Unresolved</span> a known problem with no fix yet, <span class="doc-tag doc-tag--partial">Partial Fix</span> improved but not fully resolved, <span class="doc-tag doc-tag--planned">Planned</span> future work, not a current problem, <span class="doc-tag doc-tag--maintenance">Maintenance</span> routine, recurring upkeep. Every <span class="doc-tag doc-tag--planned">Planned</span> item is rolled up on the [Planned Projects](planned-projects.md) page, and every <span class="doc-tag doc-tag--maintenance">Maintenance</span> item on the [Scheduled Maintenance](maintenance.md) page.
+
 ---
 
 ## Table of Contents
@@ -68,7 +70,9 @@ Anything still shown as `—` or in [brackets] has not been confirmed aboard yet
 ### Last Rig Inspection
 Date: May 8, 2025
 Inspector: Jeff Keiser, SAMS/AMS — Keiser Marine, Sausalito, CA (pre-purchase survey, visual only — mast ascended, no haul-out disassembly)
-Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sighted. Internal chain-plate connections were not accessible, so chain-plate integrity could not be fully assessed — no water intrusion or corrosion staining seen at the visible portions. Light surface corrosion on shrouds/stays, rated serviceable. This remains the only rig inspection on record; a full haul-out inspection by a qualified rigger (including chain plates) is still recommended before going offshore.
+Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sighted. Internal chain-plate connections were not accessible, so chain-plate integrity could not be fully assessed — no water intrusion or corrosion staining seen at the visible portions. Light surface corrosion on shrouds/stays, rated serviceable. This remains the only rig inspection on record.
+
+<span class="doc-tag doc-tag--planned">Planned</span> a full haul-out inspection by a qualified rigger (including chain plates) is still recommended before going offshore.
 
 ### Swim Platform
 - **Mechanism**: fold-down platform, raised/lowered via a line and cleat in
@@ -80,9 +84,9 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 
 ### Known Hull Findings
 - **Keel-hull seam**: repaired — reefed out the failed seam, cleaned out debris, applied flexible marine adhesive compound, torqued the keel bolts. A keel-hull gap on the Beneteau First 42 is [normal for the model](https://forums.sailboatowners.com/threads/beneteau-first-42-keel-hull-gap-normal.117295/); no active issue.
-- **Stanchion bases**: tightened boat-wide; the deck leak near the aft head is resolved. Still open: a **missing transom lifeline**, and some **gelcoat cracks at the bow pulpit stanchions** remain (partially patched).
-- **Cockpit teak decking**: weathered, sealant failing — unresolved.
-- **Rudder shaft bearing**: ~1/8" play — unresolved; monitor at haul-out, renew if play increases.
+- <span class="doc-tag doc-tag--partial">Partial Fix</span> **Stanchion bases**: tightened boat-wide; the deck leak near the aft head is resolved. Still open: a **missing transom lifeline**, and some **gelcoat cracks at the bow pulpit stanchions** remain (partially patched).
+- <span class="doc-tag doc-tag--issue">Unresolved</span> **Cockpit teak decking**: weathered, sealant failing.
+- <span class="doc-tag doc-tag--issue">Unresolved</span> **Rudder shaft bearing**: ~1/8" play; monitor at haul-out, renew if play increases.
 - No moisture-meter testing has been done. No osmotic blisters have been found; percussion sounding revealed no delamination on the accessible wetted surfaces (one small blister was noted on the starboard quarter ~1 ft below the waterline).
 - These findings are from the May 2025 pre-purchase survey — no further hull inspection has been done since.
 
@@ -121,7 +125,7 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 | 1,500 | 5.1 kn | | 3,200 (WOT) | 8.1 kn |
 
 ### Engine Location
-Centerline, aft of the saloon, between the galley (starboard) and the aft head (port). Accessed via companionway steps (lift steps) and engine compartment panels. Adjustable motor mounts on cored fiberglass longitudinal engine bed stringers, with an integrated drip sump underneath. Raw water seacock is [location]. Bleed screws are [location].
+Centerline, aft of the saloon, between the galley (starboard) and the aft head (port). Accessed via companionway steps (lift steps) and engine compartment panels. Adjustable motor mounts on cored fiberglass longitudinal engine bed stringers, with an integrated drip sump underneath. Raw water seacock is under the companionway steps, starboard side (see [Seacocks & Through-Hulls](#seacocks-through-hulls)). Bleed screws are [location].
 
 ### Starting & Stopping
 See [Operations — Engine Start Procedure](operations.md#engine-start-procedure).
@@ -136,12 +140,13 @@ Actisense EMU-1 (see [Fuel Gauges](#fuel-gauges)) for broadcast on NMEA
 2000, via a genuine Yanmar wiring harness (p/n 127610-77710, 4 m) spliced
 into the RPM sensor circuit.
 
-### Watch Items
-- The **shaft coupler is not safety-wired**. Apply corrosion inhibitor to the coupler bolts.
-- Mild surface corrosion on the pulleys and motor mounts.
-- The strut's **cutless bearing shows slight wear** — monitor, replace as needed.
-- Monitor the dripless shaft seal and dripless rudder seals frequently. The shaft seal unit was fully replaced 2026-02-05; rudder seals not separately addressed.
-- **Last engine survey**: May 2025, Bay Marine Diesel — 14 findings (exhaust hose, engine-box foam insulation, shaft-seal clamp, Racor filter assembly, mount corrosion, oil cooler, start battery, oil dipstick, freshwater pump). All actionable findings were addressed. No further mechanical inspection has been done since.
+**Last engine survey**: May 2025, Bay Marine Diesel — 14 findings (exhaust hose, engine-box foam insulation, shaft-seal clamp, Racor filter assembly, mount corrosion, oil cooler, start battery, oil dipstick, freshwater pump). All actionable findings were addressed. No further mechanical inspection has been done since.
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> The **shaft coupler is not safety-wired**. Apply corrosion inhibitor to the coupler bolts.
+> - Mild surface corrosion on the pulleys and motor mounts.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> The strut's **cutless bearing shows slight wear** — monitor, replace as needed.
+> - <span class="doc-tag doc-tag--maintenance">Maintenance</span> Monitor the dripless shaft seal and dripless rudder seals frequently. The shaft seal unit was fully replaced 2026-02-05; rudder seals not separately addressed.
 
 ---
 
@@ -194,10 +199,12 @@ and [Operations — Bleeding the Engine](operations.md#bleeding-the-engine) for
 the step-by-step how-tos.
 
 ### Fuel Management
-- Fill before offshore passages; diesel stores well.
-- Treat with biocide if boat sits unused for extended periods.
+- <span class="doc-tag doc-tag--maintenance">Maintenance</span> Fill before offshore passages; diesel stores well.
+- <span class="doc-tag doc-tag--maintenance">Maintenance</span> Treat with biocide if boat sits unused for extended periods.
 - Log fuel additions in the [engine hours log / ship's log].
-- **Open item**: the Racor sight bowl has no approved heat shield. Install a metallic shield meeting ASTM F1201. (The Racor filter assembly and tank-to-engine hose have since been updated — unconfirmed whether the heat-shielded bowl variant was installed as part of that fix.)
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--partial">Partial Fix</span> The Racor sight bowl has no approved heat shield — install a metallic shield meeting ASTM F1201. (The Racor filter assembly and tank-to-engine hose have since been updated; unconfirmed whether the heat-shielded bowl variant was installed as part of that fix.)
 
 ---
 
@@ -232,15 +239,16 @@ The engine start battery terminals have protective insulating covers, per
 | Shore power charger | 40+ A | Xantrex Tru-Charge 12 V |
 | Engine alternator | 120 A | Balmar 12 V, belt driven |
 | Solar | 120 W | One Kyocera KC120-1 panel with a **Victron Energy SmartSolar MPPT 100/20** controller (100 V, 20 A, Bluetooth) — reports to SignalK over BLE via [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble) as the "bimini" device (see Battery Monitor above). Measures ~380 Wh/day (~30 W avg); bimini shade reduces output significantly. |
-| Wind gen | — | Air-X Marine — **control panel missing** |
+| Wind gen | — | Air-X Marine. Has **no control panel of its own** — controlled by a switch on the **starboard control panel** in the cockpit. |
 
 ### Shore Power
 - **Inlet**: 30 A / 125 V, single phase, 120 V @ 60 Hz
 - **Cord**: 30 A vinyl
 - **Charger**: Xantrex Tru-Charge — port lazarette, mounted on the wall at the aft side of the compartment (alongside the inverter and AC source-selector switch — see [Inverter](#inverter) below).
 - Main AC breaker and branch breakers in the AC Original panel. Outlet polarity has been verified correct.
-- **No galvanic isolator is installed** — highly recommended (ABYC A-28).
 - Connects to dock pedestal via shore power cord; confirm polarity light is green.
+
+<span class="doc-tag doc-tag--planned">Planned</span> No galvanic isolator is installed — highly recommended (ABYC A-28).
 
 See [Operations — Connecting Shore Power](operations.md#connecting-shore-power)
 for the plug-in steps.
@@ -279,7 +287,7 @@ battery-monitor panel. Fed off the **DC Main** circuit on the DC Original
 panel above. Switches:
 - **Lights** — feeds the Cockpit Lights switch panel (see below)
 - **Electronics** — nav-station PC/Raspberry Pi
-- [two more positions — not yet confirmed]
+- <span class="doc-tag doc-tag--planned">Planned</span> [two more positions — not yet confirmed]
 
 ### 12 V Distribution / Bus Bars
 Three **RVBOATPAT 12 V 150 A (1/4" stud) marine bus bars** expand 12 V
@@ -304,7 +312,7 @@ Located on the nav station wall.
 - Main breaker: **AC Main**
 - Shore power breaker: 30 A
 - Circuits/switches:
-  - **Battery Charger** — labeled, but **does nothing** (the Xantrex charger runs regardless of this breaker's position — investigate/relabel)
+  - **Battery Charger** — <span class="doc-tag doc-tag--issue">Unresolved</span> labeled, but does nothing (the Xantrex charger runs regardless of this breaker's position — investigate/relabel)
   - **Water Heater**
   - **AC Outlets**
   - **Spare**
@@ -322,7 +330,7 @@ Located on the nav station wall.
 - Note: do not run high-draw appliances (microwave, kettle) without engine running unless battery is at ≥80%.
 
 ### Bonding
-**No bonding system is installed** (ABYC E-2 / E-11).
+<span class="doc-tag doc-tag--planned">Planned</span> No bonding system is installed (ABYC E-2 / E-11).
 
 ---
 
@@ -338,12 +346,16 @@ Located on the nav station wall.
 | Pump | ParMax 3.5, 12 V demand type, with an inline strainer |
 | Accumulator | Aquapress coated steel |
 | Plumbing | PEX tubing and rubber hose |
-| Hot water heater | Raritan, 6 gal, marine grade **120 V element + engine heat exchanger**. **Watch item**: pressure relief valve may not release properly — after motoring stretches, water heats up and the hose can blow off, dumping water into the bilge. If the 120 V element has already heated the tank at the dock, running the engine stacks the heat exchanger's heat on top of that — this can build pressure and cause hoses to develop pinholes. **If the heater has been left on, bleed the hot water line (run a hot tap for ~30 sec) before running the engine for any length of time** — see [Operations — Engine Start Procedure](operations.md#engine-start-procedure). The hose uses half-inch tubing, which may not exactly fit the likely-metric original fitting — a stern re-plumbing project is working toward reconciling this |
+| Hot water heater | Raritan, 6 gal, marine grade **120 V element + engine heat exchanger** |
 | Fill deck plates | **Forward tank**: starboard side deck, just forward of the mast — opens by hand, no tool needed. **Aft tank**: port side deck near the grill, marked "Water" — needs a tool from the drawer below the nav station |
 | Tank vents | Port and starboard hull sides, below the fill pipes |
 
-Clean the freshwater inline strainer regularly. Sanitize the tankage and
+<span class="doc-tag doc-tag--maintenance">Maintenance</span> Clean the freshwater inline strainer regularly. Sanitize the tankage and
 delivery system periodically (e.g. with a tank-flush product).
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> The hot water heater's pressure relief valve may not release properly — after motoring stretches, water heats up and the hose can blow off, dumping water into the bilge. If the 120 V element has already heated the tank at the dock, running the engine stacks the heat exchanger's heat on top of that — this can build pressure and cause hoses to develop pinholes. **If the heater has been left on, bleed the hot water line (run a hot tap for ~30 sec) before running the engine for any length of time** — see [Operations — Engine Start Procedure](operations.md#engine-start-procedure).
+> - <span class="doc-tag doc-tag--planned">Planned</span> The hot water hose uses half-inch tubing, which may not exactly fit the likely-metric original fitting — a stern re-plumbing project is working toward reconciling this.
 
 ### Deck Washdown
 Transom washdown shower: **Scandvik straight push-button sprayer**. A
@@ -484,34 +496,43 @@ A Mopeka ultrasonic sensor on the aft tank separately reports to SignalK
 
 - **Automatic bilge pump**: one Jabsco 12 V diaphragm pump, [location], float switch — activates automatically.
 - **Manual bilge pump**: Whale Gulper hand pump, [location].
-- **No high-water alarm is installed** — highly recommended. (Smoke detectors double as CO2 alarms, but there is still no dedicated high-water bilge alarm or combustible-gas/LPG detector confirmed.)
 - Both bilge float switches are confirmed working. The bilge pump breaker feeds a master auto/manual/off selector switch (**AMOMD 12 V bilge pump control switch panel**, 3-way manual/off/auto with LED indicator and 5 A fuse), located below/left of the breaker — **leave in AUTO**.
-- A **100TECH 6.5" (165 mm) 240-33 ohm sending unit** is installed as a bilge level sensor. Wiring/integration status (gauge vs. SignalK vs. unused) is unconfirmed — this is not a substitute for the dedicated high-water alarm still called out as an open item below.
-- **Test weekly**: run the pump, confirm dewatering, clear any debris.
-- **Inspection**: check bilge level on every departure; some accumulation (rain, condensation) is normal. The bilges are gelcoated; limber holes are normally clear.
+- A **100TECH 6.5" (165 mm) 240-33 ohm sending unit** is installed as a bilge level sensor. Wiring/integration status (gauge vs. SignalK vs. unused) is unconfirmed.
+
+<span class="doc-tag doc-tag--maintenance">Maintenance</span> **Test weekly**: run the pump, confirm dewatering, clear any debris.
+<span class="doc-tag doc-tag--maintenance">Maintenance</span> **Inspection**: check bilge level on every departure; some accumulation (rain, condensation) is normal. The bilges are gelcoated; limber holes are normally clear.
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--planned">Planned</span> No high-water alarm is installed — highly recommended. Smoke detectors double as CO2 alarms, but there is still no dedicated high-water bilge alarm or combustible-gas/LPG detector confirmed. The bilge level sending unit above is not a substitute for this.
 
 ### Seacocks & Through-Hulls
 
 Raw water seacocks are **bronze alloy ball valve** type; drainage
-through-hulls are bronze. Self-bailing deck drains at the port and
-starboard aft cockpit corners. Both head-system overboard thru-hulls and
-the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
-2026). The aft head discharge seacock is capped — see
-[Aft Macerator — Removed](#aft-macerator-removed).
+through-hulls are bronze. Both head-system overboard thru-hulls and the
+engine raw water intake thru-hull are 1-1/4" ball valves, all replaced Feb
+2026. The head intake, sink drain and discharge seacocks for both heads
+are clustered **under their respective sink**. Cockpit drains have **no
+seacocks** — they're self-bailing and run straight out through the swim
+platform, not through a valved thru-hull.
 
 | Location | Purpose | Normally |
 |----------|---------|---------|
-| Starboard under steps | Engine raw water intake (replaced Feb 2026) | Open underway, closed at anchor/dock |
-| Forward [location] | Head intake | Open when using head |
-| [location] | Forward head discharge (replaced Feb 2026) | Open when using head (offshore) |
-| [location] | Aft head discharge (replaced Feb 2026) | **Capped** — macerator removed, tank pumped out only |
-| [location] | Cockpit drains | Open |
-| [location] | Other | — |
+| Starboard, under the companionway steps | Engine raw water intake | Open underway; closed at anchor/dock |
+| Under the forward head sink | Forward head intake | Open when using the head |
+| Under the aft head sink | Aft head intake | Open when using the head |
+| Under the forward head sink | Forward head sink drain | Open |
+| Under the aft head sink | Aft head sink drain | Open |
+| Under the forward head sink | Forward head discharge (gravity-drain to overboard) | Closed except offshore |
+| Under the aft head sink | Aft head discharge (Y-valve route to overboard) | Closed except offshore |
+| Under the aft head sink | Aft macerator tank outlet | **Capped** — macerator removed, see [Aft Macerator — Removed](#aft-macerator-removed) |
+| — | Cockpit drains | No seacock — drains overboard via the swim platform |
 
 > Know every seacock. Be able to close them all in the dark.
 
-- Service all seacocks and sea strainers annually: disassemble, inspect, clean, lubricate.
-- **Attach a properly sized wooden emergency plug at every below- and near-waterline through-hull** — none are currently fitted.
+<span class="doc-tag doc-tag--maintenance">Maintenance</span> Service all seacocks and sea strainers annually: disassemble, inspect, clean, lubricate.
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--planned">Planned</span> Attach a properly sized wooden emergency plug at every below- and near-waterline through-hull — none are currently fitted.
 
 ---
 
@@ -521,22 +542,27 @@ the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
 - **Make/Model**: Furuno NavNet — GPS chartplotter, radar and sonar in one display
 - **Current display unit**: Furuno RDP-143
 - **Location**: Helm / nav station
-- Charts loaded: —
+- Charts loaded: Pacific charts
 - Interfaces with SignalK over NMEA 0183 serial (`/dev/ttyOP_furuno`, 4800 baud, checksum validated); SignalK uses it as the fallback next-waypoint/course source behind its own `courseApi`.
 - Connected via a **Furuno 000-159-681 24" 7-pin power/NMEA 0183 pigtail**,
   wired specifically so SignalK can feed a heading source out to the Furuno
   over NMEA 0183.
-- **Open item**: the sonar function does not fully work. Investigate and trace.
 - **Note**: the bearing readout is derived from GPS course-over-ground (COG),
   not from a compass sensor — it reads incorrectly when stationary. A compass
   input is needed for accurate bearing and radar overlay on charts.
 
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> The display itself is malfunctioning — **do not trust what it shows**. Use the KIP/Freeboard-SK displays or a handheld GPS to cross-check position and chart data until this is repaired.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> The sonar function does not fully work. Investigate and trace.
+
 ### GPS
-- **Primary**: NMEA 0183 GPS "puck" over serial (`/dev/ttyOP_gpspuck`, 4800 baud, checksum validated, overrides timestamp).
-- **NMEA 2000 source**: **Garmin GPS 19x**, mounted in the cockpit — missing
-  its T-connector; confirm it's tee'd into the N2K backbone properly.
-- SignalK's actual failover order for position/COG/SOG is: NMEA 2000 GPS sources (chained — this is the Garmin GPS 19x above) → the GPS puck → derived-data as a last resort.
-- **Open item**: the antenna offset is recorded twice in the SignalK config and the two disagree — vessel identity data says 7.95 m from bow / 0.45 m from centerline, while the GNSS sensor settings say 6.5 m / 1.7 m. Needs a physical measurement to reconcile.
+- **Primary (at the dock)**: NMEA 0183 GPS "puck" over serial (`/dev/ttyOP_gpspuck`, 4800 baud, checksum validated, overrides timestamp) — used while at berth since it doesn't depend on the sailing instruments being powered on.
+- **NMEA 2000 source (underway)**: **Garmin GPS 19x**, mounted in the cockpit — every NMEA device aboard uses this Garmin unit's GPS signal. It's missing its T-connector; confirm it's tee'd into the N2K backbone properly.
+- **AIS**: the AIS transponder also outputs a GPS position, and SignalK will fall back to it, but it's **less reliable** than the Garmin GPS 19x since the AIS antenna isn't mounted as high.
+- SignalK's actual failover order for position/COG/SOG is: NMEA 2000 GPS sources (chained — this is the Garmin GPS 19x above, then AIS) → the GPS puck → derived-data as a last resort.
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> The antenna offset is recorded twice in the SignalK config and the two disagree — vessel identity data says 7.95 m from bow / 0.45 m from centerline, while the GNSS sensor settings say 6.5 m / 1.7 m. Needs a physical measurement to reconcile.
 
 ### VHF Radio
 - **Make/Model**: Icom IC-M504 at the nav station, plus an Icom RAM mic in the cockpit
@@ -544,17 +570,11 @@ the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
 - Always monitor **Ch 16**.
 - Shares the single mast antenna with the AIS transponder via a **Digital
   Yacht ZDIGSPLK1500 (SPL1500) VHF/AIS antenna splitter** (ZeroLoss tech),
-  installed behind the breaker panel.
-- **Open item**: transmit reliability was previously an issue (the radio
-  received but did not transmit; the mast antenna was suspected) — confirm
-  the radio now transmits reliably on the mast antenna through the
-  splitter. A handheld VHF is available as backup.
+  installed behind the breaker panel. Transmit reliability through the
+  splitter has been confirmed good. A handheld VHF is available as backup.
 - **Hailer/foghorn**: an **Icom SP37 hailer horn (40 W)**, wired to the VHF
-  as both a speaker and a foghorn.
-
-### SSB
-- **Make/Model**: Icom IC-706MKIIG
-- Powers up but has never been fully tested — verify the antenna, tuner and ground plane before relying on it.
+  as both a speaker and a foghorn, per the IC-M504 manual — see
+  [Operations — Foghorn / Hailer](operations.md#foghorn-hailer).
 
 ### AIS
 - **Type**: Class B transponder (transmit + receive)
@@ -581,8 +601,9 @@ the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
 - **Two transducers are aboard, both live**:
   - The **original TackTick transducer** is kept in place as a backup,
     along with its supporting electronics and both of its displays (one
-    to the port side of the helm, one at the nav station). This is the
-    **port** through-hull.
+    to the **stbd side of the helm**, one at the nav station). This is the
+    **port** through-hull. Its wind display is **no longer reliable** — see
+    [Wind Instruments](#wind-instruments); depth remains a usable backup.
   - The **Garmin triducer** (NMEA 2000, current/primary) is the **center**
     through-hull (to starboard of center — described aboard as "center
     (starboard port)").
@@ -592,7 +613,6 @@ the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
     door leading to the v-berth.
 - **Offset**: keel is 7' 07" below the waterline — displayed depth is from the transducer, not the keel. Exact transducer-to-keel offset still not numerically confirmed.
 - Alarm: set for 10 ft below keel minimum.
-- **Maintenance**: the paddle wheel (speed sensor) needs regular cleaning of marine growth to stay accurate.
 - **Important**: the depth sensor contains an accelerometer that the masthead
   wind sensor relies on for angle correction. Do not remove or reposition
   the depth sensor without expecting incorrect wind readings (see
@@ -600,21 +620,13 @@ the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
 - **In-hull mounting note**: an in-hull (shoot-through) transducer mount
   loses approximately 25% of its power vs. a thru-hull mount.
 
+<span class="doc-tag doc-tag--maintenance">Maintenance</span> The paddle wheel (speed sensor) needs regular cleaning of marine growth to stay accurate.
+
 ### Wind Instruments
 - **Current**: Garmin GNX wind instrument (masthead sensor) — part of the
   Garmin GNX wind/depth/speed instrument package (see
   [Depth Sounder](#depth-sounder) above); working as expected. Reaches
   SignalK over the NMEA 2000 network (`can0`).
-- A **Fusion MS-NRX300 IPX7 NMEA 2000 wired remote** is mounted on the port
-  side.
-- **TackTick (backup)**: the original TackTick wind display remains aboard
-  as a manual backup, alongside the TackTick depth transducer (see
-  [Depth Sounder](#depth-sounder) above) — one display to the **port side
-  of the helm**, one at the **nav station**. The TackTick wireless pack is
-  still wired into SignalK over NMEA 0183 serial (`/dev/ttyOP_tacktick`,
-  4800 baud), but SignalK is configured to **ignore** its wind/nav
-  sentences (RMC/RMB/GLL/MWV/VWR) — so the hardware is present but not the
-  active source.
 - **Dependency**: the masthead wind sensor uses the depth sensor's
   accelerometer to correct for sensor angle. If the depth sensor is removed
   or repositioned, wind readings will be incorrect.
@@ -647,9 +659,8 @@ The onboard N2K backbone uses Regatta Processing and Ancor
 cable/T-connector/terminator hardware. Notable gateways:
 - **Actisense EMU-1** — engine/tank analog sender bridge (see [Fuel Gauges](#fuel-gauges)).
 - **Actisense NGT-1-ISO** — AIS-to-N2K bridge (see [AIS](#ais)).
-- An **Ancor 270113 NMEA 2000 power isolator** is in storage, not yet installed.
 
-#### N2K Devices (bus scan)
+### N2K Devices (bus scan)
 
 Full device list from a network scan (via the Pi/OpenPlotter), all shown
 offline at capture time since the boat wasn't powered up:
@@ -679,11 +690,12 @@ them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 ### Environmental Sensor (I2C)
 - **Make/Model**: BME280 temperature/humidity/pressure sensor, I2C bus 1, address `0x77`.
 - Bridged into SignalK via a local SignalK-over-UDP connection (`localhost:4123`); feeds the inside temp/humidity/pressure paths used by the SignalK alarm zones (see [SignalK Configuration](signalk.md)).
+- Installed in hardware, but **currently not in use** — disabled to conserve processor power on the Raspberry Pi.
 
 ### Compass
 - **Make/Model**: Ritchie 4"
 - **Location**: helm station
-- **Deviation card**: **not yet swung** — no deviation card exists.
+- <span class="doc-tag doc-tag--planned">Planned</span> **Deviation card**: not yet swung — no deviation card exists.
 
 ### Radar
 - **Installed**: yes
@@ -701,33 +713,34 @@ them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 
 ## 7. Safety Equipment
 
-| Item | Quantity | Location | Expiry/Service |
+| Item | Quantity | Location | Service/Notes |
 |------|----------|----------|----------------|
-| Life jackets (USCG approved Type III, adult) | 6 | [location] | Inspect annually. Rearming kit (33 g CO2) replaced 2026-04-07 after an inflatable PFD cartridge was accidentally triggered |
-| Inflatable PFD — Onyx A/M-24 | 1 | In use | Automatic/manual inflation, USCG approved |
+| Life jackets (USCG approved Type III, adult) | 6 | Stbd lazarette | Inspect annually. Rearming kit (33 g CO2) replaced 2026-04-07 |
+| Inflatable PFD — Onyx A/M-24 (24 g CO2) | 3 | V-berth wardrobe / on the bed | Near-shore use |
+| Inflatable PFD — coastal (32 g CO2) | 2 | V-berth wardrobe | Higher buoyancy, coastal-rated |
+| Inflatable PFD — offshore (blue) | 2 | — | Carries the PLBs and two of the survivor locator lights, see below |
 | Horseshoe ring (Type IV throwable) | 1 | Stern rail | — |
-| Handheld flares | — | Port lazarette (dedicated flare/smoke-signal container) | In date as of March 2025 |
-| Rocket parachute flares | — | Port lazarette (same container as handheld flares) | In date as of March 2025 |
-| Electronic flare — Sirius Signal C-1003 SOS LED (battery-powered, USCG-approved, w/ daytime flag & whistle) | 1 | Port lazarette | Replaces the pyrotechnic flare requirement |
-| Smoke signals | — | Port lazarette (same container as flares) | [date] |
-| EPIRB — ACR Global-Fix 406 | 1 | Mounted at the nav station | Registration updated 2026; battery replaced 2026 but **not yet tested** |
-| PLB(s) — ACR ResQLink (model PLB-450) | 2 | Carried inside the two blue offshore life jackets | Registered; tested March 2026 |
-| Survivor locator lights — ACR HemiLight3 (HL3) | 3 | Hanging from handles above the stairs | — |
+| Handheld flares | — | Port lazarette (flare/smoke-signal container) | Expired |
+| Rocket parachute flares | — | Port lazarette (same container) | Expired |
+| Smoke signals | — | Port lazarette (same container) | Expired |
+| Electronic flare — Sirius Signal C-1003 SOS LED (battery-powered, USCG-approved, w/ daytime flag & whistle) | 1 | Port lazarette | Tested and active; replaces the pyrotechnic flare requirement |
+| EPIRB — ACR Global-Fix 406 | 1 | Mounted at the nav station | Registration updated 2026; battery replaced 2026 |
+| PLB(s) — ACR ResQLink (model PLB-450) | 2 | Carried inside the two offshore life jackets | Registered; tested March 2026 |
+| Survivor locator lights — ACR HemiLight3 (HL3) | 4 | Attached to 4 inflatable PFDs (2 offshore, 2 coastal) | PFD-mounted lights |
 | Life jacket light (water-activated) | 1 | Below nav station | — |
-| PFD accessories — leg straps (NRS), emergency whistles (LuxoGear, w/ lanyard) | 2 ea. | On the two blue offshore life jackets / in all inflatable PFDs | — |
-| Fire extinguishers — Type ABC-I, 2.5 lb dry chemical | 4+ | Quarterberth, forward cabin, 2× food storage | Satisfies the 3-minimum requirement for this vessel length |
-| Fire extinguisher — Kidde Mariner PWC, 5-B:C | 1 | Under nav station | — |
+| PFD accessories — leg straps (NRS), emergency whistles (LuxoGear, w/ lanyard) | 2 ea. | On the offshore life jackets / in all inflatable PFDs | — |
+| Fire extinguishers — Kidde, Type ABC-I, 2.5 lb dry chemical | 4 | Galley (×2), engine room, port lazarette (cockpit) | Satisfies the 3-minimum requirement for this vessel length |
 | First aid / medical kit | 1 | Galley — shelf above the stove | — |
 | Searchlight | 1 | Lower cabinet under the nav station | — |
 | MOB gear — Lalizas Life Link retrieval sling (throw bag) | 1 | Stbd lazarette | — |
-| MOB gear — inflatable MOB raft | 1 | Mounted on the **stbd railing**, next to the outboard mounting crane | — |
+| MOB gear — Lalizas inflatable MOB raft/system | 1 | Mounted on the **stbd railing**, next to the outboard mounting crane | — |
 | MOB gear — Dan buoy | 1 | Stbd lazarette | Serviced January 2026 |
 | MOB gear — Scotty #0793 rescue throw bags (50 ft floating MFP rope) | 2 | Stbd lazarette | — |
-| Swim ladder | 1 | Stern lazarette, port side | Hooks onto the swim platform via two hooks — **not lashed/tied off**; has come loose in heavy seas before and required someone to dive after it. **TODO**: figure out how to tie the ladder to the platform hooks so it can't fall out in heavy seas or an emergency. |
+| Swim ladder | 1 | Stern lazarette, port side | Hooks onto the swim platform via two hooks |
 | Smoke/CO2 detectors | 2+ | Aft cabin; port side, main cabin near speaker | All units double as CO2 alarms |
-| Life raft | Reported aboard | Not sighted | **Currently out of service** |
-| Ditch bag | 1 (bag only) | Should live in the cabinet under the nav station | **Not currently packed** — no offshore or coastal passages are planned right now; pack it before any such trip |
-| "Line around prop" kit (incl. dive headlamp for underwater inspection/cutting) | 1 | Stbd lazarette | Headlamp (BESTSUN, 1800 lm) |
+| Life raft | 0 | Not aboard | — |
+| Ditch bag | 1 (bag only) | Cabinet under the nav station | See [Ditch Bag Contents](#ditch-bag-contents) below |
+| "Line around prop" kit | 1 | Stbd lazarette | Bread knife (for cutting rope), wetsuit, knife-proof gloves, dive light/headlamp (BESTSUN, 1800 lm), mask |
 | Tethers / jacklines | — | Stbd lazarette | — |
 | Harnesses | — | Stbd lazarette | — |
 
@@ -735,26 +748,24 @@ Navigation lights (port/starboard) are confirmed present and powered up.
 Steaming light and spreader lights are working (previously wired poorly;
 corrected).
 
-**Navigation light compliance issue**: the masthead tri-color light
-(red/green/white) is legal for sailing at night but **not legal for
-motoring** — under power the red/green lights must be ~8 ft below the
-steaming light, so the combo atop the mast does not comply. A bow-mounted
-red/green nav light is needed for motoring compliance (ref: Chapman's
-Piloting). The bow nav light wire is degraded — cannot be stripped without
-breaking the copper; new wire needs to be run.
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **Navigation light compliance**: the masthead tri-color light (red/green/white) is legal for sailing at night but **not legal for motoring** — under power the red/green lights must be ~8 ft below the steaming light, so the combo atop the mast does not comply. A bow-mounted red/green nav light (breaker labeled **Nav Light** on the DC Original panel) is needed for motoring compliance (ref: Chapman's Piloting).
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> Handheld flares, rocket parachute flares, and smoke signals are all expired — dispose of them and remove from the flare container.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> EPIRB battery was replaced 2026 but has **not yet been tested**.
+> - <span class="doc-tag doc-tag--planned">Planned</span> **No life raft is aboard** — a raft that was reported was never sighted and is not actually carried. Get one before any offshore or coastal passage.
+> - <span class="doc-tag doc-tag--planned">Planned</span> Swim ladder hooks onto the swim platform via two hooks but is **not also lashed/tied off** — it has come loose in heavy seas before and required someone to dive after it. Figure out how to additionally tie it to the platform hooks so it can't fall out.
 
 ### Known Gaps
 
 Required or strongly recommended equipment that is **not** currently aboard:
 
-- [ ] Fixed fire suppression system in the engine space
-- [ ] Bilge high-water alarm (dedicated alarm — distinct from the bilge float switches, confirmed working)
-- [ ] Emergency steering system — emergency tiller is aboard but has **not
+- [ ] <span class="doc-tag doc-tag--planned">Planned</span> Bilge high-water alarm (dedicated alarm — distinct from the bilge float switches, confirmed working)
+- [ ] <span class="doc-tag doc-tag--issue">Unresolved</span> Emergency steering system — emergency tiller is aboard but has **not
   been tested on deck**; test before relying on it
 
 ### Ditch Bag Contents
 
-**Status: not packed.** No offshore/coastal passages are currently
+<span class="doc-tag doc-tag--planned">Planned</span> **Status: not packed.** No offshore/coastal passages are currently
 planned, so this hasn't been prioritized — pack it (in the cabinet under
 the nav station) before any such trip.
 
@@ -778,9 +789,7 @@ the nav station) before any such trip.
 - **Rode**: 150 ft G4 5/16" galvanized chain spliced to 450 ft of 5/8"
   three-strand nylon rope. Note: windlass requires matching chain size.
 - **Hardware**: anchor swivel and HS galvanized bow shackle (5/16", 2,500 lb
-  WLL). A stainless deck key (HAIWEN 316 SS) used to open the deck
-  fill/tank plates is also stowed with this gear — unrelated to ground
-  tackle itself.
+  WLL).
 - **Snubber**: an anchor snubber hook is stored in the anchor compartment
   (bow anchor locker) — hooks onto the chain to take the anchor/chain
   weight off the windlass. Use it whenever at anchor or in a harbor (see
@@ -792,7 +801,7 @@ the nav station) before any such trip.
   [Changelog](changelog.md) for the full history and lessons learned.
 
 ### Secondary Anchor
-A spare anchor is aboard but **currently unusable** until it's rigged with a rode.
+<span class="doc-tag doc-tag--issue">Unresolved</span> A spare anchor is aboard but **currently unusable** until it's rigged with a rode.
 - **Type**: aluminum Danforth (fluke-style)
 - **Weight**: —
 - **Rode**: not yet rigged. The spare **3/8" BBB chain (250 ft)**, stored
@@ -803,8 +812,11 @@ A spare anchor is aboard but **currently unusable** until it's rigged with a rod
 
 ### Windlass
 - **Make/Model**: Quick Eagle, 12 V / 1400 W
-- **Type**: electric, foot switches at bow. A spare **Five Oceans FO3291**
-  covered foot switch is in storage.
+- **Type**: electric. **No foot switches are currently installed at the
+  bow** — operated via the remote controller only (see below). A spare
+  **Five Oceans FO3291** covered foot switch is in storage,
+  <span class="doc-tag doc-tag--planned">Planned</span> for a possible
+  future foot-switch installation.
 - **Remote control**: stored in the cabinet behind the forward toilet. To
   use it, pass it up through the roof hatch above the toilet. A toggle
   switch replaces the original (broken) buttons — the toggle's direction
@@ -817,10 +829,10 @@ A spare anchor is aboard but **currently unusable** until it's rigged with a rod
   normal use**. To avoid tripping it: only use the windlass to lift the
   weight of the anchor/chain — **use the engine, not the windlass, to
   motor the boat up to the anchor.**
-- Last serviced May 2026 (bearings replaced, reassembled with Lucas Oil
+- <span class="doc-tag doc-tag--maintenance">Maintenance</span> Last serviced May 2026 (bearings replaced, reassembled with Lucas Oil
   marine grease).
-- A **12 V reverse-polarity 3-way momentary rocker switch** is in storage,
-  earmarked for a windlass up/down control rework — **not yet installed**.
+- <span class="doc-tag doc-tag--planned">Planned</span> A **12 V reverse-polarity 3-way momentary rocker switch** is in storage,
+  earmarked for a windlass up/down control rework — not yet installed.
 
 ---
 
@@ -834,15 +846,11 @@ none of the sails have been inspected by a sailmaker.
 | Sail | Type | Area (sq ft) | Condition | Notes |
 |------|------|-------------|-----------|-------|
 | Main | Battened | — | Serviceable | Set in a stack pack on the boom; runs on a Tides Marine Strong Track. Repaired (clew eyelet and several rips) and reinstalled |
-| Headsail #1 (genoa) | 120% | — | Serviceable | Profurl roller furling |
-| Headsail #2 (working jib) | 100% | — | Serviceable | Replaces a jib whose UV cover had chafed |
-| Staysail | — | — | — | — |
-| Drifter | — | — | — | — |
+| Headsail #1 (genoa) | 120% | — | Serviceable | Profurl roller furling; kept bent on and stored aboard |
+| Headsail #2 (working jib) | 100% | — | Serviceable | Backup sail; replaces a jib whose UV cover had chafed; stored in the dock box |
 | Spinnaker #1 | Symmetric, 3/4 oz | — | — | — |
 | Spinnaker #2 | Asymmetric, 1.5 oz | — | — | — |
-| Spinnakers #3–4 | 0.5 oz ×2 | — | — | — |
-| Trysail | Yes | — | — | — |
-| Storm jib | Not in inventory | — | — | — |
+| Storm jib | — | — | — | Rigging stored in the dock box |
 
 ### Running Rigging Summary
 
@@ -851,9 +859,12 @@ clutches hold under hand weight). Halyards are braided with no wire
 splices. Boom vang is a mechanical spring-loaded strut. **Slab reefing with
 three mainsail reef points.**
 
-**Winches** — all Lewmar: two 54ST-2 (primaries), three 44ST-2, one 44ST-2 **12 V electric** (halyard winch). All six last serviced March 2026.
+**Spinnaker pole**: mounted on the bow, on the **port side stanchions**;
+raised/lowered with the pole up/pole down lines (see the line table below).
 
-**Open item**: a **MarineNow 316 SS captive key-pin halyard D-shackle
+**Winches** — all Lewmar: two 54ST-2 (primaries), three 44ST-2, one 44ST-2 **12 V electric** (halyard winch). <span class="doc-tag doc-tag--maintenance">Maintenance</span> All six last serviced March 2026.
+
+<span class="doc-tag doc-tag--planned">Planned</span> a **MarineNow 316 SS captive key-pin halyard D-shackle
 (5/16")** still needs to be installed in the main halyard.
 
 **United Yachting button line holders** are installed next to the jib
@@ -869,24 +880,26 @@ halyards and control lines terminate at clutches in the cockpit.
 | Line | Purpose | Color/ID | Clutch/Cleat |
 |------|---------|----------|-------------|
 | Main halyard | Raise/lower main | — | Cockpit clutch |
-| Jib halyard | Raise/lower headsail | — | — |
 | Mainsheet | Main trim | — | Lewmar traveler |
 | Port jib sheet | Headsail trim | — | — |
 | Starboard jib sheet | Headsail trim | — | — |
 | Vang | Leech tension | — | Spring-loaded mechanical vang |
-| Cunningham | Luff tension | — | — |
+| Cunningham | Luff tension | — | Mounting point only — not currently rigged in the blocks |
 | Outhaul | Foot tension | — | — |
 | Reef 1 | First reef, leech | — | — |
 | Reef 2 | Second reef, leech | — | — |
 | Reef 3 | Third reef, leech | — | — |
 | Furling line (headsail) | Furl/unfurl headsail | — | — |
 | Topping lift | Boom support | — | — |
+| Pole up | Spinnaker/whisker pole — raise | — | — |
+| Pole down | Spinnaker/whisker pole — lower | — | — |
 
 ### Sail Trim Notes
 - **Polars**: Beneteau 42 polars are aboard; a real polar diagram was
   generated from race analysis data — see `data/vessel/polars.csv`.
 - [Add boat-specific tuning notes here over time — e.g., twist preferences, backstay settings for conditions]
-- Service and lubricate all moving sailing hardware (cam cleats, clutches, blocks, tracks, furling gear, winches) as part of the annual routine.
+
+<span class="doc-tag doc-tag--maintenance">Maintenance</span> Service and lubricate all moving sailing hardware (cam cleats, clutches, blocks, tracks, furling gear, winches) as part of the annual routine.
 
 ---
 
@@ -916,23 +929,23 @@ Configuration](signalk.md#sensors-instrumentation) (alerts: Propane A below
 See [Operations — Using Propane](operations.md#using-propane) for the
 step-by-step how-to.
 
-> **Open item**: the LPG tanks are not secured in their locker. Fit a
-> proper mount. Perform a gas leak test (close the appliance valves, open the
-> tank valve, watch the gauge) before each use.
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> The LPG tanks are not secured in their locker. Fit a
+>   proper mount. Perform a gas leak test (close the appliance valves, open the
+>   tank valve, watch the gauge) before each use.
 
 ### Galley
 - Located to starboard, aft in the saloon.
 - **Stove**: Tesco three-burner propane with oven.
 - **Refrigeration**: Adler Barbour 12 V refrigerator/freezer, top and front
-  load. **Compressor and compressor fan are both currently failed**
-  (original 1994 equipment) — refrigeration is not functional. Old
-  refrigerant has been banned by the EPA; evaporator plate replacement
-  requires a professional technician to bleed the refrigerant line
-  (quick-disconnect pins exist on connections). Replacement (**Isotherm
-  2017 Compact Classic** air-cooled system, p/n U260X086P12111AA —
-  evaporator dimensions fit the existing fridge box) is in storage,
-  **ready to install but not yet installed**.
+  load. Old refrigerant has been banned by the EPA; evaporator plate
+  replacement requires a professional technician to bleed the refrigerant
+  line (quick-disconnect pins exist on connections).
 - **Sink**: stainless steel, separate basins. Pressure water from the ParMax pump; a Whale foot pump for salt water is fully operational — use it for washing dishes.
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> Refrigerator compressor and compressor fan are both currently failed (original 1994 equipment) — refrigeration is not functional.
+> - <span class="doc-tag doc-tag--planned">Planned</span> Replacement (**Isotherm 2017 Compact Classic** air-cooled system, p/n U260X086P12111AA — evaporator dimensions fit the existing fridge box) is in storage, ready to install but not yet installed.
 
 ### Dehumidifier
 **Waykar 1500 sq ft, 30-pint, Energy Star dehumidifier** (0.62 gal tank,
@@ -967,13 +980,15 @@ aft accommodation with queen berth and hanging locker.
 - Two spare **Aqua Signal 16212-1 LED bimini courtesy lights** are in
   storage in the electronics bin — may be repurposed as floor/cabin-sole
   lighting.
-- **Known damage**: wood damage on the athwartship bulkheads in the forward
-  accommodation; general desilvering of the interior mirrors; loose wood
-  rails in the aft head; broken lights in the bow cabin; random holes in a
-  few wood panels; missing covers in the stern cabin.
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **Known damage**: wood damage on the athwartship bulkheads in the forward
+>   accommodation; general desilvering of the interior mirrors; loose wood
+>   rails in the aft head; broken lights in the bow cabin; random holes in a
+>   few wood panels; missing covers in the stern cabin.
 
 ### Tender / Outboard
-- Small Yamaha outboard motor aboard.
+- Yamaha outboard motor aboard: **2.5 HP, 1996, two-stroke**.
 - **Carburetor**: replaced (**CHAMPAN replacement carburetor**, ref.
   6E0-14301-xx / 6E3-14301-xx) and working. Also replaced: transom clamp
   handle screw and clamp screw handle set. Yamalube 2M 2-stroke oil is kept
@@ -988,13 +1003,14 @@ aft accommodation with queen berth and hanging locker.
     (8 oz per gallon).
 - **Dinghy**: an Achilles inflatable — a spare air valve (p/n C342GY) and
   rubber valve adapter (p/n C5102, needed to pump it up) are stored in the
-  forward-most port-side salon cabinet. A dinghy towing bridle with float
-  and a 60 ft tow rope are stored together as a "dinghy towing package" in
-  the starboard lazarette, along with a 4-step folding boarding rope
-  ladder.
+  forward-most port-side salon cabinet. A foot pump to inflate the dinghy
+  is stored in the **stbd stern lazarette**. A dinghy towing bridle with
+  float and a 60 ft tow rope are stored together as a "dinghy towing
+  package" in the starboard lazarette, along with a 4-step folding
+  boarding rope ladder.
 
 ### Miscellaneous Gear
-- **Foil Drive Fusion** — for use at anchorages.
+- **Inflatable paddleboard**, 9 ft — stern lazarette.
 - **Spare sails** — stored in the dock box.
 - **Fishing rod holders** — two clamp-on 316 SS rod holders, port and starboard.
 - **Courtesy/national flags** — Brittany, French civil ensign (×2), and US
@@ -1082,8 +1098,8 @@ and marine rail hardware:
 - **Automation**: Tasker (Android automation app) is configured to enable
   tethering automatically whenever the phone starts charging. A follow-on
   script then grants the boat's client network access to that tethered
-  connection. **Tasker profile/script details:
-  TBA** — document the actual Tasker config here once finalized.
+  connection. <span class="doc-tag doc-tag--planned">Planned</span> document
+  the actual Tasker profile/script config here once finalized.
 - The phone also loads **KIP as a generic status page** once connected.
 - This is the Pi's actual internet uplink — see [Raspberry Pi](#raspberry-pi) below.
 
@@ -1091,7 +1107,7 @@ and marine rail hardware:
 
 | Device | Purpose | Status |
 |--------|---------|--------|
-| Heltec ESP32 LoRa V3 ×2 | Fore/aft bilge water-height sensors | Stored under rug in stern box. Natively supported by SignalK. Have batteries; should be powered on 12 V line |
+| Heltec ESP32 LoRa V3 ×2 | Fore/aft bilge water-height sensors | Stored under rug in stern box, natively supported by SignalK. <span class="doc-tag doc-tag--planned">Planned</span> Have batteries; should be wired onto the 12 V line and deployed |
 | Adafruit BNO055 (SPI) | Swell / orientation measurement (IMU) | Aboard, not deployed |
 | Adafruit BME280 | Temperature / humidity / pressure | Aboard (see `info.yaml`) |
 | Adafruit SGP30 | Air quality (TVOC / eCO2) | Aboard (see `info.yaml`) |

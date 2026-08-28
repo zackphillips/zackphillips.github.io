@@ -48,8 +48,8 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Sailing instruments on; depth alarm set if relevant — see [SignalK Configuration — Alarms / Zones](signalk.md#alarms-zones)
 - [ ] Bilge pump working — flip the switch on/off and listen for it
 - [ ] Nav lights functional (steaming, port, starboard, stern, anchor) — especially if departing or returning near dark
-- [ ] Anchor windlass tested — foot switches at the bow; controller in the
-      cabinet behind the v-berth head. See [Anchoring](#anchoring)
+- [ ] Anchor windlass tested — via the remote controller, cabinet behind
+      the v-berth head (no foot switches installed). See [Anchoring](#anchoring)
 - [ ] Chartplotter + instruments powered and GPS locked
 
 ### Sails
@@ -218,10 +218,11 @@ no blower to run.
   unusable**; the spare 3/8" BBB chain stored with it still needs to be cut
   to length and shackled to a rope rode and to the anchor before it can be
   deployed. See [Systems Overview — Ground Tackle](systems.md#8-ground-tackle).
-- Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker in
-  the engine compartment behind the stairs, **controller in the cabinet
-  behind the v-berth head**. **No manual override** — if the windlass
-  fails, raise the anchor by hand.
+- Windlass: **Quick Eagle 12 V / 1400 W**, breaker in the engine
+  compartment behind the stairs, operated via the **remote controller in
+  the cabinet behind the v-berth head** — no foot switches are currently
+  installed at the bow. **No manual override** — if the windlass fails,
+  raise the anchor by hand.
 
 ### Anchoring Lessons Learned
 - **Inspect the shackle** before every anchoring — a shackle failure has
@@ -252,10 +253,10 @@ no blower to run.
 4. Secure anchor with safety pin; stow snubber.
 
 ### Testing the Windlass
-Before departure, confirm the windlass responds in both directions from the
-foot switches at the bow. The controller lives in the **cabinet behind the
-v-berth head** if the foot switches don't respond and the breaker (engine
-compartment, behind the stairs) checks out.
+Before departure, confirm the windlass responds in both directions from
+the **remote controller** (cabinet behind the v-berth head — no foot
+switches are installed at the bow). If it doesn't respond, check the
+breaker (engine compartment, behind the stairs).
 
 ---
 
@@ -391,6 +392,51 @@ breaker specs.
 
 ---
 
+## Breaker Settings by Condition
+
+What the panel breakers should be set to for each phase of an outing.
+Breakers not mentioned for a given condition should be off. Panel names
+refer to the [DC Original Panel](systems.md#dc-original-panel), [DC Aux
+Panel](systems.md#dc-aux-panel), and [AC Original Panel](systems.md#ac-original-panel).
+
+### At the Dock
+- **AC Main** — On (see [Connecting Shore Power](#connecting-shore-power) above)
+- **DC Main** — On
+- **VHF** — On, monitoring Ch 16
+- **Water Heater / AC Outlets** — as needed
+- Everything else — off; run the [Post-Sail Checklist](#post-sail-checklist-before-leaving-the-boat-at-the-dock) before leaving the boat unattended
+
+### Motoring — Day
+- **DC Main, VHF, Sailing Instruments, Electronics** — On
+- **Autopilot** — as needed
+- **Steaming Light, Nav Light, Tricolor Light** — off (daylight, none required)
+- **AC Main** — off (not on shore power)
+
+### Motoring — Night
+- Everything from Motoring — Day, plus:
+- **Steaming Light** and **Nav Light** (bow, port/starboard) — On — the legal combination for motoring after dark
+- **Tricolor Light** — off — the masthead tricolor is **not legal while under power**, see [Systems Overview — Safety Equipment](systems.md#7-safety-equipment)
+
+### Sailing — Day
+- **DC Main, VHF, Sailing Instruments, Electronics** — On
+- **Autopilot** — as needed
+- **Steaming Light, Nav Light, Tricolor Light** — off (daylight, none required)
+
+### Sailing — Night
+- Everything from Sailing — Day, plus:
+- **Tricolor Light** — On — legal for sailing (not motoring), see [Systems Overview — Safety Equipment](systems.md#7-safety-equipment)
+- **Steaming Light, Nav Light** — off (the tricolor supersedes them under sail)
+
+### At Anchor
+- **DC Main** — On
+- **Bilge Pump** — Auto, always
+- **Anchor light** — On after dark [confirm which fixture provides this — likely the Tricolor Light breaker if the masthead fixture has a separate anchor-light element]
+- **Autopilot, Sailing Instruments** — off
+- **Windlass breaker** (engine compartment) — On only while actively anchoring/weighing, then off
+- **Gas Valve** — On only while cooking, then off — see [Using Propane](#using-propane) below
+
+---
+
 ## Using Propane
 
 Tank valve and shut-offs are in the **port aft lazarette**; see
@@ -491,8 +537,8 @@ uses.
 4. Diagnose: fuel, overheating, raw water, belt failure.
 
 ### Fire
-There is **no fixed fire suppression system** in the engine space. Four or more
-portable ABC dry chemical extinguishers (2.5 lb) are aboard (updated 2026).
+Four or more portable ABC dry chemical extinguishers (2.5 lb) are aboard
+(updated 2026) — see [Systems Overview — Safety Equipment](systems.md#7-safety-equipment).
 
 1. **Engine compartment**: shut off fuel at the tank ball valve, discharge an extinguisher through the smallest opening you can — do **not** open the hatch and feed it air.
 2. **Cabin**: evacuate, deploy extinguisher, prepare to abandon ship if needed.
@@ -502,12 +548,50 @@ portable ABC dry chemical extinguishers (2.5 lb) are aboard (updated 2026).
 1. Locate source immediately.
 2. Deploy bilge pump — Jabsco 12 V diaphragm (electric) plus the Whale Gulper hand pump.
 3. Plug with rags, softwood plugs, seacock plug if a through-hull failure. *(No wooden plugs are currently fitted at the through-hulls — fit them.)*
-4. If uncontrolled: call Mayday; prepare life raft and ditch bag. **The life raft is reported out of service — confirm its status before relying on it.**
+4. If uncontrolled: call Mayday; prepare the ditch bag. **No life raft is aboard** — do not plan on one.
 
 ### Emergency Tiller
 Stored aboard for use if the wheel steering fails. **Every skipper should
 know where it is and how to rig it before departure** — don't let its
 first use be an actual emergency.
+
+---
+
+## Foghorn / Hailer
+
+The **Icom SP-37 hailer horn** is wired directly to the **Icom IC-M504 VHF**
+at the nav station as both a hailer/PA speaker and an automatic foghorn —
+see [Systems Overview — VHF Radio](systems.md#vhf-radio). It's wired
+according to the IC-M504 owner's manual and has been tested aboard.
+There's no separate control for it: everything is operated from the VHF's
+own front-panel buttons.
+
+### Hailer (PA)
+Use this to talk to another vessel or the dock without leaving the helm.
+
+1. Push **[HAIL•RX]** on the VHF to enter hailer mode.
+2. Push and hold **[PTT]** and speak at a normal voice level into the mic.
+3. Rotate **[DIAL]** to adjust the volume.
+4. Push **[CLR]** or **[HAIL•RX]** again to return to normal VHF operation.
+
+> Transmitting and receiving on the VHF are both interrupted while in
+> hailer mode. An incoming DSC call automatically kicks the radio back to
+> normal operation.
+
+### Automatic Foghorn
+Sounds a horn pattern repeatedly through the hailer speaker until turned
+off — for restricted visibility (fog) per the Navigation Rules.
+
+1. While pushing and holding **[H/L]**, push **[HAIL•RX]** to enter auto foghorn mode.
+2. Rotate **[DIAL]** to select the pattern for your situation, then push **[DIAL•ENTER]**:
+   - **UNDERWAY** — one 5-second blast every 120 seconds (power-driven vessel making way)
+   - **STOP** — two 5-second blasts (2 sec apart) every 120 seconds (power-driven vessel underway but stopped)
+   - **SAIL** — one 5-second blast, then two 1-second blasts (sailing vessel)
+   - **TOW** — one 5-second blast, then three 1-second blasts (vessel towing/restricted)
+3. Rotate **[DIAL]** to set the foghorn volume, then push **[DIAL•ENTER]**.
+4. To stop: repeat step 1 (hold **[H/L]**, push **[HAIL•RX]**) to return to normal operation.
+
+> An incoming DSC call interrupts the foghorn and returns the radio to normal operation automatically — resume the foghorn pattern once clear if still needed.
 
 ---
 
