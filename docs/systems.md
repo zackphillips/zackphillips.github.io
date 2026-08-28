@@ -622,9 +622,21 @@ seacock has since been capped — see [Aft Macerator — Removed](#aft-macerator
 - **Superseded**: TackTick MN-100-2 solar depth display and two Robertson
   Dateline depth/speed displays — the Robertson displays never powered up
   when tested; replaced rather than repaired.
-- Transducer location: [under hull, forward/aft of keel]
-- **Offset**: keel is 7' 07" below the waterline — displayed depth is from the transducer, not the keel. [Confirm the transducer offset.]
+- **Two transducers are aboard, both live**:
+  - The **original TackTick transducer** was left in place as a backup,
+    along with its supporting electronics and both of its displays (one
+    to the port side of the helm, one at the nav station). This is the
+    **port** through-hull.
+  - The **Garmin triducer** (NMEA 2000, current/primary) is the **center**
+    through-hull (to starboard of center — described aboard as "center
+    (starboard port)").
+  - Both through-hulls are just **aft of the bulkhead separating the
+    v-berth from the salon**. To access either: open the long locker in
+    the salon walkway, then lift the small floor panel just aft of the
+    door leading to the v-berth.
+- **Offset**: keel is 7' 07" below the waterline — displayed depth is from the transducer, not the keel. Exact transducer-to-keel offset still not numerically confirmed.
 - Alarm: set for 10 ft below keel minimum.
+- **Maintenance**: the paddle wheel (speed sensor) needs regular cleaning of marine growth to stay accurate.
 - **Important**: the depth sensor contains an accelerometer that the masthead
   wind sensor relies on for angle correction. Do not remove or reposition
   the depth sensor without expecting incorrect wind readings (see Wind
@@ -648,10 +660,12 @@ seacock has since been capped — see [Aft Macerator — Removed](#aft-macerator
   still wired into SignalK over NMEA 0183 serial (`/dev/ttyOP_tacktick`,
   4800 baud), but SignalK is explicitly configured to **ignore** its
   wind/nav sentences (RMC/RMB/GLL/MWV/VWR) — so the hardware is present but
-  not the active source. Even so, some TackTick displays remain aboard and
-  in use: replacement battery/seal kits (Tacktick TA119, one from Vela
-  Sailing and one from Amazon) were installed in the **remaining** TackTick
-  displays in November 2025.
+  not the active source. Even so, the TackTick displays remain aboard as a
+  **backup** (kept in place alongside the original TackTick depth
+  transducer — see [Depth Sounder](#depth-sounder) above): one to the
+  **port side of the helm**, one at the **nav station**. Replacement
+  battery/seal kits (Tacktick TA119, one from Vela Sailing and one from
+  Amazon) were installed in these remaining displays in November 2025.
 - **Dependency**: the masthead wind sensor uses the depth sensor's
   accelerometer to correct for sensor angle. If the depth sensor is removed
   or repositioned, wind readings will be incorrect (diagnosed July 2026 —
@@ -667,11 +681,17 @@ seacock has since been capped — see [Aft Macerator — Removed](#aft-macerator
   a few days later (2025-10-18).
 - Connected to the NMEA 2000 backbone via a **Simrad SimNet/NMEA 2000
   adapter cable** (installed June 2025).
-- **Type**: [below-decks ram / wheel drive]
+- **Type**: not confirmed — likely a below-decks ram/linear drive, inferred
+  from the rudder-angle feedback unit (below) and the boat's mechanical
+  rack-and-pinion (non-hydraulic) steering, but not verified. The May 2025
+  pre-purchase survey may record the drive type; its source PDF isn't
+  committed to this repo (see [changelog](changelog.md#2025-05-08-other-pre-purchase-marine-survey-keiser-marine-bay-marine-diesel)) — check the original survey document, or visually confirm at the rudder quadrant.
 - **Control head location**: helm
 - Provides the rudder angle indication (there is no separate rudder position indicator).
 - SignalK's Simrad v2 autopilot API is enabled (device ID 204, converter 115, Simrad ID 4); commands are routed out to the autopilot over `seatalkOut`. Confirm this still applies correctly to the AP44 head.
-- Limits: [max sea state / wind it's trusted in]
+- **Limits (trusted use)**: comfortable for both offshore and bay sailing,
+  but **not** in seas greater than **6 ft** or winds greater than **30
+  kt** without careful hands-on supervision.
 
 ### NMEA 2000 Network
 The onboard N2K backbone was built out gradually through 2025–2026, mostly
@@ -691,7 +711,7 @@ were added. Notable gateways:
 ### Compass
 - **Make/Model**: Ritchie 4"
 - **Location**: helm station
-- **Deviation card**: [on file / not yet swung]
+- **Deviation card**: **not yet swung** — no deviation card exists.
 
 ### Radar
 - **Installed**: yes
@@ -717,25 +737,27 @@ Inventory as last recorded in March 2025.
 | Life jackets (USCG approved Type III, adult) | 6 | [location] | Inspect annually. **Note**: one inflatable PFD cartridge was accidentally triggered (per this table, Aug 2025 — gear-purchase records instead point to July 2025) — replaced with a new 33 g CO2 rearming kit, installed 2026-04-07 |
 | Inflatable PFD — Onyx A/M-24 | 1 | In use | Automatic/manual inflation, USCG approved; purchased/installed 2025-05-14 |
 | Horseshoe ring (Type IV throwable) | 1 | Stern rail | — |
-| Handheld flares | — | [location] | In date as of March 2025 |
-| Rocket parachute flares | — | [location] | In date as of March 2025 |
+| Handheld flares | — | Port lazarette (dedicated flare/smoke-signal container) | In date as of March 2025 |
+| Rocket parachute flares | — | Port lazarette (same container as handheld flares) | In date as of March 2025 |
 | Electronic flare — Sirius Signal C-1003 SOS LED (battery-powered, USCG-approved, w/ daytime flag & whistle) | 1 | Port lazarette | Installed 2026-03-29; replaces the pyrotechnic flare requirement |
-| Smoke signals | — | [location] | [date] |
-| EPIRB — ACR Global-Fix 406 | 1 | [location] | Registration updated 2026, registered to Christopher Lalau Keraly; battery replaced 2026 but **not yet tested** |
+| Smoke signals | — | Port lazarette (same container as flares) | [date] |
+| EPIRB — ACR Global-Fix 406 | 1 | Mounted at the nav station | Registration updated 2026, registered to Christopher Lalau Keraly; battery replaced 2026 but **not yet tested** |
 | PLB(s) — ACR ResQLink (model PLB-450) | 2 | Carried inside the two blue offshore life jackets | Registered to Chris and Zack; tested March 2026 |
 | Survivor locator lights — ACR HemiLight3 (HL3) | 3 | Hanging from handles above the stairs | Installed 2026-03-29 |
 | Life jacket light (water-activated) | 1 | Below nav station | Installed 2026-04-07 |
 | PFD accessories — leg straps (NRS), emergency whistles (LuxoGear, w/ lanyard) | 2 ea. | On the two blue offshore life jackets / in all inflatable PFDs | Installed 2026-03-29 |
 | Fire extinguishers — Type ABC-I, 2.5 lb dry chemical | 4+ | Quarterberth, forward cabin, 2× food storage | Recalled Kidde unit (quarterberth) replaced 2026; 2 more added — now satisfies the 3-minimum requirement for this vessel length |
 | Fire extinguisher — Kidde Mariner PWC, 5-B:C | 1 | Under nav station | Installed 2025-05-12 |
-| MOB gear — Lalizas Life Link retrieval sling + inflatable MOB system | 1 ea. | [location] | — |
+| MOB gear — Lalizas Life Link retrieval sling (throw bag) | 1 | Stbd lazarette | — |
+| MOB gear — inflatable MOB raft | 1 | Mounted on the **stbd railing**, next to the outboard mounting crane | — |
+| MOB gear — Dan buoy | 1 | Stbd lazarette | Serviced January 2026 |
 | MOB gear — Scotty #0793 rescue throw bags (50 ft floating MFP rope) | 2 | Stbd lazarette | Installed 2026-03-29 |
 | Smoke/CO2 detectors | 2+ | Aft cabin; port side, main cabin near speaker | Added/expanded 2026 — all units double as CO2 alarms |
 | Life raft | Reported aboard | Not sighted | **Currently out of service** |
-| Ditch bag | 1 | [location] | Contents current: [date] |
+| Ditch bag | 1 (bag only) | Should live in the cabinet under the nav station | **Not currently packed** — no offshore or coastal passages are planned right now; pack it before any such trip |
 | "Line around prop" kit (incl. dive headlamp for underwater inspection/cutting) | 1 | Stbd lazarette | Headlamp (BESTSUN, 1800 lm) purchased 2026-05-10 |
-| Tethers / jacklines | — | [location] | — |
-| Harnesses | — | [location] | — |
+| Tethers / jacklines | — | Stbd lazarette | — |
+| Harnesses | — | Stbd lazarette | — |
 
 Navigation lights are confirmed **present** (port/starboard, powered up),
 consistent with the May 2025 survey. The "nav lights removed/uninstalled"
@@ -768,6 +790,11 @@ Required or strongly recommended equipment that is **not** aboard:
 - [ ] Boarding / swim ladder
 
 ### Ditch Bag Contents
+
+**Status: not packed.** No offshore/coastal passages are currently
+planned, so this hasn't been prioritized — pack it (in the cabinet under
+the nav station) before any such trip.
+
 - [ ] EPIRB / PLB
 - [ ] Handheld VHF (charged)
 - [ ] Flares (in-date)
@@ -881,9 +908,12 @@ three mainsail reef points.**
 
 **United Yachting button line holders** were installed next to the jib winches (March 2026) for holding traveler lines, plus a matching drink/cup holder mounted on the bimini rail.
 
+**All lines are led aft — there are no cleats at the mast base.** All
+halyards and control lines terminate at clutches in the cockpit.
+
 | Line | Purpose | Color/ID | Clutch/Cleat |
 |------|---------|----------|-------------|
-| Main halyard | Raise/lower main | — | [mast cleat / clutch] |
+| Main halyard | Raise/lower main | — | Cockpit clutch |
 | Jib halyard | Raise/lower headsail | — | — |
 | Mainsheet | Main trim | — | Lewmar traveler |
 | Port jib sheet | Headsail trim | — | — |
