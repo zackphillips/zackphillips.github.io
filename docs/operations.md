@@ -181,6 +181,23 @@ no blower to run.
 
 ---
 
+## Swim Platform
+
+The fold-down swim platform is raised and lowered using a line (**black and
+red**) and cleat in the **aft stbd lazarette**. See
+[Systems Overview — Swim Platform](systems.md#swim-platform).
+
+### Lowering
+1. Uncleat the line in the aft stbd lazarette.
+2. Push the platform out from the exterior.
+3. Hold the line from the exterior so the platform drops slowly under control.
+
+### Raising
+1. Pull the line in from inside the lazarette.
+2. Cleat it off inside once the platform is fully raised.
+
+---
+
 ## Returning to Slip
 
 1. Radio the marina on **[marina channel TBD]** if required.

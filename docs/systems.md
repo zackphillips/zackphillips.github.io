@@ -72,6 +72,14 @@ Date: May 8, 2025
 Inspector: Jeff Keiser, SAMS/AMS — Keiser Marine, Sausalito, CA (pre-purchase survey, visual only — mast ascended, no haul-out disassembly)
 Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sighted. Internal chain-plate connections were not accessible, so chain-plate integrity could not be fully assessed — no water intrusion or corrosion staining seen at the visible portions. Light surface corrosion on shrouds/stays, rated serviceable. This remains the only rig inspection on record; a full haul-out inspection by a qualified rigger (including chain plates) is still recommended before going offshore.
 
+### Swim Platform
+- **Mechanism**: fold-down platform, raised/lowered via a line and cleat in
+  the **aft stbd lazarette**. The line is **black and red**.
+- **To lower**: uncleat the line, then push the platform out from the
+  exterior, holding the line from outside so it drops slowly under control.
+- **To raise**: pull the line in from inside the lazarette and cleat it off inside.
+- See [Operations — Swim Platform](operations.md#swim-platform) for the full procedure.
+
 ### Known Hull Findings
 - **Keel trailing edge separation — resolved February 2026.** Repaired at Svendsen's Bay Marine: reefed out the failed seam, cleaned out debris, applied flexible marine adhesive compound, and torqued the keel bolts. (Previously: set on the hard with the keel just touching; torque bolts, re-caulk seam.) Note: a keel-hull gap on the Beneteau First 42 has been [researched and determined normal](https://forums.sailboatowners.com/threads/beneteau-first-42-keel-hull-gap-normal.117295/) for the model.
 - **Stanchion bases — tightened, aft head leak resolved.** Loose stanchion bases have been tightened all around the boat. The leaks near the aft head were resolved by removing the stanchion, adding marine sealant to the hole in the deck, and reinstalling it; this required removing the bathroom fiberglass wall panels and is likely to resolve the issue entirely. A missing transom lifeline is still outstanding. Gelcoat cracks at the bow pulpit stanchions have since been patched (some remain).
