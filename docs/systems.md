@@ -748,10 +748,13 @@ Inventory as last recorded in March 2025.
 | PFD accessories — leg straps (NRS), emergency whistles (LuxoGear, w/ lanyard) | 2 ea. | On the two blue offshore life jackets / in all inflatable PFDs | Installed 2026-03-29 |
 | Fire extinguishers — Type ABC-I, 2.5 lb dry chemical | 4+ | Quarterberth, forward cabin, 2× food storage | Recalled Kidde unit (quarterberth) replaced 2026; 2 more added — now satisfies the 3-minimum requirement for this vessel length |
 | Fire extinguisher — Kidde Mariner PWC, 5-B:C | 1 | Under nav station | Installed 2025-05-12 |
+| First aid / medical kit | 1 | Galley — shelf above the stove | — |
+| Searchlight | 1 | Lower cabinet under the nav station | — |
 | MOB gear — Lalizas Life Link retrieval sling (throw bag) | 1 | Stbd lazarette | — |
 | MOB gear — inflatable MOB raft | 1 | Mounted on the **stbd railing**, next to the outboard mounting crane | — |
 | MOB gear — Dan buoy | 1 | Stbd lazarette | Serviced January 2026 |
 | MOB gear — Scotty #0793 rescue throw bags (50 ft floating MFP rope) | 2 | Stbd lazarette | Installed 2026-03-29 |
+| Swim ladder | 1 | Stern lazarette, port side | Hooks onto the swim platform via two hooks — **not lashed/tied off**; has come loose in heavy seas before and required someone to dive after it. **TODO**: figure out how to tie the ladder to the platform hooks so it can't fall out in heavy seas or an emergency. |
 | Smoke/CO2 detectors | 2+ | Aft cabin; port side, main cabin near speaker | Added/expanded 2026 — all units double as CO2 alarms |
 | Life raft | Reported aboard | Not sighted | **Currently out of service** |
 | Ditch bag | 1 (bag only) | Should live in the cabinet under the nav station | **Not currently packed** — no offshore or coastal passages are planned right now; pack it before any such trip |
@@ -781,13 +784,14 @@ Required or strongly recommended equipment that is **not** aboard:
 - [x] ~~Port and starboard navigation lights — removed/uninstalled~~ — incorrect; confirmed present and powered up, matching the May 2025 survey
 - [x] ~~Smoke detectors in the accommodation spaces~~ — added 2026, see Safety Equipment table
 - [x] ~~Trash disposal placard, written waste management plan, USCG Nav Rules handbook~~ — a waste discharge placard (Bernard Engraving Corp, installed atop the port lazarette) and a Nav Rules handbook (installed above the nav station) were both purchased 2025-05-12, alongside the trash placard already noted aboard per the May 2025 survey; waste management plan added 2026 (nav station desk / under the AIS transceiver)
-- [ ] First aid / medical kit
+- [x] ~~First aid / medical kit~~ — aboard; stored on the shelf above the stove in the galley
 - [ ] Fixed fire suppression system in the engine space
 - [ ] Bilge high-water alarm (dedicated alarm — distinct from the bilge float switches, confirmed working 2026)
 - [ ] Emergency steering system — emergency tiller is aboard but has **not
   been tested on deck** (as of August 2026; test before relying on it)
-- [ ] Searchlight
-- [ ] Boarding / swim ladder
+- [x] ~~Searchlight~~ — aboard; stored in the lower cabinet under the nav station
+- [x] ~~Boarding / swim ladder~~ — aboard; stored in the stern lazarette, port
+  side (see Safety Equipment table — not currently secured to the swim platform)
 
 ### Ditch Bag Contents
 
@@ -834,22 +838,29 @@ the nav station) before any such trip.
   nylon, 5/16" G4 chain, thimble, chain hook — West Marine, 2026-05-25) was
   **returned**, apparently for a size mismatch (9/16" vs. the 5/8" nylon
   actually delivered in August); a spare 3/8" BBB chain (250 ft) sitting in
-  the stern lazarette does **not** match the windlass gypsy/rode spec and
-  should be removed.
+  the stern lazarette does **not** match the windlass gypsy/rode spec.
+  (Previously this doc said it should be removed — it's actually earmarked
+  as rode for the spare Danforth anchor, see Secondary Anchor below.)
 - **Hardware**: anchor swivel and HS galvanized bow shackle (5/16", 2,500 lb
   WLL), added with the rode above. A stainless deck key (HAIWEN 316 SS,
   installed November 2025) is used to open the deck fill/tank plates, not
   ground tackle specifically, but is stowed with this gear.
+- **Snubber**: an anchor snubber hook is stored in the anchor compartment
+  (bow anchor locker) — hooks onto the chain to take the anchor/chain
+  weight off the windlass. Use it whenever at anchor or in a harbor (see
+  [Operations — Anchoring](operations.md#anchoring) for the procedure).
 - **Platform**: stainless fairlead anchor roller chute at the stem
 - **Storage**: bow anchor locker; chain locker drains overboard at the port lower bow
 
 ### Secondary Anchor
-None aboard. **At least one spare anchor and rode** is recommended for
-emergencies and for added anchoring options.
-- **Type**: —
+A spare anchor is aboard but **currently unusable** until it's rigged with a rode.
+- **Type**: aluminum Danforth (fluke-style)
 - **Weight**: —
-- **Rode**: —
-- **Storage**: —
+- **Rode**: not yet rigged. The spare **3/8" BBB chain (250 ft)**, stored
+  with the anchor, is earmarked as its rode, but still needs to be **cut to
+  length and shackled to a rope rode and to the anchor** before this anchor
+  can be deployed.
+- **Storage**: stern lazarette, stbd side
 
 ### Windlass
 - **Make/Model**: Quick Eagle, 12 V / 1400 W
@@ -859,7 +870,8 @@ emergencies and for added anchoring options.
   the stairs** — unlabeled. (Previously this doc guessed "nav station";
   correct location is the engine compartment.) Was found unsecured to the
   hull in the May 2025 survey — since secured.
-- **Manual override**: [location]
+- **Manual override**: **none** — there is no manual windlass override
+  aboard. If the windlass fails, the anchor must be raised by hand.
 - **Note**: doesn't typically need to cool down, but **can trip under
   normal use**. To avoid tripping it: only use the windlass to lift the
   weight of the anchor/chain — **use the engine, not the windlass, to

@@ -136,8 +136,13 @@ no blower to run.
 
 ### Gear
 - Primary: **55 lb Manson Supreme** on galvanized chain + ~3/8" stranded nylon rode, on the bow roller chute *(lengths TBD)* — upgraded from 44 lb after a shackle failure in August 2025
-- Secondary: **none aboard** — a spare anchor and rode is recommended
-- Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker at nav station
+- Secondary: **aluminum Danforth**, stern lazarette (stbd side) — **currently
+  unusable**; the spare 3/8" BBB chain stored with it still needs to be cut
+  to length and shackled to a rope rode and to the anchor before it can be
+  deployed. See [Systems Overview — Ground Tackle](systems.md#8-ground-tackle).
+- Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker in
+  the engine compartment behind the stairs. **No manual override** — if the
+  windlass fails, raise the anchor by hand.
 
 ### Anchoring Lessons Learned
 - **Inspect the shackle** before every anchoring — the original shackle
@@ -156,7 +161,9 @@ no blower to run.
 5. Back down slowly on engine — pay out scope as boat falls back.
 6. Set with a brief burst of reverse (1500–2000 RPM) until rode goes taut.
 7. Take two bearings 90° apart; log them in the chartplotter or notebook.
-8. Let out snubber: 20–30 ft of line from bow cleat to chain with snatch hook — takes load off windlass.
+8. Let out snubber: 20–30 ft of line from bow cleat to chain with the
+   anchor snubber hook (stored in the anchor compartment) — takes the
+   anchor/chain weight off the windlass. Use this whenever at anchor or in a harbor.
 9. Mark position on chartplotter; set anchor drag alarm.
 
 ### Retrieving the Anchor
@@ -289,7 +296,12 @@ similar) — leave it that way by default.
 3. Throw the horseshoe buoy and/or any floating object.
 4. **Quick-stop maneuver**: tack immediately without releasing sheets → heave to → return on a reach.
 5. Approach MOB from downwind; stop with them at the beam, windward side.
-6. Recover with the Lalizas Life Link sling / inflatable MOB system, or use a spinnaker halyard and the electric 44ST-2 winch. **There is no boarding ladder aboard** — do not plan on one.
+6. Recover with the Lalizas Life Link sling / inflatable MOB system, or use
+   a spinnaker halyard and the electric 44ST-2 winch. A swim ladder is
+   stored in the stern lazarette (port side) and hooks onto the swim
+   platform via two hooks, but it is **not lashed down** and has come
+   loose in heavy seas before (requiring someone to dive after it) — do
+   not plan on it as a primary MOB recovery method in rough conditions.
 7. Call **USCG Ch 16 — MAYDAY** if recovery is delayed.
 
 ### Engine Failure
