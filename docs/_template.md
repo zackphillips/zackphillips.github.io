@@ -24,6 +24,16 @@ remembered on that device — good for checklists you run every departure.
 
 Links to other documents work with a plain relative path, e.g.
 [the systems overview](systems.md); the reader keeps you inside the app.
+
+Status tags mark the state of an item inline — see the legend at the top
+of systems.md. Use them by dropping the raw HTML span into the Markdown
+(marked/DOMPurify pass both through):
+  <span class="doc-tag doc-tag--issue">Unresolved</span>
+  <span class="doc-tag doc-tag--partial">Partial Fix</span>
+  <span class="doc-tag doc-tag--planned">Planned</span>
+  <span class="doc-tag doc-tag--maintenance">Maintenance</span>
+Every doc-tag--planned item should also appear on planned-projects.md, and
+every doc-tag--maintenance item on maintenance.md.
 -->
 
 Why this procedure exists and when to run it.

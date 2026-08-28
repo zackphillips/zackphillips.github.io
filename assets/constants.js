@@ -48,6 +48,12 @@ var VESSEL_CONSTANTS = Object.freeze({
 
   // ── Ship's docs (docs.html) ──────────────────────────────────────────────
   DOCS_INDEX_URL: 'docs/index.json',
+  // Sidebar section order. docs/index.json itself sorts categories
+  // alphabetically (see scripts/build_docs_index.py) so the index stays
+  // predictable to diff; this list is what actually controls the order
+  // the sections render in. Categories not listed here sort alphabetically
+  // after the ones that are.
+  DOCS_CATEGORY_ORDER: ['Underway', 'Reference', 'Maintenance'],
   // Checklist ticks are per-device UI state, not vessel data — they live in
   // localStorage under this prefix and are never committed anywhere.
   DOCS_CHECKLIST_PREFIX: 'mermug.checklist.',

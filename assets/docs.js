@@ -72,11 +72,31 @@ function readingTime(words) {
 // fallback is keyed on the exact request URL.
 const FRESH = { cache: 'no-cache' };
 
+// docs/index.json itself sorts categories alphabetically (see
+// scripts/build_docs_index.py) so the file stays predictable to diff.
+// C.DOCS_CATEGORY_ORDER is what actually controls sidebar section order —
+// applied here, once, so every consumer of docsIndex (nav grouping, the
+// default-document fallback in route()) sees the same order. A stable
+// sort by category rank alone preserves the existing (order, title)
+// ordering within each category. Categories not listed sort alphabetically
+// after the ones that are.
+function sortByCategoryOrder(docs) {
+  const order = C.DOCS_CATEGORY_ORDER || [];
+  const rank = (category) => {
+    const i = order.indexOf(category);
+    return i === -1 ? order.length : i;
+  };
+  return [...docs].sort((a, b) => {
+    const diff = rank(a.category) - rank(b.category);
+    return diff !== 0 ? diff : a.category.localeCompare(b.category);
+  });
+}
+
 async function loadIndex() {
   const response = await fetch(C.DOCS_INDEX_URL, FRESH);
   if (!response.ok) throw new Error(`${C.DOCS_INDEX_URL} → HTTP ${response.status}`);
   const payload = await response.json();
-  return Array.isArray(payload.docs) ? payload.docs : [];
+  return sortByCategoryOrder(Array.isArray(payload.docs) ? payload.docs : []);
 }
 
 async function loadMarkdown(entry) {
