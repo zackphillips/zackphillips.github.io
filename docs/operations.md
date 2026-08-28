@@ -63,6 +63,13 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 Yanmar 4JH2E, 46 HP diesel. The engine space is naturally ventilated — there is
 no blower to run.
 
+> **If the water heater has been left on at the dock** (120 V element), the
+> tank is likely already hot. Running the engine adds the heat exchanger's
+> heat on top of that, which can build pressure and cause hoses to develop
+> pinholes. **Bleed the hot water line first** — running a hot tap for
+> ~30 seconds is enough — before running the engine for any length of time.
+> See [Systems Overview — Freshwater System](systems.md#freshwater-system).
+
 1. Open raw water seacock (under companion way steps, starboard side).
 2. Turn ignition key to **ON** — gauges and alarms come alive.
 3. Confirm fuel is on (ball valve at the tank, should always be open).
@@ -135,14 +142,21 @@ no blower to run.
 ## Anchoring
 
 ### Gear
-- Primary: **55 lb Manson Supreme** on galvanized chain + ~3/8" stranded nylon rode, on the bow roller chute *(lengths TBD)* — upgraded from 44 lb after a shackle failure in August 2025
-- Secondary: **none aboard** — a spare anchor and rode is recommended
-- Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker at nav station
+- Primary: **Rocna 20** (scoop/roll-bar type), ~44 lb, on 150 ft of 5/16" G4
+  galvanized chain spliced to 450 ft of 5/8" three-strand nylon rope, on the
+  bow roller chute
+- Secondary: **aluminum Danforth**, stern lazarette (stbd side) — **currently
+  unusable**; the spare 3/8" BBB chain stored with it still needs to be cut
+  to length and shackled to a rope rode and to the anchor before it can be
+  deployed. See [Systems Overview — Ground Tackle](systems.md#8-ground-tackle).
+- Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker in
+  the engine compartment behind the stairs. **No manual override** — if the
+  windlass fails, raise the anchor by hand.
 
 ### Anchoring Lessons Learned
-- **Inspect the shackle** before every anchoring — the original shackle
-  failed in 20-knot winds (August 2025), resulting in loss of the anchor.
-  The chain was fine; the shackle was the single point of failure.
+- **Inspect the shackle** before every anchoring — a shackle failure has
+  cost this boat an anchor before, in 20-knot winds. The chain was fine;
+  the shackle was the single point of failure.
 - In swells, use **more rope scope** — rope is elastic and absorbs shock
   loads better than chain alone.
 - Keel draft is 7' 07" — verify depth at anchorage (e.g. Angel Island) is
@@ -156,7 +170,9 @@ no blower to run.
 5. Back down slowly on engine — pay out scope as boat falls back.
 6. Set with a brief burst of reverse (1500–2000 RPM) until rode goes taut.
 7. Take two bearings 90° apart; log them in the chartplotter or notebook.
-8. Let out snubber: 20–30 ft of line from bow cleat to chain with snatch hook — takes load off windlass.
+8. Let out snubber: 20–30 ft of line from bow cleat to chain with the
+   anchor snubber hook (stored in the anchor compartment) — takes the
+   anchor/chain weight off the windlass. Use this whenever at anchor or in a harbor.
 9. Mark position on chartplotter; set anchor drag alarm.
 
 ### Retrieving the Anchor
@@ -164,6 +180,23 @@ no blower to run.
 2. When anchor breaks free, signal helmsman ("anchor aweigh").
 3. Rinse chain/anchor with deck wash as it comes aboard.
 4. Secure anchor with safety pin; stow snubber.
+
+---
+
+## Swim Platform
+
+The fold-down swim platform is raised and lowered using a line (**black and
+red**) and cleat in the **aft stbd lazarette**. See
+[Systems Overview — Swim Platform](systems.md#swim-platform).
+
+### Lowering
+1. Uncleat the line in the aft stbd lazarette.
+2. Push the platform out from the exterior.
+3. Hold the line from the exterior so the platform drops slowly under control.
+
+### Raising
+1. Pull the line in from inside the lazarette.
+2. Cleat it off inside once the platform is fully raised.
 
 ---
 
@@ -289,7 +322,12 @@ similar) — leave it that way by default.
 3. Throw the horseshoe buoy and/or any floating object.
 4. **Quick-stop maneuver**: tack immediately without releasing sheets → heave to → return on a reach.
 5. Approach MOB from downwind; stop with them at the beam, windward side.
-6. Recover with the Lalizas Life Link sling / inflatable MOB system, or use a spinnaker halyard and the electric 44ST-2 winch. **There is no boarding ladder aboard** — do not plan on one.
+6. Recover with the Lalizas Life Link sling / inflatable MOB system, or use
+   a spinnaker halyard and the electric 44ST-2 winch. A swim ladder is
+   stored in the stern lazarette (port side) and hooks onto the swim
+   platform via two hooks, but it is **not lashed down** and has come
+   loose in heavy seas before (requiring someone to dive after it) — do
+   not plan on it as a primary MOB recovery method in rough conditions.
 7. Call **USCG Ch 16 — MAYDAY** if recovery is delayed.
 
 ### Engine Failure
