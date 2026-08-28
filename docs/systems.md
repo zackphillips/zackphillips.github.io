@@ -240,7 +240,7 @@ The engine start battery terminals have protective insulating covers, per
 - **Make/Model**: Victron (specific model unconfirmed) — reports to SignalK over Bluetooth LE via [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble), not wired.
 - **Location**: Nav station / helm
 - Monitors house bank state of charge, voltage, current draw, and time-to-empty.
-- The main DC panel also carries **analog voltage and amperage gauges**.
+- The DC Original panel also carries **analog voltage and amperage gauges**.
 - SignalK reports SOC and draw — visible on [mermug.com](https://mermug.com).
 - The same BLE plugin also reads a second Victron device labeled "bimini" — the solar charge controller (see the Solar row below), not a second battery monitor.
 
@@ -257,14 +257,14 @@ The engine start battery terminals have protective insulating covers, per
 - **Inlet**: 30 A / 125 V, single phase, 120 V @ 60 Hz
 - **Cord**: 30 A vinyl
 - **Charger**: Xantrex Tru-Charge — port lazarette, mounted on the wall at the aft side of the compartment (alongside the inverter and AC source-selector switch — see [Inverter](#inverter) below).
-- Main AC breaker and branch breakers in the main cabin AC panel. Outlet polarity has been verified correct.
+- Main AC breaker and branch breakers in the AC Original panel. Outlet polarity has been verified correct.
 - **No galvanic isolator is installed** — highly recommended (ABYC A-28).
 - Connects to dock pedestal via shore power cord; confirm polarity light is green.
 
 **Plugging in at the dock:**
 1. Plug the shore power cord in — typically on the **port side**, at either the bow or the stern inlet.
 2. **Rotate the plug a quarter turn to lock it in.**
-3. Turn on the **AC Main** breaker (see [AC Panel](#ac-panel)) so the batteries actually charge.
+3. Turn on the **AC Main** breaker (see [AC Original Panel](#ac-original-panel)) so the batteries actually charge.
 4. Make sure the AC source-selector switch in the port lazarette is set to **"Shore"** (not "Gen") — see [Inverter](#inverter).
 
 > **Critical**: if the boat is left unplugged from shore power, the house
@@ -272,8 +272,8 @@ The engine start battery terminals have protective insulating covers, per
 > Always confirm shore power is connected and the AC Main is on before
 > leaving the boat.
 
-### DC Panel
-Located at nav station. Circuits labeled:
+### DC Original Panel
+Located on the nav station wall. Circuits labeled:
 - DC Main
 - Tricolor Light
 - Nav Light
@@ -294,25 +294,32 @@ Located at nav station. Circuits labeled:
 The anchor windlass is not on this panel — it runs off a large white
 unlabeled breaker in the engine compartment, behind the stairs (not at the bow).
 
-Separately, a **Blue Sea Systems 8025 traditional metal DC panel (3
-positions)** feeds accessory circuits, with dedicated **"Lights"** and
-**"Electronics"** breakers covering cockpit lighting and the nav-station
-PC/Raspberry Pi respectively.
+### DC Aux Panel
+Also on the nav station wall — a **Blue Sea Systems 8025 traditional metal
+DC panel (4 positions)**, installed May 2026 to replace the old
+battery-monitor panel. Switches:
+- **Lights** — cockpit lighting
+- **Electronics** — nav-station PC/Raspberry Pi
+- [two more positions — not yet confirmed]
 
 ### 12 V Distribution / Bus Bars
 Three **RVBOATPAT 12 V 150 A (1/4" stud) marine bus bars** expand 12 V
 distribution beyond the factory panel — two as general accessory bus
-points, one feeding the "Electronics" circuit (router, picture frame,
-Raspberry Pi).
+points, one feeding the DC Aux panel's "Electronics" circuit (router,
+picture frame, Raspberry Pi).
 
-Switch panels feeding accessory circuits:
-- **KEING 3-gang 12 V rocker switch panel** — cockpit lights, port panel.
-- **AMOMD 4-gang 12 V/24 V rocker switch panel** — router, picture frame, and Raspberry Pi.
+Switch panels feeding accessory circuits (distinct from the DC Original/Aux
+breaker panels above):
+- **Cockpit Lights** switch panel — **KEING 3-gang 12 V rocker switch
+  panel**, in the cockpit, starboard side.
+- **Electronics** switch panel — **AMOMD 4-gang 12 V/24 V rocker switch
+  panel**, mounted next to the monitor at the nav station — router, picture
+  frame, and Raspberry Pi.
 - Cockpit 12 V accessory socket: **Sea Dog 426053-1** power socket with
   plate, used for pedestal power.
 
-### AC Panel
-Main cabin AC electrical panel.
+### AC Original Panel
+Located on the nav station wall.
 - Main breaker: **AC Main**
 - Shore power breaker: 30 A
 - Circuits/switches:

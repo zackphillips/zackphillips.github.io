@@ -375,10 +375,11 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   anchor-chain markers.
 
 ### 2026-05-18 | Electrical | DC panel upgraded
-- Blue Sea Systems 8025 traditional metal DC panel (3 positions) installed,
-  replacing the old battery-monitor panel. Adds dedicated "Lights" and
-  "Electronics" breakers for cockpit lighting and the nav-station
-  PC/Raspberry Pi, fed by an additional RVBOATPAT 12 V 150 A bus bar.
+- Blue Sea Systems 8025 traditional metal DC panel (4 positions) installed
+  on the nav station wall as the new "DC Aux" panel, replacing the old
+  battery-monitor panel. Adds dedicated "Lights" and "Electronics" breakers
+  for cockpit lighting and the nav-station PC/Raspberry Pi, fed by an
+  additional RVBOATPAT 12 V 150 A bus bar.
 
 ### 2026-05-25 | Ground Tackle | First anchor rode reorder — returned
 - An initial order of 9/16" three-strand nylon rode, 5/16" G4 chain, a
@@ -594,7 +595,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Refrigeration | Adler Barbour 12 V | — | Top and front load. **Compressor failed** (original 1994); fan also broken. Replacement: Isotherm 2017 Compact Classic (p/n U260X086P12111AA, Defender.com, purchased 2026-07-18) — ready to install, not yet installed |
 | Stove | Tesco 3-burner propane w/ oven | — | |
 | Steering | Edson rack and pinion | — | |
-| DC panel | Blue Sea Systems 8025, 3-position | — | Installed May 2026, replacing old battery-monitor panel; adds "Lights"/"Electronics" breakers |
+| DC Aux panel | Blue Sea Systems 8025, 4-position | — | Installed May 2026, replacing old battery-monitor panel; adds "Lights"/"Electronics" breakers |
 | Engine/tank NMEA 2000 gateway | Actisense EMU-1 | — | Installed Dec 2025, behind engine control panel, accessible via aft cabin panel |
 | AIS NMEA 2000 gateway | Actisense NGT-1-ISO | — | Installed Dec 2025 |
 | GPS (NMEA 2000) | Garmin GPS 19x | — | Installed cockpit, April 2026; missing T-connector |
