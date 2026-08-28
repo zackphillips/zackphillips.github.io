@@ -274,18 +274,30 @@ The engine start battery terminals have protective insulating covers, per
 
 ### DC Panel
 Located at nav station. Circuits labeled:
-- [List circuits as you learn them, e.g.:]
-  - 1: Navigation lights
-  - 2: VHF
-  - 3: Instruments
-  - 4: Cabin lights
-  - 5: Bilge pump (auto)
-  - 6: Anchor windlass (via a large white unlabeled breaker in the engine compartment, behind the stairs — not at the bow)
-  - ...
+- DC Main
+- Tricolor Light
+- Nav Light
+- Steaming Light
+- Spreader Light
+- Salon Lights
+- Cabin Lights
+- 12VDC Outlets
+- Autopilot
+- Sailing Instruments
+- VHF
+- Fresh Water Pump
+- Bilge Pump
+- Gas Valve
+- Shower Pump
+- Panel Lights
 
-**Panel**: a **Blue Sea Systems 8025 traditional metal DC panel (3
-positions)**, with dedicated **"Lights"** and **"Electronics"** breakers
-covering cockpit lighting and the nav-station PC/Raspberry Pi respectively.
+The anchor windlass is not on this panel — it runs off a large white
+unlabeled breaker in the engine compartment, behind the stairs (not at the bow).
+
+Separately, a **Blue Sea Systems 8025 traditional metal DC panel (3
+positions)** feeds accessory circuits, with dedicated **"Lights"** and
+**"Electronics"** breakers covering cockpit lighting and the nav-station
+PC/Raspberry Pi respectively.
 
 ### 12 V Distribution / Bus Bars
 Three **RVBOATPAT 12 V 150 A (1/4" stud) marine bus bars** expand 12 V
@@ -301,14 +313,13 @@ Switch panels feeding accessory circuits:
 
 ### AC Panel
 Main cabin AC electrical panel.
-- Main breaker: in the main AC panel
+- Main breaker: **AC Main**
 - Shore power breaker: 30 A
 - Circuits/switches:
-  - **AC Main**
-  - **AC Outlets**
   - **Battery Charger** — labeled, but **does nothing** (the Xantrex charger runs regardless of this breaker's position — investigate/relabel)
   - **Water Heater**
-  - **Unused**
+  - **AC Outlets**
+  - **Spare**
 
 ### Inverter
 - **Make/Model**: Outbound
