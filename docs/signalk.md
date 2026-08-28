@@ -11,7 +11,7 @@ SignalK is the data hub aboard: it pulls in NMEA 2000, NMEA 0183 and
 Bluetooth sensor data, derives additional values, and feeds both the onboard
 [KIP](https://github.com/mxtommy/Kip) instrument display and the
 [mermug.com](https://mermug.com) tracker (see [Systems Overview §6](systems.md#6-navigation-electronics)
-and [§11](systems.md#11-vessel-data-automation)).
+and [§13](systems.md#13-vessel-data-automation)).
 
 This page summarizes what's actually **enabled and in use** on the server —
 not every plugin option. Where useful, plugin names link to their source

@@ -142,7 +142,9 @@ no blower to run.
 ## Anchoring
 
 ### Gear
-- Primary: **55 lb Manson Supreme** on galvanized chain + ~3/8" stranded nylon rode, on the bow roller chute *(lengths TBD)* — upgraded from 44 lb after a shackle failure in August 2025
+- Primary: **Rocna 20** (scoop/roll-bar type), ~44 lb, on 150 ft of 5/16" G4
+  galvanized chain spliced to 450 ft of 5/8" three-strand nylon rope, on the
+  bow roller chute
 - Secondary: **aluminum Danforth**, stern lazarette (stbd side) — **currently
   unusable**; the spare 3/8" BBB chain stored with it still needs to be cut
   to length and shackled to a rope rode and to the anchor before it can be
@@ -152,9 +154,9 @@ no blower to run.
   windlass fails, raise the anchor by hand.
 
 ### Anchoring Lessons Learned
-- **Inspect the shackle** before every anchoring — the original shackle
-  failed in 20-knot winds (August 2025), resulting in loss of the anchor.
-  The chain was fine; the shackle was the single point of failure.
+- **Inspect the shackle** before every anchoring — a shackle failure has
+  cost this boat an anchor before, in 20-knot winds. The chain was fine;
+  the shackle was the single point of failure.
 - In swells, use **more rope scope** — rope is elastic and absorbs shock
   loads better than chain alone.
 - Keel draft is 7' 07" — verify depth at anchorage (e.g. Angel Island) is
