@@ -982,6 +982,8 @@ halyards and control lines terminate at clutches in the cockpit.
 3. **Magma grill**: open the **yellow valve** in the port aft lazarette —
    this feeds the grill directly; the breaker switch is not involved and
    the yellow valve alone is all that's needed.
+4. **Lighting**: the stove and grill are lit with a lighter stored
+   **behind the stove**.
 
 > **Open item**: the LPG tank is not secured in its locker. Fit a
 > proper mount. Perform a gas leak test (close the appliance valves, open the
