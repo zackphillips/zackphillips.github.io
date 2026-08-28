@@ -792,6 +792,10 @@ A spare anchor is aboard but **currently unusable** until it's rigged with a rod
 - **Make/Model**: Quick Eagle, 12 V / 1400 W
 - **Type**: electric, foot switches at bow. A spare **Five Oceans FO3291**
   covered foot switch is in storage.
+- **Remote control**: stored in the cabinet behind the forward toilet. To
+  use it, pass it up through the roof hatch above the toilet. A toggle
+  switch replaces the original (broken) buttons — the toggle's direction
+  still matches what the buttons used to do.
 - **Breaker**: a large white unlabeled breaker in the **engine compartment,
   behind the stairs** — secured to the hull.
 - **Manual override**: **none** — if the windlass fails, the anchor must be
@@ -842,6 +846,9 @@ three mainsail reef points.**
 **United Yachting button line holders** are installed next to the jib
 winches for holding traveler lines, plus a matching drink/cup holder
 mounted on the bimini rail.
+
+**Line labels**: deck lines are physically labeled at their clutches, and
+the labels are confirmed correct.
 
 **All lines are led aft — there are no cleats at the mast base.** All
 halyards and control lines terminate at clutches in the cockpit.
