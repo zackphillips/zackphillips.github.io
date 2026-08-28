@@ -663,11 +663,16 @@ the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
   matching AP44 suncover (p/n 000-13724-001).
 - Connected to the NMEA 2000 backbone via a **Simrad SimNet/NMEA 2000
   adapter cable**.
-- **Type**: not confirmed — likely a below-decks ram/linear drive, inferred
-  from the rudder-angle feedback unit (below) and the boat's mechanical
-  rack-and-pinion (non-hydraulic) steering, but not verified. Check the
-  original pre-purchase survey document, or visually confirm at the rudder
-  quadrant.
+- **Course computer**: **Simrad AC42**, confirmed via an N2K bus scan (see
+  [N2K Devices](#n2k-devices-bus-scan) below) — a below-decks unit, consistent
+  with the rudder-angle feedback unit (below) and the boat's mechanical
+  rack-and-pinion (non-hydraulic) steering. Physical drive type (ram/linear)
+  still not visually confirmed at the rudder quadrant.
+- **Rate compass**: a **Simrad RC42** is also on the N2K bus (see [N2K
+  Devices](#n2k-devices-bus-scan) below) — feeds heading/rate-of-turn to the
+  autopilot. Not yet confirmed whether SignalK also uses it as a heading
+  source for the chartplotter (see the missing compass-input note under
+  [Chartplotter / MFD](#chartplotter-mfd)).
 - **Control head location**: helm
 - Provides the rudder angle indication (there is no separate rudder position indicator).
 - SignalK's Simrad v2 autopilot API is enabled (device ID 204, converter 115, Simrad ID 4); commands are routed out to the autopilot over `seatalkOut`. Confirm this still applies correctly to the AP44 head.
@@ -681,6 +686,29 @@ cable/T-connector/terminator hardware. Notable gateways:
 - **Actisense EMU-1** — engine/tank analog sender bridge (see [Fuel Gauges](#fuel-gauges)).
 - **Actisense NGT-1-ISO** — AIS-to-N2K bridge (see [AIS](#ais)).
 - An **Ancor 270113 NMEA 2000 power isolator** is in storage, not yet installed.
+
+#### N2K Devices (bus scan)
+
+Full device list from a network scan (via the Pi/OpenPlotter), all shown
+offline at capture time since the boat wasn't powered up:
+
+| Device | Manufacturer | Model | Serial | Class | Instance | Address | Notes |
+|--------|-------------|-------|--------|-------|----------|---------|-------|
+| Engine Monitoring Unit EMU-1 | Actisense | EMU-1 | 307901 | Propulsion | 0 | 6 | Matches [Fuel Gauges](#fuel-gauges) EMU-1 |
+| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | 251317 | Internetwork device | 0 | 2 | Model is **NGW-1**, not the NGT-1-ISO documented under [AIS](#ais) above — needs reconciling |
+| DST810 | Airmar | DST810 | A000LYR7 | Navigation | 0 | 35 | Not yet reconciled with the [Depth Sounder](#depth-sounder) transducers below — needs confirmation |
+| MS-RA70 | Fusion Electronics | MS-RA70 | 1248726 | Entertainment | 0 | 12 | Matches [Audio, Video & Entertainment](#11-audio-video-entertainment) head unit |
+| N2K Remote | Fusion Electronics | N2K Remote | 245105 | Entertainment | 0 | 33 | Matches the Fusion MS-NRX300 wired remote |
+| (unnamed) | Garmin | — | — | Internetwork device | 0 | 0 | Role unconfirmed |
+| GND10 | Garmin | GND10 | 3522042549 | Internetwork device | 0 | 1 | Not yet documented elsewhere — role unconfirmed |
+| GNX Wind | Garmin | GNX Wind | 3519834626 | Display | 0 | 10 | Matches [Wind Instruments](#wind-instruments) |
+| GNX20 | Garmin | GNX20 | 3519499603 | Display | 5 | 8 | Only one GNX20 is documented under [Depth Sounder](#depth-sounder) — a second unit here needs confirming |
+| GNX20 | Garmin | GNX20 | 3519499625 | Display | 4 | 9 | See above |
+| GPS19x-NMEA2000 | Garmin | GPS19x-NMEA2000 | 3887650194 | Navigation | 3 | 7 | Matches [GPS](#gps) N2K source |
+| signalk-server | Signal K | signalk-server | 1624514 | Internetwork device | 0 | 106 | The Pi itself, at `http://openplotter:3000` |
+| AC42 _Autopilot | Simrad | AC42 | 005629# | Steering and Control surfaces | 2 | 4 | Confirms the [Autopilot](#autopilot)'s below-decks course computer |
+| AP44 Autopilot Controller | Simrad | AP44 | 000621# | Steering and Control surfaces | 1 | 3 | Matches the [Autopilot](#autopilot) control head |
+| RC42 _Rate compass | Simrad | RC42 | 008223# | Steering and Control surfaces | 0 | 5 | Not yet documented above — see the missing compass-input note under [Chartplotter / MFD](#chartplotter-mfd); may be the fix for it |
 
 ### Environmental Sensor (I2C)
 - **Make/Model**: BME280 temperature/humidity/pressure sensor, I2C bus 1, address `0x77`.
