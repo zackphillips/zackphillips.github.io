@@ -222,17 +222,15 @@ System voltage: **12 V DC**.
 
 | Bank | Type | Capacity | Location |
 |------|------|----------|----------|
-| House bank | 4-D AGM | — Ah | [location] |
-| Start battery | AGM (site previously listed Group 27 sealed lead acid — corrected) | — Ah | [location] |
+| House bank | Three 4-D AGM batteries | — Ah (per battery) | Port lazarette |
+| Start battery | Group 31 AGM, 105 Ah (site previously listed Group 27 sealed lead acid — corrected) | 105 Ah | Under the stairs, in the engine compartment |
 
 **Switching**: five energizing solenoid switches in the aft cabin.
 
 The start battery was replaced in June 2025 (health had dropped to 59% per
-the May 2025 engine survey).
-
-A **Group 31 dual-purpose AGM battery (105 Ah)** was purchased from West
-Marine on 2026-05-25 and installed — bank assignment (house vs. a
-dedicated electronics/accessory bank) not yet confirmed in this document.
+the May 2025 engine survey) and again with the current **Group 31, 105 Ah
+AGM** (West Marine, purchased 2026-05-25), installed under the stairs in
+the engine compartment.
 
 > **Open item**: the engine start battery terminals have no protective
 > insulating covers. Required per 33 CFR 183.420 to prevent accidental shorting.
@@ -257,10 +255,21 @@ dedicated electronics/accessory bank) not yet confirmed in this document.
 ### Shore Power
 - **Inlet**: 30 A / 125 V, single phase, 120 V @ 60 Hz
 - **Cord**: 30 A vinyl
-- **Charger**: Xantrex Tru-Charge, [location]
+- **Charger**: Xantrex Tru-Charge — port lazarette, mounted on the wall at the aft side of the compartment (alongside the inverter and AC source-selector switch — see [Inverter](#inverter) below).
 - Main AC breaker and branch breakers in the main cabin AC panel. Outlet polarity has been verified correct.
 - **No galvanic isolator is installed** — highly recommended (ABYC A-28).
 - Connects to dock pedestal via shore power cord; confirm polarity light is green.
+
+**Plugging in at the dock:**
+1. Plug the shore power cord in — typically on the **port side**, at either the bow or the stern inlet.
+2. **Rotate the plug a quarter turn to lock it in.**
+3. Turn on the **AC Main** breaker (see [AC Panel](#ac-panel)) so the batteries actually charge.
+4. Make sure the AC source-selector switch in the port lazarette is set to **"Shore"** (not "Gen") — see [Inverter](#inverter).
+
+> **Critical**: if the boat is left unplugged from shore power, the house
+> batteries will deplete in **about 36 hours** — which is harmful to them.
+> Always confirm shore power is connected and the AC Main is on before
+> leaving the boat.
 
 ### DC Panel
 Located at nav station. Circuits labeled:
@@ -296,12 +305,23 @@ Switch panels feeding accessory circuits:
 Main cabin AC electrical panel.
 - Main breaker: in the main AC panel
 - Shore power breaker: 30 A
-- Circuits: [list as known]
+- Circuits/switches:
+  - **AC Main**
+  - **AC Outlets**
+  - **Battery Charger** — labeled, but **does nothing** (the Xantrex charger runs regardless of this breaker's position — investigate/relabel)
+  - **Water Heater**
+  - **Unused**
 
 ### Inverter
 - **Make/Model**: Outbound
 - Capacity: 1500 W
-- Location: well secured with adequate ventilation
+- **Location**: port lazarette, aft side of the compartment, mounted on the wall alongside the Xantrex shore charger.
+- **AC source-selector switch**: mounted to the right of the charger/inverter, with **"Shore"** and **"Gen"** positions (described aboard as a "three-phase" switch, though the vessel's AC is single-phase — likely just a Shore/Gen source-selector switch worth confirming next time it's in view).
+  - **"Shore"**: the normal/default position — the Xantrex charger runs and charges the batteries. Use whenever at the dock.
+  - **"Gen"**: powers on the **inverter** instead. Only use this **at sea while actively using the inverter**.
+  - **Always switch back to "Shore"** once done, so the batteries resume charging at the dock.
+- **Remote control**: accessed via the **starboard side rear lazarette**, at the top, tied off to a string.
+- There is also a physical power button on the inverter unit itself.
 - Note: do not run high-draw appliances (microwave, kettle) without engine running unless battery is at ≥80%.
 
 ### Bonding

@@ -175,7 +175,13 @@ no blower to run.
 4. Approach slip slowly, into the wind if possible.
 5. Lead lines to dock cleats; spring the boat in if needed.
 6. Shut down engine: key to OFF; close raw water seacock.
-7. Connect shore power; confirm charging light on battery monitor.
+7. Connect shore power (typically the port side, bow or stern inlet);
+   **rotate the plug a quarter turn to lock it in**. Turn on the **AC
+   Main** breaker and confirm the AC source-selector switch in the port
+   lazarette is set to **"Shore"** (not "Gen") — see
+   [Systems Overview — Inverter](systems.md#inverter). Confirm charging
+   light on battery monitor. **If left unplugged, the house batteries
+   deplete in ~36 hours**, which is harmful to them — don't skip this.
 8. Log hours on the engine hour meter.
 
 ---
@@ -221,7 +227,10 @@ closely while fueling — don't walk away.
 - [ ] Sail covers on (main first, then headsail)
 - [ ] Boom crutch deployed; mainsheet eased
 - [ ] Halyards flaked or secured to prevent slapping (use sail ties or slight tension to shroud)
-- [ ] Shore power connected; battery charger on
+- [ ] Shore power connected (quarter-turn locked), AC Main breaker on, AC
+      source-selector switch (port lazarette) set to **"Shore"** — battery
+      charger on. **Boat left unplugged depletes the house batteries in
+      ~36 hours.**
 - [ ] Seacocks closed (raw water, head, any open thru-hulls)
 - [ ] Bilge checked — pump if any accumulation
 - [ ] Docklines doubled / snugged for conditions
