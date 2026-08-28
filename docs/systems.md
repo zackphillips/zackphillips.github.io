@@ -967,12 +967,20 @@ halyards and control lines terminate at clutches in the cockpit.
 | Spec | Value |
 |------|-------|
 | Gas type | LPG (propane) |
-| Tankage | One tank in the aft port cockpit transom locker (i.e. the **port aft lazarette**) |
+| Tankage | **Two tanks**, in the aft port cockpit transom locker (i.e. the **port aft lazarette**) — each fitted with a **Mopeka Tank Check** ultrasonic sensor (see Propane Level Sensing below) |
 | Shut-offs | **Tank valve** — under the port aft lazarette; **leave closed when not in use**. A separate **yellow valve** in the same lazarette feeds the **Magma grill** directly. Stove gas is controlled by an electric solenoid shut-off — the **gas valve breaker switch** — DC panel / propane switch located in the **port cabinet behind the helm** |
 | Regulator | Inline |
 | Pressure gauge | At the tank |
 | Lines | Reinforced rubber LP gas line |
 | Locker ventilation | Adequate — **keep the drain hole clear** |
+
+### Propane Level Sensing
+
+Both tanks are fitted with **Mopeka Tank Check** ultrasonic sensors (BLE),
+reporting to SignalK as `propane.a` / `propane.b` — see [SignalK
+Configuration](signalk.md#sensors-instrumentation) (alerts: Propane A below
+30%, Propane B below 25%). Levels can be read either directly via the
+**Mopeka app over Bluetooth**, or via **KIP at the nav station**.
 
 ### Using Propane
 1. **Open the tank valve**, under the port aft lazarette. Leave it closed
@@ -985,7 +993,7 @@ halyards and control lines terminate at clutches in the cockpit.
 4. **Lighting**: the stove and grill are lit with a lighter stored
    **behind the stove**.
 
-> **Open item**: the LPG tank is not secured in its locker. Fit a
+> **Open item**: the LPG tanks are not secured in their locker. Fit a
 > proper mount. Perform a gas leak test (close the appliance valves, open the
 > tank valve, watch the gauge) before each use.
 
