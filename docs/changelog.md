@@ -577,7 +577,7 @@ Part numbers still need to be filled in as parts are ordered.
 | AIS transponder | — | — | Confirm what is actually installed |
 | House battery | 12 V 4-D AGM | — | |
 | Battery (added May 2026) | Group 31 dual-purpose AGM, 105 Ah | — | West Marine; bank assignment unconfirmed |
-| Start battery | 12 V AGM | — | Replaced June 2025 (health had dropped to 59% per May 2025 survey); site previously listed this as Group 27 sealed lead acid — corrected here. Still needs terminal covers |
+| Start battery | 12 V AGM | — | Replaced June 2025 (health had dropped to 59% per May 2025 survey); site previously listed this as Group 27 sealed lead acid — corrected here. Terminal covers fitted |
 | Oil cooler | — | — | Replaced June 2025 |
 | Freshwater pump | — | — | Pump, gaskets, and thermostat replaced June 2025 |
 | Exhaust hose (muffler to transom) | Vetus | — | Replaced June 2025 |

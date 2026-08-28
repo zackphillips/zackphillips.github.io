@@ -233,8 +233,8 @@ System voltage: **12 V DC**.
 
 **Switching**: five energizing solenoid switches in the aft cabin.
 
-> **Open item**: the engine start battery terminals have no protective
-> insulating covers. Required per 33 CFR 183.420 to prevent accidental shorting.
+The engine start battery terminals have protective insulating covers, per
+33 CFR 183.420.
 
 ### Battery Monitor
 - **Make/Model**: Victron (specific model unconfirmed) — reports to SignalK over Bluetooth LE via [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble), not wired.
