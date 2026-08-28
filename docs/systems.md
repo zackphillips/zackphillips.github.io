@@ -1129,5 +1129,20 @@ and marine rail hardware:
 - **Troubleshooting**: if data stops updating, check the repo state on the
   Pi first — a `git pull` interrupted by a Pi power loss can corrupt the
   local repo; fix by re-cloning.
-- The solar charge controller provides sufficient power to the Pi and its
-  frame; electrical components are labeled.
+
+**This repo, on the Pi**: this repository (`zackphillips/zackphillips.github.io`) is what actually
+publishes [mermug.com](https://mermug.com). The Pi runs
+`scripts/update_signalk_data.py`, which polls the onboard SignalK server,
+writes the results as JSON under `data/telemetry/`, and commits/pushes
+those files to this repo; GitHub Pages serves the static site straight
+from the repo, so there's no separate backend or database. The Ship's
+Docs you're reading right now are just the Markdown files under `docs/`
+in the same repo, rendered client-side — editing a `.md` file (even from
+the GitHub web UI) updates the site on the next push. See the repo's
+[README](../README.md) and [AGENTS.md](../AGENTS.md) for the full
+technical writeup.
+
+- **Installed at**: `~/code/zackphillips.github.io` on the Pi.
+- **Claude Code** (used to help maintain the Pi and this repo) is
+  installed under **Zack's personal account** on the Pi, not a shared or
+  service account.
