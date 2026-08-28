@@ -76,7 +76,7 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 - **To lower**: uncleat the line, then push the platform out from the
   exterior, holding the line from outside so it drops slowly under control.
 - **To raise**: pull the line in from inside the lazarette and cleat it off inside.
-- See [Operations — Swim Platform](operations.md#swim-platform) for the full procedure.
+- See [Procedures — Swim Platform](procedures.md#swim-platform) for the full procedure.
 
 ### Known Hull Findings
 - **Keel-hull seam**: repaired — reefed out the failed seam, cleaned out debris, applied flexible marine adhesive compound, torqued the keel bolts. A keel-hull gap on the Beneteau First 42 is [normal for the model](https://forums.sailboatowners.com/threads/beneteau-first-42-keel-hull-gap-normal.117295/); no active issue.
@@ -124,7 +124,7 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 Centerline, aft of the saloon, between the galley (starboard) and the aft head (port). Accessed via companionway steps (lift steps) and engine compartment panels. Adjustable motor mounts on cored fiberglass longitudinal engine bed stringers, with an integrated drip sump underneath. Raw water seacock is [location]. Bleed screws are [location].
 
 ### Starting & Stopping
-See [Operations Guide — Engine Start Procedure](operations.md#engine-start-procedure).
+See [Procedures — Engine Start Procedure](procedures.md#engine-start-procedure).
 **Emergency shutdown**: pull black handle below engine control panel on the port side, then turn key off.
 
 ### Raw Water Cooling Circuit
@@ -189,28 +189,9 @@ ITT Jabsco 12 V diaphragm pump, plumbed between the reserve and main tank.
 Activated by a manually operated switch just below the reserve tank, in the
 same cabinet behind the aft berth as the reserve tank fuel flow valve.
 
-### Transferring Fuel (Reserve → Main)
-
-**Never overfill the main tank.** As a rule of thumb, don't transfer fuel
-until the main tank gauge at the helm is in the red.
-
-1. With the engine **off**, open the inline valve so its tab is aligned with the hose.
-2. Turn on the switch at the tank base to run the transfer pump.
-3. Watch the reserve tank level as it transfers — shine a flashlight in
-   laterally to check it. **Never let the level go below the bottom
-   line (tape) on the tank**, to avoid pulling debris into the engine.
-4. Once the transfer is complete, turn off the switch first, then close
-   the valve on the hose.
-
-### Bleeding the Engine
-If air enters the fuel system (e.g., ran tank dry):
-1. [Describe bleed procedure for this specific engine]
-2. Bleed Racor first — open bowl petcock, pump primer until fuel flows.
-3. Bleed injection pump at [location].
-
-**TODO**: this procedure hasn't actually been exercised — walk through and
-confirm/fill in the steps above (including the injection pump bleed
-location) the next time the tank genuinely runs dry.
+See [Procedures — Fuel Transfer (Reserve → Main)](procedures.md#fuel-transfer-reserve-main)
+and [Procedures — Bleeding the Engine](procedures.md#bleeding-the-engine) for
+the step-by-step how-tos.
 
 ### Fuel Management
 - Fill before offshore passages; diesel stores well.
@@ -261,11 +242,8 @@ The engine start battery terminals have protective insulating covers, per
 - **No galvanic isolator is installed** — highly recommended (ABYC A-28).
 - Connects to dock pedestal via shore power cord; confirm polarity light is green.
 
-**Plugging in at the dock:**
-1. Plug the shore power cord in — typically on the **port side**, at either the bow or the stern inlet.
-2. **Rotate the plug a quarter turn to lock it in.**
-3. Turn on the **AC Main** breaker (see [AC Original Panel](#ac-original-panel)) so the batteries actually charge.
-4. Make sure the AC source-selector switch in the port lazarette is set to **"Shore"** (not "Gen") — see [Inverter](#inverter).
+See [Procedures — Connecting Shore Power](procedures.md#connecting-shore-power)
+for the plug-in steps.
 
 > **Critical**: if the boat is left unplugged from shore power, the house
 > batteries will deplete in **about 36 hours** — which is harmful to them.
@@ -360,7 +338,7 @@ Located on the nav station wall.
 | Pump | ParMax 3.5, 12 V demand type, with an inline strainer |
 | Accumulator | Aquapress coated steel |
 | Plumbing | PEX tubing and rubber hose |
-| Hot water heater | Raritan, 6 gal, marine grade **120 V element + engine heat exchanger**. **Watch item**: pressure relief valve may not release properly — after motoring stretches, water heats up and the hose can blow off, dumping water into the bilge. If the 120 V element has already heated the tank at the dock, running the engine stacks the heat exchanger's heat on top of that — this can build pressure and cause hoses to develop pinholes. **If the heater has been left on, bleed the hot water line (run a hot tap for ~30 sec) before running the engine for any length of time** — see [Engine Start Procedure](operations.md#engine-start-procedure). The hose uses half-inch tubing, which may not exactly fit the likely-metric original fitting — a stern re-plumbing project is working toward reconciling this |
+| Hot water heater | Raritan, 6 gal, marine grade **120 V element + engine heat exchanger**. **Watch item**: pressure relief valve may not release properly — after motoring stretches, water heats up and the hose can blow off, dumping water into the bilge. If the 120 V element has already heated the tank at the dock, running the engine stacks the heat exchanger's heat on top of that — this can build pressure and cause hoses to develop pinholes. **If the heater has been left on, bleed the hot water line (run a hot tap for ~30 sec) before running the engine for any length of time** — see [Procedures — Engine Start Procedure](procedures.md#engine-start-procedure). The hose uses half-inch tubing, which may not exactly fit the likely-metric original fitting — a stern re-plumbing project is working toward reconciling this |
 | Fill deck plates | **Forward tank**: starboard side deck, just forward of the mast — opens by hand, no tool needed. **Aft tank**: port side deck near the grill, marked "Water" — needs a tool from the drawer below the nav station |
 | Tank vents | Port and starboard hull sides, below the fill pipes |
 
@@ -415,14 +393,8 @@ Water tanks are switched using handles in a panel near the bow, inside the
 water heater compartment, under the couch base cushion closest to the
 stove. The handles are labeled **"F"** (forward) and **"A"** (aft). Exactly
 one valve should always be open (vertical) and the other closed
-(horizontal).
-
-**To switch tanks:**
-1. Turn off the fresh water pump breaker.
-2. Rotate both handles to select the other tank.
-3. Open both the galley sink and the aft head sink (cold water) so they can flow freely.
-4. Turn the fresh water pump breaker back on. It will need to pump air out of the line — wait for the water flow to become consistent.
-5. Close both faucets and wait for the pump to stop running. Once it stops, you're done.
+(horizontal). See [Procedures — Switching Freshwater Tanks](procedures.md#switching-freshwater-tanks)
+for the steps.
 
 ### Salt Water Foot Pump
 
@@ -450,10 +422,8 @@ procedures below before assuming they work the same way.
 | Forward head discharge | **No Y-valve** — toilet always pumps to the holding tank. A separate seacock under the sink gravity-drains the tank directly overboard, offshore only. See procedure below |
 | Aft head joker valve | Replaced August 2025 |
 
-**Operating the head (general):**
-1. Open inlet seacock.
-2. [Manual: describe stroke procedure] / [Electric: describe button sequence]
-3. Close inlet seacock when done at anchor or in sensitive areas.
+**Legal**: direct overboard discharge is only legal **3 nautical miles
+offshore or greater**.
 
 ### Aft Head — Y-Valve Discharge
 
@@ -461,18 +431,15 @@ The Y-valve is under the sink. Its handle covers one of two routing arrows
 — the **exposed** arrow shows where the toilet's discharge currently goes
 (either straight overboard, or to the holding tank).
 
-- **Legal**: direct overboard discharge is only legal **3 nautical miles
-  offshore or greater**.
 - **USCG compliance**: if boarded, the Coast Guard will want to see the
   Y-valve **secured in the tank direction** (zip tie or similar). Leave it
   zip-tied to the tank position by default; only free it when legitimately
   offshore.
 - **To route to the tank** (default / in harbor): expose the arrow that
   does *not* point to the seacock under the sink.
-- **To discharge directly overboard** (offshore, ≥3 nm only):
-  1. Open the seacock under the sink (handle **parallel** to the hose = open).
-  2. Turn the Y-valve so the arrow pointing to the seacock is exposed.
-  - Reverse both afterward, and re-secure the Y-valve toward the tank.
+
+See [Procedures — Head Operation & Offshore Discharge](procedures.md#head-operation-offshore-discharge)
+for the general operating steps and the offshore-discharge procedure.
 
 ### Forward Head — No Y-Valve, Gravity-Drain Seacock
 
@@ -482,14 +449,9 @@ sink instead gravity-drains the **holding tank** directly overboard.
 
 - **Keep this seacock closed (handle perpendicular to the hose) except when offshore.**
 - **Emptying in port**: pump-out only, via the bow/starboard waste port above.
-- **Flushing the tank at sea** (rinses/dilutes the tank via the washdown pump, draining it out through the gravity seacock):
-  1. Open the forward tank's gravity seacock under the sink.
-  2. In the **anchor locker**, set the **yellow-handled washdown redirect
-     valve** to the holding-tank position (its other position sends the
-     washdown pump to the anchor-locker hose for normal deck washdown use).
-  3. Turn on the washdown pump via the switch labeled **"washdown"** in the forward head.
-  4. Run for **at least 5 minutes**.
-  5. Reverse when done: pump off, redirect valve back to the hose position, seacock closed.
+
+See [Procedures — Head Operation & Offshore Discharge](procedures.md#head-operation-offshore-discharge)
+for the at-sea tank-flushing procedure.
 
 **Pump-out**: at a marina pump-out station — aft tank via the port-side
 waste port just outside the cockpit, forward tank via the starboard bow
@@ -822,7 +784,7 @@ the nav station) before any such trip.
 - **Snubber**: an anchor snubber hook is stored in the anchor compartment
   (bow anchor locker) — hooks onto the chain to take the anchor/chain
   weight off the windlass. Use it whenever at anchor or in a harbor (see
-  [Operations — Anchoring](operations.md#anchoring) for the procedure).
+  [Procedures — Anchoring](procedures.md#anchoring) for the procedure).
 - **Platform**: stainless fairlead anchor roller chute at the stem.
 - **Storage**: bow anchor locker; chain locker drains overboard at the port lower bow.
 - **History**: this is the third anchor aboard — two prior anchors were
@@ -951,15 +913,8 @@ Configuration](signalk.md#sensors-instrumentation) (alerts: Propane A below
 **Mopeka app over Bluetooth**, or via **KIP at the nav station**.
 
 ### Using Propane
-1. **Open the tank valve**, under the port aft lazarette. Leave it closed
-   when not in use.
-2. **Stove**: turn on the **gas valve breaker switch**. With the tank valve
-   open and the breaker on, gas reaches the stove.
-3. **Magma grill**: open the **yellow valve** in the port aft lazarette —
-   this feeds the grill directly; the breaker switch is not involved and
-   the yellow valve alone is all that's needed.
-4. **Lighting**: the stove and grill are lit with a lighter stored
-   **behind the stove**.
+See [Procedures — Using Propane](procedures.md#using-propane) for the
+step-by-step how-to.
 
 > **Open item**: the LPG tanks are not secured in their locker. Fit a
 > proper mount. Perform a gas leak test (close the appliance valves, open the
