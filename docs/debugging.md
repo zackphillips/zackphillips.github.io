@@ -83,7 +83,7 @@ If the engine cranks but won't fire, air may have entered the fuel system
   ITT Jabsco 12 V transfer pump.
 - The fuel flow valve for the reserve tank is in the **cabinet aft of the
   aft berth**.
-- See [Procedures — Bleeding the Engine](procedures.md#bleeding-the-engine) for the
+- See [Operations — Bleeding the Engine](operations.md#bleeding-the-engine) for the
   bleed procedure.
 
 ---
