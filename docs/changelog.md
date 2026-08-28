@@ -371,11 +371,12 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 ### 2026-05-XX | Ground Tackle | Windlass serviced
 - Serviced following the April 2026 ball bearing failure.
 
-### 2026-05-07 | Ground Tackle | Primary anchor replaced again
-- A second **Rocna 20** (West Marine) installed, along with a new
-  stainless screw-pin anchor shackle (4,000 lb SWL) and floating buoy
-  anchor-chain markers, replacing the Rocna 20 installed after the August
-  2025 loss. Reason for the swap is not recorded.
+### 2026-05-07 | Ground Tackle | Anchor rode parted; anchor lost; Rocna 20 replaced again
+- The anchor line (rode) snapped, and the Rocna 20 installed after the
+  August 2025 loss was lost with it.
+- Replacement: a second **Rocna 20** (West Marine), installed along with a
+  new stainless screw-pin anchor shackle (4,000 lb SWL) and floating buoy
+  anchor-chain markers.
 
 ### 2026-05-18 | Electrical | DC panel upgraded
 - Blue Sea Systems 8025 traditional metal DC panel (3 positions) installed,
@@ -556,7 +557,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Engine oil spec | — | — | |
 | Drive belt | — | — | |
 | Alternator | Balmar 12 V / 120 A | — | Belt driven |
-| Anchor | Rocna 20 | — | Original Manson Supreme (~44 lb) lost to a shackle failure Aug 2025, replaced with a Rocna 20; that Rocna 20 was itself replaced with another Rocna 20 in May 2026 (reason not recorded) |
+| Anchor | Rocna 20 | — | Original Manson Supreme (~44 lb) lost to a shackle failure Aug 2025, replaced with a Rocna 20; that Rocna 20 was lost when the rode parted, replaced with another Rocna 20 in May 2026 |
 | Anchor shackle | Stainless screw-pin, 4,000 lb SWL | — | West Marine, installed May 2026 |
 | Anchor rode — chain | G4 5/16" galvanized | — | 150 ft, ordered/delivered 2026-08-26 |
 | Anchor rode — rope | 5/8" three-strand nylon | — | 450 ft, spliced to chain; ordered/delivered 2026-08-26 |

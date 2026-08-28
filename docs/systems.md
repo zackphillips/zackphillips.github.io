@@ -279,7 +279,7 @@ Located at nav station. Circuits labeled:
   - 3: Instruments
   - 4: Cabin lights
   - 5: Bilge pump (auto)
-  - 6: Anchor windlass (via breaker at bow)
+  - 6: Anchor windlass (via a large white unlabeled breaker in the engine compartment, behind the stairs — not at the bow)
   - ...
 
 **Panel upgrade (2026-05-18)**: a **Blue Sea Systems 8025 traditional metal
@@ -412,30 +412,75 @@ replaced in June 2026 and is fully operational — use it for washing dishes.
 
 **Two heads** — forward (beside the forward accommodation) and aft to port. Both
 have integral showers whose sumps drain via two Jabsco Par diaphragm pumps.
+**The two heads have different plumbing designs** — see the discharge
+procedures below before assuming they work the same way.
 
 | Spec | Value |
 |------|-------|
 | Type | Manual |
 | Make/Model | Jabsco ×2 |
-| MSD type | Type III (holding tanks, no overboard discharge of sewage) |
-| Holding tanks | Two, polyethylene |
+| MSD type | Type III (holding tanks; direct overboard discharge only where legal — see below) |
+| Holding tanks | Two, polyethylene. **Aft tank**: port lazarette. **Forward tank**: location not confirmed |
 | Holding tank capacity | — gallons |
 | Tank vents | Plumbed overboard at the port and starboard hull sides |
-| Pump-out deck fitting | [location] |
-| Overboard discharge | **Forward tank**: diaphragm pump with Y-valve — confirm legal (offshore only outside 3 nm). **Aft tank**: overboard discharge removed — see Aft Macerator below; pump-out only |
+| Pump-out — aft tank | "Waste" deck port, **port side**, just outside the cockpit, above deck |
+| Pump-out — forward tank | Waste deck port near the **bow, starboard side** |
+| Aft head discharge | **Y-valve under the sink** routes the toilet's own discharge to the tank or directly overboard via a dedicated seacock. Overboard only legal **≥3 nm offshore**. See procedure below |
+| Forward head discharge | **No Y-valve** — toilet always pumps to the holding tank. A separate seacock under the sink gravity-drains the tank directly overboard, offshore only. See procedure below |
 | Aft head joker valve | Replaced August 2025 |
 
-**Operating the head:**
+**Operating the head (general):**
 1. Open inlet seacock.
 2. [Manual: describe stroke procedure] / [Electric: describe button sequence]
 3. Close inlet seacock when done at anchor or in sensitive areas.
 
-**Pump-out**: at marina pump-out station or via [portable pump-out service].
+### Aft Head — Y-Valve Discharge
+
+The Y-valve is under the sink. Its handle covers one of two routing arrows
+— the **exposed** arrow shows where the toilet's discharge currently goes
+(either straight overboard, or to the holding tank).
+
+- **Legal**: direct overboard discharge is only legal **3 nautical miles
+  offshore or greater**.
+- **USCG compliance**: if boarded, the Coast Guard will want to see the
+  Y-valve **secured in the tank direction** (zip tie or similar). Leave it
+  zip-tied to the tank position by default; only free it when legitimately
+  offshore.
+- **To route to the tank** (default / in harbor): expose the arrow that
+  does *not* point to the seacock under the sink.
+- **To discharge directly overboard** (offshore, ≥3 nm only):
+  1. Open the seacock under the sink (handle **parallel** to the hose = open).
+  2. Turn the Y-valve so the arrow pointing to the seacock is exposed.
+  - Reverse both afterward, and re-secure the Y-valve toward the tank.
+
+### Forward Head — No Y-Valve, Gravity-Drain Seacock
+
+The forward toilet always pumps into the holding tank — there is **no**
+direct-overboard route from the toilet itself. A single seacock under the
+sink instead gravity-drains the **holding tank** directly overboard.
+
+- **Keep this seacock closed (handle perpendicular to the hose) except when offshore.**
+- **Emptying in port**: pump-out only, via the bow/starboard waste port above.
+- **Flushing the tank at sea** (rinses/dilutes the tank via the washdown pump, draining it out through the gravity seacock):
+  1. Open the forward tank's gravity seacock under the sink.
+  2. In the **anchor locker**, set the **yellow-handled washdown redirect
+     valve** to the holding-tank position (its other position sends the
+     washdown pump to the anchor-locker hose for normal deck washdown use).
+  3. Turn on the washdown pump via the switch labeled **"washdown"** in the forward head.
+  4. Run for **at least 5 minutes**.
+  5. Reverse when done: pump off, redirect valve back to the hose position, seacock closed.
+
+**Pump-out**: at a marina pump-out station — aft tank via the port-side
+waste port just outside the cockpit, forward tank via the starboard bow
+waste port.
 
 ### Aft Macerator — Removed
 
 The aft holding tank's macerator pump has been **removed**; that tank now
-discharges by pump-out only.
+discharges by pump-out only. This macerator was a separate pump plumbed to
+the **tank's own outlet** (for emptying already-accumulated tank contents
+overboard) — distinct from the Y-valve above, which routes the toilet's
+live discharge.
 
 - The original macerator was defective and leaked raw black water into the
   bilge for roughly a year before it was removed in **January 2026**.
@@ -750,9 +795,9 @@ Required or strongly recommended equipment that is **not** aboard:
   3. **May 2026 replacement** — **another Rocna 20**, West Marine, purchased
      2026-05-07 (~$978), installed alongside a new **stainless screw-pin
      anchor shackle (4,000 lb SWL, West Marine)** and floating buoy
-     anchor-chain markers. Reason for swapping the second Rocna 20 out is
-     not recorded — confirm whether the second one was lost/damaged or is
-     kept as a spare.
+     anchor-chain markers. **Reason**: the rode parted (anchor line
+     snapped) and the Rocna 20 from replacement #2 was lost as a result —
+     this is the third anchor, not a spare.
   - **Currently on the bow**: the anchor from replacement #3 (May 2026), a Rocna 20.
 - **Rode**: 150 ft G4 5/16" galvanized chain spliced to 450 ft of 5/8"
   three-strand nylon rope (ordered/delivered 2026-08-26 — see
@@ -783,10 +828,15 @@ emergencies and for added anchoring options.
 - **Make/Model**: Quick Eagle, 12 V / 1400 W
 - **Type**: electric, foot switches at bow (a **Five Oceans FO3291** covered
   foot switch was purchased as a spare/replacement, April 2026, in storage)
-- **Breaker**: nav station, [circuit label]. Was found unsecured to the hull
-  in the May 2025 survey — since secured.
+- **Breaker**: a large white breaker in the **engine compartment, behind
+  the stairs** — unlabeled. (Previously this doc guessed "nav station";
+  correct location is the engine compartment.) Was found unsecured to the
+  hull in the May 2025 survey — since secured.
 - **Manual override**: [location]
-- **Note**: do not run more than [X] minutes continuously; allow to cool.
+- **Note**: doesn't typically need to cool down, but **can trip under
+  normal use**. To avoid tripping it: only use the windlass to lift the
+  weight of the anchor/chain — **use the engine, not the windlass, to
+  motor the boat up to the anchor.**
 - **April 2026**: a ball bearing shattered and fused to the windlass shaft;
   had to be cut off. Anchor was hauled by hand until resolved. Servicing
   (parts sourced from Spares Marine, UK) replaced the bearings, purchased
