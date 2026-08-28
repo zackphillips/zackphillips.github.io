@@ -967,12 +967,21 @@ halyards and control lines terminate at clutches in the cockpit.
 | Spec | Value |
 |------|-------|
 | Gas type | LPG (propane) |
-| Tankage | One tank in the aft port cockpit transom locker |
-| Shut-offs | Valve at the tank + electric solenoid shut-off at the DC panel. Propane switch located in the **port cabinet behind the helm** |
+| Tankage | One tank in the aft port cockpit transom locker (i.e. the **port aft lazarette**) |
+| Shut-offs | **Tank valve** — under the port aft lazarette; **leave closed when not in use**. A separate **yellow valve** in the same lazarette feeds the **Magma grill** directly. Stove gas is controlled by an electric solenoid shut-off — the **gas valve breaker switch** — DC panel / propane switch located in the **port cabinet behind the helm** |
 | Regulator | Inline |
 | Pressure gauge | At the tank |
 | Lines | Reinforced rubber LP gas line |
 | Locker ventilation | Adequate — **keep the drain hole clear** |
+
+### Using Propane
+1. **Open the tank valve**, under the port aft lazarette. Leave it closed
+   when not in use.
+2. **Stove**: turn on the **gas valve breaker switch**. With the tank valve
+   open and the breaker on, gas reaches the stove.
+3. **Magma grill**: open the **yellow valve** in the port aft lazarette —
+   this feeds the grill directly; the breaker switch is not involved and
+   the yellow valve alone is all that's needed.
 
 > **Open item**: the LPG tank is not secured in its locker. Fit a
 > proper mount. Perform a gas leak test (close the appliance valves, open the
