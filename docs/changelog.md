@@ -59,6 +59,20 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   - Freshwater pump, gaskets, and thermostat replaced; front of engine
     repainted where antifreeze had gotten under the paint.
 
+### 2025-05-12 | Safety | Safety/documentation items purchased
+- Kidde Mariner PWC fire extinguisher (5-B:C, KD57W-5BC) installed under the nav station.
+- Navigation Rules and Regulations Handbook installed above the nav station.
+- SeaSense air horn (118 dB) installed in the port lazarette — satisfies the sound-signaling-device requirement.
+- Bernard Engraving Corp waste discharge placard installed atop the port lazarette.
+
+### 2025-05-14 | Safety | Inflatable PFD purchased
+- Onyx A/M-24 automatic/manual inflatable life jacket (USCG approved) purchased and put into use.
+
+### 2025-05-16 | Other | Reference library — Chapman's Piloting added
+- Chapman Piloting & Seamanship, 69th Edition, added to the ship's library —
+  cited elsewhere in this changelog and in [Systems Overview](systems.md)
+  for navigation-light compliance.
+
 ### 2025-05-17 | Other | Vessel delivered to South Beach Harbor
 - First sail as new owners; motoring practice with surveyor Jeff.
 - Three co-owners: Zack Phillips, Christopher "Krug" Lalau Keraly, and
@@ -122,6 +136,32 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   navigation computer.
 - Yacht Devices Python Gateway YDPG-01 identified for NMEA conversion.
 
+### 2025-06-27 | Electrical | Interior lighting converted to LED
+- All halogen dome lights replaced with acegoo 12 V dimmable LED puck lights
+  (8 fixtures total).
+
+### 2025-07-05 | Outboard | Dinghy outboard carburetor fixed
+- An initial MARKGOO carb rebuild kit didn't fit and was discarded; a
+  CHAMPAN replacement carburetor was installed instead and resolved the
+  carb issues.
+- A second attempt at a VHF/AIS antenna power splitter (Amazon) did not
+  work for sharing one antenna between the two radios.
+
+### 2025-07-17 | Electrical | Wave One Marine LED deck light installed
+- Dual-color LED spreader/flood light installed in the bimini, toggled by
+  the bottom switch on the starboard control panel.
+
+### 2025-07-20 | Electronics | Temporary VHF antenna installed
+- A HYS low-profile VHF antenna, L-bracket NMO mount, and coax adapters
+  installed as a workaround while the June 2025 "receives but doesn't
+  transmit" issue was outstanding.
+
+### 2025-07-20 to 2025-09-18 | Hull/Deck | King's chairs designed and installed
+- Two elevated seat backs, designed and built in-house from stainless tube
+  and marine rail hardware (bimini jaw slides, hand-rail elbows, tee
+  fittings), attached to the port and starboard railings. See
+  [King's Chairs & Deck Hardware](systems.md#12-kings-chairs-deck-hardware).
+
 ### 2025-08-07 | Plumbing | Aft toilet joker valve replaced
 - Krug replaced the joker valve on the aft head.
 
@@ -158,6 +198,65 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 - Replacement: **55 lb Manson Supreme** purchased from West Marine,
   approximately **$1,200**.
 - Contributing factor: may have needed more rope scope to absorb swell.
+
+### 2025-09-24 | Electronics | Fusion NMEA 2000 wired remote installed
+- Fusion MS-NRX300 wired remote mounted port side, in place of the old
+  dead dataline display that was removed.
+
+### 2025-09-30 | Audio | New stereo installed
+- Fusion MS-RA70NSX stereo (BT/AM/FM/SiriusXM, 2-zone) installed, replacing
+  the previous stereo. See [Audio & Entertainment](systems.md#11-audio-entertainment).
+
+### 2025-10-05 | Rigging | Winch stripper ring replaced
+- Lewmar winch replacement stripper ring installed on the port rear winch.
+
+### 2025-10-14 | Electronics | Autopilot control head replaced
+- The original Simrad AP22 control head died; replaced with a Simrad AP44
+  control head (p/n 000-13289-001, via eBay). A matching AP44 suncover
+  (p/n 000-13724-001) was ordered a few days later.
+
+### 2025-10-29 | Audio | Amplifier installed
+- Garmin Fusion AM Series 400 W 2-channel amplifier installed in the aft
+  cabin wardrobe.
+
+### 2025-11-03 | Audio | New speakers installed
+- Fusion Signature 7.7" marine speakers (pair) installed, wired with new
+  12-gauge speaker wire and 6-gauge amp power/ground wire.
+
+### 2025-11-16 to 2025-11-26 | Electronics | TackTick display batteries replaced
+- Replacement battery/seal kits (Tacktick TA119) installed in the
+  remaining TackTick displays still aboard, despite the Garmin GNX
+  instruments now being the active wind/depth source.
+
+### 2025-12-03 | Electronics | Actisense EMU-1 engine management unit installed
+- Installed behind the engine control panel, accessible via a panel in the
+  aft cabin — bridges engine/tank analog senders onto NMEA 2000.
+
+### 2025-12-07 to 2025-12-18 | Plumbing | Freshwater tank sending units installed
+- Two 100TECH 240-33 ohm resistive sending units (13" and 16", sized to
+  each tank's depth) installed in the two freshwater tanks.
+
+### 2025-12-14 | Electronics | Garmin GNX 20 display installed
+- Garmin GNX 20 marine instrument (4" display) installed above the port
+  line cleats under the dodger, next to the other GNX displays.
+
+### 2025-12-19 | Engine | RPM sensor tap wired
+- Genuine Yanmar wiring harness (p/n 127610-77710) used to tap the RPM
+  sensor circuit for broadcast via the Actisense EMU-1.
+
+### 2025-12-20 | Electronics | Garmin wind/depth/speed instrument pack installed
+- "Garmin sail pack 52" (Atlantic Marine) installed in one go: replaced the
+  paddle wheel speed sensor, the masthead wind sensor, and two of the three
+  cockpit displays. See [Wind Instruments](systems.md#wind-instruments) and
+  [Depth Sounder](systems.md#depth-sounder).
+
+### 2025-12-22 | Electronics | AIS NMEA gateway installed
+- Actisense NGT-1-ISO (NMEA 0183-to-NMEA 2000) gateway installed as the
+  connector between the AIS transceiver and the N2K backbone.
+
+### 2026-01-01 | Plumbing | Bilge level sending unit installed
+- 100TECH 6.5" 240-33 ohm sending unit installed as a bilge level sensor
+  (wiring/integration destination unconfirmed).
 
 ### 2026-02-10 | Hull/Deck | Bottom paint, keel seam repair, thru-hull replacement
 - Haul-out at Svendsen's Bay Marine (Richmond, CA); Quote/Est #26-0026,
@@ -209,7 +308,57 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   waxed. Loose stanchion base fittings themselves not confirmed addressed.
 - Still open: cockpit teak decking/sealant, ~1/8" rudder shaft bearing play.
 
+### 2026-02-14 | Electronics | VHF hailer horn installed
+- Icom SP37 40 W hailer horn installed, wired to the VHF radio as both a
+  speaker and a foghorn.
+
+### 2026-02-19 | Electronics | VHF/AIS antenna splitter installed
+- Digital Yacht SPL1500 ZeroLoss VHF/AIS antenna splitter installed behind
+  the breaker panel, letting the VHF and AIS transponder properly share the
+  single mast antenna (an Amazon splitter tried for this in July 2025 had
+  not worked).
+
+### 2026-03-XX | Electronics | Temporary VHF antenna removed
+- The temporary HYS antenna installed 2025-07-20 as a workaround was
+  removed now that the antenna splitter above resolves the sharing issue.
+  Confirm the VHF transmits reliably through the mast antenna.
+
+### 2026-03-18 | Plumbing | Aft black-water tank vent replacement — discarded
+- A SEAFLO angled thru-hull fitting bought to replace the aft tank's vent
+  was found unnecessary once inspected.
+
+### 2026-03-24 | Plumbing | Forward black-water tank level sensing — unsuccessful
+- Attempt to bring a level-sender signal out of the forward holding tank
+  via an Ancor NMEA 2000 through-bulkhead connector did not work out. The
+  forward tank still has no digital level sensing.
+
+### 2026-03-29 | Safety | Major PFD/MOB safety equipment upgrade
+- ACR HemiLight3 survivor locator lights (×3) hung from handles above the stairs.
+- ACR ResQLink PLB-450 personal locator beacons (×2) fitted inside the two
+  blue offshore life jackets, registered to Chris and Zack, and tested.
+- LuxoGear emergency whistles installed in all inflatable PFDs; NRS leg
+  straps added to the two offshore jackets.
+- Scotty #0793 rescue throw bags (×2) stowed in the starboard lazarette.
+- Sirius Signal C-1003 SOS LED electronic flare installed in the port
+  lazarette, replacing the pyrotechnic flare requirement.
+
 ### 2026-03-XX | Rigging | All six winches serviced
+
+### 2026-04-07 | Safety | Life jacket light and CO2 rearming kit installed
+- Water-activated life jacket light installed below the nav station.
+- New 33 g CO2 rearming kit installed, replacing the cartridge that
+  accidentally triggered in July 2025.
+
+### 2026-04-20 | Electrical | Bilge pump control switch panel replaced
+- AMOMD 12 V bilge pump control switch panel (3-way manual/off/auto, LED
+  indicator, 5 A fuse) installed. A spare Quick Eagle windlass foot switch
+  (Five Oceans FO3291) and a 12 V reverse-polarity rocker switch (earmarked
+  for a future windlass control rework, not yet installed) were purchased
+  the same day.
+
+### 2026-04-24 | Electronics | Garmin GPS 19x installed
+- Garmin GPS 19x NMEA 2000 GPS puck installed in the cockpit — becomes the
+  primary NMEA 2000 GPS source in SignalK's failover chain.
 
 ### 2026-04-27 | Hull/Deck | Hull professionally cleaned
 
@@ -220,6 +369,33 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 
 ### 2026-05-XX | Ground Tackle | Windlass serviced
 - Serviced following the April 2026 ball bearing failure.
+
+### 2026-05-07 | Ground Tackle | Primary anchor replaced again
+- A 55 lb galvanized fixed-shank scoop anchor (West Marine) installed,
+  along with a new stainless screw-pin anchor shackle (4,000 lb SWL) and
+  floating buoy anchor-chain markers. Relationship to the Manson Supreme
+  installed after the August 2025 loss is unconfirmed — reconcile against
+  the anchor actually on the bow.
+
+### 2026-05-18 | Electrical | DC panel upgraded
+- Blue Sea Systems 8025 traditional metal DC panel (3 positions) installed,
+  replacing the old battery-monitor panel. Adds dedicated "Lights" and
+  "Electronics" breakers for cockpit lighting and the nav-station
+  PC/Raspberry Pi, fed by an additional RVBOATPAT 12 V 150 A bus bar.
+
+### 2026-05-25 | Ground Tackle | First anchor rode reorder — returned
+- An initial order of 9/16" three-strand nylon rode, 5/16" G4 chain, a
+  stainless thimble, and a chain hook (West Marine) was returned — sizing
+  did not match what was ultimately delivered in August (5/8" nylon). See
+  the 2026-08-26 entry below.
+
+### 2026-05-25 | Electrical | Battery added
+- Group 31 dual-purpose AGM battery (105 Ah, West Marine) installed — bank
+  assignment not yet confirmed in [Systems Overview](systems.md#battery-bank).
+
+### 2026-06-01 | Electrical | Solar charge controller model confirmed
+- The June 2026 solar charge controller replacement (see below) is a
+  Victron Energy SmartSolar MPPT 100/20 (100 V, 20 A, Bluetooth).
 
 ### 2026-06-11 | Electrical | New solar charge controller installed
 - New solar charge controller installed, replacing the original.
@@ -277,6 +453,10 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   refrigeration component system, approximately **$1,100** (from
   Defender.com). Evaporator element dimensions line up with existing
   fridge box.
+
+### 2026-07-18 | Electrical | Refrigeration replacement purchased
+- Isotherm 2017 Compact Classic air-cooled system (p/n U260X086P12111AA,
+  Defender.com) purchased — ready to install, not yet installed.
 
 ### 2026-08-26 | Ground Tackle | New anchor rode, swivel & shackle ordered and delivered
 - 450 ft of 5/8" three-strand nylon rope.
@@ -357,28 +537,30 @@ Part numbers still need to be filled in as parts are ordered.
 | Engine oil spec | — | — | |
 | Drive belt | — | — | |
 | Alternator | Balmar 12 V / 120 A | — | Belt driven |
-| Anchor | Manson Supreme, 55 lb | — | Upgraded from 44 lb after shackle failure Aug 2025 (~$1,200, West Marine) |
+| Anchor | 55 lb galvanized fixed-shank scoop anchor (West Marine, May 2026) | — | Replaced the 44 lb original (shackle failure, Aug 2025) with a 55 lb Manson Supreme, then replaced again May 2026 — relationship between the two 55 lb anchors unconfirmed |
+| Anchor shackle | Stainless screw-pin, 4,000 lb SWL | — | West Marine, installed May 2026 |
 | Anchor rode — chain | G4 5/16" galvanized | — | 150 ft, ordered/delivered 2026-08-26 |
 | Anchor rode — rope | 5/8" three-strand nylon | — | 450 ft, spliced to chain; ordered/delivered 2026-08-26 |
 | Anchor swivel | — | — | Ordered/delivered 2026-08-26 |
 | Bow shackle | HS galvanized, 5/16", 2,500 lb WLL | — | Ordered/delivered 2026-08-26 |
-| Anchor windlass | Quick Eagle 12 V | — | 1400 W; serviced May 2026 |
+| Anchor windlass | Quick Eagle 12 V | — | 1400 W; serviced May 2026. Foot switch: Five Oceans FO3291 (spare, April 2026) |
 | Winches | Lewmar 54ST-2 ×2, 44ST-2 ×3, 44ST-2 electric ×1 | — | All six serviced March 2026 |
 | Mainsail track | Tides Marine Strong Track | — | |
 | Headsail furler | Profurl | — | |
 | Jib | — new jib, 2026 | — | Replaces the sail with the chafed Sunbrella UV cover (May 2025 survey finding) |
 | Mast / boom | Selden aluminum | — | Keel stepped, double spreader |
 | Standing rigging | 1×19 stainless rod | — | Replaced 2015 (corrected from a previous 2012 record; matches the May 2025 survey's ~10-years-old estimate) |
-| VHF radio | Icom IC-M504 + RAM mic | — | |
+| VHF radio | Icom IC-M504 + RAM mic | — | Antenna shared with AIS via a Digital Yacht SPL1500 ZeroLoss splitter (Feb 2026); hailer horn: Icom SP37, 40 W (Feb 2026) |
 | SSB radio | Icom IC-706MKIIG | — | |
 | Chartplotter / MFD | Furuno NavNet | — | GPS, radar, sonar (sonar faulty) |
 | Radar | Furuno 24-mile, closed array | — | |
-| Autopilot | Simrad AP22 | — | |
-| Wind/depth/speed instruments | Garmin GNX wind instrument + depth/speed triducer | — | Installed 2026, replacing dead TackTick/Robertson displays; wind, depth, and paddle wheel all working |
+| Autopilot | Simrad AP44 (p/n 000-13289-001) | — | Replaced the original AP22 head (died Oct 2025); suncover p/n 000-13724-001 |
+| Wind/depth/speed instruments | Garmin GNX wind instrument + depth/speed triducer + GNX 20 display | — | Installed 2025-12-14/12-20 ("Garmin sail pack 52"), replacing dead TackTick/Robertson displays; wind, depth, and paddle wheel all working. Fusion MS-NRX300 wired remote also installed Sept 2025 |
 | Compass | Ritchie 4" | — | Helm |
 | EPIRB | ACR Global-Fix | — | Registered to Christopher Lalau Keraly (2026); battery replaced, not yet tested |
 | AIS transponder | — | — | Confirm what is actually installed |
 | House battery | 12 V 4-D AGM | — | |
+| Battery (added May 2026) | Group 31 dual-purpose AGM, 105 Ah | — | West Marine; bank assignment unconfirmed |
 | Start battery | 12 V AGM | — | Replaced June 2025 (health had dropped to 59% per May 2025 survey); site previously listed this as Group 27 sealed lead acid — corrected here. Still needs terminal covers |
 | Oil cooler | — | — | Replaced June 2025 |
 | Freshwater pump | — | — | Pump, gaskets, and thermostat replaced June 2025 |
@@ -387,12 +569,20 @@ Part numbers still need to be filled in as parts are ordered.
 | Thru-hulls (2× head overboard, engine raw water intake) | 1-1/4" ball valves | — | Replaced February 2026 |
 | Battery charger | Xantrex Tru-Charge 12 V | — | 40+ A |
 | Inverter | Outbound | — | 1500 W |
-| Solar panel | Kyocera KC120-1 | — | 120 W; original Blue Sky Solar Boost controller replaced June 2026. Measured 380 Wh/day (~30 W avg over 12 hrs). Bimini shade reduces output |
+| Solar panel | Kyocera KC120-1 | — | 120 W; original Blue Sky Solar Boost controller replaced June 2026 with a Victron Energy SmartSolar MPPT 100/20 (100 V, 20 A, Bluetooth). Measured 380 Wh/day (~30 W avg over 12 hrs). Bimini shade reduces output |
 | Wind generator | Air-X Marine | — | Control panel missing |
 | Freshwater pump | ParMax 3.5, 12 V | — | Demand type |
 | Water heater | Raritan | — | 6 gal, 120 V + engine heat exchanger |
 | Heads | Jabsco manual ×2 | — | Type III MSD |
 | Bilge pump | Jabsco 12 V diaphragm | — | Manual backup: Whale Gulper |
-| Refrigeration | Adler Barbour 12 V | — | Top and front load. **Compressor failed** (original 1994); fan also broken. Replacement: Isotherm 2017 Compact Classic (~$1,100, Defender.com) — not yet installed |
+| Refrigeration | Adler Barbour 12 V | — | Top and front load. **Compressor failed** (original 1994); fan also broken. Replacement: Isotherm 2017 Compact Classic (p/n U260X086P12111AA, Defender.com, purchased 2026-07-18) — ready to install, not yet installed |
 | Stove | Tesco 3-burner propane w/ oven | — | |
 | Steering | Edson rack and pinion | — | |
+| DC panel | Blue Sea Systems 8025, 3-position | — | Installed May 2026, replacing old battery-monitor panel; adds "Lights"/"Electronics" breakers |
+| Engine/tank NMEA 2000 gateway | Actisense EMU-1 | — | Installed Dec 2025, behind engine control panel, accessible via aft cabin panel |
+| AIS NMEA 2000 gateway | Actisense NGT-1-ISO | — | Installed Dec 2025 |
+| GPS (NMEA 2000) | Garmin GPS 19x | — | Installed cockpit, April 2026; missing T-connector |
+| Freshwater tank senders | 100TECH 240-33 ohm, 13" & 16" | — | Installed Dec 2025, one per tank |
+| Bilge level sender | 100TECH 240-33 ohm, 6.5" | — | Installed Jan 2026; integration unconfirmed |
+| Audio head unit | Fusion MS-RA70NSX | — | Installed Sept 2025; amp: Garmin Fusion AM Series 400 W; speakers: Fusion Signature 7.7" pair |
+| Hot water fittings | 316 SS hex nipple adapters, 1" & 3/4" NPT | — | Feb 2026, part of ongoing stern re-plumbing project |
