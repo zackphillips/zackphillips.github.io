@@ -9,9 +9,7 @@ description: What is installed aboard, where it lives, how it works, and what to
 
 1994 Beneteau First 42s7, Hull #BEY57004E494
 Home berth: South Beach Harbor, San Francisco
-Owners: Zack Phillips, Christopher "Krug" Lalau Keraly, Brandon "Bug"
-Purchase price: ~$68–70K (May 2025); previous owner Philip Zachary Krasner
-Insurance: GEICO (minimum $500K liability, per marina requirement)
+Purchase price: ~$68–70K (May 2025)
 Title: Triton Marine Title, Inc.
 Parking pass: #1941 (South Beach Harbor)
 Slip rental: can be rented out at $20/day when away
@@ -235,14 +233,14 @@ System voltage: **12 V DC**.
 
 **Switching**: five energizing solenoid switches in the aft cabin.
 
-> **Open item**: the engine start battery terminals have no protective
-> insulating covers. Required per 33 CFR 183.420 to prevent accidental shorting.
+The engine start battery terminals have protective insulating covers, per
+33 CFR 183.420.
 
 ### Battery Monitor
 - **Make/Model**: Victron (specific model unconfirmed) — reports to SignalK over Bluetooth LE via [signalk-victron-ble](https://github.com/stefanor/signalk-victron-ble), not wired.
 - **Location**: Nav station / helm
 - Monitors house bank state of charge, voltage, current draw, and time-to-empty.
-- The main DC panel also carries **analog voltage and amperage gauges**.
+- The DC Original panel also carries **analog voltage and amperage gauges**.
 - SignalK reports SOC and draw — visible on [mermug.com](https://mermug.com).
 - The same BLE plugin also reads a second Victron device labeled "bimini" — the solar charge controller (see the Solar row below), not a second battery monitor.
 
@@ -259,14 +257,14 @@ System voltage: **12 V DC**.
 - **Inlet**: 30 A / 125 V, single phase, 120 V @ 60 Hz
 - **Cord**: 30 A vinyl
 - **Charger**: Xantrex Tru-Charge — port lazarette, mounted on the wall at the aft side of the compartment (alongside the inverter and AC source-selector switch — see [Inverter](#inverter) below).
-- Main AC breaker and branch breakers in the main cabin AC panel. Outlet polarity has been verified correct.
+- Main AC breaker and branch breakers in the AC Original panel. Outlet polarity has been verified correct.
 - **No galvanic isolator is installed** — highly recommended (ABYC A-28).
 - Connects to dock pedestal via shore power cord; confirm polarity light is green.
 
 **Plugging in at the dock:**
 1. Plug the shore power cord in — typically on the **port side**, at either the bow or the stern inlet.
 2. **Rotate the plug a quarter turn to lock it in.**
-3. Turn on the **AC Main** breaker (see [AC Panel](#ac-panel)) so the batteries actually charge.
+3. Turn on the **AC Main** breaker (see [AC Original Panel](#ac-original-panel)) so the batteries actually charge.
 4. Make sure the AC source-selector switch in the port lazarette is set to **"Shore"** (not "Gen") — see [Inverter](#inverter).
 
 > **Critical**: if the boat is left unplugged from shore power, the house
@@ -274,43 +272,64 @@ System voltage: **12 V DC**.
 > Always confirm shore power is connected and the AC Main is on before
 > leaving the boat.
 
-### DC Panel
-Located at nav station. Circuits labeled:
-- [List circuits as you learn them, e.g.:]
-  - 1: Navigation lights
-  - 2: VHF
-  - 3: Instruments
-  - 4: Cabin lights
-  - 5: Bilge pump (auto)
-  - 6: Anchor windlass (via a large white unlabeled breaker in the engine compartment, behind the stairs — not at the bow)
-  - ...
+### DC Original Panel
+Located on the nav station wall. Circuits labeled:
+- DC Main
+- Tricolor Light
+- Nav Light
+- Steaming Light
+- Spreader Light
+- Salon Lights
+- Cabin Lights
+- 12VDC Outlets
+- Autopilot
+- Sailing Instruments
+- VHF
+- Fresh Water Pump
+- Bilge Pump
+- Gas Valve
+- Shower Pump
+- Panel Lights
 
-**Panel**: a **Blue Sea Systems 8025 traditional metal DC panel (3
-positions)**, with dedicated **"Lights"** and **"Electronics"** breakers
-covering cockpit lighting and the nav-station PC/Raspberry Pi respectively.
+The anchor windlass is not on this panel — it runs off a large white
+unlabeled breaker in the engine compartment, behind the stairs (not at the bow).
+
+### DC Aux Panel
+Also on the nav station wall — a **Blue Sea Systems 8025 traditional metal
+DC panel (4 positions)**, installed May 2026 to replace the old
+battery-monitor panel. Fed off the **DC Main** circuit on the DC Original
+panel above. Switches:
+- **Lights** — feeds the Cockpit Lights switch panel (see below)
+- **Electronics** — nav-station PC/Raspberry Pi
+- [two more positions — not yet confirmed]
 
 ### 12 V Distribution / Bus Bars
 Three **RVBOATPAT 12 V 150 A (1/4" stud) marine bus bars** expand 12 V
 distribution beyond the factory panel — two as general accessory bus
-points, one feeding the "Electronics" circuit (router, picture frame,
-Raspberry Pi).
+points, one feeding the DC Aux panel's "Electronics" circuit (router,
+picture frame, Raspberry Pi).
 
-Switch panels feeding accessory circuits:
-- **KEING 3-gang 12 V rocker switch panel** — cockpit lights, port panel.
-- **AMOMD 4-gang 12 V/24 V rocker switch panel** — router, picture frame, and Raspberry Pi.
+Switch panels feeding individual accessories (downstream of the DC
+Original/Aux breaker panels above):
+- **Cockpit Lights** switch panel — **KEING 3-gang 12 V rocker switch
+  panel**, in the cockpit, starboard side. Fed off the DC Aux panel's
+  **"Lights"** switch.
+- **Electronics** switch panel — **AMOMD 4-gang 12 V/24 V rocker switch
+  panel**, mounted next to the monitor at the nav station — router, picture
+  frame, and Raspberry Pi. Fed off the DC Aux panel's **"Electronics"**
+  switch via the bus bar above.
 - Cockpit 12 V accessory socket: **Sea Dog 426053-1** power socket with
   plate, used for pedestal power.
 
-### AC Panel
-Main cabin AC electrical panel.
-- Main breaker: in the main AC panel
+### AC Original Panel
+Located on the nav station wall.
+- Main breaker: **AC Main**
 - Shore power breaker: 30 A
 - Circuits/switches:
-  - **AC Main**
-  - **AC Outlets**
   - **Battery Charger** — labeled, but **does nothing** (the Xantrex charger runs regardless of this breaker's position — investigate/relabel)
   - **Water Heater**
-  - **Unused**
+  - **AC Outlets**
+  - **Spare**
 
 ### Inverter
 - **Make/Model**: Outbound
@@ -644,11 +663,16 @@ the engine raw water intake thru-hull are 1-1/4" ball valves (replaced Feb
   matching AP44 suncover (p/n 000-13724-001).
 - Connected to the NMEA 2000 backbone via a **Simrad SimNet/NMEA 2000
   adapter cable**.
-- **Type**: not confirmed — likely a below-decks ram/linear drive, inferred
-  from the rudder-angle feedback unit (below) and the boat's mechanical
-  rack-and-pinion (non-hydraulic) steering, but not verified. Check the
-  original pre-purchase survey document, or visually confirm at the rudder
-  quadrant.
+- **Course computer**: **Simrad AC42**, confirmed via an N2K bus scan (see
+  [N2K Devices](#n2k-devices-bus-scan) below) — a below-decks unit, consistent
+  with the rudder-angle feedback unit (below) and the boat's mechanical
+  rack-and-pinion (non-hydraulic) steering. Physical drive type (ram/linear)
+  still not visually confirmed at the rudder quadrant.
+- **Rate compass**: a **Simrad RC42** is also on the N2K bus (see [N2K
+  Devices](#n2k-devices-bus-scan) below) — feeds heading/rate-of-turn to the
+  autopilot. Not yet confirmed whether SignalK also uses it as a heading
+  source for the chartplotter (see the missing compass-input note under
+  [Chartplotter / MFD](#chartplotter-mfd)).
 - **Control head location**: helm
 - Provides the rudder angle indication (there is no separate rudder position indicator).
 - SignalK's Simrad v2 autopilot API is enabled (device ID 204, converter 115, Simrad ID 4); commands are routed out to the autopilot over `seatalkOut`. Confirm this still applies correctly to the AP44 head.
@@ -662,6 +686,33 @@ cable/T-connector/terminator hardware. Notable gateways:
 - **Actisense EMU-1** — engine/tank analog sender bridge (see [Fuel Gauges](#fuel-gauges)).
 - **Actisense NGT-1-ISO** — AIS-to-N2K bridge (see [AIS](#ais)).
 - An **Ancor 270113 NMEA 2000 power isolator** is in storage, not yet installed.
+
+#### N2K Devices (bus scan)
+
+Full device list from a network scan (via the Pi/OpenPlotter), all shown
+offline at capture time since the boat wasn't powered up:
+
+| Device | Manufacturer | Model | Part # | Serial | Class | Instance | Address | Notes |
+|--------|-------------|-------|--------|--------|-------|----------|---------|-------|
+| Engine Monitoring Unit EMU-1 | Actisense | EMU-1 | — | 307901 | Propulsion | 0 | 6 | Matches [Fuel Gauges](#fuel-gauges) EMU-1 |
+| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | — | 251317 | Internetwork device | 0 | 2 | Model is **NGW-1**, not the NGT-1-ISO documented under [AIS](#ais) above — needs reconciling |
+| DST810 | Airmar | DST810 | — | A000LYR7 | Navigation | 0 | 35 | Not yet reconciled with the [Depth Sounder](#depth-sounder) transducers below — needs confirmation |
+| MS-RA70 | Fusion Electronics | MS-RA70 | — | 1248726 | Entertainment | 0 | 12 | Matches [Audio, Video & Entertainment](#11-audio-video-entertainment) head unit |
+| N2K Remote | Fusion Electronics | N2K Remote | — | 245105 | Entertainment | 0 | 33 | Matches the Fusion MS-NRX300 wired remote |
+| (unnamed) | Garmin | — | — | — | Internetwork device | 0 | 0 | Role unconfirmed |
+| GND10 | Garmin | GND10 | — | 3522042549 | Internetwork device | 0 | 1 | Not yet documented elsewhere — role unconfirmed |
+| GNX Wind | Garmin | GNX Wind | — | 3519834626 | Display | 0 | 10 | Matches [Wind Instruments](#wind-instruments) |
+| GNX20 | Garmin | GNX20 | — | 3519499603 | Display | 5 | 8 | Only one GNX20 is documented under [Depth Sounder](#depth-sounder) — a second unit here needs confirming |
+| GNX20 | Garmin | GNX20 | — | 3519499625 | Display | 4 | 9 | See above |
+| GPS19x-NMEA2000 | Garmin | GPS19x-NMEA2000 | — | 3887650194 | Navigation | 3 | 7 | Matches [GPS](#gps) N2K source |
+| signalk-server | Signal K | signalk-server | — | 1624514 | Internetwork device | 0 | 106 | The Pi itself, at `http://openplotter:3000` |
+| AC42 _Autopilot | Simrad | AC42 | — | 005629# | Steering and Control surfaces | 2 | 4 | Confirms the [Autopilot](#autopilot)'s below-decks course computer |
+| AP44 Autopilot Controller | Simrad | AP44 | **000-13289-001** | 000621# | Steering and Control surfaces | 1 | 3 | Matches the [Autopilot](#autopilot) control head; suncover p/n 000-13724-001 |
+| RC42 _Rate compass | Simrad | RC42 | — | 008223# | Steering and Control surfaces | 0 | 5 | Not yet documented above — see the missing compass-input note under [Chartplotter / MFD](#chartplotter-mfd); may be the fix for it |
+
+Part numbers are only documented in this repo for the AP44 head (see
+[Autopilot](#autopilot)) — the rest are unconfirmed; fill in as you look
+them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 
 ### Environmental Sensor (I2C)
 - **Make/Model**: BME280 temperature/humidity/pressure sensor, I2C bus 1, address `0x77`.
@@ -697,8 +748,8 @@ cable/T-connector/terminator hardware. Notable gateways:
 | Rocket parachute flares | — | Port lazarette (same container as handheld flares) | In date as of March 2025 |
 | Electronic flare — Sirius Signal C-1003 SOS LED (battery-powered, USCG-approved, w/ daytime flag & whistle) | 1 | Port lazarette | Replaces the pyrotechnic flare requirement |
 | Smoke signals | — | Port lazarette (same container as flares) | [date] |
-| EPIRB — ACR Global-Fix 406 | 1 | Mounted at the nav station | Registration updated 2026, registered to Christopher Lalau Keraly; battery replaced 2026 but **not yet tested** |
-| PLB(s) — ACR ResQLink (model PLB-450) | 2 | Carried inside the two blue offshore life jackets | Registered to Chris and Zack; tested March 2026 |
+| EPIRB — ACR Global-Fix 406 | 1 | Mounted at the nav station | Registration updated 2026; battery replaced 2026 but **not yet tested** |
+| PLB(s) — ACR ResQLink (model PLB-450) | 2 | Carried inside the two blue offshore life jackets | Registered; tested March 2026 |
 | Survivor locator lights — ACR HemiLight3 (HL3) | 3 | Hanging from handles above the stairs | — |
 | Life jacket light (water-activated) | 1 | Below nav station | — |
 | PFD accessories — leg straps (NRS), emergency whistles (LuxoGear, w/ lanyard) | 2 ea. | On the two blue offshore life jackets / in all inflatable PFDs | — |
@@ -1091,8 +1142,14 @@ and marine rail hardware:
 | Adafruit SGP30 | Air quality (TVOC / eCO2) | Aboard (see `info.yaml`) |
 
 ### Raspberry Pi
+- **Model**: Raspberry Pi 4, 16 GB
 - **Location**: [nav station / electrical compartment]
-- **OS**: Raspberry Pi OS (bookworm or later)
+- **OS**: OpenPlotter (built on Raspberry Pi OS, bookworm or later)
+- **HAT**: MacArthur HAT, with the following hardwired connections:
+  - TackTick — NMEA 0183 I/O
+  - Furuno — NMEA 0183 I/O
+  - NMEA 2000 bus
+  - One-wire temperature sensors: fridge, freezer, interior (nav station), exterior (stbd side panel)
 - **Services**: `mermug-website.service`, `mermug-polars.service`,
   `signalk-gitpush.service` (timer)
 - Manage via `make status`, `make show-logs-website`
