@@ -205,7 +205,7 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 
 ### 2025-09-30 | Audio | New stereo installed
 - Fusion MS-RA70NSX stereo (BT/AM/FM/SiriusXM, 2-zone) installed, replacing
-  the previous stereo. See [Audio & Entertainment](systems.md#11-audio-entertainment).
+  the previous stereo. See [Audio, Video & Entertainment](systems.md#11-audio-video-entertainment).
 
 ### 2025-10-05 | Rigging | Winch stripper ring replaced
 - Lewmar winch replacement stripper ring installed on the port rear winch.
@@ -457,6 +457,25 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 ### 2026-07-18 | Electrical | Refrigeration replacement purchased
 - Isotherm 2017 Compact Classic air-cooled system (p/n U260X086P12111AA,
   Defender.com) purchased — ready to install, not yet installed.
+
+### 2026-02-01 | Electrical | Dehumidifier added
+- Waykar 1500 sq ft, 30-pint Energy Star dehumidifier installed next to the
+  refrigerator, secured, draining via a hose to the sink. Considered
+  essential to keeping the boat dry and preventing mold/rust.
+
+### 2026-XX-XX | Electrical | Apple TV and projector installed
+- Apple TV HD (modified to run on 12 V directly) and a projector installed
+  on the "Electronics" breaker, switched from the starboard side of the
+  salon. Projector screen stored in the port-side salon cabinet, hangs
+  from the bar below the port windows. **Exact date TBD.**
+
+### 2026-XX-XX | Software | Cellular hotspot set up as boat internet uplink
+- A rooted Google Pixel 4a (Visible Plus plan) tethers its 5G/LTE
+  connection to provide the boat's internet, automated via Tasker
+  (tethering enabled on charge-start, followed by a script granting the
+  boat's client network access). Also loads KIP as a generic status page.
+  This is the Raspberry Pi's actual internet uplink. **Tasker
+  profile/script details and exact setup date TBD.**
 
 ### 2026-08-26 | Ground Tackle | New anchor rode, swivel & shackle ordered and delivered
 - 450 ft of 5/8" three-strand nylon rope.

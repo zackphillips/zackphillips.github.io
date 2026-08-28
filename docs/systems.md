@@ -34,7 +34,7 @@ Anything still shown as `—` or in [brackets] has not been confirmed aboard yet
 8. [Ground Tackle](#8-ground-tackle)
 9. [Sails & Running Rigging](#9-sails-running-rigging)
 10. [Galley, Propane & Accommodation](#10-galley-propane-accommodation)
-11. [Audio & Entertainment](#11-audio-entertainment)
+11. [Audio, Video & Entertainment](#11-audio-video-entertainment)
 12. [King's Chairs & Deck Hardware](#12-kings-chairs-deck-hardware)
 13. [Vessel Data / Automation](#13-vessel-data-automation)
 
@@ -865,6 +865,14 @@ three mainsail reef points.**
   Currently in storage, **ready to install but not yet installed.**
 - **Sink**: stainless steel, separate basins. Pressure water from the ParMax pump; a Whale foot pump for salt water was replaced June 2026 and is fully operational — use it for washing dishes.
 
+### Dehumidifier
+**Waykar 1500 sq ft, 30-pint, Energy Star dehumidifier** (0.62 gal tank,
+auto or manual drainage), purchased 2026-02-01. Kept plugged in (AC power)
+next to the refrigerator and secured in place; drains via a hose routed to
+the sink rather than relying on the internal tank. **Considered essential**
+to keeping the boat dry and preventing mold and rust below decks — keep it
+running continuously.
+
 ### Accommodation Layout
 
 Forward to aft: head compartment forward → forward accommodation with a queen
@@ -939,7 +947,7 @@ aft accommodation with queen berth and hanging locker.
 
 ---
 
-## 11. Audio & Entertainment
+## 11. Audio, Video & Entertainment
 
 A full stereo refresh was done over September–November 2025.
 
@@ -954,6 +962,15 @@ A full stereo refresh was done over September–November 2025.
 
 An earlier **Fusion wire harness (for an MS-RA770, zones 3 & 4)** was
 purchased October 2025 but returned — not part of the final build.
+
+### Video
+- **Apple TV HD**, modified to run directly on **12 V** (no AC adapter/inverter
+  needed). Powered from the "Electronics" breaker (see [12 V Distribution](#12-v-distribution-bus-bars)),
+  with a dedicated switch on the **starboard side of the salon**.
+- **Projector**: also on the Electronics breaker, switched alongside the
+  Apple TV on the starboard side of the salon.
+- **Projector screen**: stored in the **port-side cabinet in the salon**;
+  hangs from the bar just below the windows on the port side when in use.
 
 ---
 
@@ -1010,6 +1027,17 @@ mid-September 2025 (last king's-chair-tagged purchase: 2025-09-18).
 - Privacy zone suppresses positions within 200 m of South Beach Harbor.
 - See [AGENTS.md](../AGENTS.md) and [README.md](../README.md) for full technical details.
 
+### Internet Connectivity (Cellular Hotspot)
+- **Device**: Google Pixel 4a, rooted, with a Visible Plus SIM plan.
+  Provides internet to the boat over its 5G/LTE connection via tethering.
+- **Automation**: Tasker (Android automation app) is configured to enable
+  tethering automatically whenever the phone starts charging. A follow-on
+  script then grants the boat's client network access to that tethered
+  connection — built with Claude's help. **Tasker profile/script details:
+  TBA** — document the actual Tasker config here once finalized.
+- The phone also loads **KIP as a generic status page** once connected.
+- This is the Pi's actual internet uplink — see [Raspberry Pi](#raspberry-pi) below.
+
 ### Sensor Hardware (aboard, not all deployed)
 
 | Device | Purpose | Status |
@@ -1025,7 +1053,8 @@ mid-September 2025 (last king's-chair-tagged purchase: 2025-09-18).
 - **Services**: `mermug-website.service`, `mermug-polars.service`,
   `signalk-gitpush.service` (timer)
 - Manage via `make status`, `make show-logs-website`
-- Pi connects to the internet via [marina WiFi / cellular / both].
+- Pi connects to the internet via a **cellular hotspot** (Google Pixel 4a) —
+  see [Internet Connectivity](#internet-connectivity-cellular-hotspot) above.
 - **Known issue (July 2025)**: Pi died during a `git pull`, corrupting the
   local repo; fixed by re-cloning. If data stops updating, check the repo
   state on the Pi first.
