@@ -297,8 +297,9 @@ unlabeled breaker in the engine compartment, behind the stairs (not at the bow).
 ### DC Aux Panel
 Also on the nav station wall — a **Blue Sea Systems 8025 traditional metal
 DC panel (4 positions)**, installed May 2026 to replace the old
-battery-monitor panel. Switches:
-- **Lights** — cockpit lighting
+battery-monitor panel. Fed off the **DC Main** circuit on the DC Original
+panel above. Switches:
+- **Lights** — feeds the Cockpit Lights switch panel (see below)
 - **Electronics** — nav-station PC/Raspberry Pi
 - [two more positions — not yet confirmed]
 
@@ -308,13 +309,15 @@ distribution beyond the factory panel — two as general accessory bus
 points, one feeding the DC Aux panel's "Electronics" circuit (router,
 picture frame, Raspberry Pi).
 
-Switch panels feeding accessory circuits (distinct from the DC Original/Aux
-breaker panels above):
+Switch panels feeding individual accessories (downstream of the DC
+Original/Aux breaker panels above):
 - **Cockpit Lights** switch panel — **KEING 3-gang 12 V rocker switch
-  panel**, in the cockpit, starboard side.
+  panel**, in the cockpit, starboard side. Fed off the DC Aux panel's
+  **"Lights"** switch.
 - **Electronics** switch panel — **AMOMD 4-gang 12 V/24 V rocker switch
   panel**, mounted next to the monitor at the nav station — router, picture
-  frame, and Raspberry Pi.
+  frame, and Raspberry Pi. Fed off the DC Aux panel's **"Electronics"**
+  switch via the bus bar above.
 - Cockpit 12 V accessory socket: **Sea Dog 426053-1** power socket with
   plate, used for pedestal power.
 
