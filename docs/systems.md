@@ -341,7 +341,7 @@ Main cabin AC electrical panel.
 | Pump | ParMax 3.5, 12 V demand type, with an inline strainer |
 | Accumulator | Aquapress coated steel |
 | Plumbing | PEX tubing and rubber hose |
-| Hot water heater | Raritan, 6 gal, marine grade **120 V element + engine heat exchanger**. **Watch item**: pressure relief valve may not release properly — after motoring stretches, water heats up and the hose can blow off, dumping water into the bilge (diagnosed August 2025). The hose uses half-inch tubing which may not be an exact fit for the likely-metric original fitting. A stern re-plumbing project (fill hose, July 2025; 316 SS 1" NPT reducing hex nipple and 3/4" hex nipple adapters, February 2026) has been working toward reconciling this fitting mismatch |
+| Hot water heater | Raritan, 6 gal, marine grade **120 V element + engine heat exchanger**. **Watch item**: pressure relief valve may not release properly — after motoring stretches, water heats up and the hose can blow off, dumping water into the bilge (diagnosed August 2025). If the 120 V element has already heated the tank at the dock, running the engine stacks the heat exchanger's heat on top of that — this can build pressure and cause hoses to develop pinholes. **If the heater has been left on, bleed the hot water line (run a hot tap for ~30 sec) before running the engine for any length of time** — see [Engine Start Procedure](operations.md#engine-start-procedure). The hose uses half-inch tubing which may not be an exact fit for the likely-metric original fitting. A stern re-plumbing project (fill hose, July 2025; 316 SS 1" NPT reducing hex nipple and 3/4" hex nipple adapters, February 2026) has been working toward reconciling this fitting mismatch |
 | Fill deck plates | **Forward tank**: starboard side deck, just forward of the mast — opens by hand, no tool needed. **Aft tank**: port side deck near the grill, marked "Water" — needs a tool from the drawer below the nav station |
 | Tank vents | Port and starboard hull sides, below the fill pipes |
 
@@ -354,6 +354,11 @@ Transom washdown shower: **Scandvik straight push-button sprayer** (Defender,
 installed October 2025) replaced a broken washdown hose. A separate
 **Marpac coiled washdown hose w/ nozzle** (Amazon, purchased March 2026) is
 kept on the dock for exterior cleaning.
+
+- **Warm water**: the stern washdown hose gets warm water via a mixer that
+  taps off the aft head sink. Temperature is set by a **thermostatic mixing
+  valve under the aft head sink** — rotate the valve to adjust. **102°F is
+  a good setting.**
 
 ### Filling Freshwater Tanks
 

@@ -63,6 +63,13 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 Yanmar 4JH2E, 46 HP diesel. The engine space is naturally ventilated — there is
 no blower to run.
 
+> **If the water heater has been left on at the dock** (120 V element), the
+> tank is likely already hot. Running the engine adds the heat exchanger's
+> heat on top of that, which can build pressure and cause hoses to develop
+> pinholes. **Bleed the hot water line first** — running a hot tap for
+> ~30 seconds is enough — before running the engine for any length of time.
+> See [Systems Overview — Freshwater System](systems.md#freshwater-system).
+
 1. Open raw water seacock (under companion way steps, starboard side).
 2. Turn ignition key to **ON** — gauges and alarms come alive.
 3. Confirm fuel is on (ball valve at the tank, should always be open).
