@@ -175,7 +175,13 @@ no blower to run.
 4. Approach slip slowly, into the wind if possible.
 5. Lead lines to dock cleats; spring the boat in if needed.
 6. Shut down engine: key to OFF; close raw water seacock.
-7. Connect shore power; confirm charging light on battery monitor.
+7. Connect shore power (typically the port side, bow or stern inlet);
+   **rotate the plug a quarter turn to lock it in**. Turn on the **AC
+   Main** breaker and confirm the AC source-selector switch in the port
+   lazarette is set to **"Shore"** (not "Gen") — see
+   [Systems Overview — Inverter](systems.md#inverter). Confirm charging
+   light on battery monitor. **If left unplugged, the house batteries
+   deplete in ~36 hours**, which is harmful to them — don't skip this.
 8. Log hours on the engine hour meter.
 
 ---
@@ -215,13 +221,58 @@ closely while fueling — don't walk away.
 
 ---
 
+## Head Operation & Offshore Discharge
+
+The two heads have **different plumbing** — don't assume they work the
+same way. Full specs: [Systems Overview — Head (Marine Toilet)](systems.md#head-marine-toilet).
+
+**Legal**: direct overboard discharge of sewage is only legal **3 nautical
+miles offshore or greater**. If boarded inside that limit, the USCG will
+want to see the aft head's Y-valve secured toward the tank (zip tie or
+similar) — leave it that way by default.
+
+### Aft head (has a Y-valve, under the sink)
+- The Y-valve's handle covers one of two arrows — the **exposed** arrow
+  shows where the toilet's discharge currently goes.
+- **Default / in harbor**: expose the arrow that does *not* point to the
+  seacock under the sink (routes to the holding tank).
+- **Offshore only (≥3 nm)**, to discharge directly overboard:
+  1. Open the seacock under the sink (handle **parallel** to the hose).
+  2. Turn the Y-valve so the arrow pointing to the seacock is exposed.
+  3. When back inside 3 nm (or done), reverse both and re-secure the
+     Y-valve toward the tank.
+
+### Forward head (no Y-valve)
+- The toilet always pumps to the holding tank — there's no direct-overboard
+  toilet route. A separate seacock under the sink instead gravity-drains
+  the **tank** overboard.
+- **Keep that seacock closed (handle perpendicular to the hose) except offshore.**
+- **To flush/rinse the forward tank at sea:**
+  1. Open the forward tank's gravity seacock under the sink.
+  2. In the anchor locker, set the **yellow-handled washdown redirect
+     valve** to the holding-tank position (its other position feeds the
+     anchor-locker hose for normal washdown).
+  3. Turn on the washdown pump — switch labeled **"washdown"** in the forward head.
+  4. Run for **at least 5 minutes**.
+  5. Reverse when done: pump off, redirect valve back to hose position, seacock closed.
+
+### Pump-out (both heads, in port)
+- **Aft tank**: "waste" deck fitting, port side, just outside the cockpit, above deck.
+- **Forward tank**: waste deck fitting near the bow, starboard side.
+- The aft tank's macerator was removed (Jan 2026) — pump-out is its **only** emptying method now.
+
+---
+
 ## Post-Arrival / Layup
 
 - [ ] Engine hours logged
 - [ ] Sail covers on (main first, then headsail)
 - [ ] Boom crutch deployed; mainsheet eased
 - [ ] Halyards flaked or secured to prevent slapping (use sail ties or slight tension to shroud)
-- [ ] Shore power connected; battery charger on
+- [ ] Shore power connected (quarter-turn locked), AC Main breaker on, AC
+      source-selector switch (port lazarette) set to **"Shore"** — battery
+      charger on. **Boat left unplugged depletes the house batteries in
+      ~36 hours.**
 - [ ] Seacocks closed (raw water, head, any open thru-hulls)
 - [ ] Bilge checked — pump if any accumulation
 - [ ] Docklines doubled / snugged for conditions
