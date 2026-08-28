@@ -2,7 +2,7 @@
 title: Operations Guide
 category: Underway
 order: 10
-description: Pre-departure checklist, engine start, sail handling, anchoring and emergency procedures.
+description: Pre-departure and post-sail checklists, plus every stepwise how-to aboard — engine, docking, sails, anchoring, fueling, tanks, propane, heads and emergencies.
 ---
 
 # S.V. Mermug — Operations Guide
@@ -10,51 +10,120 @@ description: Pre-departure checklist, engine start, sail handling, anchoring and
 1994 Beneteau First 42s7 — 42' 06" sloop, Hull #BEY57004E494 | MMSI 338543654 | USCG 1024168
 Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 
----
-
 ## Pre-Departure Checklist
 
 ### Safety & Documentation
 - [ ] Ship's papers aboard (documentation, registration, insurance)
-- [ ] Float plan filed with a shore contact
-- [ ] Flares in date (check expiration on handheld and parachute flares)
-- [ ] Life jackets accessible and in good condition (one per person + throwable)
+- [ ] Float plan communicated to another captain or shore contact
+- [ ] Flares in date (check expiration on handheld and parachute flares) — **port lazarette**
+- [ ] Horn aboard — **port lazarette**
+- [ ] Life jackets (PFDs) accessible and in good condition (one per person) — **starboard lazarette**
+- [ ] Throwable device and fire extinguishers accessible and charged
 - [ ] EPIRB registered, battery in date, hydrostatic release in date
+- [ ] Emergency tiller available, and skipper knows how to rig it — see [Emergency Tiller](#emergency-tiller)
 - [ ] First aid kit stocked
-- [ ] Fire extinguishers charged and accessible
+- [ ] Everything onboard secured (nothing loose that can shift or fly underway)
 
 ### Engine
-- [ ] Engine oil level — check dipstick, should be between min/max
-- [ ] Raw water strainer clear
-- [ ] Coolant level in overflow reservoir
+- [ ] Fuel level OK on both tanks. Reserve may be used if you must, but if
+      the reserve tank runs empty, refuel before relying on it again — see
+      [Fueling](#fueling)
+- [ ] Engine oil level — check dipstick, should be between min/max. Check
+      at least monthly and log in the logbook
+- [ ] Coolant level in overflow reservoir. Check at least monthly and log in the logbook
+- [ ] Raw water seacock to the engine open (under companionway steps, starboard side)
+- [ ] Oil filter clean (accessible from the aft berth)
 - [ ] Belt tension — alternator and raw water pump belts
-- [ ] Fuel level — check gauge and visually at fill deck plate
 - [ ] Transmission fluid level
-- [ ] No unusual odors in engine compartment (fuel, burning)
+- [ ] No unusual odors in engine compartment (fuel, burning); engine compartment dry
+- [ ] After starting: water flowing from the exhaust (port side, aft of the boat) — see [Engine Start Procedure](#engine-start-procedure)
 
 ### Electrical
-- [ ] House battery state of charge — aim for ≥80% before departure
-- [ ] Start battery isolated from house bank
-- [ ] Nav lights functional (steaming, port, starboard, stern, anchor)
-- [ ] VHF radio on and scanning Ch 16
-- [ ] AIS transmitting (verify on chartplotter)
+- [ ] Battery voltage OK — resting (no charging, no load) 12.6–12.8 V reads
+      as full for AGM; below ~12.2 V is low. The battery monitor's state of
+      charge is the more reliable read — aim for ≥80% before departure. See
+      [Systems Overview — Battery Monitor](systems.md#battery-monitor)
+- [ ] Shore power disconnected and stowed
+- [ ] VHF on; speaker near the helm confirmed working
+- [ ] Sailing instruments on; depth alarm set if relevant — see [SignalK Configuration — Alarms / Zones](signalk.md#alarms-zones)
+- [ ] Bilge pump working — flip the switch on/off and listen for it
+- [ ] Nav lights functional (steaming, port, starboard, stern, anchor) — especially if departing or returning near dark
+- [ ] Anchor windlass tested — foot switches at the bow; controller in the
+      cabinet behind the v-berth head. See [Anchoring](#anchoring)
 - [ ] Chartplotter + instruments powered and GPS locked
 
+### Sails
+- [ ] Mainsail cover (stack pack) unzipped
+- [ ] Main halyard set
+- [ ] Reefing lines set up if wind is expected
+- [ ] Winch handles out
+
+### Lines & Fenders
+- [ ] All unneeded dock lines removed from the boat — they can get caught in the prop
+- [ ] Fenders ready to be pulled on deck after departure
+
 ### Rigging & Deck
-- [ ] Running rigging led properly; halyards, sheets, guys cleated or coiled
 - [ ] Standing rigging — quick visual on turnbuckles, cotter pins, stays
 - [ ] Boom vang, cunningham, outhaul: tension set for conditions
 - [ ] Furling systems: headsail and main furled cleanly, lines free to run
-- [ ] Hatches dogged shut (or confirmed open intentionally)
+- [ ] Hatches battened (dogged shut, or confirmed open intentionally)
 - [ ] Through-hulls checked — know which are open, which closed
 - [ ] Bilge pumps operational; bilge dry or at normal level
 
+### Misc
+- [ ] Propane tank valve off (port aft lazarette) unless actively cooking — see [Using Propane](#using-propane)
+- [ ] Skipper knows the tides and currents to expect today
+- [ ] Sunset hour known
+- [ ] Weather briefed — NOAA, PredictWind, or Passage Weather
+
 ### Navigation
 - [ ] Charts loaded / paper chart aboard for the area
-- [ ] Tide and current reviewed for departure, transit, arrival
-- [ ] Weather briefed — NOAA, PredictWind, or Passage Weather
 - [ ] Waypoints entered in chartplotter if applicable
 - [ ] Hazards noted (shipping lanes, rocks, TSS boundaries)
+
+---
+
+## Post-Sail Checklist (Before Leaving the Boat at the Dock)
+
+### Electrical
+- [ ] Shore power plugged in and working — the light near the switch on the
+      electrical panel should come on. See [Connecting Shore
+      Power](#connecting-shore-power)
+- [ ] Fridge turned off if the boat won't be used within the month
+      (perishables removed first)
+- [ ] All other electrical outputs off
+- [ ] Instrument panels, autopilot and radar off
+- [ ] Extra sacrificial zinc set out for haul-out *(not currently stocked aboard — add to the spares kit)*
+- [ ] AC Main breaker on, AC source-selector switch (port lazarette) set to
+      **"Shore"** — battery charger on. **Boat left unplugged depletes the
+      house batteries in ~36 hours.**
+
+### Heads & Water
+- [ ] Both heads pumped dry — see [Head Operation](#head-operation-offshore-discharge)
+- [ ] Bilge checked — pump if any accumulation
+- [ ] Seacocks closed (raw water, head, any open thru-hulls)
+
+### Sails
+- [ ] Main stored in its sock (stack pack)
+- [ ] Lines neatly stored; halyards flaked or secured to prevent slapping
+      (sail ties or slight tension to shroud)
+- [ ] Genoa well furled
+- [ ] Mainsheet trimmed tight (centered) so the boom doesn't swing; boom
+      crutch deployed if used
+
+### Docking Lines
+- [ ] Two bow lines, two spring lines, one stern line — all set and snug
+- [ ] Boat doesn't move much even with wind on it
+- [ ] Fenders out
+
+### Misc
+- [ ] Boat keys and the spare harbor FOB stowed in the first drawer of the nav station
+- [ ] Swim platform up — see [Swim Platform](#swim-platform)
+- [ ] Cover on over the dodger's plastic glass
+- [ ] Propane tank valve off (port aft lazarette) — see [Using Propane](#using-propane)
+- [ ] All perishables and trash off the boat
+- [ ] Companionway locked
+- [ ] Engine hours logged; logbook updated
 
 ---
 
@@ -112,7 +181,7 @@ no blower to run.
 1. Ease mainsheet fully; boom traveler to centerline.
 2. Ease vang to zero.
 3. Head into the wind (or motor head-to-wind if in tight quarters).
-4. Remove sail cover; remove boom crutch if deployed.
+4. Unzip and remove the sail cover (stack pack); remove boom crutch if deployed.
 5. Release reefing lines fully.
 6. Hoist main halyard — hand-over-hand to luff, then winch to proper tension.
 7. Ease cunningham and outhaul to shape for conditions.
@@ -150,8 +219,9 @@ no blower to run.
   to length and shackled to a rope rode and to the anchor before it can be
   deployed. See [Systems Overview — Ground Tackle](systems.md#8-ground-tackle).
 - Windlass: **Quick Eagle 12 V / 1400 W**, foot switches at bow, breaker in
-  the engine compartment behind the stairs. **No manual override** — if the
-  windlass fails, raise the anchor by hand.
+  the engine compartment behind the stairs, **controller in the cabinet
+  behind the v-berth head**. **No manual override** — if the windlass
+  fails, raise the anchor by hand.
 
 ### Anchoring Lessons Learned
 - **Inspect the shackle** before every anchoring — a shackle failure has
@@ -181,6 +251,12 @@ no blower to run.
 3. Rinse chain/anchor with deck wash as it comes aboard.
 4. Secure anchor with safety pin; stow snubber.
 
+### Testing the Windlass
+Before departure, confirm the windlass responds in both directions from the
+foot switches at the bow. The controller lives in the **cabinet behind the
+v-berth head** if the foot switches don't respond and the breaker (engine
+compartment, behind the stairs) checks out.
+
 ---
 
 ## Swim Platform
@@ -206,7 +282,9 @@ red**) and cleat in the **aft stbd lazarette**. See
 2. Reduce speed to bare steerage in the harbor — no wake.
 3. Assign bow, stern, and spring line handlers before entering the fairway.
 4. Approach slip slowly, into the wind if possible.
-5. Lead lines to dock cleats; spring the boat in if needed.
+5. Lead lines to dock cleats; spring the boat in if needed. Set two bow
+   lines, two spring lines, and a stern line, all snug — the boat
+   shouldn't move much even with wind on it. Fenders out.
 6. Shut down engine: key to OFF; close raw water seacock.
 7. Connect shore power (typically the port side, bow or stern inlet);
    **rotate the plug a quarter turn to lock it in**. Turn on the **AC
@@ -215,7 +293,7 @@ red**) and cleat in the **aft stbd lazarette**. See
    [Systems Overview — Inverter](systems.md#inverter). Confirm charging
    light on battery monitor. **If left unplugged, the house batteries
    deplete in ~36 hours**, which is harmful to them — don't skip this.
-8. Log hours on the engine hour meter.
+8. Log hours on the engine hour meter, and update the logbook.
 
 ---
 
@@ -252,6 +330,90 @@ closely while fueling — don't walk away.
 9. When finished, close both tank fills and return both opener tools to
    the nav station drawer.
 
+### Fuel Transfer (Reserve → Main)
+
+**Never overfill the main tank.** As a rule of thumb, don't transfer fuel
+until the main tank gauge at the helm is in the red. You may run on the
+reserve tank if you must, but if the reserve tank runs empty, refuel before
+relying on it again. See [Systems Overview — Fuel System](systems.md#3-fuel-system)
+for tank and pump specs.
+
+1. With the engine **off**, open the inline valve so its tab is aligned with the hose.
+2. Turn on the switch at the tank base to run the transfer pump.
+3. Watch the reserve tank level as it transfers — shine a flashlight in
+   laterally to check it. **Never let the level go below the bottom
+   line (tape) on the tank**, to avoid pulling debris into the engine.
+4. Once the transfer is complete, turn off the switch first, then close
+   the valve on the hose.
+
+### Bleeding the Engine
+If air enters the fuel system (e.g., ran tank dry):
+1. [Describe bleed procedure for this specific engine]
+2. Bleed Racor first — open bowl petcock, pump primer until fuel flows.
+3. Bleed injection pump at [location].
+
+**TODO**: this procedure hasn't actually been exercised — walk through and
+confirm/fill in the steps above (including the injection pump bleed
+location) the next time the tank genuinely runs dry.
+
+---
+
+## Switching Freshwater Tanks
+
+Water tanks are switched using handles in a panel near the bow, inside the
+water heater compartment, under the couch base cushion closest to the
+stove. The handles are labeled **"F"** (forward) and **"A"** (aft). Exactly
+one valve should always be open (vertical) and the other closed
+(horizontal). See [Systems Overview — Freshwater System](systems.md#freshwater-system).
+
+1. Turn off the fresh water pump breaker.
+2. Rotate both handles to select the other tank.
+3. Open both the galley sink and the aft head sink (cold water) so they can flow freely.
+4. Turn the fresh water pump breaker back on. It will need to pump air out of the line — wait for the water flow to become consistent.
+5. Close both faucets and wait for the pump to stop running. Once it stops, you're done.
+
+---
+
+## Connecting Shore Power
+
+See [Systems Overview — Shore Power](systems.md#shore-power) for inlet and
+breaker specs.
+
+1. Plug the shore power cord in — typically on the **port side**, at either the bow or the stern inlet.
+2. **Rotate the plug a quarter turn to lock it in.**
+3. Turn on the **AC Main** breaker (see [Systems Overview — AC Original Panel](systems.md#ac-original-panel)) so the batteries actually charge.
+4. Make sure the AC source-selector switch in the port lazarette is set to **"Shore"** (not "Gen") — see [Systems Overview — Inverter](systems.md#inverter).
+
+> **Critical**: if the boat is left unplugged from shore power, the house
+> batteries will deplete in **about 36 hours** — which is harmful to them.
+> Always confirm shore power is connected and the AC Main is on before
+> leaving the boat.
+
+---
+
+## Using Propane
+
+Tank valve and shut-offs are in the **port aft lazarette**; see
+[Systems Overview — Propane (LPG)](systems.md#propane-lpg) for the full
+system layout.
+
+1. **Open the tank valve**, under the port aft lazarette. Leave it closed
+   when not in use.
+2. **Stove**: turn on the **gas valve breaker switch**. With the tank valve
+   open and the breaker on, gas reaches the stove.
+3. **Magma grill**: open the **yellow valve** in the port aft lazarette —
+   this feeds the grill directly; the breaker switch is not involved and
+   the yellow valve alone is all that's needed.
+4. **Lighting**: the stove and grill are lit with a lighter stored
+   **behind the stove**.
+
+> **Open item**: the LPG tanks are not secured in their locker. Fit a
+> proper mount. Perform a gas leak test (close the appliance valves, open the
+> tank valve, watch the gauge) before each use.
+
+**Before leaving the dock, and whenever the boat is left unattended, close
+the tank valve** (port aft lazarette).
+
 ---
 
 ## Head Operation & Offshore Discharge
@@ -263,6 +425,11 @@ same way. Full specs: [Systems Overview — Head (Marine Toilet)](systems.md#hea
 miles offshore or greater**. If boarded inside that limit, the USCG will
 want to see the aft head's Y-valve secured toward the tank (zip tie or
 similar) — leave it that way by default.
+
+**Operating the head (general):**
+1. Open inlet seacock.
+2. [Manual: describe stroke procedure] / [Electric: describe button sequence]
+3. Close inlet seacock when done at anchor or in sensitive areas.
 
 ### Aft head (has a Y-valve, under the sink)
 - The Y-valve's handle covers one of two arrows — the **exposed** arrow
@@ -294,23 +461,10 @@ similar) — leave it that way by default.
 - **Forward tank**: waste deck fitting near the bow, starboard side.
 - The aft tank's macerator was removed (Jan 2026) — pump-out is its **only** emptying method now.
 
----
-
-## Post-Arrival / Layup
-
-- [ ] Engine hours logged
-- [ ] Sail covers on (main first, then headsail)
-- [ ] Boom crutch deployed; mainsheet eased
-- [ ] Halyards flaked or secured to prevent slapping (use sail ties or slight tension to shroud)
-- [ ] Shore power connected (quarter-turn locked), AC Main breaker on, AC
-      source-selector switch (port lazarette) set to **"Shore"** — battery
-      charger on. **Boat left unplugged depletes the house batteries in
-      ~36 hours.**
-- [ ] Seacocks closed (raw water, head, any open thru-hulls)
-- [ ] Bilge checked — pump if any accumulation
-- [ ] Docklines doubled / snugged for conditions
-- [ ] Instruments and electronics powered down
-- [ ] Companionway locked
+### Leaving the boat — pumping heads dry
+Before leaving the boat at the dock, pump both heads dry (a few extra
+strokes/cycles after the bowl clears) so nothing sits in the bowl between
+uses.
 
 ---
 
@@ -349,6 +503,11 @@ portable ABC dry chemical extinguishers (2.5 lb) are aboard (updated 2026).
 2. Deploy bilge pump — Jabsco 12 V diaphragm (electric) plus the Whale Gulper hand pump.
 3. Plug with rags, softwood plugs, seacock plug if a through-hull failure. *(No wooden plugs are currently fitted at the through-hulls — fit them.)*
 4. If uncontrolled: call Mayday; prepare life raft and ditch bag. **The life raft is reported out of service — confirm its status before relying on it.**
+
+### Emergency Tiller
+Stored aboard for use if the wheel steering fails. **Every skipper should
+know where it is and how to rig it before departure** — don't let its
+first use be an actual emergency.
 
 ---
 
