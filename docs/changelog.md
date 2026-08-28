@@ -33,8 +33,7 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   fair market value $65,000; estimated replacement cost $750,000.
 - Companion engine survey by Marty Chin, Bay Marine Diesel — engine hours
   6,381.7 at time of survey.
-- Vessel was named "Tivoli" at this time; buyer of record Christopher Lalau
-  Keraly. Renamed "Mermug" by early 2026.
+- Vessel was named "Tivoli" at this time. Renamed "Mermug" by early 2026.
 - **Note:** this survey is dated ~7 weeks after the "Vessel purchased" entry
   above (2025-03-14, KKMI Boatyard, 6,376 hrs) — the two haul dates/yards and
   hour readings don't fully reconcile with each other. Both kept as recorded
@@ -75,8 +74,6 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 
 ### 2025-05-17 | Other | Vessel delivered to South Beach Harbor
 - First sail as new owners; motoring practice with surveyor Jeff.
-- Three co-owners: Zack Phillips, Christopher "Krug" Lalau Keraly, and
-  Brandon "Bug".
 
 ### 2025-05-24 | Navigation | Navigation light compliance issue identified
 - Masthead tri-color light (red/green/white) is legal for sailing at night
@@ -163,7 +160,7 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   [King's Chairs & Deck Hardware](systems.md#12-kings-chairs-deck-hardware).
 
 ### 2025-08-07 | Plumbing | Aft toilet joker valve replaced
-- Krug replaced the joker valve on the aft head.
+- Joker valve on the aft head replaced.
 
 ### 2025-08-07 | Electrical | Fridge compressor fan found broken
 - Adler Barbour refrigeration compressor fan discovered broken.
@@ -303,8 +300,7 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 - Bilge: both float switches confirmed working (previously not both
   functional); bilge pump breaker upgraded to feed a master auto/manual/off
   selector switch, located below/left of the breaker — **leave in AUTO**.
-- EPIRB: registration updated, now registered to Christopher Lalau Keraly;
-  battery replaced (not yet tested).
+- EPIRB: registration updated; battery replaced (not yet tested).
 - Gelcoat cracks at the bow pulpit stanchions patched (some remain); boat
   waxed. Loose stanchion base fittings themselves not confirmed addressed.
 - Still open: cockpit teak decking/sealant, ~1/8" rudder shaft bearing play.
@@ -336,7 +332,7 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
 ### 2026-03-29 | Safety | Major PFD/MOB safety equipment upgrade
 - ACR HemiLight3 survivor locator lights (×3) hung from handles above the stairs.
 - ACR ResQLink PLB-450 personal locator beacons (×2) fitted inside the two
-  blue offshore life jackets, registered to Chris and Zack, and tested.
+  blue offshore life jackets, registered and tested.
 - LuxoGear emergency whistles installed in all inflatable PFDs; NRS leg
   straps added to the two offshore jackets.
 - Scotty #0793 rescue throw bags (×2) stowed in the starboard lazarette.
@@ -438,7 +434,7 @@ Categories: **Electronics** | **Engine** | **Rigging** | **Sails** | **Electrica
   rips.
 
 ### 2026-07-23 | Sails | Repaired mainsail reinstalled
-- Zack reinstalled the repaired mainsail solo.
+- Repaired mainsail reinstalled solo.
 - Repairs: clew eyelet replaced, two minor rips repaired, race-day rip
   repaired.
 
@@ -530,7 +526,7 @@ Reference table for planned maintenance intervals. Update "Last Done" column aft
 | Hull zinc replacement | Haulout | February 2026 | |
 | Prop & shaft inspection | Haulout | February 2026 | Shaft seal (PSS) fully replaced same haulout |
 | Fire extinguisher service | 6 years (hydrotest 12 yr) | 2026 | Recalled unit replaced; 2 more added (now 4+ aboard) |
-| EPIRB registration & battery | Per label / 5 years | 2026 | Registration updated (Christopher Lalau Keraly); battery replaced but **not yet tested** |
+| EPIRB registration & battery | Per label / 5 years | 2026 | Registration updated; battery replaced but **not yet tested** |
 | Flare expiration | Check annually | 2026 | Battery-powered USCG-approved electronic flare added (port lazarette) |
 | Life jacket inspection | Annually | — | |
 | Bilge pump test | Monthly | 2026 | Both float switches confirmed working; new auto/manual/off master switch installed (leave in AUTO) |
@@ -577,7 +573,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Autopilot | Simrad AP44 (p/n 000-13289-001) | — | Replaced the original AP22 head (died Oct 2025); suncover p/n 000-13724-001 |
 | Wind/depth/speed instruments | Garmin GNX wind instrument + depth/speed triducer + GNX 20 display | — | Installed 2025-12-14/12-20 ("Garmin sail pack 52"), replacing dead TackTick/Robertson displays; wind, depth, and paddle wheel all working. Fusion MS-NRX300 wired remote also installed Sept 2025 |
 | Compass | Ritchie 4" | — | Helm |
-| EPIRB | ACR Global-Fix | — | Registered to Christopher Lalau Keraly (2026); battery replaced, not yet tested |
+| EPIRB | ACR Global-Fix | — | Registered (2026); battery replaced, not yet tested |
 | AIS transponder | — | — | Confirm what is actually installed |
 | House battery | 12 V 4-D AGM | — | |
 | Battery (added May 2026) | Group 31 dual-purpose AGM, 105 Ah | — | West Marine; bank assignment unconfirmed |

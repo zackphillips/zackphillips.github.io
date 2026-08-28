@@ -9,9 +9,7 @@ description: What is installed aboard, where it lives, how it works, and what to
 
 1994 Beneteau First 42s7, Hull #BEY57004E494
 Home berth: South Beach Harbor, San Francisco
-Owners: Zack Phillips, Christopher "Krug" Lalau Keraly, Brandon "Bug"
-Purchase price: ~$68–70K (May 2025); previous owner Philip Zachary Krasner
-Insurance: GEICO (minimum $500K liability, per marina requirement)
+Purchase price: ~$68–70K (May 2025)
 Title: Triton Marine Title, Inc.
 Parking pass: #1941 (South Beach Harbor)
 Slip rental: can be rented out at $20/day when away
@@ -697,8 +695,8 @@ cable/T-connector/terminator hardware. Notable gateways:
 | Rocket parachute flares | — | Port lazarette (same container as handheld flares) | In date as of March 2025 |
 | Electronic flare — Sirius Signal C-1003 SOS LED (battery-powered, USCG-approved, w/ daytime flag & whistle) | 1 | Port lazarette | Replaces the pyrotechnic flare requirement |
 | Smoke signals | — | Port lazarette (same container as flares) | [date] |
-| EPIRB — ACR Global-Fix 406 | 1 | Mounted at the nav station | Registration updated 2026, registered to Christopher Lalau Keraly; battery replaced 2026 but **not yet tested** |
-| PLB(s) — ACR ResQLink (model PLB-450) | 2 | Carried inside the two blue offshore life jackets | Registered to Chris and Zack; tested March 2026 |
+| EPIRB — ACR Global-Fix 406 | 1 | Mounted at the nav station | Registration updated 2026; battery replaced 2026 but **not yet tested** |
+| PLB(s) — ACR ResQLink (model PLB-450) | 2 | Carried inside the two blue offshore life jackets | Registered; tested March 2026 |
 | Survivor locator lights — ACR HemiLight3 (HL3) | 3 | Hanging from handles above the stairs | — |
 | Life jacket light (water-activated) | 1 | Below nav station | — |
 | PFD accessories — leg straps (NRS), emergency whistles (LuxoGear, w/ lanyard) | 2 ea. | On the two blue offshore life jackets / in all inflatable PFDs | — |
