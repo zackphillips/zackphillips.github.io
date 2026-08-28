@@ -692,23 +692,27 @@ cable/T-connector/terminator hardware. Notable gateways:
 Full device list from a network scan (via the Pi/OpenPlotter), all shown
 offline at capture time since the boat wasn't powered up:
 
-| Device | Manufacturer | Model | Serial | Class | Instance | Address | Notes |
-|--------|-------------|-------|--------|-------|----------|---------|-------|
-| Engine Monitoring Unit EMU-1 | Actisense | EMU-1 | 307901 | Propulsion | 0 | 6 | Matches [Fuel Gauges](#fuel-gauges) EMU-1 |
-| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | 251317 | Internetwork device | 0 | 2 | Model is **NGW-1**, not the NGT-1-ISO documented under [AIS](#ais) above — needs reconciling |
-| DST810 | Airmar | DST810 | A000LYR7 | Navigation | 0 | 35 | Not yet reconciled with the [Depth Sounder](#depth-sounder) transducers below — needs confirmation |
-| MS-RA70 | Fusion Electronics | MS-RA70 | 1248726 | Entertainment | 0 | 12 | Matches [Audio, Video & Entertainment](#11-audio-video-entertainment) head unit |
-| N2K Remote | Fusion Electronics | N2K Remote | 245105 | Entertainment | 0 | 33 | Matches the Fusion MS-NRX300 wired remote |
-| (unnamed) | Garmin | — | — | Internetwork device | 0 | 0 | Role unconfirmed |
-| GND10 | Garmin | GND10 | 3522042549 | Internetwork device | 0 | 1 | Not yet documented elsewhere — role unconfirmed |
-| GNX Wind | Garmin | GNX Wind | 3519834626 | Display | 0 | 10 | Matches [Wind Instruments](#wind-instruments) |
-| GNX20 | Garmin | GNX20 | 3519499603 | Display | 5 | 8 | Only one GNX20 is documented under [Depth Sounder](#depth-sounder) — a second unit here needs confirming |
-| GNX20 | Garmin | GNX20 | 3519499625 | Display | 4 | 9 | See above |
-| GPS19x-NMEA2000 | Garmin | GPS19x-NMEA2000 | 3887650194 | Navigation | 3 | 7 | Matches [GPS](#gps) N2K source |
-| signalk-server | Signal K | signalk-server | 1624514 | Internetwork device | 0 | 106 | The Pi itself, at `http://openplotter:3000` |
-| AC42 _Autopilot | Simrad | AC42 | 005629# | Steering and Control surfaces | 2 | 4 | Confirms the [Autopilot](#autopilot)'s below-decks course computer |
-| AP44 Autopilot Controller | Simrad | AP44 | 000621# | Steering and Control surfaces | 1 | 3 | Matches the [Autopilot](#autopilot) control head |
-| RC42 _Rate compass | Simrad | RC42 | 008223# | Steering and Control surfaces | 0 | 5 | Not yet documented above — see the missing compass-input note under [Chartplotter / MFD](#chartplotter-mfd); may be the fix for it |
+| Device | Manufacturer | Model | Part # | Serial | Class | Instance | Address | Notes |
+|--------|-------------|-------|--------|--------|-------|----------|---------|-------|
+| Engine Monitoring Unit EMU-1 | Actisense | EMU-1 | — | 307901 | Propulsion | 0 | 6 | Matches [Fuel Gauges](#fuel-gauges) EMU-1 |
+| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | — | 251317 | Internetwork device | 0 | 2 | Model is **NGW-1**, not the NGT-1-ISO documented under [AIS](#ais) above — needs reconciling |
+| DST810 | Airmar | DST810 | — | A000LYR7 | Navigation | 0 | 35 | Not yet reconciled with the [Depth Sounder](#depth-sounder) transducers below — needs confirmation |
+| MS-RA70 | Fusion Electronics | MS-RA70 | — | 1248726 | Entertainment | 0 | 12 | Matches [Audio, Video & Entertainment](#11-audio-video-entertainment) head unit |
+| N2K Remote | Fusion Electronics | N2K Remote | — | 245105 | Entertainment | 0 | 33 | Matches the Fusion MS-NRX300 wired remote |
+| (unnamed) | Garmin | — | — | — | Internetwork device | 0 | 0 | Role unconfirmed |
+| GND10 | Garmin | GND10 | — | 3522042549 | Internetwork device | 0 | 1 | Not yet documented elsewhere — role unconfirmed |
+| GNX Wind | Garmin | GNX Wind | — | 3519834626 | Display | 0 | 10 | Matches [Wind Instruments](#wind-instruments) |
+| GNX20 | Garmin | GNX20 | — | 3519499603 | Display | 5 | 8 | Only one GNX20 is documented under [Depth Sounder](#depth-sounder) — a second unit here needs confirming |
+| GNX20 | Garmin | GNX20 | — | 3519499625 | Display | 4 | 9 | See above |
+| GPS19x-NMEA2000 | Garmin | GPS19x-NMEA2000 | — | 3887650194 | Navigation | 3 | 7 | Matches [GPS](#gps) N2K source |
+| signalk-server | Signal K | signalk-server | — | 1624514 | Internetwork device | 0 | 106 | The Pi itself, at `http://openplotter:3000` |
+| AC42 _Autopilot | Simrad | AC42 | — | 005629# | Steering and Control surfaces | 2 | 4 | Confirms the [Autopilot](#autopilot)'s below-decks course computer |
+| AP44 Autopilot Controller | Simrad | AP44 | **000-13289-001** | 000621# | Steering and Control surfaces | 1 | 3 | Matches the [Autopilot](#autopilot) control head; suncover p/n 000-13724-001 |
+| RC42 _Rate compass | Simrad | RC42 | — | 008223# | Steering and Control surfaces | 0 | 5 | Not yet documented above — see the missing compass-input note under [Chartplotter / MFD](#chartplotter-mfd); may be the fix for it |
+
+Part numbers are only documented in this repo for the AP44 head (see
+[Autopilot](#autopilot)) — the rest are unconfirmed; fill in as you look
+them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 
 ### Environmental Sensor (I2C)
 - **Make/Model**: BME280 temperature/humidity/pressure sensor, I2C bus 1, address `0x77`.
