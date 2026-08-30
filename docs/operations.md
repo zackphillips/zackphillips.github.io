@@ -36,6 +36,7 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
       Pump, Autopilot, VHF — see [DC Original Panel](systems.md#dc-original-panel)
       / [DC Aux Panel](systems.md#dc-aux-panel)
 - [ ] Stereo on; phone connected now if desired — easier than fiddling with it underway
+- [ ] AIS silent mode disabled — switch at the nav station, above the bilge switch
 - [ ] VHF on; speaker near the helm confirmed working
 - [ ] Sailing instruments on; depth alarm set if relevant — see [SignalK Configuration — Alarms / Zones](signalk.md#alarms-zones)
 - [ ] Bilge pump working — flip the switch on/off and listen for it
@@ -131,7 +132,7 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Propane tank valve off (port aft lazarette) — see [Using Propane](#using-propane)
 - [ ] All perishables and trash off the boat
 - [ ] Companionway locked
-- [ ] Engine hours logged; logbook updated
+- [ ] Logbook updated
 
 ---
 
@@ -147,14 +148,17 @@ no blower to run.
 > ~30 seconds is enough — before running the engine for any length of time.
 > See [Systems Overview — Freshwater System](systems.md#freshwater-system).
 
-1. Open raw water seacock (under companion way steps, starboard side).
-2. Turn ignition key to **ON** — gauges and alarms come alive.
-3. Confirm fuel is on (ball valve at the tank, should always be open).
-4. Shift to neutral if not already.
-5. Turn key to **START** — do not crank more than 10 seconds at a stretch.
-6. Once running: confirm raw water exhaust flowing at transom (within ~20 sec).
-7. Let engine warm at ~1000 RPM for 2–3 minutes before putting in gear.
-8. Confirm oil pressure in normal range on gauge.
+1. Ensure the black shutdown handle below the engine control panel is
+   pushed in all the way.
+2. Open raw water seacock (under companion way steps, starboard side).
+3. Turn ignition key to **ON** — gauges and alarms come alive. Turning the
+   key alone does not start the engine.
+4. Confirm fuel is on (ball valve at the tank, should always be open).
+5. Shift to neutral if not already.
+6. With the key on, press and hold the black **start button** next to the
+   key — no more than 5 seconds at a stretch.
+7. Once running: confirm raw water exhaust flowing at transom (within ~20 sec).
+8. Let the engine warm at idle (~600 RPM) for 2–3 minutes before putting it in gear.
 
 > If raw water flow does not appear within 30 seconds of startup, shut down immediately and check the strainer and seacock.
 
@@ -166,24 +170,34 @@ no blower to run.
 
 ### South Beach Harbor (Home Berth)
 
-- Slip is **[slip number TBD]**, pier **[pier TBD]**.
+- Pier **[pier TBD]**.
 - Prevailing wind is W–SW; boat will weathervane bow into the wind when lines ease.
 - Spring lines: forward spring cleats to mid-cleat on dock; aft spring to stern cleat.
+- **Dock neighbor caution**: a trawler downwind of us has no dock finger,
+  so departing and docking near it has to be done carefully. Put two
+  fenders out on the stbd side in case of contact — they keep fenders out
+  for this too.
 - Standard procedure when departing single-handed into a westerly:
   1. Remove all lines except the forward spring.
   2. Back down on the spring — boat swings bow out.
   3. When clear, remove spring, shift to forward, depart.
 
-### General Slip Departure
-1. Fenders deployed until clear of dock; assign someone to tend fenders.
-2. Assign roles: helm, bow line, stern line, spring.
-3. Call out "lines off" order (usually stern → bow → springs or use springs to swing).
-4. Motor out at idle until clear of the marina fairway.
-5. Stow dock lines and fenders before leaving the fairway.
+### Departure Procedure (Crewed)
+1. Center the rudder; confirm the autopilot is off.
+2. Visual check: is shore power disconnected? Does everything about the boat's state look right?
+3. Check the fairway for other boats.
+4. Remove the two bow lines and the forward spring line — the boat will
+   sit fine on the stern line and rear spring line alone.
+5. Station 1–2 people on the dock holding the stern line and spring line.
+   Have them untie and run the lines through the cleat, ready to release
+   on the captain's order.
+6. On the captain's order, cast off both remaining lines (stern and
+   spring) at the same time.
+7. Reverse quickly so the bow doesn't swing downwind.
+8. Watch behind you — don't hit boats on the opposite dock.
+9. Once clear, motor out at idle until past the marina fairway.
 
----
-
-## After Casting Off
+### After Casting Off
 
 - [ ] Have a crew member stand toward the bow to watch for other boats for the captain
 - [ ] Remove all fenders (five: two to stbd, three to port) — either stow in the stbd lazarette or tie to the bimini rail on the stbd side near the cockpit
@@ -357,11 +371,12 @@ Sails — Main Sail](#raising-the-sails).
 4. Stop headway; lower anchor slowly by windlass until it touches bottom.
 5. Back down slowly on engine — pay out scope as boat falls back.
 6. Set with a brief burst of reverse (1500–2000 RPM) until rode goes taut.
-7. Take two bearings 90° apart; log them in the chartplotter or notebook.
-8. Let out snubber: 20–30 ft of line from bow cleat to chain with the
+7. Set at least two anchor alarms (your phone app and SignalK at the nav
+   station) if staying more than a couple of hours, or for any duration at night.
+8. Let out snubber: up to 10 ft of line from bow cleat to chain with the
    anchor snubber hook (stored in the anchor compartment) — takes the
    anchor/chain weight off the windlass. Use this whenever at anchor or in a harbor.
-9. Mark position on chartplotter; set anchor drag alarm.
+9. Mark position on chartplotter.
 
 ### Retrieving the Anchor
 1. Motor slowly to short scope; windlass retrieves as boat moves forward.
@@ -396,13 +411,18 @@ red**) and cleat in the **aft stbd lazarette**. See
 
 ## Returning to Slip
 
-1. Radio the marina on **[marina channel TBD]** if required.
-2. Reduce speed to bare steerage in the harbor — no wake.
-3. Assign bow, stern, and spring line handlers before entering the fairway.
-4. Approach slip slowly, into the wind if possible.
-5. Lead lines to dock cleats; spring the boat in if needed. Set two bow
+1. Reduce speed to bare steerage in the harbor — no wake.
+2. Assign bow, stern, and spring line handlers before entering the fairway.
+3. Approach slip slowly, into the wind if possible.
+4. Lead lines to dock cleats; spring the boat in if needed. Set two bow
    lines, two spring lines, and a stern line, all snug — the boat
-   shouldn't move much even with wind on it. Fenders out.
+   shouldn't move much even with wind on it.
+5. Set fenders. On the side facing the slip (port side at South Beach
+   Harbor): three fenders, near the water but not touching it, attached
+   to the lifelines/stanchions at the base of the spinnaker pole, the
+   front of the gate, and the rear of the gate. If a boat on our leeward
+   side has no fenders of its own out, add two more fenders **high** on
+   that side, at the front of the gate and one stanchion forward of it.
 6. Shut down engine: key to OFF; close raw water seacock.
 7. Connect shore power (typically the port side, bow or stern inlet);
    **rotate the plug a quarter turn to lock it in**. Turn on the **AC
@@ -411,7 +431,7 @@ red**) and cleat in the **aft stbd lazarette**. See
    [Systems Overview — Inverter](systems.md#inverter). Confirm charging
    light on battery monitor. **If left unplugged, the house batteries
    deplete in ~36 hours**, which is harmful to them — don't skip this.
-8. Log hours on the engine hour meter, and update the logbook.
+8. Re-enable AIS silent mode — switch at the nav station, above the bilge switch.
 
 ---
 
@@ -520,11 +540,14 @@ Panel](systems.md#dc-aux-panel), and [AC Original Panel](systems.md#ac-original-
 - **AC Main** — On (see [Connecting Shore Power](#connecting-shore-power) above)
 - **DC Main** — On
 - **VHF** — On, monitoring Ch 16
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto
 - **Water Heater / AC Outlets** — as needed
 - Everything else — off; run the [Post-Sail Checklist](#post-sail-checklist-before-leaving-the-boat-at-the-dock) before leaving the boat unattended
 
 ### Motoring — Day
 - **DC Main, VHF, Sailing Instruments, Electronics** — On
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto
+- **Fresh Water Pump** — as needed
 - **Autopilot** — as needed
 - **Steaming Light, Nav Light, Tricolor Light** — off (daylight, none required)
 - **AC Main** — off (not on shore power)
@@ -533,9 +556,12 @@ Panel](systems.md#dc-aux-panel), and [AC Original Panel](systems.md#ac-original-
 - Everything from Motoring — Day, plus:
 - **Steaming Light** and **Nav Light** (bow, port/starboard) — On — the legal combination for motoring after dark
 - **Tricolor Light** — off — the masthead tricolor is **not legal while under power**, see [Systems Overview — Safety Equipment](systems.md#7-safety-equipment)
+- **Spreader Light** — as needed
+- **Cockpit Lights** — as needed (rocker switches by the throttle at the helm)
 
 ### Sailing — Day
 - **DC Main, VHF, Sailing Instruments, Electronics** — On
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto
 - **Autopilot** — as needed
 - **Steaming Light, Nav Light, Tricolor Light** — off (daylight, none required)
 
@@ -546,7 +572,7 @@ Panel](systems.md#dc-aux-panel), and [AC Original Panel](systems.md#ac-original-
 
 ### At Anchor
 - **DC Main** — On
-- **Bilge Pump** — Auto, always
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto, always
 - **Anchor light** — On after dark [confirm which fixture provides this — likely the Tricolor Light breaker if the masthead fixture has a separate anchor-light element]
 - **Autopilot, Sailing Instruments** — off
 - **Windlass breaker** (engine compartment) — On only while actively anchoring/weighing, then off
@@ -663,7 +689,10 @@ Four or more portable ABC dry chemical extinguishers (2.5 lb) are aboard
 
 ### Taking on Water
 1. Locate source immediately.
-2. Deploy bilge pump — Jabsco 12 V diaphragm (electric) plus the Whale Gulper hand pump.
+2. Deploy the bilge pump — Jabsco 12 V diaphragm (electric) plus the manual
+   pumps: the Whale Gulper hand pump at the helm (handle stows above the
+   propane tanks, port stern lazarette — pump rigorously), and a backup
+   hand pump (grey cylinder with hose) in the stbd stern lazarette.
 3. Plug with rags, softwood plugs, seacock plug if a through-hull failure. *(No wooden plugs are currently fitted at the through-hulls — fit them.)*
 4. If uncontrolled: call Mayday; prepare the ditch bag. **No life raft is aboard** — do not plan on one.
 
@@ -714,10 +743,54 @@ off — for restricted visibility (fog) per the Navigation Rules.
 
 ## Radio Communications
 
-- **Hailing and distress**: Ch 16 (always monitor)
+### Channels
+- **Ch 16 (156.800 MHz)** — International distress, safety, and calling
+  channel. **Always monitor this underway.** Used to raise another vessel
+  or shore station, and for all Mayday/Pan-Pan/Securité traffic.
+- **Ch 9 (156.450 MHz)** — Alternate US recreational "boater calling"
+  channel. Some marinas and pleasure boaters monitor this instead of, or
+  alongside, 16 for routine hailing, which keeps 16 clearer for distress traffic.
+- **Ch 68, 69, 71, 72, 78A** — Non-commercial "pleasure" working channels.
+  Move here after hailing on 16 or 9 to actually carry on a conversation.
 - **Working channel (SF Bay)**: Ch 68 or 69 for vessel-to-vessel
 - **USCG SF Traffic**: Ch 14
 - **Bridge openings**: varies — consult chart or call on Ch 16
+
+### Hailing Another Vessel (Non-Emergency)
+1. On Ch 16 (or Ch 9), call their vessel name three times, followed by
+   yours: *"[Their vessel], [their vessel], [their vessel], this is
+   Mermug, over."*
+2. Once they respond, agree on a working channel (e.g., Ch 68) and move
+   off 16/9 right away — don't hold a conversation on the calling channel.
+3. On the working channel, re-establish contact, have your conversation,
+   and sign off clearly (*"Mermug out"*) when done to free up the channel.
+
+### Pan-Pan vs. Mayday
+- **Pan-Pan** (said three times): an urgency call — the vessel or someone
+  aboard is in a situation that could become dangerous or needs
+  assistance, but there is **no immediate danger to life**. Examples:
+  engine failure while drifting toward a hazard, a non-life-threatening
+  injury, steering failure, slow/controlled flooding.
+- **Mayday** (said three times): a distress call — **grave and imminent
+  danger to life or to the vessel**, requiring immediate assistance.
+  Examples: sinking, fire, uncontrolled flooding, someone unconscious or
+  overboard and not yet recovered.
+
+> If in doubt which applies, call Pan-Pan early — that's what upgrades to
+> a Mayday if things get worse — rather than waiting too long to call for
+> help at all.
+
+### Pan-Pan Call Format
+```
+PAN-PAN PAN-PAN PAN-PAN
+This is [vessel name] [vessel name] [vessel name]
+MMSI [number]
+We have [nature of urgency]
+Our position is [lat/lon or bearing/distance from landmark]
+We have [number] persons aboard
+[Any other relevant information]
+PAN-PAN [vessel name] over
+```
 
 ### Mayday Call Format
 ```
