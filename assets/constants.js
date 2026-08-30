@@ -53,7 +53,7 @@ var VESSEL_CONSTANTS = Object.freeze({
   // predictable to diff; this list is what actually controls the order
   // the sections render in. Categories not listed here sort alphabetically
   // after the ones that are.
-  DOCS_CATEGORY_ORDER: ['Underway', 'Reference', 'Maintenance'],
+  DOCS_CATEGORY_ORDER: ['Operations', 'Systems', 'Maintenance'],
   // Checklist ticks are per-device UI state, not vessel data — they live in
   // localStorage under this prefix and are never committed anywhere.
   DOCS_CHECKLIST_PREFIX: 'mermug.checklist.',

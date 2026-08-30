@@ -1,7 +1,7 @@
 ---
 title: Debugging Guide
-category: Reference
-order: 30
+category: Operations
+order: 20
 description: Diagnostic procedures for known issues, based on real troubleshooting experiences aboard S.V. Mermug.
 ---
 

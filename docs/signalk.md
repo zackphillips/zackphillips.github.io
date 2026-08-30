@@ -1,7 +1,7 @@
 ---
 title: SignalK Configuration
-category: Reference
-order: 11
+category: Systems
+order: 10
 description: What's running on the onboard SignalK server — data sources, sensors, and what each enabled plugin does.
 ---
 

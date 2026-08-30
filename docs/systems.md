@@ -1,7 +1,7 @@
 ---
 title: Systems Overview
-category: Reference
-order: 10
+category: Systems
+order: 20
 description: What is installed aboard, where it lives, how it works, and what to watch out for.
 ---
 

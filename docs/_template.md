@@ -1,6 +1,6 @@
 ---
 title: New Procedure
-category: Underway
+category: Operations
 order: 100
 description: One sentence describing what this document covers.
 ---
