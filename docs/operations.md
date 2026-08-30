@@ -271,6 +271,30 @@ To douse, reverse these steps.
 
 ---
 
+## Dousing the Sails
+
+### Primary Sails
+
+**Main Sail**
+
+1. Turn into the wind.
+2. Tighten the mainsheet.
+3. Put the main halyard on the winch and open the cleat.
+4. Quickly lower the main halyard, guiding the sail down into the bag as it falls.
+5. When the sail has about 12–15 ft left to fall, it will stop lowering under its own weight. Send someone on deck to step up the mast (using the two folding footholds) and pull the rest of the sail down by hand.
+6. Remove the main halyard from the head of the sail and clip it to the base of the mast.
+
+**Head Sail (Jib / Genoa)**
+
+1. Head into the wind, at least a beam reach — this can be done with the main still up.
+2. Put the jib furler on the electric winch. You may need to tug on the furling line to get enough slack to wrap it — three wraps minimum.
+3. Blow (ease) the active jib sheet, but keep some tension on it by hand so the sail doesn't flog — flogging can damage it.
+4. Confirm the furling cleat is closed.
+5. Furl the jib in using the electric winch. Once fully furled, run one more turn to secure it.
+6. Coil the jib sheets and hang them over the winches.
+
+---
+
 ## Sail Handling
 
 ### Hoisting the Mainsail
