@@ -98,19 +98,18 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Shore power plugged in and working — the light near the switch on the
       electrical panel should come on. See [Connecting Shore
       Power](#connecting-shore-power)
-- [ ] Fridge turned off if the boat won't be used within the month
-      (perishables removed first)
-- [ ] All other electrical outputs off
-- [ ] Instrument panels, autopilot and radar off
-- [ ] Extra sacrificial zinc set out for haul-out *(not currently stocked aboard — add to the spares kit)*
-- [ ] AC Main breaker on, AC source-selector switch (port lazarette) set to
-      **"Shore"** — battery charger on. **Boat left unplugged depletes the
-      house batteries in ~36 hours.**
+- [ ] AC Breakers: AC Main and the outlets on — confirm the panel lights show they're powered
+- [ ] DC Breakers: leave DC Main on; leave Bilge Pump and Refrigerator on;
+      everything else off
+- [ ] Battery charging confirmed — house battery voltage >13 V; AC
+      source-selector switch (back of the port lazarette) set to
+      **"Shore"**; battery charger on. **Note**: the battery charger
+      breaker does not control the actual battery charger. **Boat left
+      unplugged depletes the house batteries in ~36 hours.**
 
 ### Heads & Water
 - [ ] Both heads pumped dry — see [Head Operation](#head-operation-offshore-discharge)
 - [ ] Bilge checked — pump if any accumulation
-- [ ] Seacocks closed (raw water, head, any open thru-hulls)
 
 ### Sails
 - [ ] Main stored in its sock (stack pack)
@@ -131,8 +130,12 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Cover on over the dodger's plastic glass
 - [ ] Propane tank valve off (port aft lazarette) — see [Using Propane](#using-propane)
 - [ ] All perishables and trash off the boat
-- [ ] Companionway locked
 - [ ] Logbook updated
+
+### If the Boat Will Not Be Used for a Month
+- [ ] Fridge turned off (perishables removed first)
+- [ ] Seacocks closed (raw water, head, any open thru-hulls)
+- [ ] Companionway locked
 
 ---
 
