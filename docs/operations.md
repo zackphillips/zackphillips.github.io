@@ -13,13 +13,11 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 ## Pre-Departure Checklist
 
 ### Safety & Documentation
-- [ ] Ship's papers aboard (documentation, registration, insurance)
 - [ ] Float plan communicated to another captain or shore contact
 - [ ] Flares in date (check expiration on handheld and parachute flares) — **port lazarette**
 - [ ] Horn aboard — **port lazarette**
 - [ ] Life jackets (PFDs) accessible and in good condition (one per person) — **starboard lazarette**
-- [ ] Throwable device and fire extinguishers accessible and charged
-- [ ] EPIRB registered, battery in date, hydrostatic release in date
+- [ ] Throwable device accessible
 - [ ] Emergency tiller available, and skipper knows how to rig it — see [Emergency Tiller](#emergency-tiller)
 - [ ] First aid kit stocked
 - [ ] Everything onboard secured (nothing loose that can shift or fly underway)
@@ -28,21 +26,10 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Fuel level OK on both tanks. Reserve may be used if you must, but if
       the reserve tank runs empty, refuel before relying on it again — see
       [Fueling](#fueling)
-- [ ] Engine oil level — check dipstick, should be between min/max. Check
-      at least monthly and log in the logbook
-- [ ] Coolant level in overflow reservoir. Check at least monthly and log in the logbook
 - [ ] Raw water seacock to the engine open (under companionway steps, starboard side)
-- [ ] Oil filter clean (accessible from the aft berth)
-- [ ] Belt tension — alternator and raw water pump belts
-- [ ] Transmission fluid level
-- [ ] No unusual odors in engine compartment (fuel, burning); engine compartment dry
 - [ ] After starting: water flowing from the exhaust (port side, aft of the boat) — see [Engine Start Procedure](#engine-start-procedure)
 
 ### Electrical
-- [ ] Battery voltage OK — resting (no charging, no load) 12.6–12.8 V reads
-      as full for AGM; below ~12.2 V is low. The battery monitor's state of
-      charge is the more reliable read — aim for ≥80% before departure. See
-      [Systems Overview — Battery Monitor](systems.md#battery-monitor)
 - [ ] Shore power disconnected and stowed
 - [ ] VHF on; speaker near the helm confirmed working
 - [ ] Sailing instruments on; depth alarm set if relevant — see [SignalK Configuration — Alarms / Zones](signalk.md#alarms-zones)
@@ -50,7 +37,7 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Nav lights functional (steaming, port, starboard, stern, anchor) — especially if departing or returning near dark
 - [ ] Anchor windlass tested — via the remote controller, cabinet behind
       the v-berth head (no foot switches installed). See [Anchoring](#anchoring)
-- [ ] Chartplotter + instruments powered and GPS locked
+- [ ] Chartplotter + instruments powered
 
 ### Sails
 - [ ] Mainsail cover (stack pack) unzipped
@@ -59,27 +46,42 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Winch handles out
 
 ### Lines & Fenders
-- [ ] All unneeded dock lines removed from the boat — they can get caught in the prop
 - [ ] Fenders ready to be pulled on deck after departure
 
 ### Rigging & Deck
-- [ ] Standing rigging — quick visual on turnbuckles, cotter pins, stays
-- [ ] Boom vang, cunningham, outhaul: tension set for conditions
 - [ ] Furling systems: headsail and main furled cleanly, lines free to run
 - [ ] Hatches battened (dogged shut, or confirmed open intentionally)
 - [ ] Through-hulls checked — know which are open, which closed
-- [ ] Bilge pumps operational; bilge dry or at normal level
+- [ ] Bilge pumps operational; bilge dry or at normal level, run if needed
 
 ### Misc
 - [ ] Propane tank valve off (port aft lazarette) unless actively cooking — see [Using Propane](#using-propane)
 - [ ] Skipper knows the tides and currents to expect today
 - [ ] Sunset hour known
-- [ ] Weather briefed — NOAA, PredictWind, or Passage Weather
+- [ ] Weather briefed — iWindSurf (Anita Rock, Treasure Island, Point Blunt (Angel Island)), PredictWind (offshore)
 
 ### Navigation
-- [ ] Charts loaded / paper chart aboard for the area
 - [ ] Waypoints entered in chartplotter if applicable
 - [ ] Hazards noted (shipping lanes, rocks, TSS boundaries)
+
+### Monthly Checks - Check these if they have not been checked in the last month
+- [ ] Engine oil level — check dipstick, should be between min/max. Check
+      at least monthly and log in the logbook
+- [ ] Coolant level in overflow reservoir — stbd side of the engine
+      compartment (white jug, red liquid); min/max are printed on the
+      container. Check at least monthly and log in the logbook
+- [ ] Oil filter clean (accessible from the aft berth)
+- [ ] Belt tension — alternator and raw water pump belts
+- [ ] Transmission fluid level
+- [ ] No unusual odors in engine compartment (fuel, burning); engine compartment dry
+- [ ] EPIRB registered, battery in date, hydrostatic release in date
+- [ ] Fire extinguishers accessible and charged
+- [ ] Ship's papers aboard (documentation, registration, insurance)
+- [ ] Battery voltage OK — resting (no charging, no load) 12.6–12.8 V reads
+      as full for AGM; below ~12.2 V is low. The battery monitor's state of
+      charge is the more reliable read — aim for ≥80% before departure. See
+      [Systems Overview — Battery Monitor](systems.md#battery-monitor)
+- [ ] Standing rigging — quick visual on turnbuckles, cotter pins, stays
 
 ---
 
@@ -172,6 +174,20 @@ no blower to run.
 3. Call out "lines off" order (usually stern → bow → springs or use springs to swing).
 4. Motor out at idle until clear of the marina fairway.
 5. Stow dock lines and fenders before leaving the fairway.
+
+---
+
+## After Casting Off
+
+- [ ] Have a crew member stand toward the bow to watch for other boats for the captain
+- [ ] Remove all fenders (five: two to stbd, three to port) — either stow in the stbd lazarette or tie to the bimini rail on the stbd side near the cockpit
+- [ ] Close both gates (lifeline clips)
+- [ ] Wrap or remove all deck lines — leave no lines loose on deck! Typical
+      protocol is to make a large loop, then pull the loop over and through
+      the lifelines. Ensure the loops are pulled tight so the lines don't
+      fall off while underway. **⚠️ Loose lines at the middle or stern of
+      the boat can foul the prop** — make sure these won't run out while
+      sailing. If in doubt, remove them and stow in the stbd lazarette.
 
 ---
 

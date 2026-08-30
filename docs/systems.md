@@ -125,7 +125,7 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 | 1,500 | 5.1 kn | | 3,200 (WOT) | 8.1 kn |
 
 ### Engine Location
-Centerline, aft of the saloon, between the galley (starboard) and the aft head (port). Accessed via companionway steps (lift steps) and engine compartment panels. Adjustable motor mounts on cored fiberglass longitudinal engine bed stringers, with an integrated drip sump underneath. Raw water seacock is under the companionway steps, starboard side (see [Seacocks & Through-Hulls](#seacocks-through-hulls)). Bleed screws are [location].
+Centerline, aft of the saloon, between the galley (starboard) and the aft head (port). Accessed via companionway steps (lift steps) and engine compartment panels. Adjustable motor mounts on cored fiberglass longitudinal engine bed stringers, with an integrated drip sump underneath. Raw water seacock is under the companionway steps, starboard side (see [Seacocks & Through-Hulls](#seacocks-through-hulls)). The coolant overflow reservoir (white jug, red liquid; min/max marked on the container) is on the stbd side of the engine compartment. Bleed screws are [location].
 
 ### Starting & Stopping
 See [Operations — Engine Start Procedure](operations.md#engine-start-procedure).
