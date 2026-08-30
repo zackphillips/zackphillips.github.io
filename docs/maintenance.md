@@ -49,7 +49,5 @@ For one-time fixes and installs (not recurring), see
 - "Not specified" means the docs record when a task was last done, but not
   a fixed interval — use the manufacturer's guidance or the last-done date
   as a rule of thumb until an interval is confirmed and added here.
-- Engine hours should be logged in the logbook on every outing regardless
-  of the items above — see [Systems Overview — Engine & Drive](systems.md#2-engine-drive).
 - When you complete an item, update its **Last Done** date here and in the
   corresponding section of [Systems Overview](systems.md).

@@ -102,7 +102,7 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 | HP | 46 metric HP @ 3400 RPM |
 | Cylinders | Four (4), in line |
 | Fuel | Diesel |
-| Hours | 6,381.7 hrs as of the May 2025 survey (most recent recorded reading) — log hours via the engine hour meter each outing |
+| Hours | 6,381.7 hrs as of the May 2025 survey (most recent recorded reading) |
 | Raw water pump impeller | Yanmar 129470-42532 (12-blade rubber, 5/8" 12-spline shaft, 2.25"/57mm dia.) — carry a spare |
 | Oil spec | Factory spec SAE 20/30 (single-grade, per Yanmar service manual); commonly run today as SAE 15W-40, API CD/CF diesel oil, since single-grade 20/30 is largely obsolete |
 | Oil capacity | ~7.0 L (7.4 US qt) total including filter |
@@ -125,7 +125,7 @@ Notes: Rigging inspected from aloft and on deck; no rigging or tang damage sight
 | 1,500 | 5.1 kn | | 3,200 (WOT) | 8.1 kn |
 
 ### Engine Location
-Centerline, aft of the saloon, between the galley (starboard) and the aft head (port). Accessed via companionway steps (lift steps) and engine compartment panels. Adjustable motor mounts on cored fiberglass longitudinal engine bed stringers, with an integrated drip sump underneath. Raw water seacock is under the companionway steps, starboard side (see [Seacocks & Through-Hulls](#seacocks-through-hulls)). Bleed screws are [location].
+Centerline, aft of the saloon, between the galley (starboard) and the aft head (port). Accessed via companionway steps (lift steps) and engine compartment panels. Adjustable motor mounts on cored fiberglass longitudinal engine bed stringers, with an integrated drip sump underneath. Raw water seacock is under the companionway steps, starboard side (see [Seacocks & Through-Hulls](#seacocks-through-hulls)). The coolant overflow reservoir (white jug, red liquid; min/max marked on the container) is on the stbd side of the engine compartment. Bleed screws are [location].
 
 ### Starting & Stopping
 See [Operations — Engine Start Procedure](operations.md#engine-start-procedure).
@@ -201,7 +201,7 @@ the step-by-step how-tos.
 ### Fuel Management
 - <span class="doc-tag doc-tag--maintenance">Maintenance</span> Fill before offshore passages; diesel stores well.
 - <span class="doc-tag doc-tag--maintenance">Maintenance</span> Treat with biocide if boat sits unused for extended periods.
-- Log fuel additions in the [engine hours log / ship's log].
+- Log fuel additions in the ship's log.
 
 > **⚠️ Watch Items**
 > - <span class="doc-tag doc-tag--partial">Partial Fix</span> The Racor sight bowl has no approved heat shield — install a metallic shield meeting ASTM F1201. (The Racor filter assembly and tank-to-engine hose have since been updated; unconfirmed whether the heat-shielded bowl variant was installed as part of that fix.)
@@ -495,7 +495,9 @@ A Mopeka ultrasonic sensor on the aft tank separately reports to SignalK
 ### Bilge
 
 - **Automatic bilge pump**: one Jabsco 12 V diaphragm pump, [location], float switch — activates automatically.
-- **Manual bilge pump**: Whale Gulper hand pump, [location].
+- **Manual bilge pump**: Whale Gulper hand pump, mounted at the helm; its
+  handle stows above the propane tanks in the port stern lazarette. Pump rigorously.
+- **Backup hand pump**: a second, portable hand pump (grey cylinder with hose), stored in the stbd stern lazarette.
 - Both bilge float switches are confirmed working. The bilge pump breaker feeds a master auto/manual/off selector switch (**AMOMD 12 V bilge pump control switch panel**, 3-way manual/off/auto with LED indicator and 5 A fuse), located below/left of the breaker — **leave in AUTO**.
 - A **100TECH 6.5" (165 mm) 240-33 ohm sending unit** is installed as a bilge level sensor. Wiring/integration status (gauge vs. SignalK vs. unused) is unconfirmed.
 

@@ -13,13 +13,11 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 ## Pre-Departure Checklist
 
 ### Safety & Documentation
-- [ ] Ship's papers aboard (documentation, registration, insurance)
 - [ ] Float plan communicated to another captain or shore contact
 - [ ] Flares in date (check expiration on handheld and parachute flares) — **port lazarette**
 - [ ] Horn aboard — **port lazarette**
 - [ ] Life jackets (PFDs) accessible and in good condition (one per person) — **starboard lazarette**
-- [ ] Throwable device and fire extinguishers accessible and charged
-- [ ] EPIRB registered, battery in date, hydrostatic release in date
+- [ ] Throwable device accessible
 - [ ] Emergency tiller available, and skipper knows how to rig it — see [Emergency Tiller](#emergency-tiller)
 - [ ] First aid kit stocked
 - [ ] Everything onboard secured (nothing loose that can shift or fly underway)
@@ -28,29 +26,25 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Fuel level OK on both tanks. Reserve may be used if you must, but if
       the reserve tank runs empty, refuel before relying on it again — see
       [Fueling](#fueling)
-- [ ] Engine oil level — check dipstick, should be between min/max. Check
-      at least monthly and log in the logbook
-- [ ] Coolant level in overflow reservoir. Check at least monthly and log in the logbook
 - [ ] Raw water seacock to the engine open (under companionway steps, starboard side)
-- [ ] Oil filter clean (accessible from the aft berth)
-- [ ] Belt tension — alternator and raw water pump belts
-- [ ] Transmission fluid level
-- [ ] No unusual odors in engine compartment (fuel, burning); engine compartment dry
 - [ ] After starting: water flowing from the exhaust (port side, aft of the boat) — see [Engine Start Procedure](#engine-start-procedure)
 
 ### Electrical
-- [ ] Battery voltage OK — resting (no charging, no load) 12.6–12.8 V reads
-      as full for AGM; below ~12.2 V is low. The battery monitor's state of
-      charge is the more reliable read — aim for ≥80% before departure. See
-      [Systems Overview — Battery Monitor](systems.md#battery-monitor)
 - [ ] Shore power disconnected and stowed
+- [ ] Covers removed from the Garmin instruments, autopilot, and stereo remote
+- [ ] Breakers on: Electronics, Lights, Sailing Instruments, Fresh Water
+      Pump, Autopilot, VHF — see [DC Original Panel](systems.md#dc-original-panel)
+      / [DC Aux Panel](systems.md#dc-aux-panel)
+- [ ] Stereo on; phone connected now if desired — easier than fiddling with it underway
+- [ ] AIS silent mode disabled — switch at the nav station, above the bilge switch
 - [ ] VHF on; speaker near the helm confirmed working
 - [ ] Sailing instruments on; depth alarm set if relevant — see [SignalK Configuration — Alarms / Zones](signalk.md#alarms-zones)
 - [ ] Bilge pump working — flip the switch on/off and listen for it
 - [ ] Nav lights functional (steaming, port, starboard, stern, anchor) — especially if departing or returning near dark
+- [ ] Night sailing: steaming light and nav lights turned on, plus spreader lights while still at the dock
 - [ ] Anchor windlass tested — via the remote controller, cabinet behind
       the v-berth head (no foot switches installed). See [Anchoring](#anchoring)
-- [ ] Chartplotter + instruments powered and GPS locked
+- [ ] Chartplotter + instruments powered
 
 ### Sails
 - [ ] Mainsail cover (stack pack) unzipped
@@ -59,27 +53,42 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Winch handles out
 
 ### Lines & Fenders
-- [ ] All unneeded dock lines removed from the boat — they can get caught in the prop
 - [ ] Fenders ready to be pulled on deck after departure
 
 ### Rigging & Deck
-- [ ] Standing rigging — quick visual on turnbuckles, cotter pins, stays
-- [ ] Boom vang, cunningham, outhaul: tension set for conditions
 - [ ] Furling systems: headsail and main furled cleanly, lines free to run
 - [ ] Hatches battened (dogged shut, or confirmed open intentionally)
 - [ ] Through-hulls checked — know which are open, which closed
-- [ ] Bilge pumps operational; bilge dry or at normal level
+- [ ] Bilge pumps operational; bilge dry or at normal level, run if needed
 
 ### Misc
 - [ ] Propane tank valve off (port aft lazarette) unless actively cooking — see [Using Propane](#using-propane)
 - [ ] Skipper knows the tides and currents to expect today
 - [ ] Sunset hour known
-- [ ] Weather briefed — NOAA, PredictWind, or Passage Weather
+- [ ] Weather briefed — iWindSurf (Anita Rock, Treasure Island, Point Blunt (Angel Island)), PredictWind (offshore)
 
 ### Navigation
-- [ ] Charts loaded / paper chart aboard for the area
 - [ ] Waypoints entered in chartplotter if applicable
 - [ ] Hazards noted (shipping lanes, rocks, TSS boundaries)
+
+### Monthly Checks - Check these if they have not been checked in the last month
+- [ ] Engine oil level — check dipstick, should be between min/max. Check
+      at least monthly and log in the logbook
+- [ ] Coolant level in overflow reservoir — stbd side of the engine
+      compartment (white jug, red liquid); min/max are printed on the
+      container. Check at least monthly and log in the logbook
+- [ ] Oil filter clean (accessible from the aft berth)
+- [ ] Belt tension — alternator and raw water pump belts
+- [ ] Transmission fluid level
+- [ ] No unusual odors in engine compartment (fuel, burning); engine compartment dry
+- [ ] EPIRB registered, battery in date, hydrostatic release in date
+- [ ] Fire extinguishers accessible and charged
+- [ ] Ship's papers aboard (documentation, registration, insurance)
+- [ ] Battery voltage OK — resting (no charging, no load) 12.6–12.8 V reads
+      as full for AGM; below ~12.2 V is low. The battery monitor's state of
+      charge is the more reliable read — aim for ≥80% before departure. See
+      [Systems Overview — Battery Monitor](systems.md#battery-monitor)
+- [ ] Standing rigging — quick visual on turnbuckles, cotter pins, stays
 
 ---
 
@@ -89,19 +98,18 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Shore power plugged in and working — the light near the switch on the
       electrical panel should come on. See [Connecting Shore
       Power](#connecting-shore-power)
-- [ ] Fridge turned off if the boat won't be used within the month
-      (perishables removed first)
-- [ ] All other electrical outputs off
-- [ ] Instrument panels, autopilot and radar off
-- [ ] Extra sacrificial zinc set out for haul-out *(not currently stocked aboard — add to the spares kit)*
-- [ ] AC Main breaker on, AC source-selector switch (port lazarette) set to
-      **"Shore"** — battery charger on. **Boat left unplugged depletes the
-      house batteries in ~36 hours.**
+- [ ] AC Breakers: AC Main and the outlets on — confirm the panel lights show they're powered
+- [ ] DC Breakers: leave DC Main on; leave Bilge Pump and Refrigerator on;
+      everything else off
+- [ ] Battery charging confirmed — house battery voltage >13 V; AC
+      source-selector switch (back of the port lazarette) set to
+      **"Shore"**; battery charger on. **Note**: the battery charger
+      breaker does not control the actual battery charger. **Boat left
+      unplugged depletes the house batteries in ~36 hours.**
 
 ### Heads & Water
 - [ ] Both heads pumped dry — see [Head Operation](#head-operation-offshore-discharge)
 - [ ] Bilge checked — pump if any accumulation
-- [ ] Seacocks closed (raw water, head, any open thru-hulls)
 
 ### Sails
 - [ ] Main stored in its sock (stack pack)
@@ -122,8 +130,12 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 - [ ] Cover on over the dodger's plastic glass
 - [ ] Propane tank valve off (port aft lazarette) — see [Using Propane](#using-propane)
 - [ ] All perishables and trash off the boat
+- [ ] Logbook updated
+
+### If the Boat Will Not Be Used for a Month
+- [ ] Fridge turned off (perishables removed first)
+- [ ] Seacocks closed (raw water, head, any open thru-hulls)
 - [ ] Companionway locked
-- [ ] Engine hours logged; logbook updated
 
 ---
 
@@ -139,14 +151,17 @@ no blower to run.
 > ~30 seconds is enough — before running the engine for any length of time.
 > See [Systems Overview — Freshwater System](systems.md#freshwater-system).
 
-1. Open raw water seacock (under companion way steps, starboard side).
-2. Turn ignition key to **ON** — gauges and alarms come alive.
-3. Confirm fuel is on (ball valve at the tank, should always be open).
-4. Shift to neutral if not already.
-5. Turn key to **START** — do not crank more than 10 seconds at a stretch.
-6. Once running: confirm raw water exhaust flowing at transom (within ~20 sec).
-7. Let engine warm at ~1000 RPM for 2–3 minutes before putting in gear.
-8. Confirm oil pressure in normal range on gauge.
+1. Ensure the black shutdown handle below the engine control panel is
+   pushed in all the way.
+2. Open raw water seacock (under companion way steps, starboard side).
+3. Turn ignition key to **ON** — gauges and alarms come alive. Turning the
+   key alone does not start the engine.
+4. Confirm fuel is on (ball valve at the tank, should always be open).
+5. Shift to neutral if not already.
+6. With the key on, press and hold the black **start button** next to the
+   key — no more than 5 seconds at a stretch.
+7. Once running: confirm raw water exhaust flowing at transom (within ~20 sec).
+8. Let the engine warm at idle (~600 RPM) for 2–3 minutes before putting it in gear.
 
 > If raw water flow does not appear within 30 seconds of startup, shut down immediately and check the strainer and seacock.
 
@@ -158,41 +173,160 @@ no blower to run.
 
 ### South Beach Harbor (Home Berth)
 
-- Slip is **[slip number TBD]**, pier **[pier TBD]**.
+- Pier **[pier TBD]**.
 - Prevailing wind is W–SW; boat will weathervane bow into the wind when lines ease.
 - Spring lines: forward spring cleats to mid-cleat on dock; aft spring to stern cleat.
+- **Dock neighbor caution**: a trawler downwind of us has no dock finger,
+  so departing and docking near it has to be done carefully. Put two
+  fenders out on the stbd side in case of contact — they keep fenders out
+  for this too.
 - Standard procedure when departing single-handed into a westerly:
   1. Remove all lines except the forward spring.
   2. Back down on the spring — boat swings bow out.
   3. When clear, remove spring, shift to forward, depart.
 
-### General Slip Departure
-1. Fenders deployed until clear of dock; assign someone to tend fenders.
-2. Assign roles: helm, bow line, stern line, spring.
-3. Call out "lines off" order (usually stern → bow → springs or use springs to swing).
-4. Motor out at idle until clear of the marina fairway.
-5. Stow dock lines and fenders before leaving the fairway.
+### Departure Procedure (Crewed)
+1. Center the rudder; confirm the autopilot is off.
+2. Visual check: is shore power disconnected? Does everything about the boat's state look right?
+3. Check the fairway for other boats.
+4. Remove the two bow lines and the forward spring line — the boat will
+   sit fine on the stern line and rear spring line alone.
+5. Station 1–2 people on the dock holding the stern line and spring line.
+   Have them untie and run the lines through the cleat, ready to release
+   on the captain's order.
+6. On the captain's order, cast off both remaining lines (stern and
+   spring) at the same time.
+7. Reverse quickly so the bow doesn't swing downwind.
+8. Watch behind you — don't hit boats on the opposite dock.
+9. Once clear, motor out at idle until past the marina fairway.
+
+### After Casting Off
+
+- [ ] Have a crew member stand toward the bow to watch for other boats for the captain
+- [ ] Remove all fenders (five: two to stbd, three to port) — either stow in the stbd lazarette or tie to the bimini rail on the stbd side near the cockpit
+- [ ] Close both gates (lifeline clips)
+- [ ] Wrap or remove all deck lines — leave no lines loose on deck! Typical
+      protocol is to make a large loop, then pull the loop over and through
+      the lifelines. Ensure the loops are pulled tight so the lines don't
+      fall off while underway. **⚠️ Loose lines at the middle or stern of
+      the boat can foul the prop** — make sure these won't run out while
+      sailing. If in doubt, remove them and stow in the stbd lazarette.
+
+---
+
+## Raising the Sails
+
+### Primary Sails
+
+**Main Sail**
+
+1. Captain steers the boat directly into the wind, with enough sea room to motor forward for about 5 minutes at just above idle speed.
+2. Decide on a reefing level based on wind speed:
+
+   | Wind Speed | Reef |
+   |---|---|
+   | < 20 kt | Full main (no reefs) |
+   | 20–25 kt | Reef 1 |
+   | 25–30 kt | Reef 2 |
+   | > 30 kt | Reef 3 |
+
+   > On the fence? Take the reef — it's much easier to shake one out underway than to put one in.
+3. Confirm the main halyard is connected to the mainsail and runs unobstructed to the top of the mast — follow it up with your eyes and watch for it snagging in the lazy jacks.
+4. Release the mainsheet, vang, and the Reef 1, 2, and 3 cleats. Release all of them even if you're taking a different reef.
+5. Put the main halyard on the electric winch and close its cleat. Toss the extra line into the cabin.
+6. Raise the main using the main halyard. Have someone watch the battens to make sure they don't catch in the lazy jacks.
+7. **If reefing**: as the reefing eyelet comes up, send someone forward to unzip the sail bag and hook the eyelet onto one of the reefing hooks (stainless, 1.5" diameter) — either hook works. **If not reefing**, skip this step.
+8. From the cockpit, keep raising the halyard until it's tight and the motor is straining. Double-check that the vang and mainsheet are uncleated — if either is still cleated, the main may not go all the way up.
+9. **If reefing**: choose the matching reefing line, close its cleat, and tension it (electric or hand winch) until fairly tight. **If not reefing**: adjust the outhaul to taste.
+10. Re-cleat the unused reefing lines and pull them taut by hand — they shouldn't carry load, but shouldn't be slapping against the sail either.
+11. Move the main halyard off the electric winch and put the mainsheet on it instead. Trim, and fall off the wind.
+
+**Head Sail (Jib / Genoa)**
+
+1. Take both jib sheets off their winches so they can run free.
+2. Uncleat the furling line (leftmost cleat on the port side) and confirm it's free to run.
+3. On approximately a beam reach, put the leeward sheet on a winch and start pulling — the wind will help you unfurl it.
+4. Trim as needed.
+
+### Spinnakers
+
+> **⚠️ Advanced maneuver.** Be sure you and your crew know what you're doing —
+> the steps below are guidelines, not a complete procedure. Confirm wind is
+> under 20 kt and seas under 4–6 ft before flying either spinnaker (bay
+> sailing is fine).
+
+**Symmetrical**
+
+1. Bring the spinnaker to the forward head. Run the head of the sail out of the hatch, leaving the bag inside.
+2. Sail downwind on a broad reach.
+3. Send one crew member on deck wearing a life jacket.
+4. Run the sheets and guys to the foredeck — sheets go through the rear pulley on the gunwale, guys through the pulley farther amidships. On the leeward side, run the line around the front of the forestay (leeward to windward, outside the forestay).
+5. Unzip the front of the sail bag to expose the pole connector. Use the line and cleat on the mast to raise it to about 8 ft above the deck.
+6. Untie the pole and hook it to the attachment point, tip above the rail on the windward side of the headsail, hook opening facing up.
+7. Release the pole up/down cleats in the cockpit.
+8. Untie the overhand knot on the pole-down line and tie it to the bottom of the pole with a bowline.
+9. Hook the pole-up line to the top of the pole and add a little tension to lift it a few inches off the bow rail.
+10. Run the spinnaker halyard to windward of the pole and hook it to the head of the sail.
+11. Raise the spinnaker halyard — have the person on deck pull at the mast to do this quickly. The sock keeps the sail from opening as it goes up.
+12. Connect the sheets and guys to the two clews, matching each side.
+13. Run the active (leeward) guy through the spinnaker pole's mouth — a pull ring toward the front of the pole opens the jaw.
+14. Put the leeward guy and windward sheet on winches, ready to tune.
+15. Furl the headsail.
+16. Ease the mainsheet out to blanket the spinnaker in the main's wind shadow.
+17. Have the person on deck open the sock using its control line — tension on the line helps it release.
+
+To douse, reverse these steps.
+
+**Asymmetrical**
+
+1. Sail on a broad reach.
+2. Send one crew member on deck wearing a life jacket.
+3. The asymmetrical spinnaker lives on deck — attach its bag to the lifelines on the leeward side.
+4. Run the spinnaker sheets (no guys needed) through the rear pulleys near the cockpit seats.
+5. Connect the spinnaker halyard to the head of the sail, running it behind the jib — it will be raised behind the jib.
+6. Run the windward sheet outside the forestay and connect it to the clew; on the leeward side, connect the other sheet to the same clew.
+7. Leave the jib up while raising, and ease the mainsheet out to blanket the spinnaker in the main's wind shadow.
+8. Make sure the active (leeward) sheet is on a winch.
+9. Raise the spinnaker — have the person on deck pull the halyard at the mast to do this quickly. **The sail will power up as it fills — be ready.**
+10. Furl the jib.
+
+To douse, reverse these steps.
+
+---
+
+## Dousing the Sails
+
+### Primary Sails
+
+**Main Sail**
+
+1. Turn into the wind.
+2. Tighten the mainsheet.
+3. Put the main halyard on the winch and open the cleat.
+4. Quickly lower the main halyard, guiding the sail down into the bag as it falls.
+5. When the sail has about 12–15 ft left to fall, it will stop lowering under its own weight. Send someone on deck to step up the mast (using the two folding footholds) and pull the rest of the sail down by hand.
+6. Remove the main halyard from the head of the sail and clip it to the base of the mast.
+
+**Head Sail (Jib / Genoa)**
+
+1. Head up to at least a beam reach (no need to go head-to-wind) — this can be done with the main still up.
+2. Put the jib furler on the electric winch. You may need to tug on the furling line to get enough slack to wrap it — three wraps minimum.
+3. Blow (ease) the active jib sheet, but keep some tension on it by hand so the sail doesn't flog — flogging can damage it.
+4. Confirm the furling cleat is closed.
+5. Furl the jib in using the electric winch. Once fully furled, run one more turn to secure it.
+6. Coil the jib sheets and hang them over the winches.
 
 ---
 
 ## Sail Handling
 
-### Hoisting the Mainsail
-1. Ease mainsheet fully; boom traveler to centerline.
-2. Ease vang to zero.
-3. Head into the wind (or motor head-to-wind if in tight quarters).
-4. Unzip and remove the sail cover (stack pack); remove boom crutch if deployed.
-5. Release reefing lines fully.
-6. Hoist main halyard — hand-over-hand to luff, then winch to proper tension.
-7. Ease cunningham and outhaul to shape for conditions.
-8. Cleat halyard on mast cleat and coil tail.
+Hoisting the main and unfurling the headsail: see [Raising the
+Sails](#raising-the-sails). Dropping the main and furling the headsail: see
+[Dousing the Sails](#dousing-the-sails). This section covers reducing sail
+while already underway — for reefing at the initial hoist, see [Raising the
+Sails — Main Sail](#raising-the-sails).
 
-### Furling the Headsail
-- Sheet in slightly before furling — keeps sail from flogging and wrapping evenly.
-- Furl from the cockpit using the furling line — steady even tension.
-- Lock off furling drum when furled; coil furling line.
-
-### Reefing the Main
+### Reefing the Main Underway
 
 **First Reef:**
 1. Ease mainsheet to depower.
@@ -240,11 +374,12 @@ no blower to run.
 4. Stop headway; lower anchor slowly by windlass until it touches bottom.
 5. Back down slowly on engine — pay out scope as boat falls back.
 6. Set with a brief burst of reverse (1500–2000 RPM) until rode goes taut.
-7. Take two bearings 90° apart; log them in the chartplotter or notebook.
-8. Let out snubber: 20–30 ft of line from bow cleat to chain with the
+7. Set at least two anchor alarms (your phone app and SignalK at the nav
+   station) if staying more than a couple of hours, or for any duration at night.
+8. Let out snubber: up to 10 ft of line from bow cleat to chain with the
    anchor snubber hook (stored in the anchor compartment) — takes the
    anchor/chain weight off the windlass. Use this whenever at anchor or in a harbor.
-9. Mark position on chartplotter; set anchor drag alarm.
+9. Mark position on chartplotter.
 
 ### Retrieving the Anchor
 1. Motor slowly to short scope; windlass retrieves as boat moves forward.
@@ -279,13 +414,18 @@ red**) and cleat in the **aft stbd lazarette**. See
 
 ## Returning to Slip
 
-1. Radio the marina on **[marina channel TBD]** if required.
-2. Reduce speed to bare steerage in the harbor — no wake.
-3. Assign bow, stern, and spring line handlers before entering the fairway.
-4. Approach slip slowly, into the wind if possible.
-5. Lead lines to dock cleats; spring the boat in if needed. Set two bow
+1. Reduce speed to bare steerage in the harbor — no wake.
+2. Assign bow, stern, and spring line handlers before entering the fairway.
+3. Approach slip slowly, into the wind if possible.
+4. Lead lines to dock cleats; spring the boat in if needed. Set two bow
    lines, two spring lines, and a stern line, all snug — the boat
-   shouldn't move much even with wind on it. Fenders out.
+   shouldn't move much even with wind on it.
+5. Set fenders. On the side facing the slip (port side at South Beach
+   Harbor): three fenders, near the water but not touching it, attached
+   to the lifelines/stanchions at the base of the spinnaker pole, the
+   front of the gate, and the rear of the gate. If a boat on our leeward
+   side has no fenders of its own out, add two more fenders **high** on
+   that side, at the front of the gate and one stanchion forward of it.
 6. Shut down engine: key to OFF; close raw water seacock.
 7. Connect shore power (typically the port side, bow or stern inlet);
    **rotate the plug a quarter turn to lock it in**. Turn on the **AC
@@ -294,7 +434,7 @@ red**) and cleat in the **aft stbd lazarette**. See
    [Systems Overview — Inverter](systems.md#inverter). Confirm charging
    light on battery monitor. **If left unplugged, the house batteries
    deplete in ~36 hours**, which is harmful to them — don't skip this.
-8. Log hours on the engine hour meter, and update the logbook.
+8. Re-enable AIS silent mode — switch at the nav station, above the bilge switch.
 
 ---
 
@@ -403,11 +543,14 @@ Panel](systems.md#dc-aux-panel), and [AC Original Panel](systems.md#ac-original-
 - **AC Main** — On (see [Connecting Shore Power](#connecting-shore-power) above)
 - **DC Main** — On
 - **VHF** — On, monitoring Ch 16
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto
 - **Water Heater / AC Outlets** — as needed
 - Everything else — off; run the [Post-Sail Checklist](#post-sail-checklist-before-leaving-the-boat-at-the-dock) before leaving the boat unattended
 
 ### Motoring — Day
 - **DC Main, VHF, Sailing Instruments, Electronics** — On
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto
+- **Fresh Water Pump** — as needed
 - **Autopilot** — as needed
 - **Steaming Light, Nav Light, Tricolor Light** — off (daylight, none required)
 - **AC Main** — off (not on shore power)
@@ -416,9 +559,12 @@ Panel](systems.md#dc-aux-panel), and [AC Original Panel](systems.md#ac-original-
 - Everything from Motoring — Day, plus:
 - **Steaming Light** and **Nav Light** (bow, port/starboard) — On — the legal combination for motoring after dark
 - **Tricolor Light** — off — the masthead tricolor is **not legal while under power**, see [Systems Overview — Safety Equipment](systems.md#7-safety-equipment)
+- **Spreader Light** — as needed
+- **Cockpit Lights** — as needed (rocker switches by the throttle at the helm)
 
 ### Sailing — Day
 - **DC Main, VHF, Sailing Instruments, Electronics** — On
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto
 - **Autopilot** — as needed
 - **Steaming Light, Nav Light, Tricolor Light** — off (daylight, none required)
 
@@ -429,7 +575,7 @@ Panel](systems.md#dc-aux-panel), and [AC Original Panel](systems.md#ac-original-
 
 ### At Anchor
 - **DC Main** — On
-- **Bilge Pump** — Auto, always
+- **Bilge Pump** — Breaker on, switch (below and to the left of the breaker panel) set to Auto, always
 - **Anchor light** — On after dark [confirm which fixture provides this — likely the Tricolor Light breaker if the masthead fixture has a separate anchor-light element]
 - **Autopilot, Sailing Instruments** — off
 - **Windlass breaker** (engine compartment) — On only while actively anchoring/weighing, then off
@@ -546,7 +692,10 @@ Four or more portable ABC dry chemical extinguishers (2.5 lb) are aboard
 
 ### Taking on Water
 1. Locate source immediately.
-2. Deploy bilge pump — Jabsco 12 V diaphragm (electric) plus the Whale Gulper hand pump.
+2. Deploy the bilge pump — Jabsco 12 V diaphragm (electric) plus the manual
+   pumps: the Whale Gulper hand pump at the helm (handle stows above the
+   propane tanks, port stern lazarette — pump rigorously), and a backup
+   hand pump (grey cylinder with hose) in the stbd stern lazarette.
 3. Plug with rags, softwood plugs, seacock plug if a through-hull failure. *(No wooden plugs are currently fitted at the through-hulls — fit them.)*
 4. If uncontrolled: call Mayday; prepare the ditch bag. **No life raft is aboard** — do not plan on one.
 
@@ -597,10 +746,54 @@ off — for restricted visibility (fog) per the Navigation Rules.
 
 ## Radio Communications
 
-- **Hailing and distress**: Ch 16 (always monitor)
+### Channels
+- **Ch 16 (156.800 MHz)** — International distress, safety, and calling
+  channel. **Always monitor this underway.** Used to raise another vessel
+  or shore station, and for all Mayday/Pan-Pan/Securité traffic.
+- **Ch 9 (156.450 MHz)** — Alternate US recreational "boater calling"
+  channel. Some marinas and pleasure boaters monitor this instead of, or
+  alongside, 16 for routine hailing, which keeps 16 clearer for distress traffic.
+- **Ch 68, 69, 71, 72, 78A** — Non-commercial "pleasure" working channels.
+  Move here after hailing on 16 or 9 to actually carry on a conversation.
 - **Working channel (SF Bay)**: Ch 68 or 69 for vessel-to-vessel
 - **USCG SF Traffic**: Ch 14
 - **Bridge openings**: varies — consult chart or call on Ch 16
+
+### Hailing Another Vessel (Non-Emergency)
+1. On Ch 16 (or Ch 9), call their vessel name three times, followed by
+   yours: *"[Their vessel], [their vessel], [their vessel], this is
+   Mermug, over."*
+2. Once they respond, agree on a working channel (e.g., Ch 68) and move
+   off 16/9 right away — don't hold a conversation on the calling channel.
+3. On the working channel, re-establish contact, have your conversation,
+   and sign off clearly (*"Mermug out"*) when done to free up the channel.
+
+### Pan-Pan vs. Mayday
+- **Pan-Pan** (said three times): an urgency call — the vessel or someone
+  aboard is in a situation that could become dangerous or needs
+  assistance, but there is **no immediate danger to life**. Examples:
+  engine failure while drifting toward a hazard, a non-life-threatening
+  injury, steering failure, slow/controlled flooding.
+- **Mayday** (said three times): a distress call — **grave and imminent
+  danger to life or to the vessel**, requiring immediate assistance.
+  Examples: sinking, fire, uncontrolled flooding, someone unconscious or
+  overboard and not yet recovered.
+
+> If in doubt which applies, call Pan-Pan early — that's what upgrades to
+> a Mayday if things get worse — rather than waiting too long to call for
+> help at all.
+
+### Pan-Pan Call Format
+```
+PAN-PAN PAN-PAN PAN-PAN
+This is [vessel name] [vessel name] [vessel name]
+MMSI [number]
+We have [nature of urgency]
+Our position is [lat/lon or bearing/distance from landmark]
+We have [number] persons aboard
+[Any other relevant information]
+PAN-PAN [vessel name] over
+```
 
 ### Mayday Call Format
 ```
