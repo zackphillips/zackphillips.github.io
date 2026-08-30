@@ -191,6 +191,86 @@ no blower to run.
 
 ---
 
+## Raising the Sails
+
+### Primary Sails
+
+**Main Sail**
+
+1. Captain steers directly into the wind, with enough clearance to motor forward for about 5 minutes. Speed should be just above idle.
+2. Decide on a reefing level based on wind speed:
+
+   | Wind Speed | Reef |
+   |---|---|
+   | < 20 kt | Full main (no reefs) |
+   | 20–25 kt | Reef 1 |
+   | 25–30 kt | Reef 2 |
+   | > 30 kt | Reef 3 |
+
+   > On the fence? Take the reef — it's much easier to shake one out underway than to put one in.
+3. Confirm the main halyard is connected to the mainsail and runs unobstructed to the top of the mast — follow it up with your eyes and watch for it snagging in the lazy jacks.
+4. Release the mainsheet, vang, and the Reef 1, 2, and 3 cleats. Release all of them even if you're taking a different reef.
+5. Put the main halyard on the electric winch and close its cleat. Toss the extra line into the cabin.
+6. Raise the main using the main halyard. Have someone watch the battens to make sure they don't catch in the lazy jacks.
+7. **If reefing**: as the reefing eyelet comes up, send someone forward to unzip the sail bag and hook the eyelet onto one of the reefing hooks (stainless, 1.5" diameter) — either hook works. **If not reefing**, skip this step.
+8. From the cockpit, keep raising the halyard until it's tight and the motor is straining. Double-check that the vang and mainsheet are uncleated first — if either is still cleated, the main may not go all the way up.
+9. **If reefing**: choose the matching reefing line, close its cleat, and tension it (electric or hand winch) until fairly tight. **If not reefing**: adjust the outhaul to taste.
+10. Re-cleat the unused reefing lines and pull them taut by hand — they shouldn't carry load, but shouldn't be flapping and slapping the sail either.
+11. Move the main halyard off the electric winch and put the mainsheet on it instead. Trim, and fall off the wind.
+
+**Head Sail (Jib / Genoa)**
+
+1. Take both jib sheets off their winches so they can run free.
+2. Uncleat the furling line (leftmost cleat on the port side) and confirm it's free to run.
+3. On approximately a beam reach, put the leeward sheet on a winch and start pulling — the wind will help you unfurl it.
+4. Trim as needed.
+
+### Spinnakers
+
+> **⚠️ Advanced maneuver.** Be sure you and your crew know what you're doing —
+> the steps below are guidelines, not a complete procedure. Confirm wind is
+> under 20 kt and seas under 4–6 ft before flying either spinnaker (bay
+> sailing is fine).
+
+**Symmetrical**
+
+1. Bring the spinnaker to the forward head. Run the head of the sail out of the hatch, leaving the bag inside.
+2. Sail downwind on a broad reach.
+3. Send one crew member on deck wearing a life jacket.
+4. Run the sheets and guys to the foredeck — sheets go through the rear pulley on the gunwale, guys through the pulley further amidships. On the leeward side, run the line around the front of the forestay (leeward to windward, outside the forestay).
+5. Unzip the front of the sail bag to expose the pole connector. Use the line and cleat on the mast to raise it to about 8 ft above the deck.
+6. Untie the pole and hook it to the attachment point, tip above the rail on the windward side of the headsail, hook opening facing up.
+7. Release the pole up/down cleats in the cockpit.
+8. Untie the overhand knot on the pole-down line and tie it to the bottom of the pole with a bowline.
+9. Hook the pole-up line to the top of the pole and add a little tension to lift it a few inches off the bow rail.
+10. Run the spinnaker halyard to windward of the pole and hook it to the head of the sail.
+11. Raise the spinnaker halyard — have the person on deck pull at the mast to do this quickly. The sock keeps the sail from opening as it goes up.
+12. Connect the sheets and guys to the two clews, matching each side.
+13. Run the active (leeward) guy through the spinnaker pole's mouth — a pull ring toward the front of the pole opens the jaw.
+14. Put the leeward guy and windward sheet on winches, ready to tune.
+15. Furl the headsail.
+16. Ease the mainsheet out to blanket the spinnaker in the main's wind shadow.
+17. Have the person on deck open the sock using its control line — tension on the line helps it release.
+
+To douse, reverse these steps.
+
+**Asymmetrical**
+
+1. Sail on a broad reach.
+2. Send one crew member on deck wearing a life jacket.
+3. The asymmetrical spinnaker lives on deck — attach its bag to the lifelines on the leeward side.
+4. Run the spinnaker sheets (no guys needed) through the rear pulleys near the chairs.
+5. Connect the spinnaker halyard to the head of the sail, running it behind the jib — it will be raised behind the jib.
+6. Run the windward sheet outside the forestay and connect it to the clew; on the leeward side, connect the other sheet to the same clew.
+7. Leave the jib up while raising, and ease the mainsheet out to blanket the spinnaker in the main's wind shadow.
+8. Make sure the active (leeward) sheet is on a winch.
+9. Raise the spinnaker — have the person on deck pull the halyard at the mast to do this quickly. **The sail will power up as it fills — be ready.**
+10. Furl the jib.
+
+To douse, reverse these steps.
+
+---
+
 ## Sail Handling
 
 ### Hoisting the Mainsail
