@@ -1,6 +1,6 @@
 ---
 title: Operations Guide
-category: Underway
+category: Operations
 order: 10
 description: Pre-departure and post-sail checklists, plus every stepwise how-to aboard — engine, docking, sails, anchoring, fueling, tanks, propane, heads and emergencies.
 ---

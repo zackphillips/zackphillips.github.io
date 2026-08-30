@@ -1,7 +1,7 @@
 ---
 title: Vessel Changelog
-category: Reference
-order: 20
+category: Maintenance
+order: 10
 description: Running log of modifications, repairs, upgrades and significant maintenance events.
 ---
 

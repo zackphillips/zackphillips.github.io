@@ -1,7 +1,7 @@
 ---
 title: Scheduled Maintenance
 category: Maintenance
-order: 10
+order: 30
 description: Recurring maintenance pulled from Systems Overview — what's due, how often, and when it was last done.
 ---
 
