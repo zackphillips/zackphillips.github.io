@@ -29,6 +29,7 @@ const el = {
 let docsIndex = [];        // entries from docs/index.json
 let activeSlug = null;     // slug of the document on screen
 let activeToc = [];        // [{ id, text, level }] for the document on screen
+let expandedToc = new Set(); // ids of h2 TOC entries currently expanded
 let searchTerm = '';
 const markdownCache = new Map();
 
@@ -131,6 +132,65 @@ function matchesSearch(entry) {
   return searchTerm.split(/\s+/).every((word) => haystack.includes(word));
 }
 
+// Group the flat h2/h3 heading list into h2 sections with their h3 children
+// nested underneath, so the sidebar can render each section collapsed until
+// the reader opens it.
+function buildTocTree(toc) {
+  const roots = [];
+  let current = null;
+  for (const heading of toc) {
+    if (heading.level <= 2 || !current) {
+      current = { heading, children: [] };
+      roots.push(current);
+    } else {
+      current.children.push({ heading, children: [] });
+    }
+  }
+  return roots;
+}
+
+function renderToc(tree) {
+  const html = ['<div class="docs-nav__toc">'];
+  for (const { heading, children } of tree) {
+    const hasChildren = children.length > 0;
+    const expanded = expandedToc.has(heading.id);
+    const classes = `docs-nav__toc-item docs-nav__toc-item--h${heading.level}` +
+      (hasChildren ? ' docs-nav__toc-item--parent' : '');
+    html.push(
+      `<a class="${classes}" href="#${heading.id}" data-toc-id="${heading.id}"` +
+      (hasChildren ? ` aria-expanded="${expanded}"` : '') + '>' +
+      (hasChildren ? '<span class="docs-nav__toc-caret" aria-hidden="true"></span>' : '') +
+      `${escapeHtml(heading.text)}</a>`
+    );
+    if (hasChildren) {
+      html.push(`<div class="docs-nav__toc-children"${expanded ? '' : ' hidden'}>`);
+      for (const child of children) {
+        html.push(
+          `<a class="docs-nav__toc-item docs-nav__toc-item--h${child.heading.level}" href="#${child.heading.id}">` +
+          `${escapeHtml(child.heading.text)}</a>`
+        );
+      }
+      html.push('</div>');
+    }
+  }
+  html.push('</div>');
+  return html.join('');
+}
+
+// A direct link to a nested (h3) heading is useless if the sidebar keeps it
+// hidden — open whichever section owns it.
+function expandTocAncestor(headingId) {
+  if (!headingId) return;
+  const index = activeToc.findIndex((h) => h.id === headingId);
+  if (index === -1 || activeToc[index].level <= 2) return;
+  for (let i = index - 1; i >= 0; i--) {
+    if (activeToc[i].level <= 2) {
+      expandedToc.add(activeToc[i].id);
+      return;
+    }
+  }
+}
+
 function renderNav() {
   const visible = docsIndex.filter(matchesSearch);
 
@@ -157,16 +217,10 @@ function renderNav() {
         ` data-slug="${escapeHtml(entry.slug)}">${escapeHtml(entry.title)}</a>`
       );
       // The table of contents nests under whichever document is open, so the
-      // sidebar never needs a third column.
+      // sidebar never needs a third column. Sections start collapsed — only
+      // headings, not their sub-entries, show until a heading is clicked.
       if (active && activeToc.length) {
-        html.push('<div class="docs-nav__toc">');
-        for (const heading of activeToc) {
-          html.push(
-            `<a class="docs-nav__toc-item docs-nav__toc-item--h${heading.level}" href="#${heading.id}">` +
-            `${escapeHtml(heading.text)}</a>`
-          );
-        }
-        html.push('</div>');
+        html.push(renderToc(buildTocTree(activeToc)));
       }
     }
     html.push('</div>');
@@ -333,6 +387,7 @@ async function showDoc(slug, { scrollToHash = true } = {}) {
 
   activeSlug = slug;
   activeToc = [];  // the outgoing document's headings must not linger in the nav
+  expandedToc = new Set();  // every document opens with its TOC sections collapsed
   el.article.innerHTML = '<p class="docs-placeholder">Loading…</p>';
   el.header.style.display = '';
   el.title.textContent = entry.title;
@@ -361,6 +416,7 @@ async function showDoc(slug, { scrollToHash = true } = {}) {
   wrapTables();
   decorateLinks();
   activeToc = decorateHeadings();
+  expandTocAncestor(location.hash ? decodeURIComponent(location.hash.slice(1)) : null);
   const boxes = initChecklists(entry.slug);
   el.meta.innerHTML = renderDocMeta(entry, boxes);
   updateChecklistCount();
@@ -385,6 +441,7 @@ async function showDoc(slug, { scrollToHash = true } = {}) {
 function showPlaceholder(message) {
   activeSlug = null;
   activeToc = [];
+  expandedToc = new Set();
   el.header.style.display = 'none';
   el.article.innerHTML = `<p class="docs-placeholder">${message}</p>`;
   renderNav();
@@ -406,6 +463,18 @@ function navigate(slug, { replace = false, hash = '' } = {}) {
 function route({ replace = false } = {}) {
   const slug = slugFromUrl();
   if (slug) {
+    // A same-page anchor click (e.g. a sidebar TOC entry) is a same-document
+    // navigation, and per spec that also fires 'popstate' — not just actual
+    // back/forward. Re-running showDoc for the document already on screen
+    // would re-fetch nothing useful but would blow away sidebar state (which
+    // TOC sections are expanded, checklist DOM); just honor the new hash.
+    if (slug === activeSlug) {
+      if (location.hash) {
+        document.getElementById(decodeURIComponent(location.hash.slice(1)))
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      return;
+    }
     showDoc(slug);
     return;
   }
@@ -450,6 +519,17 @@ function initEvents() {
     if (window.matchMedia('(max-width: 900px)').matches) {
       document.getElementById('docs-main')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+  });
+
+  // Clicking a TOC heading that has sub-entries expands/collapses them in
+  // place; the link's href still takes the reader to that heading as normal.
+  el.nav.addEventListener('click', (event) => {
+    const parent = event.target.closest('.docs-nav__toc-item--parent');
+    if (!parent) return;
+    const id = parent.dataset.tocId;
+    if (expandedToc.has(id)) expandedToc.delete(id);
+    else expandedToc.add(id);
+    renderNav();
   });
 
   el.search.addEventListener('input', () => {

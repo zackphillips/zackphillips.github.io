@@ -1566,6 +1566,28 @@ body.map-fills .footer {
   line-height: 1.3;
 }
 
+.docs-nav__toc-item--parent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.docs-nav__toc-caret {
+  flex: none;
+  width: 8px;
+  font-size: 0.85em;
+  transition: transform 0.15s ease;
+}
+
+.docs-nav__toc-caret::before { content: '\25b8'; } /* ▸ */
+
+.docs-nav__toc-item--parent[aria-expanded="true"] .docs-nav__toc-caret { transform: rotate(90deg); }
+
+.docs-nav__toc-children { display: flex; flex-direction: column; }
+.docs-nav__toc-children[hidden] { display: none; }
+
+.docs-nav__toc-children .docs-nav__toc-item,
 .docs-nav__toc-item--h3 { padding-left: 20px; font-size: 0.74em; }
 
 @media (hover: hover) {
