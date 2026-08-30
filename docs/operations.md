@@ -31,10 +31,16 @@ Draft 7' 07" | Home berth: South Beach Harbor, San Francisco
 
 ### Electrical
 - [ ] Shore power disconnected and stowed
+- [ ] Covers removed from the Garmin instruments, autopilot, and stereo remote
+- [ ] Breakers on: Electronics, Lights, Sailing Instruments, Fresh Water
+      Pump, Autopilot, VHF — see [DC Original Panel](systems.md#dc-original-panel)
+      / [DC Aux Panel](systems.md#dc-aux-panel)
+- [ ] Stereo on; phone connected now if desired — easier than fiddling with it underway
 - [ ] VHF on; speaker near the helm confirmed working
 - [ ] Sailing instruments on; depth alarm set if relevant — see [SignalK Configuration — Alarms / Zones](signalk.md#alarms-zones)
 - [ ] Bilge pump working — flip the switch on/off and listen for it
 - [ ] Nav lights functional (steaming, port, starboard, stern, anchor) — especially if departing or returning near dark
+- [ ] Night sailing: steaming light and nav lights turned on, plus spreader lights while still at the dock
 - [ ] Anchor windlass tested — via the remote controller, cabinet behind
       the v-berth head (no foot switches installed). See [Anchoring](#anchoring)
 - [ ] Chartplotter + instruments powered
