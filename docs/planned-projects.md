@@ -52,6 +52,7 @@ For recurring upkeep instead of one-time fixes, see
 - [ ] Investigate/trace the chartplotter's non-working sonar function — see [Chartplotter / MFD](systems.md#chartplotter-mfd)
 - [ ] Reconcile the GPS antenna offset recorded twice (and disagreeing) in the SignalK config — see [GPS](systems.md#gps)
 - [ ] Swing the compass and produce a deviation card — see [Compass](systems.md#compass)
+- [ ] Reinstall the Garmin GNX triducer — removed 2026-08-31 to clean off marine growth and left out; Garmin depth/speed is dark and masthead wind angle correction is affected until it's back in — see [Depth Sounder](systems.md#depth-sounder)
 
 ## Ground Tackle
 
@@ -74,3 +75,5 @@ For recurring upkeep instead of one-time fixes, see
 ## Not Yet Prioritized
 
 - [ ] Pack the ditch bag before any offshore/coastal passage — see [Ditch Bag Contents](systems.md#ditch-bag-contents)
+- [ ] Repair and return the outboard motor and dinghy to the boat — both taken home 2026-08-31, neither currently aboard — see [Tender / Outboard](systems.md#tender-outboard)
+- [ ] Install the new pedestal — currently staged in the dock box (moved there 2026-08-31)

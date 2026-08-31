@@ -484,6 +484,24 @@ Format: `YYYY-MM-DD: Description`
 - Confirms/updates the primary anchor rode length and materials — see
   [Ground Tackle](systems.md#8-ground-tackle).
 
+### 2026-08-31: Dockside visit — triducer cleaned, outboard/dinghy pulled for repair, old line culled, new pedestal staged
+- Pulled the Garmin GNX triducer (center through-hull) and cleaned marine
+  growth off the paddle wheel/sensor face, then **left it uninstalled**.
+  Garmin depth/speed will read nothing until it's reinstalled; the
+  TackTick backup transducer remains in place as a fallback. **Note**: the
+  masthead wind sensor depends on this same unit's accelerometer for angle
+  correction, so expect incorrect wind readings until it's back in — see
+  [Depth Sounder](systems.md#depth-sounder).
+- Removed the Yamaha outboard motor and the Achilles dinghy from the boat
+  and brought both home for repair — neither is currently aboard. See
+  [Tender / Outboard](systems.md#tender-outboard).
+- Culled a batch of old line that was frayed or otherwise unusable
+  (including an old/spare anchor rode) and took it home; none of it is
+  aboard anymore. The current primary rode (ordered/delivered 2026-08-26,
+  above) is unaffected.
+- Moved the new pedestal — not yet installed — into the dock box for
+  storage until it's installed.
+
 <!-- Add entries above this line, newest first -->
 
 ---

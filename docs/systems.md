@@ -624,6 +624,8 @@ platform, not through a valved thru-hull.
 
 <span class="doc-tag doc-tag--maintenance">Maintenance</span> The paddle wheel (speed sensor) needs regular cleaning of marine growth to stay accurate.
 
+<span class="doc-tag doc-tag--issue">Unresolved</span> **Currently uninstalled**: pulled 2026-08-31 to clean off marine growth and left out. Garmin depth/speed reads nothing until it's reinstalled (TackTick backup remains available); the masthead wind sensor's angle correction is also affected in the meantime — see the accelerometer dependency note above. See [Planned Projects](planned-projects.md#navigation-electronics).
+
 ### Wind Instruments
 - **Current**: Garmin GNX wind instrument (masthead sensor) — part of the
   Garmin GNX wind/depth/speed instrument package (see
@@ -990,6 +992,7 @@ aft accommodation with queen berth and hanging locker.
 >   few wood panels; missing covers in the stern cabin.
 
 ### Tender / Outboard
+<span class="doc-tag doc-tag--issue">Unresolved</span> **Currently off the boat**: the outboard and dinghy were both taken home 2026-08-31 for repair — neither is aboard right now. See [Planned Projects](planned-projects.md#not-yet-prioritized).
 - Yamaha outboard motor aboard: **2.5 HP, 1996, two-stroke**.
 - **Carburetor**: replaced (**CHAMPAN replacement carburetor**, ref.
   6E0-14301-xx / 6E3-14301-xx) and working. Also replaced: transom clamp
