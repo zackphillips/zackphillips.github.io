@@ -53,10 +53,22 @@ var VESSEL_CONSTANTS = Object.freeze({
   // predictable to diff; this list is what actually controls the order
   // the sections render in. Categories not listed here sort alphabetically
   // after the ones that are.
-  DOCS_CATEGORY_ORDER: ['Operations', 'Systems', 'Maintenance'],
+  DOCS_CATEGORY_ORDER: ['Operations', 'Systems', 'Maintenance', 'Voyages'],
   // Checklist ticks are per-device UI state, not vessel data — they live in
   // localStorage under this prefix and are never committed anywhere.
   DOCS_CHECKLIST_PREFIX: 'mermug.checklist.',
+
+  // ── GitHub (edit-in-place links) ────────────────────────────────────────
+  // "Edit on GitHub" links (docs.js, the Voyages tab's "Log this voyage"
+  // button) point here. Anyone can open the editor, but only collaborators
+  // with push access can commit straight to GITHUB_DEFAULT_BRANCH — GitHub
+  // routes everyone else through "fork + pull request" automatically, so
+  // this alone is what keeps edits gated to contributors.
+  GITHUB_REPO: 'zackphillips/zackphillips.github.io',
+  GITHUB_DEFAULT_BRANCH: 'main',
+  // Slug of docs/captains-log.md, used to build its edit link from the
+  // Voyages tab without waiting on docs/index.json to load.
+  CAPTAINS_LOG_PATH: 'docs/captains-log.md',
 
   // ── Data URLs ────────────────────────────────────────────────────────────
   TRACKS_INDEX_URL:     'data/telemetry/tracks_index.json',

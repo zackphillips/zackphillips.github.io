@@ -373,7 +373,7 @@ function renderDocMeta(entry, boxes) {
   bits.push(renderChecklistControls(entry.slug, boxes));
   bits.push(
     `<a class="docs-doc-meta__item docs-edit-link" target="_blank" rel="noopener noreferrer"` +
-    ` href="https://github.com/zackphillips/zackphillips.github.io/edit/main/${escapeHtml(entry.path)}">Edit on GitHub</a>`
+    ` href="https://github.com/${C.GITHUB_REPO}/edit/${C.GITHUB_DEFAULT_BRANCH}/${escapeHtml(entry.path)}">Edit on GitHub</a>`
   );
   return bits.join('');
 }
