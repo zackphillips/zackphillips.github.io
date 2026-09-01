@@ -624,6 +624,8 @@ platform, not through a valved thru-hull.
 
 <span class="doc-tag doc-tag--maintenance">Maintenance</span> The paddle wheel (speed sensor) needs regular cleaning of marine growth to stay accurate.
 
+<span class="doc-tag doc-tag--issue">Unresolved</span> **Not seated in its through-hull**: pulled 2026-08-31 to clean off marine growth. Still aboard — set upright next to the through-hull, not taken off the boat — just not reinstalled yet. Garmin depth/speed reads nothing until it's reinstalled (TackTick backup remains available); the masthead wind sensor's angle correction is also affected in the meantime — see the accelerometer dependency note above. See [Planned Projects](planned-projects.md#navigation-electronics).
+
 ### Wind Instruments
 - **Current**: Garmin GNX wind instrument (masthead sensor) — part of the
   Garmin GNX wind/depth/speed instrument package (see
@@ -990,7 +992,8 @@ aft accommodation with queen berth and hanging locker.
 >   few wood panels; missing covers in the stern cabin.
 
 ### Tender / Outboard
-- Yamaha outboard motor aboard: **2.5 HP, 1996, two-stroke**.
+<span class="doc-tag doc-tag--issue">Unresolved</span> **Currently off the boat**: the outboard and dinghy were both taken home 2026-08-31 for repair — neither is aboard right now. See [Planned Projects](planned-projects.md#not-yet-prioritized).
+- Yamaha outboard motor aboard: **Yamaha 3MSHU, 2.5 HP, 1996, two-stroke**.
 - **Carburetor**: replaced (**CHAMPAN replacement carburetor**, ref.
   6E0-14301-xx / 6E3-14301-xx) and working. Also replaced: transom clamp
   handle screw and clamp screw handle set. Yamalube 2M 2-stroke oil is kept
@@ -1003,6 +1006,23 @@ aft accommodation with queen berth and hanging locker.
   - Flush all the old fuel before use.
   - Use Yamaha brand oil or a reputable brand; oil mix ratio: **100:1**
     (8 oz per gallon).
+- **Spare parts reference** (2-stroke 2.5 HP/3 HP family the 3MSHU belongs
+  to — confirm exact fitment against the motor's serial number via
+  [boats.net](https://www.boats.net/catalog/yamaha/outboard) or
+  [partzilla.com](https://www.partzilla.com/catalog/yamaha/boat) before
+  ordering, since small Yamaha outboards vary parts within a model code):
+  - Water pump impeller kit (impeller + drive pin): OEM **6L5-44352-00-00**
+    (superseded by 6L5-44352-01-00); aftermarket equivalents from JLM
+    Marine, Offshore Marine Parts, and others.
+  - Spark plug: **NGK B7HS** (non-resistor, Yamaha p/n B7H-S0000-00-00) or
+    **NGK BR7HS** (resistor, Yamaha p/n BR7-HS100-00-00, supersedes the
+    older B7HS-10) — gap 0.6 mm (0.024").
+  - Gearcase (lower unit) oil: Yamalube Gearcase Lube SAE 90, ~0.07 L
+    (0.08 US qt) capacity.
+  - 2-stroke mix oil: Yamalube 2-M, 100:1 (already kept aboard — see above).
+  - Carburetor: current unit is the aftermarket CHAMPAN replacement noted
+    above; OEM rebuild kits for this carb family are sold under Yamaha's
+    6E0-/6E3-14301-xx series.
 - **Dinghy**: an Achilles inflatable — a spare air valve (p/n C342GY) and
   rubber valve adapter (p/n C5102, needed to pump it up) are stored in the
   forward-most port-side salon cabinet. A foot pump to inflate the dinghy

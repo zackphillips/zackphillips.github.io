@@ -35,7 +35,7 @@ For one-time fixes and installs (not recurring), see
 | Bilge pump test | Weekly | — | [Bilge](systems.md#bilge) |
 | Bilge level inspection | Every departure | — | [Bilge](systems.md#bilge) |
 | Seacocks & sea strainers — service | Annually | — | [Seacocks & Through-Hulls](systems.md#seacocks-through-hulls) |
-| Depth/speed paddle wheel — clean marine growth | Regularly | — | [Depth Sounder](systems.md#depth-sounder) |
+| Depth/speed paddle wheel — clean marine growth | Regularly | 2026-08-31 (left uninstalled — see [Planned Projects](planned-projects.md#navigation-electronics)) | [Depth Sounder](systems.md#depth-sounder) |
 | Winches — service (all six) | Not specified | March 2026 | [Running Rigging Summary](systems.md#running-rigging-summary) |
 | Sailing hardware lubrication (cam cleats, clutches, blocks, tracks, furling gear, winches) | Annually | — | [Sail Trim Notes](systems.md#sail-trim-notes) |
 | Windlass bearings | Not specified | May 2026 | [Windlass](systems.md#windlass) |
