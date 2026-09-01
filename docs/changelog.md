@@ -486,8 +486,9 @@ Format: `YYYY-MM-DD: Description`
 
 ### 2026-08-31: Dockside visit — triducer cleaned, outboard/dinghy pulled for repair, old line culled, new pedestal staged
 - Pulled the Garmin GNX triducer (center through-hull) and cleaned marine
-  growth off the paddle wheel/sensor face, then **left it uninstalled**.
-  Garmin depth/speed will read nothing until it's reinstalled; the
+  growth off the paddle wheel/sensor face, then **left it out of the
+  through-hull** — still aboard, set upright next to the hole, not taken
+  home. Garmin depth/speed will read nothing until it's reinstalled; the
   TackTick backup transducer remains in place as a fallback. **Note**: the
   masthead wind sensor depends on this same unit's accelerometer for angle
   correction, so expect incorrect wind readings until it's back in — see

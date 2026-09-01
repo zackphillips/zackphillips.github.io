@@ -52,7 +52,7 @@ For recurring upkeep instead of one-time fixes, see
 - [ ] Investigate/trace the chartplotter's non-working sonar function — see [Chartplotter / MFD](systems.md#chartplotter-mfd)
 - [ ] Reconcile the GPS antenna offset recorded twice (and disagreeing) in the SignalK config — see [GPS](systems.md#gps)
 - [ ] Swing the compass and produce a deviation card — see [Compass](systems.md#compass)
-- [ ] Reinstall the Garmin GNX triducer — removed 2026-08-31 to clean off marine growth and left out; Garmin depth/speed is dark and masthead wind angle correction is affected until it's back in — see [Depth Sounder](systems.md#depth-sounder)
+- [ ] Reinstall the Garmin GNX triducer — pulled 2026-08-31 to clean off marine growth; still aboard, set upright next to the through-hull, just not seated. Garmin depth/speed is dark and masthead wind angle correction is affected until it's back in — see [Depth Sounder](systems.md#depth-sounder)
 
 ## Ground Tackle
 
