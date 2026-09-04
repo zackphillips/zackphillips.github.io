@@ -189,7 +189,73 @@ anchored.
 | signalk-alarm-silencer | Enabled |
 | signalk-pushover-notification-relay | Pushes battery SOC and SD-card-utilization notifications to a phone via Pushover |
 | signalk-twilio-notifications | SMS alert for house battery <20% — currently **disabled** |
-| [signalk-mob-notifier](https://github.com/meri-imperiumi/signalk-mob-notifier) | Man-overboard BLE-tag notifier — currently **disabled** |
+| [signalk-mob-notifier](https://github.com/meri-imperiumi/signalk-mob-notifier) | Man-overboard BLE-tag notifier — currently **disabled**. Separate system from the MOB button below; it would page a missing BLE tag, not a button press — don't conflate the two |
+| signalk-mob-course | Enabled — subscribes to `notifications.mob.*`; on any notification at state `emergency`, calls the Course API's `setDestination()` with the MOB position, falling back to the vessel's current `navigation.position` if the notification doesn't carry one. Drives the autopilot/plotter destination back toward the person in the water. See MOB Button below |
+
+### MOB Button (`notifications.mob.button`)
+
+The physical MOB push button (see [Systems §6](systems.md#6-navigation-electronics)
+and [§7](systems.md#7-safety-equipment)) surfaces raw in SignalK at
+`notifications.propulsion.port.neutralStartProtect` via the Actisense
+EMU-1. A **Node-RED flow** (`signalk-node-red`, flow tab "MOB Button", all
+wired core nodes — no function nodes) turns that raw engine-alarm path
+into a proper MOB alert at `notifications.mob.button`:
+
+```
+MOB button (subscribe) → parse state → edge only (rbe) → pressed?
+    → debounce 100ms → MOB already active?
+        ├─ no  → mobActive = true  → MOB = emergency
+        └─ yes → hold 5s → mobActive = false → MOB = normal
+    └─ (release) → cancel hold
+```
+
+| Gesture | Result |
+|---|---|
+| Press (instant, 100 ms debounce) | Raises `notifications.mob.button` at state `emergency`, method visual + sound, message "Person Overboard!" |
+| Hold 5 s while a MOB is active | Sets `notifications.mob.button` back to `normal` |
+| Hold 5 s from idle | Raises only — never raises then clears |
+| Release before 5 s | Cancels the pending clear |
+
+Design notes:
+- The **press is instant, not held**, matching commercial MOB buttons — an
+  accidental press is cheap and reversible; a delayed emergency is not.
+- The raise is gated on `flow.mobActive` so a long hold from idle can't
+  set-then-clear.
+- The `edge only` (`rbe`) node blocks repeated identical states, so an
+  EMU-1 transmitting continuously while the button is held collapses to
+  one press event and one release event.
+- The path is `notifications.mob.button` rather than bare `notifications.mob`.
+  The Signal K spec lists the standard alarm keys as `notifications.mob.*`,
+  and the server's Notifications API otherwise publishes MOB alarms as
+  `notifications.mob.{uuid}` — a stable `button` id keeps one MOB slot for
+  this button and stays compatible with tooling that subscribes to the
+  wildcard.
+
+**Consumed by**: `signalk-notification-player` (alarm sound) and
+`signalk-mob-course` (sets the course destination — see table above).
+Appears as a standard notification in Freeboard-SK and KIP.
+
+**Known limitations** — see the [Man Overboard Procedure](mob-procedure.md)
+for what to do about each of these:
+- No position is embedded in the notification — `signalk-send-notification`
+  only emits `state`/`method`/`message`, so `signalk-mob-course` falls back
+  to the boat's position at the moment it processes the delta, not the
+  moment of the press (a boat length or two off at speed).
+- `signalk-mob-course` never calls `clearDestination()` — clearing the
+  notification does not cancel the course.
+- `status.canClear` is `false` on this notification, since it's raised by
+  a delta rather than through the Notifications API. Clearing still works
+  (the flow re-emits from the same `$source`), but UIs that read
+  `canClear` won't offer a Clear button.
+- Emergency notifications cannot be silenced, per the Notifications API —
+  there is no silence path for this alarm by design.
+- Hold-to-clear depends on a release delta. If the EMU-1 stops
+  transmitting rather than emitting a non-alarm state on release, the
+  clear timer won't cancel correctly.
+- <span class="doc-tag doc-tag--issue">Unresolved</span> Built and
+  bench-tested with simulated notifications only as of 2026-09-04 — not
+  yet tested against the physical button and the EMU-1's real delta
+  cadence.
 
 ---
 
@@ -201,7 +267,7 @@ anchored.
 | signalk-to-influxdb2 | Present but **disabled** (org "Mermug", bucket "signalk"; would exclude GNSS metadata and derived-data/tides as sources) |
 | @signalk/app-dock | Local kiosk launcher — autostarts Freeboard-SK, also exposes KIP and the admin Settings page |
 | [@mxtommy/kip](https://github.com/mxtommy/Kip) | Instrument display webapp; SQLite-backed history series enabled and registered as a SignalK History API provider |
-| signalk-node-red | Installed but **disabled** |
+| signalk-node-red | **Enabled** — runs the "MOB Button" flow, see [Notifications / Alerting](#notifications-alerting) |
 
 ---
 
@@ -240,8 +306,8 @@ anchored.
 plus the third-party plugins named above.
 
 Several plugins referenced here (e.g. signalk-logbook, signalk-saillogger,
-signalk-noaa-weather, signalk-node-red, signalk-to-influxdb2,
-signalk-restricted-areas, signalk-timezone-plugin,
+signalk-noaa-weather, signalk-node-red, signalk-mob-course,
+signalk-to-influxdb2, signalk-restricted-areas, signalk-timezone-plugin,
 signalk-nmea2000-emitter-cannon, sk-to-nmea2000, voyage-data-recorder) have
 config files on disk but aren't in `package.json`'s dependency list — they
 were most likely installed directly via the SignalK App Store rather than

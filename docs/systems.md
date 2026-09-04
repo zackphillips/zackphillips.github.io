@@ -707,6 +707,24 @@ them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 - **Type**: closed array antenna, mounted on the stainless radar mast at the transom
 - Confirmed working. System is fully proprietary — cannot integrate with non-Furuno displays.
 
+### MOB (Man Overboard) Button
+- **Type**: momentary push button, mounted on the **cockpit coaming,
+  starboard side**.
+- Wired into an **Actisense EMU-1** alarm/switch input (see [NMEA 2000
+  Network](#nmea-2000-network) above). The EMU-1 can only emit
+  engine-related PGNs, so the button is deliberately mapped to an engine
+  alarm channel that's irrelevant to Mermug's actual engine, to avoid any
+  ambiguity with a real engine alarm.
+- Surfaces raw in SignalK at
+  `notifications.propulsion.port.neutralStartProtect` — state `alarm`
+  while held, back to a non-alarm state on release.
+- A **Node-RED flow** and the **signalk-mob-course** plugin turn that raw
+  path into a standard MOB notification and an automatic course back to
+  the position — see [SignalK Configuration — MOB
+  Button](signalk.md#mob-button-notificationsmobbutton) for the full
+  software chain, and [Man Overboard Procedure](mob-procedure.md) for what
+  to do when it fires.
+
 ### SignalK Server
 - Running on Raspberry Pi at `192.168.8.50:3000`, no SSL, token-based security.
 - Aggregates all NMEA 2000 / NMEA 0183 / Bluetooth instrument data onboard.
@@ -740,6 +758,7 @@ them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 | MOB gear — Lalizas inflatable MOB raft/system | 1 | Mounted on the **stbd railing**, next to the outboard mounting crane | — |
 | MOB gear — Dan buoy | 1 | Stbd lazarette | Serviced January 2026 |
 | MOB gear — Scotty #0793 rescue throw bags (50 ft floating MFP rope) | 2 | Stbd lazarette | — |
+| MOB gear — cockpit MOB button (Actisense EMU-1 → NMEA 2000 → SignalK → Node-RED) | 1 | Cockpit coaming, starboard side | Electronic position-marking aid — raises a SignalK alert and sets an autopilot course back to the position. **Not a retrieval device.** See [MOB Button](#mob-man-overboard-button) and the [Man Overboard Procedure](mob-procedure.md) |
 | Swim ladder | 1 | Stern lazarette, port side | Hooks onto the swim platform via two hooks |
 | Smoke/CO2 detectors | 2+ | Aft cabin; port side, main cabin near speaker | All units double as CO2 alarms |
 | Life raft | 0 | Not aboard | — |
@@ -758,6 +777,23 @@ corrected).
 > - <span class="doc-tag doc-tag--issue">Unresolved</span> EPIRB battery was replaced 2026 but has **not yet been tested**.
 > - <span class="doc-tag doc-tag--planned">Planned</span> **No life raft is aboard** — a raft that was reported was never sighted and is not actually carried. Get one before any offshore or coastal passage.
 > - <span class="doc-tag doc-tag--planned">Planned</span> Swim ladder hooks onto the swim platform via two hooks but is **not also lashed/tied off** — it has come loose in heavy seas before and required someone to dive after it. Figure out how to additionally tie it to the platform hooks so it can't fall out.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **MOB button flow untested on hardware**: built and bench-tested with simulated notifications only, as of 2026-09-04 — not yet tested against the physical button and the EMU-1's real delta cadence.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **MOB course is never auto-cancelled**: `signalk-mob-course` sets the destination but does not call `clearDestination()` when the MOB notification is cleared — the boat keeps navigating to the MOB position until the destination is cancelled separately.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **No position embedded in the MOB notification**: it's published via `signalk-send-notification`, which only carries `state`/`method`/`message` — `signalk-mob-course` falls back to the vessel's position at the moment it processes the delta, not the moment of the button press (a boat length or two off at speed).
+> - <span class="doc-tag doc-tag--planned">Planned</span> The MOB flow transmits no PGN 127233 (Man Overboard) and no AIS SART — it's SignalK-side only, so the Garmin chartplotter most likely shows nothing from it.
+
+### MOB Button
+
+A momentary push button in the cockpit (coaming, starboard side) raises a
+SignalK man-overboard notification and automatically sets the autopilot's
+course back to the vessel's position when pressed — see [Navigation &
+Electronics — MOB Button](#mob-man-overboard-button) for the hardware
+chain and [SignalK Configuration](signalk.md#mob-button-notificationsmobbutton)
+for the Node-RED flow and plugin. It marks a position and points the boat
+back at it; it is **not** a substitute for AIS MOB beacons, DSC distress,
+or physically getting the person out of the water. Full response steps,
+including the known limitations above, are in the
+[Man Overboard Procedure](mob-procedure.md).
 
 ### Known Gaps
 
