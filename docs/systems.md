@@ -340,7 +340,7 @@ Located on the nav station wall.
 
 | Spec | Value |
 |------|-------|
-| Tank capacity | 140 gallons across **two** tanks, 70 gallons each |
+| Tank capacity | ~158 gallons across **two** tanks, ~79 gallons (300 L) each — per Beneteau factory spec sheet; previously (incorrectly) documented as 70 gal each |
 | Tank material | Polyethylene and integral FRP |
 | Tank locations | Aft to port under the aft berth; forward to starboard under the berth |
 | Pump | ParMax 3.5, 12 V demand type, with an inline strainer |
