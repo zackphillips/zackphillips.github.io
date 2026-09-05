@@ -541,6 +541,22 @@ Format: `YYYY-MM-DD: Description`
   bench-tested with simulated notifications only** — not yet tested
   against the physical button and the EMU-1's real delta cadence.
 
+### 2026-09-04: Furuno display removed; Samsung tablet installed as chartplotter
+- Removed the Furuno RDP-143 display from the helm/nav station. The three
+  cables that ran to it were cut about 18" down — left long enough to be
+  reconnected later — and re-run down to the breaker panel behind the
+  engine. **All three remain connected to the radar** on the antenna end,
+  which currently has no display attached to it as a result. See
+  [Chartplotter / MFD](systems.md#chartplotter-mfd) and
+  [Radar](systems.md#radar).
+- All removed Furuno parts are still aboard for now and will be taken to
+  Zack's garage for storage as soon as possible.
+- Installed a **Samsung Tab Active 9" tablet + RAM mount** in the Furuno's
+  place as the chartplotter. Powered off a 12 V outlet plug, with a new
+  **10 A inline fuse (yellow)** added near the windlass wiring in the aft
+  cabin. Cable runs through the **aft cabin wardrobe** and into the **aft
+  head sink area** to the breaker panel. Tested and functional.
+
 <!-- Add entries above this line, newest first -->
 
 ---
@@ -624,8 +640,8 @@ Part numbers still need to be filled in as parts are ordered.
 | Standing rigging | 1×19 stainless rod | — | Replaced 2015 (corrected from a previous 2012 record; matches the May 2025 survey's ~10-years-old estimate) |
 | VHF radio | Icom IC-M504 + RAM mic | — | Antenna shared with AIS via a Digital Yacht SPL1500 ZeroLoss splitter (Feb 2026); hailer horn: Icom SP37, 40 W (Feb 2026) |
 | SSB radio | Icom IC-706MKIIG | — | |
-| Chartplotter / MFD | Furuno NavNet | — | GPS, radar, sonar (sonar faulty) |
-| Radar | Furuno 24-mile, closed array | — | |
+| Chartplotter / MFD | Samsung Tab Active 9" tablet + RAM mount | — | Replaced the Furuno RDP-143 display, 2026-09-04; powered off a 12 V outlet with a 10 A inline fuse |
+| Radar | Furuno 24-mile, closed array | — | No display connected since the Furuno RDP-143 was removed 2026-09-04; cables run to the breaker panel behind the engine, still connected to the radar |
 | Autopilot | Simrad AP44 (p/n 000-13289-001) | — | Replaced the original AP22 head (died Oct 2025); suncover p/n 000-13724-001 |
 | Wind/depth/speed instruments | Garmin GNX wind instrument + depth/speed triducer + GNX 20 display | — | Installed 2025-12-14/12-20 ("Garmin sail pack 52"), replacing dead TackTick/Robertson displays; wind, depth, and paddle wheel all working. Fusion MS-NRX300 wired remote also installed Sept 2025 |
 | Compass | Ritchie 4" | — | Helm |
