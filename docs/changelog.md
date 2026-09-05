@@ -503,6 +503,44 @@ Format: `YYYY-MM-DD: Description`
 - Moved the new pedestal — not yet installed — into the dock box for
   storage until it's installed.
 
+### 2026-09-04: MOB button wired through NMEA 2000 into SignalK; automatic course-to-position
+- A momentary push button, mounted on the cockpit coaming (starboard side),
+  wired into an **Actisense EMU-1** alarm/switch input. The EMU-1 can only
+  emit engine-related PGNs, so the button is deliberately mapped to an
+  engine alarm channel irrelevant to Mermug's actual engine, avoiding
+  ambiguity with a real engine alarm — surfaces in SignalK at
+  `notifications.propulsion.port.neutralStartProtect`.
+- Enabled **signalk-node-red** (previously installed but disabled) and
+  built a "MOB Button" flow, all wired core nodes, no function nodes: it
+  debounces the raw button path, collapses the EMU-1's repeated deltas to
+  one press/release event, and publishes a proper MOB alert at
+  `notifications.mob.button` — instant raise on press (state `emergency`),
+  hold 5 s to clear back to `normal`. See
+  [SignalK Configuration — MOB Button](signalk.md#mob-button-notificationsmobbutton)
+  for the full node chain and design notes.
+- Added the **signalk-mob-course** plugin, which subscribes to
+  `notifications.mob.*` and calls the Course API's `setDestination()` with
+  the MOB position on any `emergency` notification — falling back to the
+  vessel's current position if none is carried — automatically pointing
+  the autopilot/plotter back at the person in the water.
+- Documented in [Systems Overview §7 — Safety
+  Equipment](systems.md#7-safety-equipment) (electronic position-marking
+  aid, not a retrieval device) and
+  [§6 — Navigation & Electronics](systems.md#6-navigation-electronics)
+  (hardware signal chain), plus a new
+  [Man Overboard Procedure](mob-procedure.md).
+- **Known limitations**, documented rather than smoothed over: no position
+  is embedded in the notification itself (`signalk-mob-course` falls back
+  to position at delta-processing time, a boat length or two off at
+  speed); the course is **never auto-cancelled** on clearing the MOB
+  (cancel it separately); `status.canClear` reads `false` so some UIs
+  won't show a Clear button (clearing itself still works); emergency
+  notifications can't be silenced by design; no PGN 127233 or AIS SART is
+  transmitted, so the Garmin chartplotter most likely shows nothing.
+- <span class="doc-tag doc-tag--issue">Unresolved</span> **Built and
+  bench-tested with simulated notifications only** — not yet tested
+  against the physical button and the EMU-1's real delta cadence.
+
 ### 2026-09-04: Furuno display removed; Samsung tablet installed as chartplotter
 - Removed the Furuno RDP-143 display from the helm/nav station. The three
   cables that ran to it were cut about 18" down — left long enough to be
