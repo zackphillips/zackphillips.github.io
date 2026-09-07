@@ -541,21 +541,35 @@ platform, not through a valved thru-hull.
 ## 6. Navigation & Electronics
 
 ### Chartplotter / MFD
-- **Make/Model**: Furuno NavNet — GPS chartplotter, radar and sonar in one display
-- **Current display unit**: Furuno RDP-143
-- **Location**: Helm / nav station
-- Charts loaded: Pacific charts
-- Interfaces with SignalK over NMEA 0183 serial (`/dev/ttyOP_furuno`, 4800 baud, checksum validated); SignalK uses it as the fallback next-waypoint/course source behind its own `courseApi`.
-- Connected via a **Furuno 000-159-681 24" 7-pin power/NMEA 0183 pigtail**,
-  wired specifically so SignalK can feed a heading source out to the Furuno
-  over NMEA 0183.
-- **Note**: the bearing readout is derived from GPS course-over-ground (COG),
-  not from a compass sensor — it reads incorrectly when stationary. A compass
-  input is needed for accurate bearing and radar overlay on charts.
+- **Make/Model**: Samsung Tab Active 9" tablet + RAM mount
+- **Location**: Helm / nav station — installed 2026-09-04 in place of the
+  Furuno RDP-143 display (removed; see
+  [Vessel Changelog](changelog.md#2026-09-04-furuno-display-removed-samsung-tablet-installed-as-chartplotter)).
+  The RDP-143 and other removed Furuno parts remain aboard for now, pending
+  a trip to Zack's garage for storage.
+- **Power**: a 12 V outlet plug, with a new 10 A inline fuse (yellow) added
+  near the windlass wiring in the aft cabin. Cable runs through the aft
+  cabin wardrobe and into the aft head sink area to the breaker panel.
+  Tested and functional.
+- Since this replaces a Furuno NavNet unit that combined GPS chartplotter,
+  radar and sonar in one proprietary display, the new tablet only covers
+  chartplotting — it cannot display radar or sonar (see
+  [Radar](#radar)).
+- **Note**: the Furuno RDP-143's NMEA 0183 serial link to SignalK
+  (`/dev/ttyOP_furuno`, described under [SignalK
+  Configuration](signalk.md)) fed a heading source out to the Furuno over a
+  **Furuno 000-159-681 24" 7-pin power/NMEA 0183 pigtail**. With the
+  display removed, it's unconfirmed whether anything downstream still
+  consumes that link — needs verification and reconciling against
+  `signalk.md`.
+- **Historical note**: on the old Furuno display, the bearing readout was
+  derived from GPS course-over-ground (COG), not from a compass sensor —
+  it read incorrectly when stationary, and a compass input was needed for
+  accurate bearing and radar overlay on charts. Not yet confirmed whether
+  this still applies to the tablet in any way.
 
 > **⚠️ Watch Items**
-> - <span class="doc-tag doc-tag--issue">Unresolved</span> The display itself is malfunctioning — **do not trust what it shows**. Use the KIP/Freeboard-SK displays or a handheld GPS to cross-check position and chart data until this is repaired.
-> - <span class="doc-tag doc-tag--issue">Unresolved</span> The sonar function does not fully work. Investigate and trace.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> Confirm whether SignalK's `furuno` NMEA 0183 data source is still live now that the display it fed is removed — see the note above.
 
 ### GPS
 - **Primary (at the dock)**: NMEA 0183 GPS "puck" over serial (`/dev/ttyOP_gpspuck`, 4800 baud, checksum validated, overrides timestamp) — used while at berth since it doesn't depend on the sailing instruments being powered on.
@@ -705,7 +719,11 @@ them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 - **Installed**: yes
 - **Make/Model**: Furuno, 24-mile
 - **Type**: closed array antenna, mounted on the stainless radar mast at the transom
-- Confirmed working. System is fully proprietary — cannot integrate with non-Furuno displays.
+- Confirmed working 2025-06-03 (see [Vessel Changelog](changelog.md)).
+  System is fully proprietary — cannot integrate with non-Furuno displays.
+
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **No display currently connected.** The Furuno RDP-143 display was removed 2026-09-04 and replaced with a non-Furuno tablet (see [Chartplotter / MFD](#chartplotter-mfd)), which can't show radar. The three cables that fed the display were cut ~18" down and now run to the breaker panel behind the engine, left long enough to reconnect; **all three remain connected to the radar** on the antenna end. Radar is effectively unusable aboard until reconnected to a compatible Furuno display, or its fate is otherwise decided.
 
 ### MOB (Man Overboard) Button
 - **Type**: momentary push button, mounted on the **cockpit coaming,
