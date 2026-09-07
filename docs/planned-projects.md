@@ -49,6 +49,7 @@ For recurring upkeep instead of one-time fixes, see
 ## Plumbing & Freshwater
 
 - [ ] Reconcile the hot water heater's half-inch hose against its likely-metric original fitting (stern re-plumbing project) — see [Freshwater System](systems.md#freshwater-system)
+- [ ] Update the freshwater tank calibration on the Pi — both tanks are configured at 0.265 m³ (~70 gal) but the factory spec sheet lists 300 L (~79 gal) each — see [SignalK Calibration](signalk.md#calibration-raw-nmea-2000-tank-sender-curves)
 
 ## Navigation & Electronics
 
