@@ -557,7 +557,11 @@ Format: `YYYY-MM-DD: Description`
   cabin. Cable runs through the **aft cabin wardrobe** and into the **aft
   head sink area** to the breaker panel. Tested and functional.
 
-### 2026-09-07: Refrigerator removed; MOB button disconnected pending rework; windlass control cable run; canvas repairs; cigarette lighter replaced
+### 2026-09-07: Refrigerator removed; MOB button disconnected pending rework; windlass control cable run; canvas repairs; cigarette lighter replaced; BBB chain relocated and cut
+- **250 ft BBB chain removed from port lazarette and cut down.** Pulled the
+  250 ft BBB chain out of the port lazarette. Before stowing it, cut it
+  into a 150 ft section and a 100 ft section with an angle grinder. Both
+  sections are now stowed in the dock box (not aboard the boat).
 - **Refrigerator removed.** Disconnected the quick-connect refrigerant
   hoses and pulled them through into the icebox, then removed the cooling
   element (evaporator) from the icebox itself. The old Adler Barbour unit
