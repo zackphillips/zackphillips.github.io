@@ -1202,6 +1202,8 @@ and marine rail hardware:
 - Manage via `make status`, `make show-logs-website`
 - Pi connects to the internet via a **cellular hotspot** (Google Pixel 4a) —
   see [Internet Connectivity](#internet-connectivity-cellular-hotspot) above.
+- Reachable from off the boat over the AstroWarp VPN — see
+  [Remote Access (VPN)](remote-access.md).
 - **Troubleshooting**: if data stops updating, check the repo state on the
   Pi first — a `git pull` interrupted by a Pi power loss can corrupt the
   local repo; fix by re-cloning.
