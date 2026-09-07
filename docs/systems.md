@@ -131,6 +131,9 @@ Centerline, aft of the saloon, between the galley (starboard) and the aft head (
 See [Operations — Engine Start Procedure](operations.md#engine-start-procedure).
 **Emergency shutdown**: pull black handle below engine control panel on the port side, then turn key off.
 
+**12 V accessory socket**: cigarette-lighter-style socket on the engine
+control panel. Replaced 2026-09-07 — fully functional.
+
 ### Raw Water Cooling Circuit
 Closed reservoir (heat exchanger) cooling with a raw-water-cooled exhaust. Raw water enters via a bronze ball-valve seacock → plastic strainer with sight glass → impeller pump → heat exchanger → exhaust mixing riser → flexible hose → fiberglass surge pipe and muffler → transom discharge. **Check exhaust water flow within 30 seconds of start.**
 
@@ -743,6 +746,10 @@ them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
   software chain, and [Man Overboard Procedure](mob-procedure.md) for what
   to do when it fires.
 
+> **⚠️ Watch Items**
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **Disconnected as of 2026-09-07.** The EMU-1 wiring above was judged not a robust long-term solution and has been physically disconnected — the button currently raises no notification at all. Its wire was run back to the nav station but left unconnected there.
+> - <span class="doc-tag doc-tag--planned">Planned</span> A 12 V-to-3.3 V optoisolator and a relay set are staged next to the Raspberry Pi, intended to interface the button directly with the Pi instead of the EMU-1 — not yet wired in.
+
 ### SignalK Server
 - Running on Raspberry Pi at `192.168.8.50:3000`, no SSL, token-based security.
 - Aggregates all NMEA 2000 / NMEA 0183 / Bluetooth instrument data onboard.
@@ -776,7 +783,7 @@ them up (e.g. off a label or the Actisense/Garmin/Airmar spec sheets).
 | MOB gear — Lalizas inflatable MOB raft/system | 1 | Mounted on the **stbd railing**, next to the outboard mounting crane | — |
 | MOB gear — Dan buoy | 1 | Stbd lazarette | Serviced January 2026 |
 | MOB gear — Scotty #0793 rescue throw bags (50 ft floating MFP rope) | 2 | Stbd lazarette | — |
-| MOB gear — cockpit MOB button (Actisense EMU-1 → NMEA 2000 → SignalK → Node-RED) | 1 | Cockpit coaming, starboard side | Electronic position-marking aid — raises a SignalK alert and sets an autopilot course back to the position. **Not a retrieval device.** See [MOB Button](#mob-man-overboard-button) and the [Man Overboard Procedure](mob-procedure.md) |
+| MOB gear — cockpit MOB button | 1 | Cockpit coaming, starboard side | **Not currently functional** — disconnected from the Actisense EMU-1 2026-09-07 pending a rework via an optoisolator/relay set direct to the Raspberry Pi. When wired in, it's an electronic position-marking aid — raises a SignalK alert and sets an autopilot course back to the position. **Not a retrieval device.** See [MOB Button](#mob-man-overboard-button) and the [Man Overboard Procedure](mob-procedure.md) |
 | Swim ladder | 1 | Stern lazarette, port side | Hooks onto the swim platform via two hooks |
 | Smoke/CO2 detectors | 2+ | Aft cabin; port side, main cabin near speaker | All units double as CO2 alarms |
 | Life raft | 0 | Not aboard | — |
@@ -795,7 +802,7 @@ corrected).
 > - <span class="doc-tag doc-tag--issue">Unresolved</span> EPIRB battery was replaced 2026 but has **not yet been tested**.
 > - <span class="doc-tag doc-tag--planned">Planned</span> **No life raft is aboard** — a raft that was reported was never sighted and is not actually carried. Get one before any offshore or coastal passage.
 > - <span class="doc-tag doc-tag--planned">Planned</span> Swim ladder hooks onto the swim platform via two hooks but is **not also lashed/tied off** — it has come loose in heavy seas before and required someone to dive after it. Figure out how to additionally tie it to the platform hooks so it can't fall out.
-> - <span class="doc-tag doc-tag--issue">Unresolved</span> **MOB button flow untested on hardware**: built and bench-tested with simulated notifications only, as of 2026-09-04 — not yet tested against the physical button and the EMU-1's real delta cadence.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> **MOB button disconnected**: as of 2026-09-07 the button is physically disconnected from the EMU-1 (judged not robust enough) and raises no notification. A rework via an optoisolator and relay set direct to the Raspberry Pi is staged but not yet wired in — see [MOB Button](#mob-man-overboard-button).
 > - <span class="doc-tag doc-tag--issue">Unresolved</span> **MOB course is never auto-cancelled**: `signalk-mob-course` sets the destination but does not call `clearDestination()` when the MOB notification is cleared — the boat keeps navigating to the MOB position until the destination is cancelled separately.
 > - <span class="doc-tag doc-tag--issue">Unresolved</span> **No position embedded in the MOB notification**: it's published via `signalk-send-notification`, which only carries `state`/`method`/`message` — `signalk-mob-course` falls back to the vessel's position at the moment it processes the delta, not the moment of the button press (a boat length or two off at speed).
 > - <span class="doc-tag doc-tag--planned">Planned</span> The MOB flow transmits no PGN 127233 (Man Overboard) and no AIS SART — it's SignalK-side only, so the Garmin chartplotter most likely shows nothing from it.
@@ -891,6 +898,10 @@ the nav station) before any such trip.
   marine grease).
 - <span class="doc-tag doc-tag--planned">Planned</span> A **12 V reverse-polarity 3-way momentary rocker switch** is in storage,
   earmarked for a windlass up/down control rework — not yet installed.
+- <span class="doc-tag doc-tag--planned">Planned</span> A control cable has been run (2026-09-07) from the nav
+  station back to behind the engine control panel as a partial run toward
+  this rework — not yet connected to anything at either end; both ends
+  labeled with stickers.
 
 ---
 
@@ -952,6 +963,18 @@ halyards and control lines terminate at clutches in the cockpit.
 | Pole up | Spinnaker/whisker pole — raise | — | — |
 | Pole down | Spinnaker/whisker pole — lower | — | — |
 
+### Canvas / Sail Bag
+- **Sail bag zipper**: the separated zipper was glued back together
+  2026-09-07 — the sail bag now fully zips closed. May need further
+  reinforcement, but holding for now.
+- **Canvas patch repairs** (2026-09-07): stick-on repair sheets applied to
+  the Bimini (two places), the top of the sail bag, and a large sheet on
+  the front of the sail bag.
+- <span class="doc-tag doc-tag--issue">Unresolved</span> **Port-side sail bag tear**: a large tear on the port side of the
+  sail bag could not be fully repaired (2026-09-07 attempt) — that area is
+  structural/load-bearing in the canvas and needs a proper repair, likely
+  by a sailmaker, rather than a stick-on patch.
+
 ### Sail Trim Notes
 - **Polars**: Beneteau 42 polars are aboard; a real polar diagram was
   generated from race analysis data — see `data/vessel/polars.csv`.
@@ -995,15 +1018,17 @@ step-by-step how-to.
 ### Galley
 - Located to starboard, aft in the saloon.
 - **Stove**: Tesco three-burner propane with oven.
-- **Refrigeration**: Adler Barbour 12 V refrigerator/freezer, top and front
-  load. Old refrigerant has been banned by the EPA; evaporator plate
-  replacement requires a professional technician to bleed the refrigerant
-  line (quick-disconnect pins exist on connections).
+- **Refrigeration**: icebox only as of 2026-09-07 — the old Adler Barbour
+  12 V refrigerator/freezer has been **fully removed** (quick-connect
+  refrigerant hoses disconnected and pulled through into the icebox,
+  cooling element/evaporator removed from the box). The **Isotherm 2017
+  Compact Classic** replacement (p/n U260X086P12111AA, purchased
+  2026-07-18) has not yet been installed.
 - **Sink**: stainless steel, separate basins. Pressure water from the ParMax pump; a Whale foot pump for salt water is fully operational — use it for washing dishes.
 
 > **⚠️ Watch Items**
-> - <span class="doc-tag doc-tag--issue">Unresolved</span> Refrigerator compressor and compressor fan are both currently failed (original 1994 equipment) — refrigeration is not functional.
-> - <span class="doc-tag doc-tag--planned">Planned</span> Replacement (**Isotherm 2017 Compact Classic** air-cooled system, p/n U260X086P12111AA — evaporator dimensions fit the existing fridge box) is in storage, ready to install but not yet installed.
+> - <span class="doc-tag doc-tag--issue">Unresolved</span> No refrigeration equipment is currently installed — the old unit was removed 2026-09-07 and the replacement is not yet in. Icebox has no active cooling in the meantime.
+> - <span class="doc-tag doc-tag--planned">Planned</span> Install the **Isotherm 2017 Compact Classic** air-cooled system (p/n U260X086P12111AA — evaporator dimensions fit the existing fridge box), in storage since 2026-07-18.
 
 ### Dehumidifier
 **Waykar 1500 sq ft, 30-pint, Energy Star dehumidifier** (0.62 gal tank,
