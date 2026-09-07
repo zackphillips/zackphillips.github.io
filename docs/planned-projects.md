@@ -52,8 +52,8 @@ For recurring upkeep instead of one-time fixes, see
 
 ## Navigation & Electronics
 
-- [ ] Repair the Furuno NavNet chartplotter display — it's currently malfunctioning and not to be trusted — see [Chartplotter / MFD](systems.md#chartplotter-mfd)
-- [ ] Investigate/trace the chartplotter's non-working sonar function — see [Chartplotter / MFD](systems.md#chartplotter-mfd)
+- [ ] Reconnect the radar to a compatible display, or otherwise decide its fate — the Furuno RDP-143 was removed 2026-09-04 and a Samsung tablet was installed in its place, but the tablet can't show radar (proprietary Furuno interface) — see [Radar](systems.md#radar)
+- [ ] Confirm whether SignalK's `furuno` NMEA 0183 data source is still live now that the display it fed was removed 2026-09-04 — see [Chartplotter / MFD](systems.md#chartplotter-mfd)
 - [ ] Reconcile the GPS antenna offset recorded twice (and disagreeing) in the SignalK config — see [GPS](systems.md#gps)
 - [ ] Swing the compass and produce a deviation card — see [Compass](systems.md#compass)
 - [ ] Reinstall the Garmin GNX triducer — pulled 2026-08-31 to clean off marine growth; still aboard, set upright next to the through-hull, just not seated. Garmin depth/speed is dark and masthead wind angle correction is affected until it's back in — see [Depth Sounder](systems.md#depth-sounder)
@@ -78,6 +78,7 @@ For recurring upkeep instead of one-time fixes, see
 
 ## Not Yet Prioritized
 
+- [ ] Take the removed Furuno display and other Furuno parts to Zack's garage for storage — still aboard as of 2026-09-04 — see [Chartplotter / MFD](systems.md#chartplotter-mfd)
 - [ ] Pack the ditch bag before any offshore/coastal passage — see [Ditch Bag Contents](systems.md#ditch-bag-contents)
 - [ ] Repair and return the outboard motor and dinghy to the boat — both taken home 2026-08-31, neither currently aboard — see [Tender / Outboard](systems.md#tender-outboard)
 - [ ] Install the new pedestal — currently staged in the dock box (moved there 2026-08-31)
