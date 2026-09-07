@@ -557,6 +557,40 @@ Format: `YYYY-MM-DD: Description`
   cabin. Cable runs through the **aft cabin wardrobe** and into the **aft
   head sink area** to the breaker panel. Tested and functional.
 
+### 2026-09-07: Refrigerator removed; MOB button disconnected pending rework; windlass control cable run; canvas repairs; cigarette lighter replaced
+- **Refrigerator removed.** Disconnected the quick-connect refrigerant
+  hoses and pulled them through into the icebox, then removed the cooling
+  element (evaporator) from the icebox itself. The old Adler Barbour unit
+  is now off the boat entirely. The Isotherm 2017 Compact Classic
+  replacement (purchased 2026-07-18) has **not yet been installed** — the
+  icebox currently has no cooling equipment at all.
+- **MOB button disconnected from the Actisense EMU-1.** The EMU-1-based
+  wiring installed 2026-09-04 was judged not a robust long-term solution
+  and has been physically disconnected — the button currently raises no
+  notification. Its wire was run back to the nav station but left
+  unconnected there. A 12 V-to-3.3 V optoisolator and a relay set, staged
+  next to the Raspberry Pi to interface the button directly with the Pi
+  instead of the EMU-1, are also not yet hooked up. Ran out of time to
+  finish this rework.
+- **Windlass control cable run.** Ran a new cable from the nav station
+  back to behind the engine control panel, as a partial run toward the
+  planned windlass up/down control rework (see the 12 V reverse-polarity
+  rocker switch staged since April 2026). Not yet connected to anything
+  at either end; both ends labeled with stickers for the next session.
+- **Sail bag zipper repaired.** Glued the separated zipper back together —
+  the sail bag now fully zips closed. May need further reinforcement, but
+  holding for now.
+- **Canvas patch repairs.** Applied stick-on repair sheets: two on the
+  Bimini, one on top of the sail bag, and one large sheet on the front of
+  the sail bag.
+- **Port-side sail bag tear — unresolved.** Attempted to repair the large
+  tear on the port side of the sail bag; that area turned out to be a
+  structural/load-bearing part of the canvas and couldn't be fully fixed
+  with a patch. Needs revisiting, likely by a sailmaker.
+- **Engine panel cigarette lighter replaced.** The 12 V cigarette-lighter
+  accessory socket in the engine control panel was replaced and is now
+  fully functional.
+
 <!-- Add entries above this line, newest first -->
 
 ---
@@ -663,7 +697,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Water heater | Raritan | — | 6 gal, 120 V + engine heat exchanger |
 | Heads | Jabsco manual ×2 | — | Type III MSD |
 | Bilge pump | Jabsco 12 V diaphragm | — | Manual backup: Whale Gulper |
-| Refrigeration | Adler Barbour 12 V | — | Top and front load. **Compressor failed** (original 1994); fan also broken. Replacement: Isotherm 2017 Compact Classic (p/n U260X086P12111AA, Defender.com, purchased 2026-07-18) — ready to install, not yet installed |
+| Refrigeration | — (removed) | — | Old Adler Barbour 12 V unit **fully removed 2026-09-07** (quick-connect refrigerant hoses disconnected and pulled through into the icebox; cooling element/evaporator removed from the box) — icebox currently has no cooling equipment. Replacement: Isotherm 2017 Compact Classic (p/n U260X086P12111AA, Defender.com, purchased 2026-07-18) — ready to install, not yet installed |
 | Stove | Tesco 3-burner propane w/ oven | — | |
 | Steering | Edson rack and pinion | — | |
 | DC Aux panel | Blue Sea Systems 8025, 4-position | — | Installed May 2026, replacing old battery-monitor panel; adds "Lights"/"Electronics" breakers |
