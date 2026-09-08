@@ -76,6 +76,8 @@ For recurring upkeep instead of one-time fixes, see
 
 - [ ] Wire the two Heltec ESP32 LoRa bilge water-height sensors onto the 12 V line and deploy them (fore/aft) — see [Sensor Hardware](systems.md#sensor-hardware-aboard-not-all-deployed)
 - [ ] Document the actual Tasker profile/script config for cellular tethering automation — see [Internet Connectivity](systems.md#internet-connectivity-cellular-hotspot)
+- [ ] Convert the Pi's tracker daemon into a published SignalK plugin, configured from the admin UI — design and migration order in [SignalK Plugin Conversion](signalk-plugin.md)
+- [ ] First step of that conversion, worth doing on its own: add a path allowlist to the instrument log so the ~1 MB `instrument_log.json` stops being committed in full every 2 min underway — see [Payload size](signalk-plugin.md#payload-size)
 
 ## Not Yet Prioritized
 
