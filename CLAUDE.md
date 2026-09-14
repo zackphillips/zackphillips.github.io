@@ -13,7 +13,7 @@ the session is for site or plugin development.
 | `data/vessel/info.yaml`, `polars.csv`, `logo.png` | **Editable** | Vessel config |
 | `docs/index.json` | Never hand-edit | Generated — `make docs-index` |
 | `data/telemetry/**` | Never edit | Pi-managed, overwritten every cycle |
-| `index.html`, `docs.html`, `assets/`, `sw.js`, `manifest.json` | **Off limits by default** | Static site — slated to move into the SignalK plugin, see `docs/signalk-plugin.md` |
+| `index.html`, `docs.html`, `assets/`, `sw.js`, `manifest.json` | **Off limits by default** | Static site — slated to move into the SignalK plugin, see `docs/project-ideas.md` |
 | `scripts/`, `services/`, `Makefile`, `tests/`, `pyproject.toml`, `.github/` | **Off limits by default** | Pi backend + tooling — same reason |
 
 If a docs change seems to need a frontend change (a new category, a new
