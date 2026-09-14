@@ -577,7 +577,7 @@ platform, not through a valved thru-hull.
 ### GPS
 - **Primary (at the dock)**: NMEA 0183 GPS "puck" over serial (`/dev/ttyOP_gpspuck`, 4800 baud, checksum validated, overrides timestamp) — used while at berth since it doesn't depend on the sailing instruments being powered on.
 - **NMEA 2000 source (underway)**: **Garmin GPS 19x**, mounted in the cockpit — every NMEA device aboard uses this Garmin unit's GPS signal. It's missing its T-connector; confirm it's tee'd into the N2K backbone properly.
-- **AIS**: the AIS transponder also outputs a GPS position, and SignalK will fall back to it, but it's **less reliable** than the Garmin GPS 19x since the AIS antenna isn't mounted as high.
+- **AIS**: the [AIT1500](#ais) transponder also outputs a GPS position — it reaches the bus through the same Actisense NGW-1 that carries its AIS targets — and SignalK will fall back to it, but it's **less reliable** than the Garmin GPS 19x. The AIT1500 uses a *built-in* GPS antenna inside the unit itself, below deck; it is **not** fed by the masthead VHF/AIS antenna or the SPL1500 splitter, which carry RF only. (The SMA-to-UHF adapter noted under [AIS](#ais) may indicate an external GPS antenna was fitted instead — worth confirming.)
 - SignalK's actual failover order for position/COG/SOG is: NMEA 2000 GPS sources (chained — this is the Garmin GPS 19x above, then AIS) → the GPS puck → derived-data as a last resort.
 
 > **⚠️ Watch Items**
@@ -615,32 +615,18 @@ platform, not through a valved thru-hull.
 - Coax run to the AIS uses TS9/RF and SMA-to-UHF adapter cables (unverified
   fit — flagged for confirmation).
 
-<span class="doc-tag doc-tag--issue">Unresolved</span> **How AIS targets reach
-the N2K backbone is not settled.** The [N2K bus scan](#n2k-devices-bus-scan)
-found an **Actisense NGW-1** (serial 251317, address 2, self-reported device
-name "NMEA 2000<->0183 Gateway"), and the NGW-1 is Actisense's 0183-to-2000
-converter — the right part for the job. But the NGW-1-ISO aboard is reported
-as a **stowed tool**, plugged in via a USB-to-serial converter only when the
-[EMU-1](#fuel-gauges) is being programmed, not a permanent install. Both
-cannot be true of one box, so either:
+**Onto the N2K backbone**: the AIT1500's NMEA 0183 output is converted by a
+permanently wired **Actisense NGW-1** — serial 251317, N2K address 2 in the
+[bus scan](#n2k-devices-bus-scan). This is what puts AIS targets (and the
+AIT1500's GPS fix, see [GPS](#gps)) on `can0` for SignalK; the AIT1500 itself
+has no N2K interface and never appears on the bus.
 
-- **Two Actisense gateways are aboard** (most likely): a permanently wired
-  **NGW-1** bridging the AIT1500 onto the bus, *plus* a stowed programming
-  gateway — see [NMEA 2000 Network](#nmea-2000-network). This fits the bus
-  scan, the 2025-12-22 changelog entry logging an AIS gateway as *installed*,
-  and the fact that the 0183-only AIT1500 needs a converter for SignalK to
-  see AIS on `can0` at all.
-- **Only the stowed gateway exists**, and it happened to be connected during
-  the bus scan. Then AIS never reaches N2K in normal operation, it reaches
-  the plotter over 0183 at 38,400 baud only, and `can0` is **not** an AIS
-  source — which would make [SignalK](signalk.md)'s `signalk-n2kais-to-nmea0183`
-  plugin dead weight.
-
-**To settle it**: look behind the panel for a second Actisense box wired
-between the AIT1500 and a bus T-connector, and read the model on the stowed
-unit's case (see the caution under [NMEA 2000 Network](#nmea-2000-network)).
-A powered-up bus scan with the stowed unit *unplugged* would also answer it —
-if an NGW-1 at address 2 is still there, it's permanently installed.
+> **Do not confuse the two Actisense gateways aboard.** The NGW-1 above is
+> wired in permanently and does the AIS conversion. A *separate* stowed
+> gateway is used only to program the [EMU-1](#fuel-gauges) — see
+> [NMEA 2000 Network](#nmea-2000-network). Earlier revisions of these docs
+> collapsed them into one "NGT-1-ISO" doing the AIS job, which was wrong on
+> both counts.
 
 ### Depth Sounder
 - **Current**: Garmin GNX depth/speed triducer — part of the Garmin GNX
@@ -716,23 +702,23 @@ cable/T-connector/terminator hardware.
 
 **Permanently installed gateways:**
 - **Actisense EMU-1** — engine/tank analog sender bridge (see [Fuel Gauges](#fuel-gauges)).
-- **Actisense NGW-1** — NMEA 0183-to-N2K conversion gateway, seen at address 2
-  in the [bus scan](#n2k-devices-bus-scan). Presumed to be the
-  [AIS](#ais) bridge; see the unresolved note there before relying on it.
+- **Actisense NGW-1** — NMEA 0183-to-N2K conversion gateway at address 2 in
+  the [bus scan](#n2k-devices-bus-scan), converting the
+  [AIS](#ais) transponder's 0183 output onto the backbone.
 
 **Stowed (not normally on the bus):**
-- An Actisense **PC gateway plus a USB-to-serial converter**, kept off the
-  boat's permanent wiring and plugged into a bus T-connector only to program
-  or update the [EMU-1](#fuel-gauges). Actisense's EMU Toolkit needs this
-  kind of interface to reach the EMU-1, and explicitly does not require it to
-  stay connected afterwards, so stowing it is the intended workflow.
-  <span class="doc-tag doc-tag--issue">Unresolved</span> **Read the model off
-  this unit's case.** It has been described aboard as an "NGW-1-ISO", but an
-  NGW-1 cannot program an EMU-1 — Actisense's Toolkit requires an **NGT-1**
-  or **NGX-1** N2K-to-PC interface, and the **NGT-1-ISO** is specifically the
-  opto-isolated RS232 variant that needs a USB-to-serial converter to reach a
-  laptop. An NGT-1-ISO is the part that matches the described use; confirm
-  before ordering spares or cables for it.
+- An Actisense **N2K-to-PC gateway plus a USB-to-serial converter**, kept out
+  of the boat's permanent wiring and plugged into a bus T-connector only to
+  program or update the [EMU-1](#fuel-gauges), then stowed again. Actisense's
+  EMU Toolkit can only reach an EMU-1 through this kind of interface, and
+  explicitly does not need it to stay connected afterwards, so this is the
+  intended workflow — not a fault.
+  - Identified by function as an **NGT-1-ISO**: an EMU-1 can only be
+    programmed by an NGT-1 or NGX-1, and the `-ISO` is the opto-isolated
+    RS232 variant, which is why it needs the USB-to-serial converter.
+    **Not yet read off the case** — worth confirming before ordering spares
+    or cables, since it has also been described aboard as an "NGW-1-ISO" and
+    an NGW-1 cannot do this job.
 
 ### N2K Devices (bus scan)
 
@@ -742,7 +728,7 @@ offline at capture time since the boat wasn't powered up:
 | Device | Manufacturer | Model | Part # | Serial | Class | Instance | Address | Notes |
 |--------|-------------|-------|--------|--------|-------|----------|---------|-------|
 | Engine Monitoring Unit EMU-1 | Actisense | EMU-1 | — | 307901 | Propulsion | 0 | 6 | Matches [Fuel Gauges](#fuel-gauges) EMU-1 |
-| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | — | 251317 | Internetwork device | 0 | 2 | Self-reported **NGW-1** (0183↔2000 converter), presumed the [AIS](#ais) bridge — but whether it is permanently wired or was a stowed unit plugged in at scan time is <span class="doc-tag doc-tag--issue">Unresolved</span>; see [AIS](#ais). Variant (-ISO/-USB/-STNG) unconfirmed |
+| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | — | 251317 | Internetwork device | 0 | 2 | The permanently wired [AIS](#ais) 0183-to-N2K converter. The stowed EMU-1 programming gateway is a **different** unit and was not connected for this scan. Variant (-ISO/-USB/-STNG) unconfirmed |
 | DST810 | Airmar | DST810 | — | A000LYR7 | Navigation | 0 | 35 | Not yet reconciled with the [Depth Sounder](#depth-sounder) transducers below — needs confirmation |
 | MS-RA70 | Fusion Electronics | MS-RA70 | — | 1248726 | Entertainment | 0 | 12 | Matches [Audio, Video & Entertainment](#11-audio-video-entertainment) head unit |
 | N2K Remote | Fusion Electronics | N2K Remote | — | 245105 | Entertainment | 0 | 33 | Matches the Fusion MS-NRX300 wired remote |

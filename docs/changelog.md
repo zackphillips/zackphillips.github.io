@@ -255,10 +255,9 @@ Format: `YYYY-MM-DD: Description`
   interface, which does no NMEA 0183 conversion — it could not have done this
   job. The AIS transceiver it bridges is a Digital Yacht **AIT1500**, which is
   NMEA 0183 only and needs a converter to reach the bus.
-- <span class="doc-tag doc-tag--issue">Unresolved</span> Whether this gateway
-  is in fact permanently wired is now in question — a separate Actisense
-  gateway is kept stowed for EMU-1 programming, and the bus scan may have
-  caught that one instead. See [Systems — AIS](systems.md#ais).
+- Confirmed 2026-09-14 as a **permanent install**, distinct from the stowed
+  Actisense gateway used to program the EMU-1. Two Actisense gateways are
+  aboard; see [Systems — NMEA 2000 Network](systems.md#nmea-2000-network).
 
 ### 2026-01-01: Bilge level sending unit installed
 - 100TECH 6.5" 240-33 ohm sending unit installed as a bilge level sensor
@@ -716,8 +715,8 @@ Part numbers still need to be filled in as parts are ordered.
 | Steering | Edson rack and pinion | — | |
 | DC Aux panel | Blue Sea Systems 8025, 4-position | — | Installed May 2026, replacing old battery-monitor panel; adds "Lights"/"Electronics" breakers |
 | Engine/tank NMEA 2000 gateway | Actisense EMU-1 | — | Installed Dec 2025, behind engine control panel, accessible via aft cabin panel |
-| AIS NMEA 2000 gateway | Actisense NGW-1 | — | Installed Dec 2025; model corrected from "NGT-1-ISO" 2026-09-14 per the N2K bus scan (serial 251317, address 2) — variant unconfirmed, and whether it is permanently wired or the stowed unit below is unresolved (see [Systems — AIS](systems.md#ais)) |
-| EMU-1 programming gateway (stowed) | Actisense PC gateway + USB-to-serial converter | — | Not permanently wired; plugged into a bus T-connector only to program/update the EMU-1, then stowed. Described aboard as an "NGW-1-ISO", but an NGW-1 cannot program an EMU-1 — Actisense's Toolkit needs an **NGT-1** or **NGX-1**. Read the model off the case (see [Systems — NMEA 2000 Network](systems.md#nmea-2000-network)) |
+| AIS NMEA 2000 gateway | Actisense NGW-1 | — | Installed Dec 2025, permanently wired; converts the AIT1500's NMEA 0183 onto the backbone. Bus scan: serial 251317, address 2. Model corrected from "NGT-1-ISO" 2026-09-14; variant (-ISO/-USB/-STNG) unconfirmed |
+| EMU-1 programming gateway (stowed) | Actisense NGT-1-ISO + USB-to-serial converter | — | **Not** the AIS gateway above and not permanently wired — plugged into a bus T-connector only to program/update the EMU-1, then stowed. Identified by function (only an NGT-1/NGX-1 can program an EMU-1; `-ISO` is the RS232 variant needing the USB-serial adapter); model not yet read off the case |
 | GPS (NMEA 2000) | Garmin GPS 19x | — | Installed cockpit, April 2026; missing T-connector |
 | Freshwater tank senders | 100TECH 240-33 ohm, 13" & 16" | — | Installed Dec 2025, one per tank |
 | Bilge level sender | 100TECH 240-33 ohm, 6.5" | — | Installed Jan 2026; integration unconfirmed |
