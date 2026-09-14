@@ -18,6 +18,13 @@ SignalK (onboard) → scripts/update_signalk_data.py (Raspberry Pi)
 - The browser fetches committed JSON files directly from the repo.
 - The Pi auto-pushes; code changes go through normal PRs from a laptop/agent.
 
+**Planned replacement**: the Pi daemon and the static site are being moved
+into a published SignalK plugin — see `docs/signalk-plugin.md`. Until that
+lands, treat the frontend (`index.html`, `docs.html`, `assets/`, `sw.js`) and
+backend (`scripts/`, `services/`, `Makefile`) as frozen unless a session is
+explicitly for site or plugin development. Docs and vessel config sessions
+should never need to touch them; `CLAUDE.md` spells out the boundary.
+
 ---
 
 ## Repo layout
