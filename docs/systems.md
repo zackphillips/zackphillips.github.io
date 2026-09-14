@@ -600,8 +600,22 @@ platform, not through a valved thru-hull.
 - **Make/Model**: — (confirm what is actually installed)
 - Integrated with chartplotter; MMSI: **338543654**
 - Verify targets visible on chartplotter on departure.
-- Bridged onto the NMEA 2000 backbone via an **Actisense NGT-1-ISO**
-  NMEA 0183-to-NMEA 2000 gateway.
+- Bridged onto the NMEA 2000 backbone via an **Actisense NGW-1**
+  NMEA 0183-to-NMEA 2000 conversion gateway — serial 251317, N2K address 2,
+  see [N2K Devices](#n2k-devices-bus-scan).
+  - The AIS transceiver itself is NMEA 0183 and does **not** appear on the
+    N2K bus scan; the chartplotter and SignalK (over `can0`) both see its
+    targets through this gateway.
+  - <span class="doc-tag doc-tag--issue">Unresolved</span> The NGW-1
+    **variant** is not confirmed. An **NGW-1-ISO** (opto-isolated NMEA 0183
+    serial input) is the variant that fits this install — check the case
+    label.
+  - **Model corrected 2026-09-14.** Earlier revisions of these docs called
+    this an "NGT-1-ISO". That was a documentation error: the Actisense
+    **NGT-1** is an NMEA 2000-to-PC interface and does no NMEA 0183
+    conversion at all, so it could never have filled this role. Nothing
+    aboard needs one either — the Pi reads N2K over SocketCAN (`can0`), not
+    over an Actisense serial gateway (see [SignalK](signalk.md)).
 - Shares the single mast antenna with the VHF radio through the Digital
   Yacht SPL1500 ZeroLoss splitter — see [VHF Radio](#vhf-radio) above.
 - Coax run to the AIS uses TS9/RF and SMA-to-UHF adapter cables (unverified
@@ -679,7 +693,7 @@ platform, not through a valved thru-hull.
 The onboard N2K backbone uses Regatta Processing and Ancor
 cable/T-connector/terminator hardware. Notable gateways:
 - **Actisense EMU-1** — engine/tank analog sender bridge (see [Fuel Gauges](#fuel-gauges)).
-- **Actisense NGT-1-ISO** — AIS-to-N2K bridge (see [AIS](#ais)).
+- **Actisense NGW-1** — NMEA 0183 AIS-to-N2K conversion gateway (see [AIS](#ais)).
 
 ### N2K Devices (bus scan)
 
@@ -689,7 +703,7 @@ offline at capture time since the boat wasn't powered up:
 | Device | Manufacturer | Model | Part # | Serial | Class | Instance | Address | Notes |
 |--------|-------------|-------|--------|--------|-------|----------|---------|-------|
 | Engine Monitoring Unit EMU-1 | Actisense | EMU-1 | — | 307901 | Propulsion | 0 | 6 | Matches [Fuel Gauges](#fuel-gauges) EMU-1 |
-| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | — | 251317 | Internetwork device | 0 | 2 | Model is **NGW-1**, not the NGT-1-ISO documented under [AIS](#ais) above — needs reconciling |
+| NMEA 2000<->0183 Gateway | Actisense | NGW-1 | — | 251317 | Internetwork device | 0 | 2 | The [AIS](#ais) gateway. Reconciled 2026-09-14: the scan's self-reported **NGW-1** is correct; the docs' former "NGT-1-ISO" was an error (see [AIS](#ais)). Variant (-ISO/-USB/-STNG) still unconfirmed |
 | DST810 | Airmar | DST810 | — | A000LYR7 | Navigation | 0 | 35 | Not yet reconciled with the [Depth Sounder](#depth-sounder) transducers below — needs confirmation |
 | MS-RA70 | Fusion Electronics | MS-RA70 | — | 1248726 | Entertainment | 0 | 12 | Matches [Audio, Video & Entertainment](#11-audio-video-entertainment) head unit |
 | N2K Remote | Fusion Electronics | N2K Remote | — | 245105 | Entertainment | 0 | 33 | Matches the Fusion MS-NRX300 wired remote |

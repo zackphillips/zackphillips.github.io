@@ -247,8 +247,13 @@ Format: `YYYY-MM-DD: Description`
   [Depth Sounder](systems.md#depth-sounder).
 
 ### 2025-12-22: AIS NMEA gateway installed
-- Actisense NGT-1-ISO (NMEA 0183-to-NMEA 2000) gateway installed as the
-  connector between the AIS transceiver and the N2K backbone.
+- Actisense NGW-1 (NMEA 0183-to-NMEA 2000 conversion gateway) installed as
+  the connector between the AIS transceiver and the N2K backbone.
+- **Model corrected 2026-09-14.** This entry originally recorded an
+  "NGT-1-ISO". The N2K bus scan reports the device as an Actisense **NGW-1**
+  (serial 251317, address 2), and the NGT-1 is Actisense's NMEA 2000-to-PC
+  interface, which does no NMEA 0183 conversion — it could not have done this
+  job. See [Systems — AIS](systems.md#ais).
 
 ### 2026-01-01: Bilge level sending unit installed
 - 100TECH 6.5" 240-33 ohm sending unit installed as a bilge level sensor
@@ -706,7 +711,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Steering | Edson rack and pinion | — | |
 | DC Aux panel | Blue Sea Systems 8025, 4-position | — | Installed May 2026, replacing old battery-monitor panel; adds "Lights"/"Electronics" breakers |
 | Engine/tank NMEA 2000 gateway | Actisense EMU-1 | — | Installed Dec 2025, behind engine control panel, accessible via aft cabin panel |
-| AIS NMEA 2000 gateway | Actisense NGT-1-ISO | — | Installed Dec 2025 |
+| AIS NMEA 2000 gateway | Actisense NGW-1 | — | Installed Dec 2025; model corrected from "NGT-1-ISO" 2026-09-14 per the N2K bus scan (serial 251317) — variant (-ISO/-USB/-STNG) unconfirmed |
 | GPS (NMEA 2000) | Garmin GPS 19x | — | Installed cockpit, April 2026; missing T-connector |
 | Freshwater tank senders | 100TECH 240-33 ohm, 13" & 16" | — | Installed Dec 2025, one per tank |
 | Bilge level sender | 100TECH 240-33 ohm, 6.5" | — | Installed Jan 2026; integration unconfirmed |
