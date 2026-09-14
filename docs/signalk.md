@@ -175,7 +175,7 @@ anchored.
 | Plugin | What it does |
 |---|---|
 | [@signalk/signalk-to-nmea0183](https://github.com/SignalK/signalk-to-nmea0183) | Converts SignalK back to NMEA 0183 — APB, DPT, GGA, GLL, HDM, HDTC, MTW, MWVR/MWVT, RMB, RSA, VWR/VWT, XTE/XTE-GC, ZDA — feeds legacy instruments/autopilot from modern sources |
-| [signalk-n2kais-to-nmea0183](https://github.com/sbender9/signalk-n2kais-to-nmea0183) | Converts AIS from NMEA 2000 to NMEA 0183 output |
+| [signalk-n2kais-to-nmea0183](https://github.com/sbender9/signalk-n2kais-to-nmea0183) | Converts AIS from NMEA 2000 back to NMEA 0183 output. The AIT1500 transceiver is 0183-only and is converted *onto* N2K by an Actisense NGW-1, so this plugin re-converts it for 0183 consumers — see [Systems — AIS](systems.md#ais) |
 | [sk-to-nmea2000](https://github.com/SignalK/signalk-to-nmea2000) | Mostly disabled except navigation data, route/waypoint info, XTE, bearing/distance-to-marks, time-to-mark — feeds a legacy NMEA 2000 chartplotter/autopilot the active route |
 | signalk-nmea2000-emitter-cannon | Similar role: nav/route/XTE data and house battery broadcast enabled out to NMEA 2000; most other PGNs disabled |
 

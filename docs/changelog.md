@@ -247,8 +247,17 @@ Format: `YYYY-MM-DD: Description`
   [Depth Sounder](systems.md#depth-sounder).
 
 ### 2025-12-22: AIS NMEA gateway installed
-- Actisense NGT-1-ISO (NMEA 0183-to-NMEA 2000) gateway installed as the
-  connector between the AIS transceiver and the N2K backbone.
+- Actisense NGW-1 (NMEA 0183-to-NMEA 2000 conversion gateway) installed as
+  the connector between the AIS transceiver and the N2K backbone.
+- **Model corrected 2026-09-14.** This entry originally recorded an
+  "NGT-1-ISO". The N2K bus scan reports the device as an Actisense **NGW-1**
+  (serial 251317, address 2), and the NGT-1 is Actisense's NMEA 2000-to-PC
+  interface, which does no NMEA 0183 conversion — it could not have done this
+  job. The AIS transceiver it bridges is a Digital Yacht **AIT1500**, which is
+  NMEA 0183 only and needs a converter to reach the bus.
+- Confirmed 2026-09-14 as a **permanent install**, distinct from the stowed
+  Actisense gateway used to program the EMU-1. Two Actisense gateways are
+  aboard; see [Systems — NMEA 2000 Network](systems.md#nmea-2000-network).
 
 ### 2026-01-01: Bilge level sending unit installed
 - 100TECH 6.5" 240-33 ohm sending unit installed as a bilge level sensor
@@ -684,7 +693,7 @@ Part numbers still need to be filled in as parts are ordered.
 | Wind/depth/speed instruments | Garmin GNX wind instrument + depth/speed triducer + GNX 20 display | — | Installed 2025-12-14/12-20 ("Garmin sail pack 52"), replacing dead TackTick/Robertson displays; wind, depth, and paddle wheel all working. Fusion MS-NRX300 wired remote also installed Sept 2025 |
 | Compass | Ritchie 4" | — | Helm |
 | EPIRB | ACR Global-Fix | — | Registered (2026); battery replaced, not yet tested |
-| AIS transponder | — | — | Confirm what is actually installed |
+| AIS transponder | Digital Yacht AIT1500 | — | Class B, built-in 50-channel GPS (internal antenna). NMEA 0183 only (38,400 baud high speed / 4,800 baud low speed) + USB — **no NMEA 2000 interface**. Antenna shared with the VHF via the Digital Yacht SPL1500 splitter |
 | House battery | 12 V 4-D AGM | — | |
 | Battery (added May 2026) | Group 31 dual-purpose AGM, 105 Ah | — | West Marine; bank assignment unconfirmed |
 | Start battery | 12 V AGM | — | Replaced June 2025 (health had dropped to 59% per May 2025 survey); site previously listed this as Group 27 sealed lead acid — corrected here. Terminal covers fitted |
@@ -706,7 +715,8 @@ Part numbers still need to be filled in as parts are ordered.
 | Steering | Edson rack and pinion | — | |
 | DC Aux panel | Blue Sea Systems 8025, 4-position | — | Installed May 2026, replacing old battery-monitor panel; adds "Lights"/"Electronics" breakers |
 | Engine/tank NMEA 2000 gateway | Actisense EMU-1 | — | Installed Dec 2025, behind engine control panel, accessible via aft cabin panel |
-| AIS NMEA 2000 gateway | Actisense NGT-1-ISO | — | Installed Dec 2025 |
+| AIS NMEA 2000 gateway | Actisense NGW-1 | — | Installed Dec 2025, permanently wired; converts the AIT1500's NMEA 0183 onto the backbone. Bus scan: serial 251317, address 2. Model corrected from "NGT-1-ISO" 2026-09-14; variant (-ISO/-USB/-STNG) unconfirmed |
+| EMU-1 programming gateway (stowed) | Actisense NGT-1-ISO + USB-to-serial converter | — | **Not** the AIS gateway above and not permanently wired — plugged into a bus T-connector only to program/update the EMU-1, then stowed. Identified by function (only an NGT-1/NGX-1 can program an EMU-1; `-ISO` is the RS232 variant needing the USB-serial adapter); model not yet read off the case |
 | GPS (NMEA 2000) | Garmin GPS 19x | — | Installed cockpit, April 2026; missing T-connector |
 | Freshwater tank senders | 100TECH 240-33 ohm, 13" & 16" | — | Installed Dec 2025, one per tank |
 | Bilge level sender | 100TECH 240-33 ohm, 6.5" | — | Installed Jan 2026; integration unconfirmed |
