@@ -56,6 +56,8 @@ For recurring upkeep instead of one-time fixes, see
 - [ ] Reconnect the radar to a compatible display, or otherwise decide its fate — the Furuno RDP-143 was removed 2026-09-04 and a Samsung tablet was installed in its place, but the tablet can't show radar (proprietary Furuno interface) — see [Radar](systems.md#radar)
 - [ ] Confirm whether SignalK's `furuno` NMEA 0183 data source is still live now that the display it fed was removed 2026-09-04 — see [Chartplotter / MFD](systems.md#chartplotter-mfd)
 - [ ] Reconcile the GPS antenna offset recorded twice (and disagreeing) in the SignalK config — see [GPS](systems.md#gps)
+- [ ] Settle how AIS reaches the N2K backbone: look for a permanently wired Actisense NGW-1 between the AIT1500 and a bus T-connector, and re-scan the bus with the stowed programming gateway unplugged — see [AIS](systems.md#ais)
+- [ ] Read the model off the stowed Actisense EMU-1 programming gateway — described aboard as an "NGW-1-ISO", but only an NGT-1/NGX-1 can program an EMU-1 — see [NMEA 2000 Network](systems.md#nmea-2000-network)
 - [ ] Swing the compass and produce a deviation card — see [Compass](systems.md#compass)
 - [ ] Reinstall the Garmin GNX triducer — pulled 2026-08-31 to clean off marine growth; still aboard, set upright next to the through-hull, just not seated. Garmin depth/speed is dark and masthead wind angle correction is affected until it's back in — see [Depth Sounder](systems.md#depth-sounder)
 
