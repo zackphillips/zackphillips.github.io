@@ -17,8 +17,11 @@
 #include "sensesp/sensors/digital_input.h"
 #include "sensesp/sensors/sensor.h"
 #include "sensesp/signalk/signalk_output.h"
+#include "sensesp/signalk/signalk_put_request_listener.h"
 #include "sensesp/system/lambda_consumer.h"
 #include "sensesp_app_builder.h"
+
+#include "chain_counter.h"
 
 
 using namespace sensesp;
@@ -47,6 +50,41 @@ const float kAnalogInputScale = 3.3;
 const uint8_t kDigitalInput1Gpio = 4;
 const uint8_t kDigitalInput2Gpio = 3;
 const unsigned int kDigitalInputReadInterval = 500;
+
+// Windlass chain counter GPIOs. Override with -D CHAIN_*_GPIO=n in
+// platformio.ini if these clash with your wiring. All three inputs must be
+// level shifted or opto-isolated: the windlass harness is 12 V and the ESP32
+// is 3.3 V tolerant only.
+#ifndef CHAIN_SENSOR_GPIO
+#define CHAIN_SENSOR_GPIO 38
+#endif
+#ifndef CHAIN_UP_GPIO
+#define CHAIN_UP_GPIO 39
+#endif
+#ifndef CHAIN_DOWN_GPIO
+#define CHAIN_DOWN_GPIO 40
+#endif
+
+const uint8_t kChainSensorGpio = CHAIN_SENSOR_GPIO;
+const uint8_t kChainUpGpio = CHAIN_UP_GPIO;
+const uint8_t kChainDownGpio = CHAIN_DOWN_GPIO;
+
+// Chain paid out per counted pulse, in meters. This is a starting point for a
+// Quick Eagle gypsy counting both sensor edges; calibrate it against a marked
+// chain and set the real value in the web config UI.
+const float kChainDistancePerPulse = 0.1675;
+
+// Signal K path the rode length is published on and accepts PUT requests for.
+// Not part of the Signal K schema -- there is no windlass or rode key in it --
+// but it sits in the navigation.anchor tree the dashboard already reads. Change
+// it in the web config UI if your consumer expects something else.
+const char* kRodeSkPath = "navigation.anchor.rodeDeployed";
+
+// Values mirrored to the OLED.
+float current_rode = 0.0;
+int current_pulse_count = 0;
+bool current_chain_up = false;
+bool current_chain_down = false;
 
 // Test this yourself by connecting pin 15 to pin 14 with a jumper wire and
 // see if the value changes!
@@ -221,7 +259,89 @@ void setup() {
       ->set_title("Digital Input 2 SK Output Path")
       ->set_sort_order(210);
   digital_input2->connect_to(di2_sk_output);
-  
+
+  // Windlass chain counter. The gypsy sensor only reports movement, so the up
+  // and down contactor sense lines supply the direction.
+  auto chain_counter = std::make_shared<ChainCounter>(
+      kChainSensorGpio, kChainUpGpio, kChainDownGpio, kChainDistancePerPulse,
+      "/Windlass/Chain Counter");
+  ConfigItem(chain_counter)
+      ->set_title("Windlass Chain Counter")
+      ->set_description(
+          "Rode calibration and counter state. Set the pulse count to 0 with "
+          "the anchor fully home.")
+      ->set_sort_order(300);
+
+  chain_counter->attach([chain_counter]() {
+    current_rode = chain_counter->get_rode();
+    current_pulse_count = chain_counter->get_pulse_count();
+    current_chain_up = chain_counter->get_up();
+    current_chain_down = chain_counter->get_down();
+    debugD("Rode: %.2fm (%d pulses, dir %d)", current_rode,
+           current_pulse_count, chain_counter->get_direction());
+  });
+
+  // Deployed rode, in meters.
+  auto rode_metadata =
+      std::make_shared<SKMetadata>("m", "Anchor rode deployed");
+  auto rode_sk_output = std::make_shared<SKOutput<float>>(
+      kRodeSkPath,                 // Signal K path
+      "/Windlass/Rode Deployed",   // configuration path
+      rode_metadata
+  );
+  ConfigItem(rode_sk_output)
+      ->set_title("Rode Deployed SK Output Path")
+      ->set_description("The SK path to publish the deployed rode length")
+      ->set_sort_order(310);
+  chain_counter->connect_to(rode_sk_output);
+
+  // Raw pulse count, mostly useful for calibration.
+  auto pulse_metadata =
+      std::make_shared<SKMetadata>("", "Windlass gypsy pulse count");
+  auto pulse_sk_output = std::make_shared<SKOutput<int>>(
+      "sensors.windlass.pulseCount",  // Signal K path
+      "/Windlass/Pulse Count",        // configuration path
+      pulse_metadata
+  );
+  ConfigItem(pulse_sk_output)
+      ->set_title("Windlass Pulse Count SK Output Path")
+      ->set_sort_order(320);
+  chain_counter->pulse_count_output()->connect_to(pulse_sk_output);
+
+  // Contactor state, so the dashboard can tell hauling from veering.
+  auto up_metadata = std::make_shared<SKMetadata>("", "Windlass hauling up");
+  auto up_sk_output = std::make_shared<SKOutput<bool>>(
+      "sensors.windlass.up",   // Signal K path
+      "/Windlass/Up",          // configuration path
+      up_metadata
+  );
+  ConfigItem(up_sk_output)
+      ->set_title("Windlass Up SK Output Path")
+      ->set_sort_order(330);
+  chain_counter->up_output()->connect_to(up_sk_output);
+
+  auto down_metadata = std::make_shared<SKMetadata>("", "Windlass veering down");
+  auto down_sk_output = std::make_shared<SKOutput<bool>>(
+      "sensors.windlass.down",  // Signal K path
+      "/Windlass/Down",         // configuration path
+      down_metadata
+  );
+  ConfigItem(down_sk_output)
+      ->set_title("Windlass Down SK Output Path")
+      ->set_sort_order(340);
+  chain_counter->down_output()->connect_to(down_sk_output);
+
+  // Accept a Signal K PUT on the rode path so the counter can be zeroed or
+  // corrected from the dashboard: PUT 0 with the anchor home.
+  auto rode_put_listener =
+      std::make_shared<FloatSKPutRequestListener>(kRodeSkPath);
+  auto rode_put_consumer = std::make_shared<LambdaConsumer<float>>(
+      [chain_counter](float rode) {
+        debugI("Rode set to %.2fm over Signal K PUT", rode);
+        chain_counter->set_rode(rode);
+      });
+  rode_put_listener->connect_to(rode_put_consumer);
+
   // Enable Vext power for peripherals (CRITICAL for Heltec V3!)
   pinMode(Vext, OUTPUT);
   digitalWrite(Vext, LOW);  // LOW = enable power to external components
@@ -266,8 +386,14 @@ void loop() {
     display.setFont(ArialMT_Plain_10);
     display.setTextAlignment(TEXT_ALIGN_LEFT);
     
-    // Title
-    display.drawString(0, 0, "SensESP Engine Reader");
+    // Rode, direction and raw pulse count on the top line
+    const char* chain_dir = current_chain_up     ? "UP"
+                            : current_chain_down ? "DN"
+                                                 : "--";
+    display.drawString(0, 0, "Rode " + String(current_rode, 1) + "m " + chain_dir);
+    display.setTextAlignment(TEXT_ALIGN_RIGHT);
+    display.drawString(128, 0, "p" + String(current_pulse_count));
+    display.setTextAlignment(TEXT_ALIGN_LEFT);
     
     // Analog input values with pin numbers
     display.drawString(0, 10, "A" + String(kAnalogInput1Gpio) + ": " + String(current_analog_value1, 2) + "V");
@@ -288,14 +414,17 @@ void loop() {
     display.display();
     
     // Also output to serial for debugging
-    debugD("Display: A%d=%.2fV, A%d=%.2fV, A%d=%.2fV, D%d=%s, D%d=%s", 
+    debugD("Display: A%d=%.2fV, A%d=%.2fV, A%d=%.2fV, D%d=%s, D%d=%s, rode=%.2fm (%d pulses, %s)", 
            kAnalogInput1Gpio, current_analog_value1,
            kAnalogInput2Gpio, current_analog_value2, 
            kAnalogInput3Gpio, current_analog_value3,
            kDigitalInput1Gpio, current_digital_input1 ? "HIGH" : "LOW",
-           kDigitalInput2Gpio, current_digital_input2 ? "HIGH" : "LOW");
+           kDigitalInput2Gpio, current_digital_input2 ? "HIGH" : "LOW",
+           current_rode, current_pulse_count, chain_dir);
   }
   
-  delay(100);  // Small delay to prevent excessive CPU usage
+  // 1 ms, not 100 ms: the chain counter polls its sensor every 5 ms and a
+  // 10 Hz event loop would miss pulses. Still yields to the idle task.
+  delay(1);
 }
 
