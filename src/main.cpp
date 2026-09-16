@@ -1,12 +1,15 @@
-// Signal K application template file.
+// SensESP node for a Heltec WiFi LoRa 32 V3.
 //
-// This application demonstrates core SensESP concepts in a very
-// concise manner. You can build and upload the application as is
-// and observe the value changes on the serial port monitor.
+// Two jobs:
 //
-// You can use this source file as a basis for your own projects.
-// Remove the parts that are not relevant to you, and add your own code
-// for external hardware libraries.
+//   - Windlass chain counter (see chain_counter.h). This is the part that is
+//     wired up and calibrated.
+//   - Three analog and two digital inputs, published on generic
+//     sensors.analog_inputN / sensors.digital_inputN paths. These are still
+//     the template's inputs: point them at real engine signals and rename the
+//     paths when you do.
+//
+// Current values are mirrored to the on-board OLED.
 
 #include <memory>
 
@@ -121,8 +124,9 @@ void setup() {
   // Construct the global SensESPApp() object
   SensESPAppBuilder builder;
   sensesp_app = (&builder)
-                    // Set a custom hostname for the app.
-                    ->set_hostname("my-sensesp-project")
+                    // Sets the mDNS name: the config UI is at
+                    // http://windlass.local/ once it joins the boat network.
+                    ->set_hostname("windlass")
                     // Optionally, hard-code the WiFi and Signal K server
                     // settings. This is normally not needed.
                     //->set_wifi_client("My WiFi SSID", "my_wifi_password")
