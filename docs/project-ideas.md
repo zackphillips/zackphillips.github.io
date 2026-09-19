@@ -355,3 +355,231 @@ does.
   signalk-services-to-signalk gives today.
 - `@signalk/tracks-plugin` is already installed and exposes a track API;
   whether to build GPX from that instead of the plugin's own position log.
+
+---
+
+## Uplink Phone Telemetry in Signal K
+
+**Status:** Idea / not yet started
+**Scope:** Publish the cellular uplink phone's health (battery level and
+temperature, charge state, cell signal, network type, uptime) into Signal K.
+Write it through a UDP Signal K data connection fed by a root shell script
+that Tasker triggers. As a side effect, finish documenting the Tasker
+tethering config that is already an open item on
+[Planned Projects](planned-projects.md#vessel-data-automation).
+
+### 1. Why
+
+The [Google Pixel 4a](systems.md#internet-connectivity-cellular-hotspot) is
+the boat's only internet uplink. Pushover alerts, PostgSail, the Windy
+station, the mermug.com telemetry push and AstroWarp remote access all
+depend on it. Right now nothing tells us how healthy the phone is.
+
+- **Battery heat.** The phone sits on a charger around the clock in a
+  closed cabin. A lithium pouch held at 100% and warm is the classic
+  swelling failure. Logging battery temperature is the cheapest early
+  warning.
+- **Signal quality.** RSRP and network type (LTE vs. NR) explain slow or
+  dropped uplink at different berths and anchorages. Without them we're
+  guessing whether a problem is the phone, the carrier or the router.
+- **Uptime.** Unexpected reboots show up as uptime resets. A reboot
+  silently breaks tethering if the Tasker charge-start trigger doesn't
+  re-fire.
+
+### 2. Current state (from these docs)
+
+- SignalK runs at `192.168.8.50:3000`, no SSL, token security,
+  `allow_readonly` on. See [SignalK Configuration](signalk.md#server).
+- The phone is rooted, on Visible Plus, and runs Tasker. Tasker enables
+  tethering on charge start, and a follow-on script grants the boat
+  network access. The exact profile and script are **not documented**.
+- The phone also loads KIP as a status page, so it can already reach the
+  Pi over HTTP in at least one direction. The tether topology is not
+  recorded (see Open Questions).
+
+### 3. Design
+
+#### 3.1 Network path (decide first)
+
+Everything else depends on whether the phone can reach the Pi.
+
+- **Phone is on the boat LAN side** (e.g. Pi USB-tethered directly, or
+  the grant script bridges the phone onto `192.168.8.0/24`): send straight
+  to `192.168.8.50`. Nothing else needed.
+- **Phone is the router's WAN upstream** (hotspot or USB tether into the
+  router WAN): the phone sits outside the router's NAT. Add a router port
+  forward, WAN UDP 7777 to `192.168.8.50:7777`. The phone then targets
+  the router's address on the tether subnet (`ip neigh` on the phone).
+
+A reverse proxy is **not** part of this design. It would need the same
+port forward and adds a service to maintain. Revisit only if we later want
+TLS or a single authenticated HTTP endpoint for several devices.
+
+Test: from a root shell on the phone, run `ping 192.168.8.50`.
+
+#### 3.2 Signal K ingest: UDP data connection
+
+In SignalK admin, go to **Server → Data Connections → Add**:
+
+| Setting | Value |
+|---|---|
+| Data Type | Signal K |
+| Signal K Source | UDP |
+| Port | 7777 |
+| ID | `pixel4a` (becomes the `$source` label) |
+
+The server accepts delta JSON datagrams directly, so there are no plugins,
+no Node-RED flow and no device token for ingest. UDP is unauthenticated,
+which is acceptable because the port is only reachable from the vessel LAN
+or the tether subnet. **Never forward it from the open internet.** A lost
+packet costs one status sample, which doesn't matter at a 2-minute
+cadence.
+
+**Rejected alternative:** Node-RED `http in` → change node (JSONata) →
+`signalk-send-pathvalue`, gated on a shared-secret header. It has
+delivery confirmation and auth, but it's more parts to maintain. Switch to
+it only if UDP loss or spoofing becomes a real problem.
+
+#### 3.3 Data paths
+
+Standard Signal K paths where the spec has them, so KIP unit conversion
+works. Custom paths under `communication.cellular` otherwise.
+
+| Path | Units | Source on phone | Spec |
+|---|---|---|---|
+| `electrical.batteries.phone.stateOfCharge` | ratio 0–1 | `dumpsys battery` level / 100 | Standard |
+| `electrical.batteries.phone.temperature` | K | `dumpsys battery` temperature (tenths °C) | Standard |
+| `electrical.batteries.phone.chargingMode` | string | `dumpsys battery` status | Standard |
+| `communication.cellular.rsrp` | dBm | `dumpsys telephony.registry` | Custom |
+| `communication.cellular.networkType` | string | `getprop gsm.network.type` | Custom |
+| `communication.cellular.uptime` | s | `/proc/uptime` | Custom |
+
+For Android `dumpsys battery` status, 2 = charging, 3 = discharging,
+4 = not charging and 5 = full.
+
+#### 3.4 Collection script
+
+Keep Tasker as the trigger only. Root shell reads are more reliable than
+Tasker's built-in variables. `%CELLSIG` is the legacy 0–8 scale and often
+returns -1 on Android 10+.
+
+Proposed location: `/data/local/tmp/sk_status.sh` on the phone, with a
+copy committed to this repo so the config is documented.
+
+```sh
+#!/system/bin/sh
+# Publish uplink phone health to SignalK over UDP.
+HOST=192.168.8.50   # or router tether-side IP if forwarded (see 3.1)
+PORT=7777
+
+B=$(dumpsys battery)
+LVL=$(echo "$B" | awk '/^  level:/{print $2/100}')
+TK=$(echo "$B"  | awk '/^  temperature:/{print $2/10+273.15}')
+ST=$(echo "$B"  | awk '/^  status:/{print $2}')
+case "$ST" in
+  2) MODE=charging ;; 3) MODE=discharging ;;
+  4) MODE=not-charging ;; 5) MODE=full ;; *) MODE=unknown ;;
+esac
+
+RSRP=$(dumpsys telephony.registry | grep -o 'rsrp=-[0-9]*' | head -1 | cut -d= -f2)
+NET=$(getprop gsm.network.type | cut -d, -f1)
+UP=$(cut -d' ' -f1 /proc/uptime)
+
+printf '{"updates":[{"values":[
+{"path":"electrical.batteries.phone.stateOfCharge","value":%s},
+{"path":"electrical.batteries.phone.temperature","value":%s},
+{"path":"electrical.batteries.phone.chargingMode","value":"%s"},
+{"path":"communication.cellular.rsrp","value":%s},
+{"path":"communication.cellular.networkType","value":"%s"},
+{"path":"communication.cellular.uptime","value":%s}
+]}]}\n' "$LVL" "$TK" "$MODE" "${RSRP:-null}" "$NET" "$UP" \
+  | toybox nc -u -w1 "$HOST" "$PORT"
+```
+
+Verify before trusting the script:
+
+- [ ] `toybox nc --help` lists `-u` on the phone's toybox build
+- [ ] `dumpsys battery` indentation matches the awk anchors
+- [ ] `dumpsys telephony.registry` emits `rsrp=` on LTE (on NR it may
+  only emit `ssRsrp=`, so extend the grep if RSRP comes back null on 5G)
+- [ ] `getprop gsm.network.type` returns something useful and not
+  `Unknown`
+
+#### 3.5 Tasker profile
+
+- **Trigger:** Time context repeating every 2 min, all day.
+- **Task:** Run Shell, `sh /data/local/tmp/sk_status.sh`, **Use Root** on.
+- Exempt Tasker from battery optimization. Doze shouldn't apply while the
+  phone is charging, but the exemption covers unplugged periods, which are
+  exactly when the data matters most.
+
+#### 3.6 Staleness watchdog (Node-RED, no function nodes)
+
+Signal K keeps the last value forever, so a dead phone looks healthy.
+Subscribe to `communication.cellular.uptime` and feed a `trigger` node set
+to "send nothing, then after 5 min send". The output sets
+`notifications.communication.cellular.stale` to `alert` for display at the
+nav station in KIP and Freeboard. Any new sample resets the trigger and
+sends a `normal` state.
+
+**Known limitation:** Pushover can't deliver this alert, because Pushover
+goes out through the phone that just died. It is a local-only alarm. From
+off the boat, AstroWarp dropping is the only remote signal.
+
+#### 3.7 Battery protection
+
+Logging temperature only helps if we act on it. Once the data is flowing:
+
+- Cap charge around 80% using a root charge controller (e.g. the
+  ACC module, if the phone is rooted via Magisk). Confirm the cap works by
+  watching `stateOfCharge` plateau and `temperature` drop.
+- Add a SignalK zone on `electrical.batteries.phone.temperature`: warn at
+  104 °F (313 K), alarm at 113 °F (318 K).
+
+### 4. Failure modes
+
+| Failure | Effect | Mitigation |
+|---|---|---|
+| Phone can't route to Pi | No data, silently | Test in 3.1 first; port forward if phone is WAN-side |
+| Phone reboots, Tasker trigger doesn't re-fire | No tether, no telemetry | Uptime reset visible in history; staleness watchdog fires |
+| Phone dies / battery swells | Uplink lost; alerts can't leave the boat | Charge cap, temperature zone, local watchdog |
+| UDP port exposed beyond LAN | Anyone can inject deltas | Forward only on tether-side WAN, never from internet |
+| Android update changes `dumpsys` output | Nulls or garbage values | Script sends `null` on missing RSRP; eyeball values after any OS update |
+| Tasker killed by battery optimization | Gaps while unplugged | Optimization exemption (3.5) |
+
+### 5. Build plan
+
+- [ ] Record the tether topology (hotspot vs. USB, router WAN vs. Pi) in
+  [Internet Connectivity](systems.md#internet-connectivity-cellular-hotspot)
+- [ ] Export the existing Tasker tethering profile and grant script and
+  document them there (closes the existing Planned Projects item)
+- [ ] Confirm phone → Pi reachability; add the router port forward if
+  needed
+- [ ] Add the `pixel4a` UDP data connection in SignalK
+- [ ] Run the script by hand from `adb shell su` and confirm all six paths
+  appear in the SignalK data browser with sane values
+- [ ] Add the Tasker 2-minute profile
+- [ ] Build the Node-RED staleness watchdog; test by disabling the profile
+- [ ] Add the temperature zones
+- [ ] Install the charge cap; confirm via history over 48 h
+- [ ] Add a KIP panel (phone battery %, temperature, RSRP)
+- [ ] Optional: add the phone paths to the mermug.com telemetry allowlist
+  once the [instrument log allowlist](project-ideas.md#payload-size) exists
+- [ ] Document the final config in [SignalK Configuration](signalk.md) and
+  log the change in the [Changelog](changelog.md)
+
+### 6. Open questions
+
+- How exactly is the phone tethered: Wi-Fi hotspot or USB, and into the
+  router or the Pi? What does the "grant access" script do?
+- Is the phone rooted via Magisk (which the ACC charge cap needs)?
+- Should the script also report tether state and data used? Only worth it
+  if Visible Plus hotspot throttling turns out to matter in practice.
+
+### 7. Done when
+
+- All six paths update in SignalK every ~2 min for 7 consecutive days.
+- Unplugging the phone and killing Tasker raises the stale notification
+  within 5 min.
+- Phone battery temperature history shows the charge cap holding it below
+  the warn threshold at the dock in warm weather.
