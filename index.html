@@ -13,24 +13,24 @@
   <meta property="og:type"        content="website" />
   <meta property="og:title"       content="Mermug — Live Vessel Tracker" />
   <meta property="og:description" content="Live position, weather and systems for Mermug." />
-  <meta property="og:url"         content="https://zackphillips.github.io/" />
-  <meta property="og:image"       content="https://zackphillips.github.io/data/vessel/logo.png" />
+  <meta property="og:url"         content="http://mermug.com/" />
+  <meta property="og:image"       content="http://mermug.com/data/vessel/logo.png" />
   <meta name="description"        content="Live position, weather and systems for Mermug." />
 
   <!-- Twitter card -->
   <meta name="twitter:card"        content="summary" />
   <meta name="twitter:title"       content="Mermug — Live Vessel Tracker" />
   <meta name="twitter:description" content="Live position, weather and systems for Mermug." />
-  <meta name="twitter:image"       content="https://zackphillips.github.io/data/vessel/logo.png" />
+  <meta name="twitter:image"       content="http://mermug.com/data/vessel/logo.png" />
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="icon" href="assets/icon.svg" />
+  <link rel="icon" href="data/vessel/logo.png" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#4f46e5" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Mermug" />
-  <link rel="apple-touch-icon" href="assets/icon.svg" />
+  <link rel="apple-touch-icon" href="data/vessel/logo.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1"></script>
   <link rel="stylesheet" href="assets/styles.css" />
@@ -354,6 +354,16 @@
         <div class="info-panel" id="vessel-panel">
           <div class="panel-title">Vessel Information</div>
           <div class="data-grid" id="vessel-grid"></div>
+        </div>
+
+        <!-- OTHER INSTRUMENTS -->
+        <!-- Any path in instrument_log.json that no panel above draws. The
+             plugin's captured-path list is configurable, so a boat can log
+             something this release has never heard of; without this it was
+             fetched, published and drawn by nothing. -->
+        <div class="info-panel" id="other-panel" style="display:none">
+          <div class="panel-title">Other Instruments</div>
+          <div class="data-grid" id="other-grid"></div>
         </div>
 
         <!-- RAW DATA -->
