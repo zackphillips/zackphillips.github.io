@@ -68,7 +68,15 @@
     "beam": {
       "meta": {
         "description": "Data should be of type number.",
-        "units": "m"
+        "units": "m",
+        "displayUnits": {
+          "category": "length",
+          "targetUnit": "foot",
+          "formula": "value * 3.280839895013124",
+          "inverseFormula": "value / 3.280839895013124",
+          "symbol": "foot",
+          "displayFormat": "0.0"
+        }
       },
       "value": 4.11,
       "$source": "defaults",
@@ -77,7 +85,15 @@
     "airHeight": {
       "meta": {
         "description": "Data should be of type number.",
-        "units": "m"
+        "units": "m",
+        "displayUnits": {
+          "category": "length",
+          "targetUnit": "foot",
+          "formula": "value * 3.280839895013124",
+          "inverseFormula": "value / 3.280839895013124",
+          "symbol": "foot",
+          "displayFormat": "0.0"
+        }
       },
       "value": 18,
       "$source": "defaults",
@@ -110,7 +126,15 @@
       "fromBow": {
         "meta": {
           "description": "Distance of the sensor along the vessel axis from the bow",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "distance",
+            "targetUnit": "naut-mile",
+            "formula": "value * 0.0005399568034557236",
+            "inverseFormula": "value / 0.0005399568034557236",
+            "symbol": "nmi",
+            "displayFormat": "0.0"
+          }
         },
         "value": 7.95,
         "$source": "defaults",
@@ -119,7 +143,15 @@
       "fromCenter": {
         "meta": {
           "description": "Distance of the sensor across the vessel from the centreline, positive towards starboard",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "distance",
+            "targetUnit": "naut-mile",
+            "formula": "value * 0.0005399568034557236",
+            "inverseFormula": "value / 0.0005399568034557236",
+            "symbol": "nmi",
+            "displayFormat": "0.0"
+          }
         },
         "value": 0.45,
         "$source": "defaults",
@@ -133,18 +165,18 @@
         },
         "value": "B",
         "$source": "can0.2",
-        "timestamp": "2026-09-20T04:46:24.578Z",
+        "timestamp": "2026-09-20T05:46:15.156Z",
         "pgn": 129039
       },
       "boundingBox": {
         "value": {
-          "latmin": 37.73645423162268,
-          "latmax": 37.82599700306459,
-          "lonmin": -122.44112717282736,
-          "lonmax": -122.32869043460839
+          "latmin": 37.73645929483814,
+          "latmax": 37.826002066280104,
+          "lonmin": -122.44111192643949,
+          "lonmax": -122.32867518051945
         },
         "$source": "marinetraffic.XX",
-        "timestamp": "2026-09-20T04:46:16.512Z"
+        "timestamp": "2026-09-20T05:46:03.036Z"
       }
     },
     "fuel": {
@@ -156,17 +188,25 @@
           },
           "value": -71,
           "$source": "fuel.reserve",
-          "timestamp": "2026-09-20T04:46:23.026Z"
+          "timestamp": "2026-09-20T05:46:04.249Z"
         },
         "battery": {
           "voltage": {
             "meta": {
               "description": "",
-              "units": "V"
+              "units": "V",
+              "displayUnits": {
+                "category": "voltage",
+                "targetUnit": "V",
+                "formula": "value",
+                "inverseFormula": "value",
+                "symbol": "V",
+                "displayFormat": "0.00"
+              }
             },
             "value": 3,
             "$source": "fuel.reserve",
-            "timestamp": "2026-09-20T04:46:23.026Z"
+            "timestamp": "2026-09-20T05:46:04.249Z"
           },
           "strength": {
             "meta": {
@@ -185,11 +225,19 @@
                   "state": "warn",
                   "message": "Battery very low -  change now"
                 }
-              ]
+              ],
+              "displayUnits": {
+                "category": "percentage",
+                "targetUnit": "percent",
+                "formula": "value * 100",
+                "inverseFormula": "value * 0.01",
+                "symbol": "%",
+                "displayFormat": "0"
+              }
             },
             "value": 1,
             "$source": "fuel.reserve",
-            "timestamp": "2026-09-20T04:46:23.026Z"
+            "timestamp": "2026-09-20T05:46:04.249Z"
           }
         },
         "readingQuality": {
@@ -198,7 +246,7 @@
           },
           "value": 3,
           "$source": "fuel.reserve",
-          "timestamp": "2026-09-20T04:46:23.027Z"
+          "timestamp": "2026-09-20T05:46:04.250Z"
         }
       }
     },
@@ -209,19 +257,27 @@
             "description": "",
             "units": "db"
           },
-          "value": -72,
+          "value": -76,
           "$source": "propane.a",
-          "timestamp": "2026-09-20T04:46:16.415Z"
+          "timestamp": "2026-09-20T05:46:12.630Z"
         },
         "battery": {
           "voltage": {
             "meta": {
               "description": "",
-              "units": "V"
+              "units": "V",
+              "displayUnits": {
+                "category": "voltage",
+                "targetUnit": "V",
+                "formula": "value",
+                "inverseFormula": "value",
+                "symbol": "V",
+                "displayFormat": "0.00"
+              }
             },
             "value": 3,
             "$source": "propane.a",
-            "timestamp": "2026-09-20T04:46:16.416Z"
+            "timestamp": "2026-09-20T05:46:12.630Z"
           },
           "strength": {
             "meta": {
@@ -240,11 +296,19 @@
                   "state": "warn",
                   "message": "Battery very low -  change now"
                 }
-              ]
+              ],
+              "displayUnits": {
+                "category": "percentage",
+                "targetUnit": "percent",
+                "formula": "value * 100",
+                "inverseFormula": "value * 0.01",
+                "symbol": "%",
+                "displayFormat": "0"
+              }
             },
             "value": 1,
             "$source": "propane.a",
-            "timestamp": "2026-09-20T04:46:16.416Z"
+            "timestamp": "2026-09-20T05:46:12.630Z"
           }
         },
         "readingQuality": {
@@ -253,7 +317,7 @@
           },
           "value": 3,
           "$source": "propane.a",
-          "timestamp": "2026-09-20T04:46:16.416Z"
+          "timestamp": "2026-09-20T05:46:12.630Z"
         }
       },
       "b-CD-A5-8E-1A-0E-FC": {
@@ -262,19 +326,27 @@
             "description": "",
             "units": "db"
           },
-          "value": -75,
+          "value": -73,
           "$source": "propane.b",
-          "timestamp": "2026-09-20T04:46:19.101Z"
+          "timestamp": "2026-09-20T05:46:15.725Z"
         },
         "battery": {
           "voltage": {
             "meta": {
               "description": "",
-              "units": "V"
+              "units": "V",
+              "displayUnits": {
+                "category": "voltage",
+                "targetUnit": "V",
+                "formula": "value",
+                "inverseFormula": "value",
+                "symbol": "V",
+                "displayFormat": "0.00"
+              }
             },
             "value": 2.96875,
             "$source": "propane.b",
-            "timestamp": "2026-09-20T04:46:19.102Z"
+            "timestamp": "2026-09-20T05:46:15.725Z"
           },
           "strength": {
             "meta": {
@@ -293,11 +365,19 @@
                   "state": "warn",
                   "message": "Battery very low -  change now"
                 }
-              ]
+              ],
+              "displayUnits": {
+                "category": "percentage",
+                "targetUnit": "percent",
+                "formula": "value * 100",
+                "inverseFormula": "value * 0.01",
+                "symbol": "%",
+                "displayFormat": "0"
+              }
             },
             "value": 1,
             "$source": "propane.b",
-            "timestamp": "2026-09-20T04:46:19.102Z"
+            "timestamp": "2026-09-20T05:46:15.725Z"
           }
         },
         "readingQuality": {
@@ -306,7 +386,7 @@
           },
           "value": 3,
           "$source": "propane.b",
-          "timestamp": "2026-09-20T04:46:19.102Z"
+          "timestamp": "2026-09-20T05:46:15.725Z"
         }
       }
     },
@@ -317,19 +397,27 @@
             "description": "",
             "units": "db"
           },
-          "value": -72,
+          "value": -71,
           "$source": "blackwater.stern",
-          "timestamp": "2026-09-20T04:46:24.155Z"
+          "timestamp": "2026-09-20T05:46:09.481Z"
         },
         "battery": {
           "voltage": {
             "meta": {
               "description": "",
-              "units": "V"
+              "units": "V",
+              "displayUnits": {
+                "category": "voltage",
+                "targetUnit": "V",
+                "formula": "value",
+                "inverseFormula": "value",
+                "symbol": "V",
+                "displayFormat": "0.00"
+              }
             },
             "value": 2.9375,
             "$source": "blackwater.stern",
-            "timestamp": "2026-09-20T04:46:24.155Z"
+            "timestamp": "2026-09-20T05:46:09.481Z"
           },
           "strength": {
             "meta": {
@@ -348,11 +436,19 @@
                   "state": "warn",
                   "message": "Battery very low -  change now"
                 }
-              ]
+              ],
+              "displayUnits": {
+                "category": "percentage",
+                "targetUnit": "percent",
+                "formula": "value * 100",
+                "inverseFormula": "value * 0.01",
+                "symbol": "%",
+                "displayFormat": "0"
+              }
             },
             "value": 1,
             "$source": "blackwater.stern",
-            "timestamp": "2026-09-20T04:46:24.155Z"
+            "timestamp": "2026-09-20T05:46:09.481Z"
           }
         },
         "readingQuality": {
@@ -361,7 +457,7 @@
           },
           "value": 0,
           "$source": "blackwater.stern",
-          "timestamp": "2026-09-20T04:46:24.155Z"
+          "timestamp": "2026-09-20T05:46:09.482Z"
         }
       }
     }
@@ -522,7 +618,7 @@
             }
           },
           "$source": "fuel.reserve",
-          "timestamp": "2026-09-20T04:46:24.088Z"
+          "timestamp": "2026-09-20T05:46:11.056Z"
         }
       },
       "propane": {
@@ -562,7 +658,7 @@
             }
           },
           "$source": "propane.a",
-          "timestamp": "2026-09-20T04:46:24.089Z"
+          "timestamp": "2026-09-20T05:46:11.057Z"
         },
         "b-CD-A5-8E-1A-0E-FC": {
           "battery": {
@@ -603,7 +699,7 @@
             }
           },
           "$source": "propane.b",
-          "timestamp": "2026-09-20T04:46:24.090Z"
+          "timestamp": "2026-09-20T05:46:11.057Z"
         }
       },
       "blackwater": {
@@ -643,7 +739,7 @@
             }
           },
           "$source": "blackwater.stern",
-          "timestamp": "2026-09-20T04:46:24.090Z"
+          "timestamp": "2026-09-20T05:46:11.058Z"
         }
       }
     },
@@ -1144,7 +1240,15 @@
         "type": "number",
         "units": "ratio",
         "displayName": "Polar performance factor",
-        "updateContract": "event"
+        "updateContract": "event",
+        "displayUnits": {
+          "category": "percentage",
+          "targetUnit": "percent",
+          "formula": "value * 100",
+          "inverseFormula": "value * 0.01",
+          "symbol": "%",
+          "displayFormat": "0"
+        }
       },
       "value": 1,
       "$source": "signalk-polar-management",
@@ -1170,59 +1274,83 @@
         "temperature": {
           "meta": {
             "description": "",
-            "units": "K"
+            "units": "K",
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
-          "value": 326.35,
+          "value": 325.85,
           "$source": "signalk-rpi-monitor",
-          "timestamp": "2026-09-20T04:46:17.294Z"
+          "timestamp": "2026-09-20T05:46:04.040Z"
         }
       },
       "cpu": {
         "temperature": {
           "meta": {
             "description": "",
-            "units": "K"
+            "units": "K",
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
-          "value": 326.6,
+          "value": 323.85,
           "$source": "signalk-rpi-monitor",
-          "timestamp": "2026-09-20T04:46:17.294Z"
+          "timestamp": "2026-09-20T05:46:04.041Z"
         },
         "utilisation": {
           "meta": {
             "description": "",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
-          "value": 0.25,
+          "value": 0.14,
           "$source": "signalk-rpi-monitor",
-          "timestamp": "2026-09-20T04:46:22.210Z"
+          "timestamp": "2026-09-20T05:46:08.962Z"
         },
         "core": {
           "1": {
             "utilisation": {
-              "value": 0.24,
+              "value": 0.09,
               "$source": "signalk-rpi-monitor",
-              "timestamp": "2026-09-20T04:46:22.211Z"
+              "timestamp": "2026-09-20T05:46:08.963Z"
             }
           },
           "2": {
             "utilisation": {
-              "value": 0.31,
+              "value": 0.2,
               "$source": "signalk-rpi-monitor",
-              "timestamp": "2026-09-20T04:46:22.211Z"
+              "timestamp": "2026-09-20T05:46:08.963Z"
             }
           },
           "3": {
             "utilisation": {
-              "value": 0.22,
+              "value": 0.11,
               "$source": "signalk-rpi-monitor",
-              "timestamp": "2026-09-20T04:46:22.211Z"
+              "timestamp": "2026-09-20T05:46:08.963Z"
             }
           },
           "4": {
             "utilisation": {
-              "value": 0.22,
+              "value": 0.16,
               "$source": "signalk-rpi-monitor",
-              "timestamp": "2026-09-20T04:46:22.211Z"
+              "timestamp": "2026-09-20T05:46:08.963Z"
             }
           }
         }
@@ -1231,11 +1359,19 @@
         "utilisation": {
           "meta": {
             "description": "",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
-          "value": 0.38,
+          "value": 0.4,
           "$source": "signalk-rpi-monitor",
-          "timestamp": "2026-09-20T04:46:17.295Z"
+          "timestamp": "2026-09-20T05:46:04.042Z"
         }
       },
       "sd": {
@@ -1249,8 +1385,7 @@
               "formula": "value * 100",
               "inverseFormula": "value * 0.01",
               "symbol": "%",
-              "displayFormat": "0",
-              "explicit": true
+              "displayFormat": "0"
             },
             "zones": [
               {
@@ -1269,14 +1404,14 @@
           },
           "value": 0.62,
           "$source": "signalk-rpi-monitor",
-          "timestamp": "2026-09-20T04:46:17.295Z"
+          "timestamp": "2026-09-20T05:46:04.060Z"
         }
       }
     },
     "sun": {
       "value": "night",
       "$source": "derived-data",
-      "timestamp": "2026-09-20T04:46:22.797Z"
+      "timestamp": "2026-09-20T05:45:22.876Z"
     },
     "mode": {
       "meta": {
@@ -1284,174 +1419,174 @@
       },
       "value": "night",
       "$source": "derived-data",
-      "timestamp": "2026-09-20T04:46:22.797Z"
+      "timestamp": "2026-09-20T05:45:22.876Z"
     },
     "sunlight": {
       "times": {
         "1": {
           "sunrise": {
-            "value": "2026-09-20T13:56:55.202Z",
+            "value": "2026-09-20T13:56:55.201Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "sunriseEnd": {
-            "value": "2026-09-20T13:59:37.127Z",
+            "value": "2026-09-20T13:59:37.126Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "goldenHourEnd": {
-            "value": "2026-09-20T14:31:31.010Z",
+            "value": "2026-09-20T14:31:31.009Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "solarNoon": {
-            "value": "2026-09-20T20:04:18.842Z",
+            "value": "2026-09-20T20:04:18.841Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "goldenHour": {
-            "value": "2026-09-21T01:37:06.674Z",
+            "value": "2026-09-21T01:37:06.673Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "sunsetStart": {
-            "value": "2026-09-21T02:09:00.557Z",
+            "value": "2026-09-21T02:09:00.556Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "sunset": {
-            "value": "2026-09-21T02:11:42.482Z",
+            "value": "2026-09-21T02:11:42.481Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "dusk": {
-            "value": "2026-09-21T02:37:55.568Z",
+            "value": "2026-09-21T02:37:55.567Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "nauticalDusk": {
-            "value": "2026-09-21T03:08:37.791Z",
+            "value": "2026-09-21T03:08:37.790Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "night": {
-            "value": "2026-09-21T03:39:51.292Z",
+            "value": "2026-09-21T03:39:51.291Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "nadir": {
-            "value": "2026-09-20T08:04:18.842Z",
+            "value": "2026-09-20T08:04:18.841Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "nightEnd": {
-            "value": "2026-09-20T12:28:46.392Z",
+            "value": "2026-09-20T12:28:46.391Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "nauticalDawn": {
-            "value": "2026-09-20T12:59:59.893Z",
+            "value": "2026-09-20T12:59:59.892Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           },
           "dawn": {
-            "value": "2026-09-20T13:30:42.116Z",
+            "value": "2026-09-20T13:30:42.115Z",
             "$source": "derived-data",
-            "timestamp": "2026-09-20T04:46:22.797Z"
+            "timestamp": "2026-09-20T05:45:22.876Z"
           }
         },
         "sunrise": {
-          "value": "2026-09-19T13:56:05.019Z",
+          "value": "2026-09-19T13:56:05.018Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "sunriseEnd": {
-          "value": "2026-09-19T13:58:46.993Z",
+          "value": "2026-09-19T13:58:46.992Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "goldenHourEnd": {
           "value": "2026-09-19T14:30:40.682Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "solarNoon": {
-          "value": "2026-09-19T20:04:40.981Z",
+          "value": "2026-09-19T20:04:40.980Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "goldenHour": {
-          "value": "2026-09-20T01:38:41.280Z",
+          "value": "2026-09-20T01:38:41.279Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "sunsetStart": {
-          "value": "2026-09-20T02:10:34.970Z",
+          "value": "2026-09-20T02:10:34.969Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "sunset": {
-          "value": "2026-09-20T02:13:16.943Z",
+          "value": "2026-09-20T02:13:16.942Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "dusk": {
-          "value": "2026-09-20T02:39:31.027Z",
+          "value": "2026-09-20T02:39:31.026Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "nauticalDusk": {
-          "value": "2026-09-20T03:10:15.716Z",
+          "value": "2026-09-20T03:10:15.715Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "night": {
-          "value": "2026-09-20T03:41:33.390Z",
+          "value": "2026-09-20T03:41:33.389Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "nadir": {
-          "value": "2026-09-19T08:04:40.981Z",
+          "value": "2026-09-19T08:04:40.980Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "nightEnd": {
-          "value": "2026-09-19T12:27:48.573Z",
+          "value": "2026-09-19T12:27:48.572Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "nauticalDawn": {
-          "value": "2026-09-19T12:59:06.247Z",
+          "value": "2026-09-19T12:59:06.246Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         },
         "dawn": {
-          "value": "2026-09-19T13:29:50.936Z",
+          "value": "2026-09-19T13:29:50.935Z",
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.797Z"
+          "timestamp": "2026-09-20T05:45:22.876Z"
         }
       }
     },
     "current": {
       "drift": {
-        "value": 0.05083333333333333,
+        "value": 0.03972222222222222,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:23.849Z"
+        "timestamp": "2026-09-20T05:46:15.191Z"
       },
       "setTrue": {
-        "value": 6.0648146928204145,
+        "value": 6.076614692820414,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:23.849Z"
+        "timestamp": "2026-09-20T05:46:15.191Z"
       },
       "setMagnetic": {
-        "value": 5.830114692820414,
+        "value": 5.8419146928204135,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:23.849Z"
+        "timestamp": "2026-09-20T05:46:15.191Z"
       },
       "driftImpact": {
-        "value": 0.05083333333333333,
+        "value": 0.03972222222222222,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:23.849Z"
+        "timestamp": "2026-09-20T05:46:15.191Z"
       },
       "meta": {
         "description": "Direction and strength of current affecting the vessel",
@@ -1481,93 +1616,149 @@
         "setTrue": 3.543018381548489
       },
       "$source": "open-meteo-marine",
-      "timestamp": "2026-09-20T04:30:00.000Z"
+      "timestamp": "2026-09-20T05:15:00.000Z"
     },
     "wind": {
       "angleTrueWater": {
         "meta": {
           "description": "True wind angle based on speed through water, negative to port",
-          "units": "rad"
+          "units": "rad",
+          "displayUnits": {
+            "category": "angle",
+            "targetUnit": "degree",
+            "formula": "value * 57.29577951308231",
+            "inverseFormula": "value / 57.29577951308231",
+            "symbol": "°",
+            "displayFormat": "0.0"
+          }
         },
-        "value": -1.8788853071795861,
+        "value": -1.9817853071795863,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:24.508Z"
+        "timestamp": "2026-09-20T05:46:15.510Z"
       },
       "speedTrue": {
         "meta": {
           "description": "True wind speed.",
-          "units": "m/s"
+          "units": "m/s",
+          "displayUnits": {
+            "category": "speed",
+            "targetUnit": "kn",
+            "formula": "value * 1.94384",
+            "inverseFormula": "value * 0.514444",
+            "symbol": "kn",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 5.3,
+        "value": 2.28,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:24.508Z"
+        "timestamp": "2026-09-20T05:46:15.510Z"
       },
       "speedApparent": {
         "meta": {
           "description": "Apparent wind speed",
-          "units": "m/s"
+          "units": "m/s",
+          "displayUnits": {
+            "category": "speed",
+            "targetUnit": "kn",
+            "formula": "value * 1.94384",
+            "inverseFormula": "value * 0.514444",
+            "symbol": "kn",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 5.23,
+        "value": 2.29,
         "$source": "can0.1",
-        "timestamp": "2026-09-20T04:46:24.761Z",
+        "timestamp": "2026-09-20T05:46:15.753Z",
         "pgn": 130306
       },
       "angleApparent": {
         "meta": {
           "description": "Apparent wind angle, negative to port",
-          "units": "rad"
+          "units": "rad",
+          "displayUnits": {
+            "category": "angle",
+            "targetUnit": "degree",
+            "formula": "value * 57.29577951308231",
+            "inverseFormula": "value / 57.29577951308231",
+            "symbol": "°",
+            "displayFormat": "0.0"
+          }
         },
-        "value": -1.8721853071795866,
+        "value": -1.9756853071795861,
         "$source": "can0.1",
-        "timestamp": "2026-09-20T04:46:24.761Z",
+        "timestamp": "2026-09-20T05:46:15.753Z",
         "pgn": 130306
       },
       "directionTrue": {
         "meta": {
           "description": "The wind direction relative to true north.",
-          "units": "rad"
+          "units": "rad",
+          "displayUnits": {
+            "category": "angle",
+            "targetUnit": "degree",
+            "formula": "value * 57.29577951308231",
+            "inverseFormula": "value / 57.29577951308231",
+            "symbol": "°",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 4.286301858063923,
+        "value": 4.182155191927958,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:23.849Z"
+        "timestamp": "2026-09-20T05:46:15.191Z"
       },
       "angleTrueGround": {
         "meta": {
           "description": "True wind angle based on speed over ground, negative to port",
-          "units": "rad"
+          "units": "rad",
+          "displayUnits": {
+            "category": "angle",
+            "targetUnit": "degree",
+            "formula": "value * 57.29577951308231",
+            "inverseFormula": "value / 57.29577951308231",
+            "symbol": "°",
+            "displayFormat": "0.0"
+          }
         },
-        "value": -1.8879981419360774,
+        "value": -1.997644808072042,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:23.849Z"
+        "timestamp": "2026-09-20T05:46:15.191Z"
       },
       "speedOverGround": {
         "meta": {
           "description": "Wind speed over ground (as calculated from speedApparent and vessel's speed over ground)",
-          "units": "m/s"
+          "units": "m/s",
+          "displayUnits": {
+            "category": "speed",
+            "targetUnit": "kn",
+            "formula": "value * 1.94384",
+            "inverseFormula": "value * 0.514444",
+            "symbol": "kn",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 5.315635319716721,
+        "value": 2.2961584323469757,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:23.849Z"
+        "timestamp": "2026-09-20T05:46:15.191Z"
       },
       "oneMinute": {
         "gustTrue": {
-          "value": 6.87,
+          "value": 3.8999999999999995,
           "$source": "gusts",
-          "timestamp": "2026-09-20T04:46:23.336Z"
+          "timestamp": "2026-09-20T05:46:15.037Z"
         }
       },
       "fiveMinutes": {
         "gustTrue": {
-          "value": 6.87,
+          "value": 7.3,
           "$source": "gusts",
-          "timestamp": "2026-09-20T04:46:23.336Z"
+          "timestamp": "2026-09-20T05:46:15.037Z"
         }
       },
       "oneHour": {
         "gustTrue": {
-          "value": 6.87,
+          "value": 8.549999999999999,
           "$source": "gusts",
-          "timestamp": "2026-09-20T04:46:23.336Z"
+          "timestamp": "2026-09-20T05:46:15.037Z"
         }
       }
     },
@@ -1575,27 +1766,43 @@
       "serviceStatus": {
         "value": "failed",
         "$source": "signalk-services-to-signalk.XX",
-        "timestamp": "2026-09-20T04:46:23.001Z"
+        "timestamp": "2026-09-20T05:45:46.974Z"
       }
     },
     "depth": {
       "belowKeel": {
         "meta": {
           "description": "Depth below keel",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "depth",
+            "targetUnit": "foot",
+            "formula": "value * 3.280839895013124",
+            "inverseFormula": "value / 3.280839895013124",
+            "symbol": "foot",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 2.96,
+        "value": 2.6,
         "$source": "derived-data",
-        "timestamp": "2026-09-20T04:46:24.689Z"
+        "timestamp": "2026-09-20T05:46:15.038Z"
       },
       "belowTransducer": {
         "meta": {
           "description": "Depth below Transducer",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "depth",
+            "targetUnit": "foot",
+            "formula": "value * 3.280839895013124",
+            "inverseFormula": "value / 3.280839895013124",
+            "symbol": "foot",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 2.96,
+        "value": 2.6,
         "$source": "can0.35",
-        "timestamp": "2026-09-20T04:46:24.689Z",
+        "timestamp": "2026-09-20T05:46:15.038Z",
         "pgn": 128267
       }
     },
@@ -1603,11 +1810,19 @@
       "temperature": {
         "meta": {
           "description": "Water temperature.",
-          "units": "K"
+          "units": "K",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 292.378,
+        "value": 292.363,
         "$source": "can0.35",
-        "timestamp": "2026-09-20T04:46:23.665Z",
+        "timestamp": "2026-09-20T05:46:14.009Z",
         "pgn": 130316
       },
       "waves": {
@@ -1615,40 +1830,72 @@
           "meta": {
             "description": "Mean height of the highest third of waves (combined wind-wave and swell).",
             "units": "m",
-            "displayName": "Significant wave height"
+            "displayName": "Significant wave height",
+            "displayUnits": {
+              "category": "distance",
+              "targetUnit": "naut-mile",
+              "formula": "value * 0.0005399568034557236",
+              "inverseFormula": "value / 0.0005399568034557236",
+              "symbol": "nmi",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0.72,
           "$source": "open-meteo-marine",
-          "timestamp": "2026-09-20T04:30:00.000Z"
+          "timestamp": "2026-09-20T05:15:00.000Z"
         },
         "period": {
           "meta": {
             "description": "Mean wave period.",
             "units": "s",
-            "displayName": "Wave period"
+            "displayName": "Wave period",
+            "displayUnits": {
+              "category": "time",
+              "targetUnit": "hour",
+              "formula": "value * 0.0002777777777777778",
+              "inverseFormula": "value / 0.0002777777777777778",
+              "symbol": "hour",
+              "displayFormat": "0.0"
+            }
           },
-          "value": 6.7,
+          "value": 6.75,
           "$source": "open-meteo-marine",
-          "timestamp": "2026-09-20T04:30:00.000Z"
+          "timestamp": "2026-09-20T05:15:00.000Z"
         },
         "direction": {
           "meta": {
             "description": "Mean direction waves come FROM, true north.",
             "units": "rad",
-            "displayName": "Wave direction"
+            "displayName": "Wave direction",
+            "displayUnits": {
+              "category": "angle",
+              "targetUnit": "degree",
+              "formula": "value * 57.29577951308231",
+              "inverseFormula": "value / 57.29577951308231",
+              "symbol": "°",
+              "displayFormat": "0.0"
+            }
           },
           "value": 4.852015320544236,
           "$source": "open-meteo-marine",
-          "timestamp": "2026-09-20T04:30:00.000Z"
+          "timestamp": "2026-09-20T05:15:00.000Z"
         },
         "windWaveHeight": {
-          "value": 0.08,
+          "value": 0.06,
           "$source": "open-meteo-marine",
-          "timestamp": "2026-09-20T04:30:00.000Z",
+          "timestamp": "2026-09-20T05:15:00.000Z",
           "meta": {
             "units": "m",
             "displayName": "Wind-wave height",
-            "description": "Height of locally wind-generated waves, excluding swell."
+            "description": "Height of locally wind-generated waves, excluding swell.",
+            "displayUnits": {
+              "category": "distance",
+              "targetUnit": "naut-mile",
+              "formula": "value * 0.0005399568034557236",
+              "inverseFormula": "value / 0.0005399568034557236",
+              "symbol": "nmi",
+              "displayFormat": "0.0"
+            }
           }
         }
       },
@@ -1656,31 +1903,55 @@
         "height": {
           "value": 0.66,
           "$source": "open-meteo-marine",
-          "timestamp": "2026-09-20T04:30:00.000Z",
+          "timestamp": "2026-09-20T05:15:00.000Z",
           "meta": {
             "units": "m",
             "displayName": "Swell height",
-            "description": "Height of swell (waves generated by distant weather)."
+            "description": "Height of swell (waves generated by distant weather).",
+            "displayUnits": {
+              "category": "distance",
+              "targetUnit": "naut-mile",
+              "formula": "value * 0.0005399568034557236",
+              "inverseFormula": "value / 0.0005399568034557236",
+              "symbol": "nmi",
+              "displayFormat": "0.0"
+            }
           }
         },
         "period": {
           "meta": {
             "description": "Mean swell period.",
             "units": "s",
-            "displayName": "Swell period"
+            "displayName": "Swell period",
+            "displayUnits": {
+              "category": "time",
+              "targetUnit": "hour",
+              "formula": "value * 0.0002777777777777778",
+              "inverseFormula": "value / 0.0002777777777777778",
+              "symbol": "hour",
+              "displayFormat": "0.0"
+            }
           },
-          "value": 4.5,
+          "value": 4.65,
           "$source": "open-meteo-marine",
-          "timestamp": "2026-09-20T04:30:00.000Z"
+          "timestamp": "2026-09-20T05:15:00.000Z"
         },
         "direction": {
           "value": 4.939281783143953,
           "$source": "open-meteo-marine",
-          "timestamp": "2026-09-20T04:30:00.000Z",
+          "timestamp": "2026-09-20T05:15:00.000Z",
           "meta": {
             "units": "rad",
             "displayName": "Swell direction",
-            "description": "Direction swell comes FROM, true north."
+            "description": "Direction swell comes FROM, true north.",
+            "displayUnits": {
+              "category": "angle",
+              "targetUnit": "degree",
+              "formula": "value * 57.29577951308231",
+              "inverseFormula": "value / 57.29577951308231",
+              "symbol": "°",
+              "displayFormat": "0.0"
+            }
           }
         }
       }
@@ -1689,181 +1960,285 @@
       "stationName": {
         "value": "Rincon Point, Pier 22 1/2",
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z"
+        "timestamp": "2026-09-20T05:46:09.211Z"
       },
       "heightNow": {
         "meta": {
           "description": "The current tide height  relative to lowest astronomical tide (LAT/Chart Datum)",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "distance",
+            "targetUnit": "naut-mile",
+            "formula": "value * 0.0005399568034557236",
+            "inverseFormula": "value / 0.0005399568034557236",
+            "symbol": "nmi",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 1.0795646901617852,
+        "value": 0.7726610213983495,
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z"
+        "timestamp": "2026-09-20T05:46:09.211Z"
       },
       "state": {
         "value": "falling",
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z",
+        "timestamp": "2026-09-20T05:46:09.211Z",
         "meta": {
           "description": "Tide trend at the current position: rising or falling"
         }
       },
       "timeToNextExtreme": {
-        "value": 15783,
+        "value": 12196,
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z",
+        "timestamp": "2026-09-20T05:46:09.211Z",
         "meta": {
           "units": "s",
-          "description": "Seconds until the next tide extreme (high or low water)"
+          "description": "Seconds until the next tide extreme (high or low water)",
+          "displayUnits": {
+            "category": "time",
+            "targetUnit": "hour",
+            "formula": "value * 0.0002777777777777778",
+            "inverseFormula": "value / 0.0002777777777777778",
+            "symbol": "hour",
+            "displayFormat": "0.0"
+          }
         }
       },
       "heightLow": {
         "meta": {
           "description": "The next low tide height relative to lowest astronomical tide (LAT/Chart Datum)",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "distance",
+            "targetUnit": "naut-mile",
+            "formula": "value * 0.0005399568034557236",
+            "inverseFormula": "value / 0.0005399568034557236",
+            "symbol": "nmi",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 0.21880089626474475,
+        "value": 0.21880063229902558,
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z"
+        "timestamp": "2026-09-20T05:46:09.211Z"
       },
       "timeLow": {
         "meta": {
           "description": "RFC 3339 (UTC only without local offset) string representing date and time.",
           "units": "RFC 3339 (UTC)"
         },
-        "value": "2026-09-20T09:09:25.127Z",
+        "value": "2026-09-20T09:09:24.487Z",
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z"
+        "timestamp": "2026-09-20T05:46:09.211Z"
       },
       "heightHigh": {
         "meta": {
           "description": "Next high tide height  relative to lowest astronomical tide (LAT/Chart Datum)",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "distance",
+            "targetUnit": "naut-mile",
+            "formula": "value * 0.0005399568034557236",
+            "inverseFormula": "value / 0.0005399568034557236",
+            "symbol": "nmi",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 1.4615099929969206,
+        "value": 1.4615077090225501,
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z"
+        "timestamp": "2026-09-20T05:46:09.211Z"
       },
       "timeHigh": {
         "meta": {
           "description": "RFC 3339 (UTC only without local offset) string representing date and time.",
           "units": "RFC 3339 (UTC)"
         },
-        "value": "2026-09-20T16:31:50.523Z",
+        "value": "2026-09-20T16:31:50.793Z",
         "$source": "tides",
-        "timestamp": "2026-09-20T04:46:22.685Z"
+        "timestamp": "2026-09-20T05:46:09.211Z"
       }
     },
     "outside": {
       "temperature": {
         "meta": {
           "description": "Outside air temperature.",
-          "units": "K"
+          "units": "K",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         },
         "value": 288.15,
         "$source": "OpenPlotter.GPIO.1W.000000b94d14",
-        "timestamp": "2026-09-20T04:45:00.761Z",
+        "timestamp": "2026-09-20T05:45:53.380Z",
         "values": {
           "open-meteo": {
             "value": 286.84999999999997,
-            "timestamp": "2026-09-20T04:30:00.000Z"
+            "timestamp": "2026-09-20T05:15:00.000Z"
           },
           "OpenPlotter.GPIO.1W.000000b94d14": {
             "value": 288.15,
-            "timestamp": "2026-09-20T04:45:00.761Z"
+            "timestamp": "2026-09-20T05:45:53.380Z"
           }
         }
       },
       "pressure": {
         "meta": {
           "description": "Barometric pressure.",
-          "units": "Pa"
+          "units": "Pa",
+          "displayUnits": {
+            "category": "pressure",
+            "targetUnit": "inHg",
+            "formula": "value * 0.00029529987601298443",
+            "inverseFormula": "value / 0.00029529987601298443",
+            "symbol": "inHg",
+            "displayFormat": "0.00"
+          }
         },
-        "value": 101500,
+        "value": 101470,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z"
+        "timestamp": "2026-09-20T05:15:00.000Z"
       },
       "relativeHumidity": {
         "meta": {
           "description": "Relative humidity.",
-          "units": "ratio"
+          "units": "ratio",
+          "displayUnits": {
+            "category": "percentage",
+            "targetUnit": "percent",
+            "formula": "value * 100",
+            "inverseFormula": "value * 0.01",
+            "symbol": "%",
+            "displayFormat": "0"
+          }
         },
-        "value": 0.92,
+        "value": 0.96,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z"
+        "timestamp": "2026-09-20T05:15:00.000Z"
       },
       "dewPointTemperature": {
         "meta": {
           "description": "Dew point.",
-          "units": "K"
+          "units": "K",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 285.54999999999995,
+        "value": 286.25,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z"
+        "timestamp": "2026-09-20T05:15:00.000Z"
       },
       "theoreticalWindChillTemperature": {
         "meta": {
           "description": "Current outside theoretical wind chill temperature",
-          "units": "K"
+          "units": "K",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         },
         "value": 286.84999999999997,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z"
+        "timestamp": "2026-09-20T05:15:00.000Z"
       },
       "heatIndexTemperature": {
         "meta": {
           "description": "Current outside heat index temperature",
-          "units": "K"
+          "units": "K",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         },
         "value": 286.84999999999997,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z"
+        "timestamp": "2026-09-20T05:15:00.000Z"
       },
       "apparentWindChillTemperature": {
         "meta": {
           "description": "Wind chill computed against the apparent wind the moving vessel experiences. Omitted when the required fresh vessel-motion data is unavailable.",
           "units": "K",
-          "displayName": "Apparent wind chill"
+          "displayName": "Apparent wind chill",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         },
         "value": 286.84999999999997,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z"
+        "timestamp": "2026-09-20T05:15:00.000Z"
       },
       "airDensity": {
         "meta": {
           "description": "Current outside air density",
           "units": "kg/m3"
         },
-        "value": 1.226046749210723,
+        "value": 1.2253951034676402,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z"
+        "timestamp": "2026-09-20T05:15:00.000Z"
       }
     },
     "weather": {
       "wetBulbGlobeTemperature": {
-        "value": 290.51497247371424,
+        "value": 290.76093214648444,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "K",
           "displayName": "Wet bulb globe temp",
-          "description": "WBGT: composite heat-stress index combining wet bulb, dry bulb, and globe (radiant) temperatures. Source of environment.weather.heatStressIndex."
+          "description": "WBGT: composite heat-stress index combining wet bulb, dry bulb, and globe (radiant) temperatures. Source of environment.weather.heatStressIndex.",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         }
       },
       "apparentTemperature": {
-        "value": 284.95,
+        "value": 285.25,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "K",
           "displayName": "Apparent temperature",
-          "description": "AccuWeather apparent (feels-like) temperature combining wind and humidity effects across the full thermal range."
+          "description": "AccuWeather apparent (feels-like) temperature combining wind and humidity effects across the full thermal range.",
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         }
       },
       "absoluteHumidity": {
-        "value": 0.010870298238834794,
+        "value": 0.011342919901392827,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "kg/m3",
           "displayName": "Absolute humidity",
@@ -1871,19 +2246,27 @@
         }
       },
       "speedGust": {
-        "value": 8.9,
+        "value": 8.7,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "m/s",
           "displayName": "Wind gust speed",
-          "description": "Peak gust wind speed (ground-referenced). Sits under environment.weather.* because the 1.8.2 wind vocabulary does not define a gust leaf."
+          "description": "Peak gust wind speed (ground-referenced). Sits under environment.weather.* because the 1.8.2 wind vocabulary does not define a gust leaf.",
+          "displayUnits": {
+            "category": "speed",
+            "targetUnit": "kn",
+            "formula": "value * 1.94384",
+            "inverseFormula": "value * 0.514444",
+            "symbol": "kn",
+            "displayFormat": "0.0"
+          }
         }
       },
       "gustFactor": {
-        "value": 1.7450980392156865,
+        "value": 1.7827868852459015,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "displayName": "Wind gust factor",
           "description": "Multiplier of peak gust over sustained wind speed (gust/sustained), always >= 1. Omitted when the upstream gust reading is not above the sustained wind speed. Plugin-derived; not in the 1.8.2 vocabulary."
@@ -1892,45 +2275,61 @@
       "beaufortScale": {
         "value": 3,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "displayName": "Beaufort scale",
           "description": "Wind force category 0 (calm) to 12 (hurricane), derived from sustained wind speed. Plugin-derived; not in the 1.8.2 vocabulary."
         }
       },
       "windSpeedApparent": {
-        "value": 5.121889571284775,
+        "value": 4.907202937732569,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "m/s",
           "displayName": "Apparent wind speed",
-          "description": "Apparent wind speed calculated from the provider's ground-referenced wind and vessel motion. Plugin-derived; published off the canonical environment.wind leaves so it cannot displace a real anemometer feed."
+          "description": "Apparent wind speed calculated from the provider's ground-referenced wind and vessel motion. Plugin-derived; published off the canonical environment.wind leaves so it cannot displace a real anemometer feed.",
+          "displayUnits": {
+            "category": "speed",
+            "targetUnit": "kn",
+            "formula": "value * 1.94384",
+            "inverseFormula": "value * 0.514444",
+            "symbol": "kn",
+            "displayFormat": "0.0"
+          }
         }
       },
       "windAngleApparent": {
-        "value": -1.1789375589853144,
+        "value": -1.244149587600087,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "rad",
           "displayName": "Apparent wind angle",
-          "description": "Apparent wind angle relative to the bow (-pi..pi, negative to port), calculated from the provider's wind and vessel motion. Plugin-derived; published off the canonical environment.wind leaves."
+          "description": "Apparent wind angle relative to the bow (-pi..pi, negative to port), calculated from the provider's wind and vessel motion. Plugin-derived; published off the canonical environment.wind leaves.",
+          "displayUnits": {
+            "category": "angle",
+            "targetUnit": "degree",
+            "formula": "value * 57.29577951308231",
+            "inverseFormula": "value / 57.29577951308231",
+            "symbol": "°",
+            "displayFormat": "0.0"
+          }
         }
       },
       "uvIndex": {
         "value": 0,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "displayName": "UV index",
           "description": "WHO solar UV scale: 0..2 low, 3..5 moderate, 6..7 high, 8..10 very high, 11+ extreme."
         }
       },
       "visibility": {
-        "value": 13400,
+        "value": 12200,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "m",
           "displayName": "Visibility",
@@ -1945,19 +2344,27 @@
         }
       },
       "cloudCover": {
-        "value": 0.7,
+        "value": 1,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "ratio",
           "displayName": "Cloud cover",
-          "description": "Fraction of sky covered by clouds: 0 (clear) to 1 (overcast)."
+          "description": "Fraction of sky covered by clouds: 0 (clear) to 1 (overcast).",
+          "displayUnits": {
+            "category": "percentage",
+            "targetUnit": "percent",
+            "formula": "value * 100",
+            "inverseFormula": "value * 0.01",
+            "symbol": "%",
+            "displayFormat": "0"
+          }
         }
       },
       "precipitationLastHour": {
         "value": 0,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "units": "m",
           "displayName": "Precipitation, last hour",
@@ -1974,16 +2381,16 @@
       "heatStressIndex": {
         "value": 0,
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "displayName": "Heat stress index",
           "description": "WBGT-derived heat-stress category: 0 (<26.7 C), 1 (26.7..27.8 C), 2 (27.8..29.4 C, the US military green flag), 3 (29.4..32.2 C, spanning the yellow and red flags), 4 (>=32.2 C, black flag)."
         }
       },
       "description": {
-        "value": "Partly cloudy",
+        "value": "Overcast",
         "$source": "open-meteo",
-        "timestamp": "2026-09-20T04:30:00.000Z",
+        "timestamp": "2026-09-20T05:15:00.000Z",
         "meta": {
           "displayName": "Weather description",
           "description": "Plain-language summary of current conditions from the weather provider (AccuWeather WeatherText or Open-Meteo WMO weather code)."
@@ -2012,11 +2419,19 @@
             ],
             "warnMethod": [
               "visual"
-            ]
+            ],
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
           "value": 292.15,
           "$source": "OpenPlotter.GPIO.1W.000000ba9635",
-          "timestamp": "2026-09-20T04:45:00.630Z"
+          "timestamp": "2026-09-20T05:45:53.248Z"
         }
       },
       "temperature": {
@@ -2030,11 +2445,19 @@
               "state": "alert",
               "message": "Inside Temperature Below Freezing"
             }
-          ]
+          ],
+          "displayUnits": {
+            "category": "temperature",
+            "targetUnit": "F",
+            "formula": "(value - 273.15) * 9/5 + 32",
+            "inverseFormula": "(value - 32) * 5/9 + 273.15",
+            "symbol": "°F",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 294.2125,
+        "value": 293.65,
         "$source": "OpenPlotter.GPIO.1W.000000b94a30",
-        "timestamp": "2026-09-20T04:45:01.573Z"
+        "timestamp": "2026-09-20T05:45:54.197Z"
       },
       "freezer": {
         "temperature": {
@@ -2060,11 +2483,19 @@
             ],
             "alertMethod": [
               "visual"
-            ]
+            ],
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
           "value": 292.15,
           "$source": "OpenPlotter.GPIO.1W.000000b4c4ab",
-          "timestamp": "2026-09-20T04:45:02.372Z"
+          "timestamp": "2026-09-20T05:45:55.000Z"
         }
       }
     }
@@ -2073,17 +2504,25 @@
     "speedThroughWater": {
       "meta": {
         "description": "Vessel speed through the water",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
       "value": 0,
       "$source": "can0.35",
-      "timestamp": "2026-09-20T04:46:24.759Z",
+      "timestamp": "2026-09-20T05:46:15.710Z",
       "pgn": 128259
     },
     "speedThroughWaterReferenceType": {
       "value": "Paddle wheel",
       "$source": "can0.35",
-      "timestamp": "2026-09-20T04:46:24.759Z",
+      "timestamp": "2026-09-20T05:46:15.710Z",
       "pgn": 128259
     },
     "position": {
@@ -2110,26 +2549,21 @@
         }
       },
       "value": {
-        "latitude": 37.78100160772262,
-        "longitude": -122.3854829495632
+        "latitude": 37.78100604419565,
+        "longitude": -122.38546406619264
       },
       "$source": "gpspuck.GP",
-      "timestamp": "2026-09-20T04:46:23.743Z",
+      "timestamp": "2026-09-20T05:46:15.091Z",
       "values": {
         "can0.7": {
-          "value": {
-            "latitude": 37.781019893839485,
-            "longitude": -122.3854609749846
-          },
-          "pgn": 129025,
-          "timestamp": "2026-09-20T04:44:23.809Z"
+          "pgn": 129025
         },
         "gpspuck.GP": {
           "value": {
-            "latitude": 37.78100160772262,
-            "longitude": -122.3854829495632
+            "latitude": 37.78100604419565,
+            "longitude": -122.38546406619264
           },
-          "timestamp": "2026-09-20T04:46:23.743Z",
+          "timestamp": "2026-09-20T05:46:15.091Z",
           "sentence": "GLL"
         }
       },
@@ -2138,20 +2572,26 @@
     "speedOverGround": {
       "meta": {
         "description": "Vessel speed over ground. If converting from AIS 'HIGH' value, set to 102.2 (Ais max value) and add warning in notifications",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 0.05083333333333333,
+      "value": 0.03972222222222222,
       "$source": "gpspuck.GP",
-      "timestamp": "2026-09-20T04:46:23.742Z",
+      "timestamp": "2026-09-20T05:46:15.089Z",
       "values": {
         "can0.7": {
-          "value": 0.05,
-          "pgn": 129026,
-          "timestamp": "2026-09-20T04:44:23.810Z"
+          "pgn": 129026
         },
         "gpspuck.GP": {
-          "value": 0.05083333333333333,
-          "timestamp": "2026-09-20T04:46:23.742Z",
+          "value": 0.03972222222222222,
+          "timestamp": "2026-09-20T05:46:15.089Z",
           "sentence": "VTG"
         }
       },
@@ -2160,18 +2600,24 @@
     "courseOverGroundTrue": {
       "meta": {
         "description": "Course over ground (true)",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
       "$source": "gpspuck.GP",
-      "timestamp": "2026-09-20T04:46:23.742Z",
+      "timestamp": "2026-09-20T05:46:15.089Z",
       "values": {
         "can0.7": {
-          "value": 6.1553,
-          "pgn": 129026,
-          "timestamp": "2026-09-20T04:44:23.810Z"
+          "pgn": 129026
         },
         "gpspuck.GP": {
-          "timestamp": "2026-09-20T04:46:23.742Z",
+          "timestamp": "2026-09-20T05:46:15.089Z",
           "sentence": "VTG"
         }
       },
@@ -2180,21 +2626,37 @@
     "headingMagnetic": {
       "meta": {
         "description": "Current magnetic heading of the vessel, equals 'headingCompass adjusted for magneticDeviation'",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 5.9389,
+      "value": 5.9455,
       "$source": "can0.5",
-      "timestamp": "2026-09-20T04:46:24.758Z",
+      "timestamp": "2026-09-20T05:46:15.726Z",
       "pgn": 127250
     },
     "rateOfTurn": {
       "meta": {
         "description": "Rate of turn (+ve is change to starboard). If the value is AIS RIGHT or LEFT, set to +-0.0206 rads and add warning in notifications",
-        "units": "rad/s"
+        "units": "rad/s",
+        "displayUnits": {
+          "category": "angularVelocity",
+          "targetUnit": "deg/s",
+          "formula": "value * 57.2958",
+          "inverseFormula": "value * 0.0174533",
+          "symbol": "°/s",
+          "displayFormat": "0.0"
+        }
       },
-      "value": -0.00412253,
+      "value": 0.00210919,
       "$source": "can0.5",
-      "timestamp": "2026-09-20T04:46:24.760Z",
+      "timestamp": "2026-09-20T05:46:15.753Z",
       "pgn": 127251
     },
     "attitude": {
@@ -2220,29 +2682,27 @@
       },
       "value": {
         "pitch": 0.0112,
-        "roll": -0.0378
+        "roll": -0.044
       },
       "$source": "can0.35",
-      "timestamp": "2026-09-20T04:46:24.758Z",
+      "timestamp": "2026-09-20T05:46:15.707Z",
       "pgn": 127257
     },
     "datetime": {
       "meta": {
         "description": "Time and Date from the GNSS Positioning System"
       },
-      "value": "2026-09-20T04:46:24Z",
+      "value": "2026-09-20T05:46:15Z",
       "$source": "can0.7",
-      "timestamp": "2026-09-20T04:46:23.771Z",
+      "timestamp": "2026-09-20T05:46:15.127Z",
       "pgn": 129029,
       "values": {
         "can0.2": {
-          "value": "2026-09-20T04:44:22Z",
-          "pgn": 129029,
-          "timestamp": "2026-09-20T04:44:23.222Z"
+          "pgn": 129029
         },
         "can0.7": {
-          "value": "2026-09-20T04:46:24Z",
-          "timestamp": "2026-09-20T04:46:23.771Z",
+          "value": "2026-09-20T05:46:15Z",
+          "timestamp": "2026-09-20T05:46:15.127Z",
           "pgn": 129029
         }
       }
@@ -2251,25 +2711,29 @@
       "antennaAltitude": {
         "meta": {
           "description": "Altitude of antenna",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "distance",
+            "targetUnit": "naut-mile",
+            "formula": "value * 0.0005399568034557236",
+            "inverseFormula": "value / 0.0005399568034557236",
+            "symbol": "nmi",
+            "displayFormat": "0.0"
+          }
         },
-        "value": 1.2,
+        "value": -3.4,
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.742Z",
+        "timestamp": "2026-09-20T05:46:15.090Z",
         "values": {
           "can0.2": {
-            "value": -1.9,
-            "pgn": 129029,
-            "timestamp": "2026-09-20T04:44:23.222Z"
+            "pgn": 129029
           },
           "can0.7": {
-            "value": -31.390993,
-            "timestamp": "2026-09-20T04:44:23.607Z",
             "pgn": 129029
           },
           "gpspuck.GP": {
-            "value": 1.2,
-            "timestamp": "2026-09-20T04:46:23.742Z",
+            "value": -3.4,
+            "timestamp": "2026-09-20T05:46:15.090Z",
             "sentence": "GGA"
           }
         },
@@ -2279,23 +2743,19 @@
         "meta": {
           "description": "Number of satellites"
         },
-        "value": 12,
+        "value": 10,
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.742Z",
+        "timestamp": "2026-09-20T05:46:15.090Z",
         "values": {
           "can0.2": {
-            "value": 12,
-            "pgn": 129029,
-            "timestamp": "2026-09-20T04:44:23.222Z"
+            "pgn": 129029
           },
           "can0.7": {
-            "value": 13,
-            "timestamp": "2026-09-20T04:44:23.607Z",
             "pgn": 129029
           },
           "gpspuck.GP": {
-            "value": 12,
-            "timestamp": "2026-09-20T04:46:23.742Z",
+            "value": 10,
+            "timestamp": "2026-09-20T05:46:15.090Z",
             "sentence": "GGA"
           }
         },
@@ -2305,23 +2765,19 @@
         "meta": {
           "description": "Horizontal Dilution of Precision"
         },
-        "value": 0.86,
+        "value": 0.97,
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.742Z",
+        "timestamp": "2026-09-20T05:46:15.090Z",
         "values": {
           "can0.2": {
-            "value": 0.89,
-            "pgn": 129029,
-            "timestamp": "2026-09-20T04:44:23.222Z"
+            "pgn": 129029
           },
           "can0.7": {
-            "value": 0.67,
-            "timestamp": "2026-09-20T04:44:23.607Z",
             "pgn": 129029
           },
           "gpspuck.GP": {
-            "value": 0.86,
-            "timestamp": "2026-09-20T04:46:23.742Z",
+            "value": 0.97,
+            "timestamp": "2026-09-20T05:46:15.090Z",
             "sentence": "GGA"
           }
         },
@@ -2333,21 +2789,17 @@
         },
         "value": -29.7,
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.742Z",
+        "timestamp": "2026-09-20T05:46:15.090Z",
         "values": {
           "can0.2": {
-            "value": -29.7,
-            "pgn": 129029,
-            "timestamp": "2026-09-20T04:44:23.222Z"
+            "pgn": 129029
           },
           "can0.7": {
-            "value": -32.04,
-            "timestamp": "2026-09-20T04:44:23.607Z",
             "pgn": 129029
           },
           "gpspuck.GP": {
             "value": -29.7,
-            "timestamp": "2026-09-20T04:46:23.742Z",
+            "timestamp": "2026-09-20T05:46:15.090Z",
             "sentence": "GGA"
           }
         },
@@ -2359,17 +2811,15 @@
         },
         "value": "GPS",
         "$source": "can0.7",
-        "timestamp": "2026-09-20T04:46:23.771Z",
+        "timestamp": "2026-09-20T05:46:15.127Z",
         "pgn": 129029,
         "values": {
           "can0.2": {
-            "value": "GPS+SBAS/WAAS",
-            "pgn": 129029,
-            "timestamp": "2026-09-20T04:44:23.222Z"
+            "pgn": 129029
           },
           "can0.7": {
             "value": "GPS",
-            "timestamp": "2026-09-20T04:46:23.771Z",
+            "timestamp": "2026-09-20T05:46:15.127Z",
             "pgn": 129029
           }
         }
@@ -2380,21 +2830,17 @@
         },
         "value": "DGNSS fix",
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.742Z",
+        "timestamp": "2026-09-20T05:46:15.090Z",
         "values": {
           "can0.2": {
-            "value": "DGNSS fix",
-            "pgn": 129029,
-            "timestamp": "2026-09-20T04:44:23.222Z"
+            "pgn": 129029
           },
           "can0.7": {
-            "value": "GNSS Fix",
-            "timestamp": "2026-09-20T04:44:23.607Z",
             "pgn": 129029
           },
           "gpspuck.GP": {
             "value": "DGNSS fix",
-            "timestamp": "2026-09-20T04:46:23.742Z",
+            "timestamp": "2026-09-20T05:46:15.090Z",
             "sentence": "GGA"
           }
         },
@@ -2406,17 +2852,15 @@
         },
         "value": "no Integrity checking",
         "$source": "can0.7",
-        "timestamp": "2026-09-20T04:46:23.771Z",
+        "timestamp": "2026-09-20T05:46:15.127Z",
         "pgn": 129029,
         "values": {
           "can0.2": {
-            "value": "no Integrity checking",
-            "pgn": 129029,
-            "timestamp": "2026-09-20T04:44:23.222Z"
+            "pgn": 129029
           },
           "can0.7": {
             "value": "no Integrity checking",
-            "timestamp": "2026-09-20T04:46:23.771Z",
+            "timestamp": "2026-09-20T05:46:15.127Z",
             "pgn": 129029
           }
         }
@@ -2425,92 +2869,86 @@
         "meta": {
           "description": "Positional Dilution of Precision"
         },
-        "value": 1.24,
+        "value": 1.84,
         "$source": "can0.7",
-        "timestamp": "2026-09-20T04:46:23.771Z",
+        "timestamp": "2026-09-20T05:46:15.127Z",
         "pgn": 129029
       },
       "satellitesInView": {
         "value": {
-          "count": 15,
+          "count": 14,
           "satellites": [
             {
-              "id": 1,
-              "elevation": 0.0174532925239284,
-              "azimuth": 0.5410520682417803,
-              "SNR": 14
+              "id": 3,
+              "elevation": 0.0349065850478568,
+              "azimuth": 0.7155849934810643,
+              "SNR": 0
             },
             {
               "id": 6,
-              "elevation": 0.6806784084332075,
-              "azimuth": 2.548180708493546,
-              "SNR": 28
+              "elevation": 1.047197551435704,
+              "azimuth": 1.9198621776321239,
+              "SNR": 36
             },
             {
               "id": 11,
-              "elevation": 0.2792526803828544,
-              "azimuth": 3.071779484211398,
-              "SNR": 33
+              "elevation": 0.7679448710528495,
+              "azimuth": 2.9496064365438994,
+              "SNR": 39
             },
             {
               "id": 12,
-              "elevation": 0.24434609533499757,
-              "azimuth": 4.991641661843522,
-              "SNR": 34
+              "elevation": 0.5934119458135655,
+              "azimuth": 5.305800927274233,
+              "SNR": 35
             },
             {
               "id": 13,
-              "elevation": 0.31415926543071115,
-              "azimuth": 5.096361416987092,
-              "SNR": 30
+              "elevation": 0.6806784084332075,
+              "azimuth": 5.393067389893875,
+              "SNR": 24
             },
             {
               "id": 14,
-              "elevation": 0.523598775717852,
-              "azimuth": 1.483529864533914,
-              "SNR": 25
+              "elevation": 0.19198621776321237,
+              "azimuth": 1.8500490075364102,
+              "SNR": 26
             },
             {
               "id": 15,
-              "elevation": 0.2792526803828544,
-              "azimuth": 4.345869838458171,
-              "SNR": 27
+              "elevation": 0,
+              "azimuth": 3.9793506954556745,
+              "SNR": 16
             },
             {
               "id": 17,
-              "elevation": 0.8203047486246348,
-              "azimuth": 0.8028514561007063,
-              "SNR": 23
-            },
-            {
-              "id": 19,
-              "elevation": 1.483529864533914,
-              "azimuth": 0.38397243552642474,
-              "SNR": 34
-            },
-            {
-              "id": 20,
-              "elevation": 0.2792526803828544,
-              "azimuth": 3.787364477692462,
+              "elevation": 0.41887902057428156,
+              "azimuth": 0.9250245037682051,
               "SNR": 22
             },
             {
+              "id": 19,
+              "elevation": 1.012290966387847,
+              "azimuth": 0.698131700957136,
+              "SNR": 30
+            },
+            {
               "id": 22,
-              "elevation": 0.8203047486246348,
-              "azimuth": 1.2042771841510596,
-              "SNR": 26
+              "elevation": 0.5061454831939235,
+              "azimuth": 1.6580627897731979,
+              "SNR": 27
             },
             {
               "id": 24,
-              "elevation": 0.8552113336724915,
-              "azimuth": 5.253441049702448,
-              "SNR": 26
+              "elevation": 1.0297442589117756,
+              "azimuth": 4.4331363010778135,
+              "SNR": 24
             },
             {
-              "id": 30,
-              "elevation": 0.20943951028714078,
-              "azimuth": 2.548180708493546,
-              "SNR": 14
+              "id": 25,
+              "elevation": 0.087266462619642,
+              "azimuth": 5.201081172130663,
+              "SNR": 0
             },
             {
               "id": 46,
@@ -2522,182 +2960,92 @@
               "id": 48,
               "elevation": 0.8028514561007063,
               "azimuth": 3.211405824402825,
-              "SNR": 31
+              "SNR": 32
             }
           ],
           "gnss": "GPS"
         },
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.743Z",
+        "timestamp": "2026-09-20T05:46:15.091Z",
         "values": {
           "can0.7": {
-            "value": {
-              "count": 13,
-              "satellites": [
-                {
-                  "id": 1,
-                  "elevation": 0.0349,
-                  "azimuth": 0.541,
-                  "SNR": 32.46
-                },
-                {
-                  "id": 6,
-                  "elevation": 0.6806,
-                  "azimuth": 2.5307,
-                  "SNR": 41.52
-                },
-                {
-                  "id": 11,
-                  "elevation": 0.2792,
-                  "azimuth": 3.0717,
-                  "SNR": 40.13
-                },
-                {
-                  "id": 12,
-                  "elevation": 0.2443,
-                  "azimuth": 4.9916,
-                  "SNR": 44.86
-                },
-                {
-                  "id": 13,
-                  "elevation": 0.3141,
-                  "azimuth": 5.0963,
-                  "SNR": 41.63
-                },
-                {
-                  "id": 14,
-                  "elevation": 0.5235,
-                  "azimuth": 1.466,
-                  "SNR": 27.07
-                },
-                {
-                  "id": 15,
-                  "elevation": 0.2967,
-                  "azimuth": 4.3633,
-                  "SNR": 43.07
-                },
-                {
-                  "id": 17,
-                  "elevation": 0.8377,
-                  "azimuth": 0.7853,
-                  "SNR": 45.58
-                },
-                {
-                  "id": 19,
-                  "elevation": 1.5009,
-                  "azimuth": 0.3316,
-                  "SNR": 47.33
-                },
-                {
-                  "id": 20,
-                  "elevation": 0.2967,
-                  "azimuth": 3.8048,
-                  "SNR": 43.64
-                },
-                {
-                  "id": 22,
-                  "elevation": 0.8203,
-                  "azimuth": 1.1693,
-                  "SNR": 42.29
-                },
-                {
-                  "id": 24,
-                  "elevation": 0.8377,
-                  "azimuth": 5.2883,
-                  "SNR": 46.15
-                },
-                {
-                  "id": 30,
-                  "elevation": 0.2268,
-                  "azimuth": 2.5481,
-                  "SNR": 38.36
-                }
-              ]
-            },
-            "pgn": 129540,
-            "timestamp": "2026-09-20T04:44:23.628Z"
+            "pgn": 129540
           },
           "gpspuck.GP": {
             "value": {
-              "count": 15,
+              "count": 14,
               "satellites": [
                 {
-                  "id": 1,
-                  "elevation": 0.0174532925239284,
-                  "azimuth": 0.5410520682417803,
-                  "SNR": 14
+                  "id": 3,
+                  "elevation": 0.0349065850478568,
+                  "azimuth": 0.7155849934810643,
+                  "SNR": 0
                 },
                 {
                   "id": 6,
-                  "elevation": 0.6806784084332075,
-                  "azimuth": 2.548180708493546,
-                  "SNR": 28
+                  "elevation": 1.047197551435704,
+                  "azimuth": 1.9198621776321239,
+                  "SNR": 36
                 },
                 {
                   "id": 11,
-                  "elevation": 0.2792526803828544,
-                  "azimuth": 3.071779484211398,
-                  "SNR": 33
+                  "elevation": 0.7679448710528495,
+                  "azimuth": 2.9496064365438994,
+                  "SNR": 39
                 },
                 {
                   "id": 12,
-                  "elevation": 0.24434609533499757,
-                  "azimuth": 4.991641661843522,
-                  "SNR": 34
+                  "elevation": 0.5934119458135655,
+                  "azimuth": 5.305800927274233,
+                  "SNR": 35
                 },
                 {
                   "id": 13,
-                  "elevation": 0.31415926543071115,
-                  "azimuth": 5.096361416987092,
-                  "SNR": 30
+                  "elevation": 0.6806784084332075,
+                  "azimuth": 5.393067389893875,
+                  "SNR": 24
                 },
                 {
                   "id": 14,
-                  "elevation": 0.523598775717852,
-                  "azimuth": 1.483529864533914,
-                  "SNR": 25
+                  "elevation": 0.19198621776321237,
+                  "azimuth": 1.8500490075364102,
+                  "SNR": 26
                 },
                 {
                   "id": 15,
-                  "elevation": 0.2792526803828544,
-                  "azimuth": 4.345869838458171,
-                  "SNR": 27
+                  "elevation": 0,
+                  "azimuth": 3.9793506954556745,
+                  "SNR": 16
                 },
                 {
                   "id": 17,
-                  "elevation": 0.8203047486246348,
-                  "azimuth": 0.8028514561007063,
-                  "SNR": 23
-                },
-                {
-                  "id": 19,
-                  "elevation": 1.483529864533914,
-                  "azimuth": 0.38397243552642474,
-                  "SNR": 34
-                },
-                {
-                  "id": 20,
-                  "elevation": 0.2792526803828544,
-                  "azimuth": 3.787364477692462,
+                  "elevation": 0.41887902057428156,
+                  "azimuth": 0.9250245037682051,
                   "SNR": 22
                 },
                 {
+                  "id": 19,
+                  "elevation": 1.012290966387847,
+                  "azimuth": 0.698131700957136,
+                  "SNR": 30
+                },
+                {
                   "id": 22,
-                  "elevation": 0.8203047486246348,
-                  "azimuth": 1.2042771841510596,
-                  "SNR": 26
+                  "elevation": 0.5061454831939235,
+                  "azimuth": 1.6580627897731979,
+                  "SNR": 27
                 },
                 {
                   "id": 24,
-                  "elevation": 0.8552113336724915,
-                  "azimuth": 5.253441049702448,
-                  "SNR": 26
+                  "elevation": 1.0297442589117756,
+                  "azimuth": 4.4331363010778135,
+                  "SNR": 24
                 },
                 {
-                  "id": 30,
-                  "elevation": 0.20943951028714078,
-                  "azimuth": 2.548180708493546,
-                  "SNR": 14
+                  "id": 25,
+                  "elevation": 0.087266462619642,
+                  "azimuth": 5.201081172130663,
+                  "SNR": 0
                 },
                 {
                   "id": 46,
@@ -2709,12 +3057,12 @@
                   "id": 48,
                   "elevation": 0.8028514561007063,
                   "azimuth": 3.211405824402825,
-                  "SNR": 31
+                  "SNR": 32
                 }
               ],
               "gnss": "GPS"
             },
-            "timestamp": "2026-09-20T04:46:23.743Z",
+            "timestamp": "2026-09-20T05:46:15.091Z",
             "sentence": "GSV"
           }
         },
@@ -2723,11 +3071,19 @@
       "differentialAge": {
         "meta": {
           "description": "Age of DGPS data",
-          "units": "s"
+          "units": "s",
+          "displayUnits": {
+            "category": "time",
+            "targetUnit": "hour",
+            "formula": "value * 0.0002777777777777778",
+            "inverseFormula": "value / 0.0002777777777777778",
+            "symbol": "hour",
+            "displayFormat": "0.0"
+          }
         },
         "value": 0,
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.742Z",
+        "timestamp": "2026-09-20T05:46:15.090Z",
         "sentence": "GGA"
       },
       "differentialReference": {
@@ -2736,47 +3092,79 @@
         },
         "value": 0,
         "$source": "gpspuck.GP",
-        "timestamp": "2026-09-20T04:46:23.742Z",
+        "timestamp": "2026-09-20T05:46:15.090Z",
         "sentence": "GGA"
       }
     },
     "log": {
       "meta": {
         "description": "Total distance traveled",
-        "units": "m"
+        "units": "m",
+        "displayUnits": {
+          "category": "distance",
+          "targetUnit": "naut-mile",
+          "formula": "value * 0.0005399568034557236",
+          "inverseFormula": "value / 0.0005399568034557236",
+          "symbol": "nmi",
+          "displayFormat": "0.0"
+        }
       },
       "value": 1289482,
       "$source": "can0.35",
-      "timestamp": "2026-09-20T04:46:24.539Z",
+      "timestamp": "2026-09-20T05:46:14.913Z",
       "pgn": 128275
     },
     "magneticVariation": {
       "meta": {
         "description": "The magnetic variation (declination) at the current position that must be added to the magnetic heading to derive the true heading. Easterly variations are positive and Westerly variations are negative (in Radians).",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
       "value": 0.2347,
       "$source": "can0.7",
-      "timestamp": "2026-09-20T04:46:23.849Z",
+      "timestamp": "2026-09-20T05:46:15.191Z",
       "pgn": 127258
     },
     "courseOverGroundMagnetic": {
       "meta": {
         "description": "Course over ground (magnetic)",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
       "$source": "gpspuck.GP",
-      "timestamp": "2026-09-20T04:46:23.742Z",
+      "timestamp": "2026-09-20T05:46:15.089Z",
       "sentence": "VTG"
     },
     "headingTrue": {
       "meta": {
         "description": "The current true north heading of the vessel, equals 'headingMagnetic adjusted for magneticVariation'",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 6.1736,
+      "value": 6.1802,
       "$source": "derived-data",
-      "timestamp": "2026-09-20T04:46:23.849Z"
+      "timestamp": "2026-09-20T05:46:15.191Z"
     },
     "state": {
       "meta": {
@@ -2784,17 +3172,25 @@
       },
       "value": "moored",
       "$source": "signalk-autostate.XX",
-      "timestamp": "2026-09-20T04:44:28.425Z"
+      "timestamp": "2026-09-20T05:44:52.078Z"
     },
     "trip": {
       "log": {
         "meta": {
           "description": "Total distance traveled on this trip / since trip reset",
-          "units": "m"
+          "units": "m",
+          "displayUnits": {
+            "category": "distance",
+            "targetUnit": "naut-mile",
+            "formula": "value * 0.0005399568034557236",
+            "inverseFormula": "value / 0.0005399568034557236",
+            "symbol": "nmi",
+            "displayFormat": "0.0"
+          }
         },
         "value": 16,
         "$source": "signalk-triplogger.XX",
-        "timestamp": "2026-09-20T04:46:22.699Z"
+        "timestamp": "2026-09-20T05:46:09.357Z"
       }
     }
   },
@@ -2811,29 +3207,53 @@
       "revolutions": {
         "meta": {
           "description": "Engine revolutions (x60 for RPM)",
-          "units": "Hz"
+          "units": "Hz",
+          "displayUnits": {
+            "category": "frequency",
+            "targetUnit": "rpm",
+            "formula": "value * 60",
+            "inverseFormula": "value * 0.0166667",
+            "symbol": "rpm",
+            "displayFormat": "0.0"
+          }
         },
         "value": 0,
         "$source": "can0.6",
-        "timestamp": "2026-09-20T04:46:24.671Z",
+        "timestamp": "2026-09-20T05:46:15.733Z",
         "pgn": 127488
       },
       "drive": {
         "trimState": {
           "meta": {
             "description": "Trim/tilt state, 0<=ratio<=1, 1 is 100% up",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
           "value": -1,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:24.671Z",
+          "timestamp": "2026-09-20T05:46:15.733Z",
           "pgn": 127488
         }
       },
       "runTime": {
         "meta": {
           "description": "Total running time for engine (Engine Hours in seconds)",
-          "units": "s"
+          "units": "s",
+          "displayUnits": {
+            "category": "time",
+            "targetUnit": "hour",
+            "formula": "value * 0.0002777777777777778",
+            "inverseFormula": "value / 0.0002777777777777778",
+            "symbol": "hour",
+            "displayFormat": "0.0"
+          }
         },
         "value": 23974453.773999996,
         "$source": "signalk-engine-hours.XX",
@@ -2844,7 +3264,15 @@
         "$source": "signalk-engine-hours.XX",
         "timestamp": "2026-09-11T22:57:08.150Z",
         "meta": {
-          "units": "s"
+          "units": "s",
+          "displayUnits": {
+            "category": "time",
+            "targetUnit": "hour",
+            "formula": "value * 0.0002777777777777778",
+            "inverseFormula": "value / 0.0002777777777777778",
+            "symbol": "hour",
+            "displayFormat": "0.0"
+          }
         }
       }
     }
@@ -2870,30 +3298,54 @@
                 "message": "Fuel Level Very Low"
               }
             ],
-            "alertMethod": null
+            "alertMethod": null,
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0.11475999999999999,
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.884Z"
+          "timestamp": "2026-09-20T05:46:15.045Z"
         },
         "currentLevel": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
           "value": 0.7599999999999999,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.884Z",
+          "timestamp": "2026-09-20T05:46:15.045Z",
           "pgn": 127505
         },
         "capacity": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0.151,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.884Z",
+          "timestamp": "2026-09-20T05:46:15.045Z",
           "pgn": 127505
         }
       },
@@ -2901,38 +3353,70 @@
         "temperature": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "K"
+            "units": "K",
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
           "value": 291.15,
           "$source": "fuel.reserve",
-          "timestamp": "2026-09-20T04:46:23.026Z"
+          "timestamp": "2026-09-20T05:46:04.249Z"
         },
         "capacity": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0.11356229999999999,
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:23.027Z"
+          "timestamp": "2026-09-20T05:46:04.249Z"
         },
         "currentVolume": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
-          "value": 0.08733664889120883,
+          "value": 0.08715985405539665,
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:23.027Z"
+          "timestamp": "2026-09-20T05:46:04.249Z"
         },
         "currentLevel": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
-          "value": 0.7690637552357502,
+          "value": 0.7675069460146251,
           "$source": "fuel.reserve",
-          "timestamp": "2026-09-20T04:46:23.027Z"
+          "timestamp": "2026-09-20T05:46:04.249Z"
         }
       }
     },
@@ -2941,30 +3425,54 @@
         "currentVolume": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0.2014,
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.884Z"
+          "timestamp": "2026-09-20T05:46:15.046Z"
         },
         "currentLevel": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
           "value": 0.7599999999999999,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.884Z",
+          "timestamp": "2026-09-20T05:46:15.046Z",
           "pgn": 127505
         },
         "capacity": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0.265,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.884Z",
+          "timestamp": "2026-09-20T05:46:15.046Z",
           "pgn": 127505
         }
       },
@@ -2972,30 +3480,54 @@
         "currentVolume": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0,
           "$source": "derived-data",
-          "timestamp": "2026-09-20T04:46:22.885Z"
+          "timestamp": "2026-09-20T05:46:15.047Z"
         },
         "currentLevel": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
           "value": 0,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.885Z",
+          "timestamp": "2026-09-20T05:46:15.047Z",
           "pgn": 127505
         },
         "capacity": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 0.265,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.885Z",
+          "timestamp": "2026-09-20T05:46:15.047Z",
           "pgn": 127505
         }
       }
@@ -3026,23 +3558,30 @@
               "formula": "value * 100",
               "inverseFormula": "value * 0.01",
               "symbol": "%",
-              "displayFormat": "0",
-              "explicit": true
+              "displayFormat": "0"
             }
           },
           "value": 0.4285714285714285,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.885Z",
+          "timestamp": "2026-09-20T05:46:15.047Z",
           "pgn": 127505
         },
         "capacity": {
           "meta": {
             "description": "Data should be of type number.",
-            "units": "m3"
+            "units": "m3",
+            "displayUnits": {
+              "category": "volume",
+              "targetUnit": "gallon",
+              "formula": "value * 264.1720512415585",
+              "inverseFormula": "value / 264.1720512415585",
+              "symbol": "gallon",
+              "displayFormat": "0.0"
+            }
           },
           "value": 214748.36469999998,
           "$source": "can0.6",
-          "timestamp": "2026-09-20T04:46:22.885Z",
+          "timestamp": "2026-09-20T05:46:15.047Z",
           "pgn": 127505
         }
       }
@@ -3052,11 +3591,19 @@
         "temperature": {
           "meta": {
             "description": "",
-            "units": "K"
+            "units": "K",
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
           "value": 291.15,
           "$source": "propane.a",
-          "timestamp": "2026-09-20T04:46:16.416Z"
+          "timestamp": "2026-09-20T05:46:12.630Z"
         },
         "currentLevel": {
           "meta": {
@@ -3064,22 +3611,38 @@
             "units": "ratio",
             "alertMethod": [
               "visual"
-            ]
+            ],
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
           "value": 0.40727485717391315,
           "$source": "propane.a",
-          "timestamp": "2026-09-20T04:46:16.416Z"
+          "timestamp": "2026-09-20T05:46:12.630Z"
         }
       },
       "b": {
         "temperature": {
           "meta": {
             "description": "",
-            "units": "K"
+            "units": "K",
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
           "value": 288.15,
           "$source": "propane.b",
-          "timestamp": "2026-09-20T04:46:19.102Z"
+          "timestamp": "2026-09-20T05:46:15.725Z"
         },
         "currentLevel": {
           "meta": {
@@ -3087,11 +3650,19 @@
             "units": "ratio",
             "alertMethod": [
               "visual"
-            ]
+            ],
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
-          "value": 0.38669390608695664,
+          "value": 0.38487844173913055,
           "$source": "propane.b",
-          "timestamp": "2026-09-20T04:46:19.102Z"
+          "timestamp": "2026-09-20T05:46:15.725Z"
         }
       }
     },
@@ -3100,20 +3671,36 @@
         "temperature": {
           "meta": {
             "description": "",
-            "units": "K"
+            "units": "K",
+            "displayUnits": {
+              "category": "temperature",
+              "targetUnit": "F",
+              "formula": "(value - 273.15) * 9/5 + 32",
+              "inverseFormula": "(value - 32) * 5/9 + 273.15",
+              "symbol": "°F",
+              "displayFormat": "0.0"
+            }
           },
           "value": 291.15,
           "$source": "blackwater.stern",
-          "timestamp": "2026-09-20T04:46:24.155Z"
+          "timestamp": "2026-09-20T05:46:09.482Z"
         },
         "currentLevel": {
           "meta": {
             "description": "",
-            "units": "ratio"
+            "units": "ratio",
+            "displayUnits": {
+              "category": "percentage",
+              "targetUnit": "percent",
+              "formula": "value * 100",
+              "inverseFormula": "value * 0.01",
+              "symbol": "%",
+              "displayFormat": "0"
+            }
           },
           "value": 0,
           "$source": "blackwater.stern",
-          "timestamp": "2026-09-20T04:46:24.155Z"
+          "timestamp": "2026-09-20T05:46:09.482Z"
         }
       }
     }
@@ -3125,11 +3712,19 @@
           "dischargeSinceFull": {
             "meta": {
               "description": "Data should be of type number.",
-              "units": "C"
+              "units": "C",
+              "displayUnits": {
+                "category": "charge",
+                "targetUnit": "Ah",
+                "formula": "value * 0.0002777777777777778",
+                "inverseFormula": "value / 0.0002777777777777778",
+                "symbol": "Ah",
+                "displayFormat": "0.0"
+              }
             },
             "value": -2880,
             "$source": "Victron.D0:5B:3A:98:8A:90",
-            "timestamp": "2026-09-20T04:46:24.491332Z"
+            "timestamp": "2026-09-20T05:46:14.997483Z"
           },
           "stateOfCharge": {
             "meta": {
@@ -3164,36 +3759,174 @@
               ],
               "alertMethod": [
                 "visual"
-              ]
+              ],
+              "displayUnits": {
+                "category": "percentage",
+                "targetUnit": "percent",
+                "formula": "value * 100",
+                "inverseFormula": "value * 0.01",
+                "symbol": "%",
+                "displayFormat": "0"
+              }
             },
             "value": 0.9990000000000001,
             "$source": "Victron.D0:5B:3A:98:8A:90",
-            "timestamp": "2026-09-20T04:46:24.491332Z"
+            "timestamp": "2026-09-20T05:46:14.997483Z"
+          },
+          "timeRemaining": {
+            "meta": {
+              "description": "Data should be of type number.",
+              "units": "s",
+              "displayUnits": {
+                "category": "time",
+                "targetUnit": "hour",
+                "formula": "value * 0.0002777777777777778",
+                "inverseFormula": "value / 0.0002777777777777778",
+                "symbol": "hour",
+                "displayFormat": "0.0"
+              }
+            },
+            "value": 864000,
+            "$source": "Victron.D0:5B:3A:98:8A:90",
+            "timestamp": "2026-09-20T04:57:40.873995Z"
           }
         },
         "current": {
           "meta": {
             "description": "Current flowing out (+ve) or in (-ve) to the device. Reversed for batteries (+ve = charging).",
             "units": "A",
-            "zones": null
+            "zones": null,
+            "displayUnits": {
+              "category": "current",
+              "targetUnit": "A",
+              "formula": "value",
+              "inverseFormula": "value",
+              "symbol": "A",
+              "displayFormat": "0.00"
+            }
           },
           "value": 0,
           "$source": "Victron.D0:5B:3A:98:8A:90",
-          "timestamp": "2026-09-20T04:46:24.491332Z"
+          "timestamp": "2026-09-20T05:46:14.997483Z"
         },
         "power": {
           "value": 0,
           "$source": "Victron.D0:5B:3A:98:8A:90",
-          "timestamp": "2026-09-20T04:46:24.491332Z"
+          "timestamp": "2026-09-20T05:46:14.997483Z"
         },
         "voltage": {
           "meta": {
             "description": "Voltage measured at or as close as possible to the device",
-            "units": "V"
+            "units": "V",
+            "displayUnits": {
+              "category": "voltage",
+              "targetUnit": "V",
+              "formula": "value",
+              "inverseFormula": "value",
+              "symbol": "V",
+              "displayFormat": "0.00"
+            }
           },
           "value": 13.16,
           "$source": "Victron.D0:5B:3A:98:8A:90",
-          "timestamp": "2026-09-20T04:46:24.491332Z"
+          "timestamp": "2026-09-20T05:46:14.997483Z"
+        }
+      }
+    },
+    "solar": {
+      "bimini": {
+        "chargingMode": {
+          "meta": {
+            "description": "Charging mode i.e. float, overcharge, etc."
+          },
+          "value": "off",
+          "$source": "Victron.CB:CE:C2:BE:3D:21",
+          "timestamp": "2026-09-20T05:44:37.033893Z"
+        },
+        "current": {
+          "meta": {
+            "description": "Current flowing out (+ve) or in (-ve) to the device. Reversed for batteries (+ve = charging).",
+            "units": "A",
+            "displayUnits": {
+              "category": "current",
+              "targetUnit": "A",
+              "formula": "value",
+              "inverseFormula": "value",
+              "symbol": "A",
+              "displayFormat": "0.00"
+            }
+          },
+          "value": 0,
+          "$source": "Victron.CB:CE:C2:BE:3D:21",
+          "timestamp": "2026-09-20T05:44:37.033893Z"
+        },
+        "loadCurrent": {
+          "meta": {
+            "description": "Data should be of type number.",
+            "units": "A",
+            "displayUnits": {
+              "category": "current",
+              "targetUnit": "A",
+              "formula": "value",
+              "inverseFormula": "value",
+              "symbol": "A",
+              "displayFormat": "0.00"
+            }
+          },
+          "value": 0,
+          "$source": "Victron.CB:CE:C2:BE:3D:21",
+          "timestamp": "2026-09-20T05:44:37.033893Z"
+        },
+        "panelPower": {
+          "meta": {
+            "description": "Data should be of type number.",
+            "units": "W",
+            "displayUnits": {
+              "category": "power",
+              "targetUnit": "W",
+              "formula": "value",
+              "inverseFormula": "value",
+              "symbol": "W",
+              "displayFormat": "0.00"
+            }
+          },
+          "value": 0,
+          "$source": "Victron.CB:CE:C2:BE:3D:21",
+          "timestamp": "2026-09-20T05:44:37.033893Z"
+        },
+        "voltage": {
+          "meta": {
+            "description": "Voltage measured at or as close as possible to the device",
+            "units": "V",
+            "displayUnits": {
+              "category": "voltage",
+              "targetUnit": "V",
+              "formula": "value",
+              "inverseFormula": "value",
+              "symbol": "V",
+              "displayFormat": "0.00"
+            }
+          },
+          "value": 12.49,
+          "$source": "Victron.CB:CE:C2:BE:3D:21",
+          "timestamp": "2026-09-20T05:44:37.033893Z"
+        },
+        "yieldToday": {
+          "meta": {
+            "description": "Data should be of type number.",
+            "units": "J",
+            "displayUnits": {
+              "category": "energy",
+              "targetUnit": "btu",
+              "formula": "value * 0.0009478169879134378",
+              "inverseFormula": "value / 0.0009478169879134378",
+              "symbol": "btu",
+              "displayFormat": "0.00"
+            }
+          },
+          "value": 36000,
+          "$source": "Victron.CB:CE:C2:BE:3D:21",
+          "timestamp": "2026-09-20T05:44:37.033893Z"
         }
       }
     }
@@ -3201,36 +3934,36 @@
   "internet": {
     "ping": {
       "jitter": {
-        "value": 1.417,
+        "value": 9.15,
         "$source": "signalk-plugin-internet-speed",
-        "timestamp": "2026-09-20T04:44:50.591Z"
+        "timestamp": "2026-09-20T05:45:12.646Z"
       },
       "latency": {
-        "value": 70.755,
+        "value": 73.032,
         "$source": "signalk-plugin-internet-speed",
-        "timestamp": "2026-09-20T04:44:50.591Z"
+        "timestamp": "2026-09-20T05:45:12.646Z"
       }
     },
     "packetLoss": {
       "value": 0,
       "$source": "signalk-plugin-internet-speed",
-      "timestamp": "2026-09-20T04:44:50.591Z"
+      "timestamp": "2026-09-20T05:45:12.646Z"
     },
     "ISP": {
       "value": "Verizon Wireless",
       "$source": "signalk-plugin-internet-speed",
-      "timestamp": "2026-09-20T04:44:50.591Z"
+      "timestamp": "2026-09-20T05:45:12.646Z"
     },
     "speed": {
       "download": {
-        "value": 19.515325,
+        "value": 19.759475,
         "$source": "signalk-plugin-internet-speed",
-        "timestamp": "2026-09-20T04:44:50.591Z"
+        "timestamp": "2026-09-20T05:45:12.646Z"
       },
       "upload": {
-        "value": 16.500275,
+        "value": 17.567425,
         "$source": "signalk-plugin-internet-speed",
-        "timestamp": "2026-09-20T04:44:50.591Z"
+        "timestamp": "2026-09-20T05:45:12.646Z"
       }
     }
   },
@@ -3238,146 +3971,332 @@
     "beatAngle": {
       "meta": {
         "description": "Optimal beat angle for current TWS, negative to port.",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
       "value": -0.8726646259971648,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "gybeAngle": {
       "meta": {
         "description": "Optimal run/gybe angle for current TWS, negative to port.",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
-      "value": -2.7286042131604735,
+      "value": -2.443460952792061,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "targetAngle": {
       "meta": {
         "description": "Target TWA — auto-switches between beat and run, negative to port.",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
-      "value": -2.7286042131604735,
+      "value": -2.443460952792061,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "beatAngleVelocityMadeGood": {
       "meta": {
         "description": "Optimal beat VMG for current TWS.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 2.2433750537570996,
+      "value": 1.3679589889061479,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "gybeAngleVelocityMadeGood": {
       "meta": {
         "description": "Optimal run VMG for current TWS.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 3.061525247282659,
+      "value": 1.4106926837426044,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "targetVelocityMadeGood": {
       "meta": {
         "description": "Target VMG — auto-switches between beat and run.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 3.061525247282659,
+      "value": 1.4106926837426044,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "optimumWindAngle": {
       "meta": {
         "description": "Difference between TWA and run angle, negative to port.",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 0.8528067991820925,
+      "value": 0.44802698904045424,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "polarSpeed": {
       "meta": {
         "description": "Polar chart boat speed for current TWS and TWA.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 4.046407338987871,
+      "value": 2.3068192039375233,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "targetSpeed": {
       "meta": {
         "description": "Boat speed needed to achieve target VMG at the optimal angle.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 3.3425482934971975,
+      "value": 1.841528512365311,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "polarSpeedRatio": {
       "meta": {
         "description": "Actual boat speed divided by polar speed.",
-        "units": "ratio"
+        "units": "ratio",
+        "displayUnits": {
+          "category": "percentage",
+          "targetUnit": "percent",
+          "formula": "value * 100",
+          "inverseFormula": "value * 0.01",
+          "symbol": "%",
+          "displayFormat": "0"
+        }
       },
       "value": 0,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "velocityMadeGood": {
       "meta": {
         "description": "Actual VMG based on current boat speed and TWA.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
       "value": 0,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "polarVelocityMadeGood": {
       "meta": {
         "description": "Polar VMG for current TWS.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 3.061525247282659,
+      "value": 1.4106926837426044,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "polarVelocityMadeGoodRatio": {
       "meta": {
         "description": "Actual VMG divided by polar VMG.",
-        "units": "ratio"
+        "units": "ratio",
+        "displayUnits": {
+          "category": "percentage",
+          "targetUnit": "percent",
+          "formula": "value * 100",
+          "inverseFormula": "value * 0.01",
+          "symbol": "%",
+          "displayFormat": "0"
+        }
       },
       "value": 0,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "maxSpeed": {
       "meta": {
         "description": "Maximum polar boat speed for current TWS.",
-        "units": "m/s"
+        "units": "m/s",
+        "displayUnits": {
+          "category": "speed",
+          "targetUnit": "kn",
+          "formula": "value * 1.94384",
+          "inverseFormula": "value * 0.514444",
+          "symbol": "kn",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 4.04809564394767,
+      "value": 2.524611693674708,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "maxSpeedAngle": {
       "meta": {
         "description": "TWA at which maximum speed is achieved, negative to port.",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
-      "value": -1.9198621771937625,
+      "value": -1.273667817417779,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
     },
     "tackTrue": {
       "meta": {
         "description": "Opposite tack heading relative to true north.",
-        "units": "rad"
+        "units": "rad",
+        "displayUnits": {
+          "category": "angle",
+          "targetUnit": "degree",
+          "formula": "value * 57.29577951308231",
+          "inverseFormula": "value / 57.29577951308231",
+          "symbol": "°",
+          "displayFormat": "0.0"
+        }
       },
-      "value": 3.444709493384405,
+      "value": 3.7348161077769753,
       "$source": "signalk-polar-performance-plugin",
-      "timestamp": "2026-09-20T04:46:24.658Z"
+      "timestamp": "2026-09-20T05:46:15.636Z"
+    }
+  },
+  "server": {
+    "backup": {
+      "lastRunTimestamp": {
+        "value": "2026-09-20T05:38:35.231Z",
+        "$source": "signalk-backup",
+        "timestamp": "2026-09-20T05:38:35.231Z",
+        "meta": {
+          "description": "When the most recent scheduled backup ran",
+          "displayName": "Last backup"
+        }
+      },
+      "lastStatus": {
+        "value": "success",
+        "$source": "signalk-backup",
+        "timestamp": "2026-09-20T05:38:35.231Z",
+        "meta": {
+          "description": "Outcome of the most recent scheduled backup run",
+          "displayName": "Backup status"
+        }
+      },
+      "lastRunTier": {
+        "value": "hourly",
+        "$source": "signalk-backup",
+        "timestamp": "2026-09-20T05:38:35.231Z",
+        "meta": {
+          "description": "Scheduler tier that produced the most recent run",
+          "displayName": "Last backup tier"
+        }
+      },
+      "nextScheduledTimestamp": {
+        "value": "2026-09-20T06:00:00.000Z",
+        "$source": "signalk-backup",
+        "timestamp": "2026-09-20T05:38:35.231Z",
+        "meta": {
+          "description": "When the next scheduled backup is due (earliest of all tiers)",
+          "displayName": "Next backup"
+        }
+      },
+      "lastRunBytes": {
+        "value": 1051553995,
+        "$source": "signalk-backup",
+        "timestamp": "2026-09-20T05:38:35.231Z",
+        "meta": {
+          "units": "B",
+          "description": "Size of the most recent scheduled backup",
+          "displayName": "Last backup size",
+          "displayUnits": {
+            "category": "dataSize",
+            "targetUnit": "MB",
+            "formula": "value / 1000000",
+            "inverseFormula": "value * 1000000",
+            "symbol": "MB",
+            "displayFormat": "0.0"
+          }
+        }
+      }
     }
   }
 }
