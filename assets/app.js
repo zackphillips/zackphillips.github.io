@@ -53,11 +53,6 @@ function setCached(key, data) {
   try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch { /* quota */ }
 }
 let tideStations = null; // Global tide stations data
-const DEFAULT_TIDE_LOCATION = {
-  lat:   C.DEFAULT_TIDE_LAT,
-  lon:   C.DEFAULT_TIDE_LON,
-  label: C.DEFAULT_TIDE_LABEL,
-};
 
 const PANEL_SKELETONS = {
   'navigation-grid': 6,
@@ -72,71 +67,81 @@ const PANEL_SKELETONS = {
 };
 
 
-function classifyBatteryStatus(percent) {
-  if (!Number.isFinite(percent)) return null;
-  if (percent >= C.BATTERY_OK_PCT)   return { level: 'ok',    label: 'Charged' };
-  if (percent >= C.BATTERY_WARN_PCT) return { level: 'warn',  label: 'Low' };
-  return { level: 'alert', label: 'Critical' };
+// ---------------------------------------------------------------------------
+// Value classification — Signal K zones and nothing else
+// ---------------------------------------------------------------------------
+// Every "is this value OK?" question on the page goes through classifyByZones.
+// There is no constant-threshold fallback any more: six classify* functions
+// used to hard-code what counts as a low battery, a low tank and a dragging
+// anchor for every boat that publishes this site. A path with no zones set on
+// the server renders uncoloured — the honest answer to "nobody has said what
+// good looks like here" — and the fix is to set the zone in Signal K, where
+// the alarm that fires the buzzer is configured anyway.
+
+// Signal K notification states, mapped onto the three the stylesheet paints.
+const ZONE_LEVELS = {
+  nominal: 'ok',
+  normal: 'ok',
+  warn: 'warn',
+  caution: 'warn',
+  alert: 'alert',
+  alarm: 'alert',
+  emergency: 'alert',
+};
+
+// Shown when a zone carries no `message` of its own.
+const ZONE_LABELS = { ok: 'Normal', warn: 'Warning', alert: 'Alert' };
+
+function zoneMatches(value, zone, inclusiveUpper) {
+  const above = zone.lower == null || value >= zone.lower;
+  const below = zone.upper == null || (inclusiveUpper ? value <= zone.upper : value < zone.upper);
+  return above && below;
 }
 
-function classifyBatteryTime(hours) {
-  if (!Number.isFinite(hours)) return null;
-  if (hours >= C.BATTERY_TIME_OK_H)   return { level: 'ok',   label: 'Plenty' };
-  if (hours >= C.BATTERY_TIME_WARN_H) return { level: 'warn', label: 'Soon' };
-  return { level: 'alert', label: 'Short' };
-}
-
-function classifyAnchorStatus(current, max) {
-  if (!Number.isFinite(current) || !Number.isFinite(max) || max <= 0) return null;
-  if (current <= max * C.ANCHOR_WARN_RATIO) return { level: 'ok',   label: 'Safe' };
-  if (current <= max * C.ANCHOR_EDGE_RATIO) return { level: 'warn', label: 'Edge' };
-  return { level: 'alert', label: 'Drifting' };
-}
-
-function classifyPacketLoss(loss) {
-  if (!Number.isFinite(loss)) return null;
-  const percentage = loss <= 1 ? loss * 100 : loss;
-  if (percentage < C.PACKET_LOSS_OK_PCT)   return { level: 'ok',   label: 'Clean' };
-  if (percentage < C.PACKET_LOSS_WARN_PCT) return { level: 'warn', label: 'Lossy' };
-  return { level: 'alert', label: 'Dropping' };
-}
-
-function classifyTankLevel(level) {
-  if (!Number.isFinite(level)) return null;
-  if (level >= C.TANK_OK_RATIO)   return { level: 'ok',   label: 'Healthy' };
-  if (level >= C.TANK_WARN_RATIO) return { level: 'warn', label: 'Low' };
-  return { level: 'alert', label: 'Refill' };
-}
-
-function classifyWasteTank(level) {
-  if (!Number.isFinite(level)) return null;
-  if (level <= C.WASTE_WARN_RATIO)  return { level: 'ok',   label: 'Clear' };
-  if (level <= C.WASTE_ALERT_RATIO) return { level: 'warn', label: 'Rising' };
-  return { level: 'alert', label: 'Full' };
-}
-
-// Classify a value using SignalK meta.zones if available, otherwise return null.
-// SignalK zone states: nominal/normal → ok, warn/caution → warn, alert/alarm/emergency → alert.
+/**
+ * Classify a value against a Signal K `meta.zones` array.
+ *
+ * Returns {level, label} or null when there are no zones, the value is not a
+ * number, or no zone covers it. Null is a real answer: the caller renders the
+ * value with no colour rather than guessing a level.
+ *
+ * Bounds are half-open (lower <= v < upper), which is what makes adjacent
+ * zones like [0,0.2) and [0.2,0.5) unambiguous. A second inclusive pass
+ * catches a value sitting exactly on the top zone's upper bound, since a
+ * bounded top zone is a common way to write them and a full tank reading
+ * exactly 1.0 should not fall out of [0.5, 1].
+ */
 function classifyByZones(value, zones) {
   if (!Array.isArray(zones) || !Number.isFinite(value)) return null;
-  for (const zone of zones) {
-    const above = zone.lower == null || value >= zone.lower;
-    const below = zone.upper == null || value <= zone.upper;
-    if (above && below) {
-      const s = zone.state;
-      if (s === 'nominal' || s === 'normal') return { level: 'ok' };
-      if (s === 'warn'    || s === 'caution') return { level: 'warn' };
-      if (s === 'alert'   || s === 'alarm' || s === 'emergency') return { level: 'alert' };
+  for (const inclusiveUpper of [false, true]) {
+    for (const zone of zones) {
+      if (!zone || typeof zone !== 'object') continue;
+      const level = ZONE_LEVELS[String(zone.state || '').toLowerCase()];
+      if (!level) continue;
+      if (!zoneMatches(value, zone, inclusiveUpper)) continue;
+      return { level, label: zone.message || ZONE_LABELS[level] };
     }
   }
   return null;
 }
 
+/** Zones for a path node in the published snapshot, or null. */
+function zonesOf(node) {
+  const zones = node?.meta?.zones;
+  return Array.isArray(zones) ? zones : null;
+}
+
 // Render a value div whose text is colored by status level (ok/warn/alert).
+//
+// The zone's own `message` becomes the hover title. That is the one place the
+// server's wording reaches the page — "House bank low" in the words whoever
+// set the zone chose, rather than a label this file invented — and it is why
+// classifyByZones returns a label at all.
 function colorValue(display, status) {
   if (display === 'N/A') return `<div class="value"><span class="value-na">N/A</span></div>`;
   const cls = status?.level ? ` value-${status.level}` : '';
-  return `<div class="value${cls}">${display}</div>`;
+  const title = status?.label ? ` title="${escapeHtml(status.label)}"` : '';
+  return `<div class="value${cls}"${title}>${display}</div>`;
 }
 
 function renderAlertSummary() {
@@ -180,6 +185,262 @@ function renderAlertSummary() {
           </div>`;
       }).join('')}
     </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+// Two things out of data/telemetry/notifications.json, answering different
+// questions. `active` is what the boat is shouting about right now and goes in
+// a banner at the top of the page. `events` is the firing log — one entry per
+// time a notification *entered* an active state — and it is what the counts
+// over 1, 3, 12 and 24 hours are built from.
+//
+// A firing is an edge, not a sample: an alarm that stays on for six hours is
+// one firing. Sampling would make the number depend on the publish cadence,
+// which halves and doubles with navigation.state, so the same alarm would
+// score thirty times higher underway than at anchor. The flip side is that
+// anything firing and clearing between two publishes is never seen, which is
+// why the panel says what it is a count *of* rather than implying a total.
+
+let notificationsData = null;
+
+// Notification messages are free text written by whatever plugin raised them.
+// They land in innerHTML, so nothing goes in unescaped.
+function escapeHtml(text) {
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Signal K state → the level the stylesheet paints. Same table as
+// classifyByZones uses; notifications and zones share the state vocabulary.
+function notificationLevel(state) {
+  return ZONE_LEVELS[String(state || '').toLowerCase()] || null;
+}
+
+function relativeAge(fromMs, toMs) {
+  const s = Math.max(0, Math.round((toMs - fromMs) / 1000));
+  if (s < 90) return `${s}s`;
+  const m = Math.round(s / 60);
+  if (m < 90) return `${m}m`;
+  const h = m / 60;
+  if (h < 36) return `${h.toFixed(h < 10 ? 1 : 0)}h`;
+  return `${Math.round(h / 24)}d`;
+}
+
+// A path reads better with its last segment emphasised: the interesting part
+// of notifications.electrical.batteries.house.capacity.stateOfCharge is the
+// end of it, and on a phone the front is what gets truncated.
+function notificationTitle(item) {
+  const message = (item.message || '').trim();
+  if (message) return message;
+  const parts = String(item.path || '').split('.');
+  return parts[parts.length - 1] || item.path || 'Notification';
+}
+
+/**
+ * Count firings per path over each window in NOTIFICATION_WINDOWS_H.
+ *
+ * Counted back from the file's own `generated` time, not from the browser
+ * clock: a page left open overnight would otherwise watch every count decay
+ * to zero and read as a quiet night, when all that happened is that no new
+ * file was published. The panel shows how old `generated` is instead.
+ */
+function countNotificationFirings(payload) {
+  const windows = C.NOTIFICATION_WINDOWS_H;
+  const asOf = Date.parse(payload?.generated ?? '');
+  const reference = Number.isFinite(asOf) ? asOf : Date.now();
+  const sampledSince = Date.parse(payload?.sampled_since ?? '');
+  const events = Array.isArray(payload?.events) ? payload.events : [];
+
+  const byPath = new Map();
+  for (const event of events) {
+    const at = Date.parse(event?.at ?? '');
+    if (!Number.isFinite(at)) continue;
+    let row = byPath.get(event.path);
+    if (!row) {
+      row = { path: event.path, counts: windows.map(() => 0), last: null, level: 'warn' };
+      byPath.set(event.path, row);
+    }
+    windows.forEach((hours, i) => {
+      if (at >= reference - hours * 3600000) row.counts[i] += 1;
+    });
+    if (row.last === null || at > row.last) {
+      row.last = at;
+      row.level = notificationLevel(event.state) || row.level;
+      row.state = event.state;
+      row.message = event.message;
+    }
+  }
+
+  // A window longer than the log has been running cannot be a total, only a
+  // floor. Flagging it is the difference between "nothing fired last night"
+  // and "the plugin restarted at 06:00".
+  const partial = windows.map((hours) =>
+    Number.isFinite(sampledSince) ? sampledSince > reference - hours * 3600000 : false,
+  );
+
+  return {
+    reference,
+    sampledSince: Number.isFinite(sampledSince) ? sampledSince : null,
+    windows,
+    partial,
+    rows: [...byPath.values()].sort((a, b) => (b.last ?? 0) - (a.last ?? 0)),
+  };
+}
+
+/** The banner above the tabs: what is active right now, worst first. */
+function renderNotificationBanner(payload) {
+  const el = document.getElementById('notification-banner');
+  if (!el) return;
+  const active = Array.isArray(payload?.active) ? payload.active : [];
+  if (!active.length) {
+    el.style.display = 'none';
+    el.innerHTML = '';
+    return;
+  }
+  const asOf = Date.parse(payload?.generated ?? '');
+  const reference = Number.isFinite(asOf) ? asOf : Date.now();
+  const worst = active.some((item) => notificationLevel(item.state) === 'alert') ? 'alert' : 'warn';
+
+  el.style.display = '';
+  el.className = `notification-banner notification-banner--${worst}`;
+  el.innerHTML = `
+    <div class="notif-banner-head">
+      ${active.length} active notification${active.length === 1 ? '' : 's'}
+    </div>
+    <div class="notif-banner-list">
+      ${active.map((item) => {
+        const level = notificationLevel(item.state) || 'warn';
+        const since = Date.parse(item.since ?? '');
+        const age = Number.isFinite(since) ? ` · ${relativeAge(since, reference)}` : '';
+        return `
+          <div class="notif-chip notif-chip--${level}">
+            <span class="notif-chip-state">${escapeHtml(item.state)}</span>
+            <span class="notif-chip-title">${escapeHtml(notificationTitle(item))}</span>
+            <span class="notif-chip-path">${escapeHtml(item.path)}${age}</span>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+/** The Data tab's panel: active rows, then how often each path has fired. */
+function renderNotificationsPanel(payload) {
+  const el = document.getElementById('notifications-body');
+  if (!el) return;
+
+  if (!payload) {
+    el.innerHTML = `
+      <div class="notif-empty">
+        No notification log published. The plugin writes
+        <code>data/telemetry/notifications.json</code> when “Publish notifications”
+        is on; an older site will not have one yet.
+      </div>`;
+    return;
+  }
+
+  const summary = countNotificationFirings(payload);
+  const active = Array.isArray(payload.active) ? payload.active : [];
+  const activeByPath = new Map(active.map((item) => [item.path, item]));
+  const asOfAge = relativeAge(summary.reference, Date.now());
+  const anyPartial = summary.partial.some(Boolean);
+
+  // Every path with either a firing in the window or an active state now.
+  const paths = [...summary.rows];
+  for (const item of active) {
+    if (!paths.some((row) => row.path === item.path)) {
+      paths.push({
+        path: item.path,
+        counts: summary.windows.map(() => 0),
+        last: null,
+        level: notificationLevel(item.state) || 'warn',
+        state: item.state,
+        message: item.message,
+      });
+    }
+  }
+
+  const head = `
+    <div class="notif-meta">
+      Firings counted as of ${asOfAge} ago${
+        summary.sampledSince
+          ? `, from a log reaching back ${relativeAge(summary.sampledSince, summary.reference)}`
+          : ''
+      }. A notification that comes on and stays on counts once; one that
+      fires and clears between two publishes is not seen at all, so these are
+      a floor rather than a total.
+    </div>`;
+
+  if (!paths.length) {
+    el.innerHTML = `${head}<div class="notif-empty">Nothing has fired in the last ${
+      payload.window_hours ?? 24
+    } hours.</div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    ${head}
+    <table class="notif-table">
+      <thead>
+        <tr>
+          <th class="notif-col-path">Notification</th>
+          <th class="notif-col-now">Now</th>
+          ${summary.windows.map((hours, i) =>
+            `<th class="notif-col-count">${hours}h${summary.partial[i] ? '<span class="notif-partial">*</span>' : ''}</th>`,
+          ).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${paths.map((row) => {
+          const current = activeByPath.get(row.path);
+          const currentLevel = current ? notificationLevel(current.state) : null;
+          const title = notificationTitle(current || row);
+          return `
+            <tr>
+              <td class="notif-col-path">
+                <span class="notif-title">${escapeHtml(title)}</span>
+                <span class="notif-path">${escapeHtml(row.path)}</span>
+              </td>
+              <td class="notif-col-now">${
+                current
+                  ? `<span class="value-${currentLevel || 'warn'}">${escapeHtml(current.state)}</span>`
+                  : '<span class="value-na">clear</span>'
+              }</td>
+              ${row.counts.map((count) =>
+                `<td class="notif-col-count${count ? ` value-${row.level}` : ''}">${count || '–'}</td>`,
+              ).join('')}
+            </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    ${anyPartial
+      ? '<div class="notif-footnote">* The log does not reach back this far yet — the count covers only the part it has seen.</div>'
+      : ''}`;
+}
+
+/**
+ * Fetch the notification file and paint both views.
+ *
+ * Separate from loadData(): a 404 here is a site published by a plugin
+ * version that did not write this file, or with notifications turned off, and
+ * that must not take the dashboard down with it.
+ */
+async function loadNotifications() {
+  let payload = null;
+  try {
+    const res = await fetch(C.NOTIFICATIONS_URL);
+    if (res.ok) payload = await res.json();
+    else console.log(`No notifications file: ${res.status} ${res.statusText}`);
+  } catch (err) {
+    console.log('Notifications unavailable:', err);
+  }
+  notificationsData = payload;
+  try { renderNotificationBanner(payload); } catch (err) { console.error('Notification banner failed:', err); }
+  try { renderNotificationsPanel(payload); } catch (err) { console.error('Notifications panel failed:', err); }
 }
 
 function renderSkeletonGrid(containerId, count = 6) {
@@ -329,16 +590,18 @@ const DAY_TRACK_COLORS = [
   '#009688', '#2196f3', '#ff4081', '#76ff03', '#40c4ff', '#ea80fc',
 ];
 
-// Privacy zones — populated from vesselData.privacy_zones after YAML loads.
-// Falls back to the South Beach Harbor constant when vesselData is unavailable.
+// Privacy zones for display, from vesselData.privacy_zones. No zones means no
+// zones: an empty list is the configured answer "hide nothing", and this used
+// to read it as "hide South Beach Harbor" — one particular boat's dock,
+// applied to everybody else's map.
+//
+// This is the second layer. The plugin redacts before it publishes: a position
+// inside a zone is replaced with the zone centre in the snapshot and the point
+// is left out of the GPX entirely, so nothing that reaches this file needs
+// hiding again. That is what makes an empty list safe here.
 function getPrivacyZones() {
   const zones = vesselData?.privacy_zones;
-  if (Array.isArray(zones) && zones.length) return zones;
-  return [{
-    lat:      C.FALLBACK_PRIVACY_ZONE_LAT,
-    lon:      C.FALLBACK_PRIVACY_ZONE_LON,
-    radius_m: C.FALLBACK_PRIVACY_ZONE_RADIUS_M,
-  }];
+  return Array.isArray(zones) ? zones.filter((z) => z && Number.isFinite(z.lat) && Number.isFinite(z.lon)) : [];
 }
 
 function isInPrivacyZone(lat, lon) {
@@ -593,7 +856,13 @@ async function loadTrack() {
     }
     const payload = await response.json();
     const rawPositions = Array.isArray(payload) ? payload : payload.positions;
-    if (!Array.isArray(rawPositions) || !map) return;
+    if (!Array.isArray(rawPositions) || !map) {
+      // No recent points, but the published GPX days are a separate file and
+      // still worth drawing: a boat that has not had a fix since the site was
+      // built should still show where it has been.
+      loadHistoricalTracks();
+      return;
+    }
 
     const positions = rawPositions
       .map(parsePositionPoint)
@@ -621,6 +890,9 @@ async function loadTrack() {
     loadHistoricalTracks();
   } catch (error) {
     console.warn('Unable to load track data:', error);
+    // A missing or unreadable position index must not take the voyage
+    // archive with it: the GPX days are their own files in the repository.
+    loadHistoricalTracks();
   }
 }
 
@@ -926,10 +1198,26 @@ let currentNav = null; // Global navigation data
 let currentPropulsion = null; // Global propulsion data
 let isDrawingPolarChart = false; // Flag to prevent multiple simultaneous chart draws
 let lastPolarChartUpdate = 0; // Timestamp of last chart update
-const SPARKLINE_POINTS = C.SPARKLINE_POINTS;
+const SPARKLINE_MAX_POINTS = C.SPARKLINE_MAX_POINTS;
 let seriesByPath = null;
 let seriesPromise = null;
 let refreshSparklines = null; // set once initInlineSparklines is ready
+
+// ── History window ─────────────────────────────────────────────────────────
+// How far back every sparkline plots. One setting for the whole page, not one
+// per panel: the panels are read against each other — battery voltage beside
+// solar power beside boat speed — and they only line up if they share an axis.
+const HISTORY_WINDOWS = C.HISTORY_WINDOWS;
+let historyWindowHours = (() => {
+  // Wrapped because a browser with site data blocked throws on the read
+  // rather than returning null, and this runs at module scope: an exception
+  // here takes the whole page down, not just the sparklines.
+  try {
+    const stored = Number(localStorage.getItem(C.HISTORY_WINDOW_KEY));
+    if (HISTORY_WINDOWS.some((w) => w.hours === stored)) return stored;
+  } catch { /* private mode */ }
+  return C.HISTORY_WINDOW_DEFAULT_HOURS;
+})();
 let bannerState = 'ok'; // 'ok' | 'error' — persists across theme switches
 
 // ── Theme cycling ──────────────────────────────────────────────────────────
@@ -1027,6 +1315,14 @@ const fmtUnit = (group, rawSI) => {
 const hasValidCoordinates = (latitude, longitude) =>
   Number.isFinite(latitude) && Number.isFinite(longitude);
 
+// Where to look up tides: the boat's position, or the home waters set on the
+// plugin config page, or nowhere.
+//
+// Nowhere is a real answer and the panels say so. There used to be a third
+// step here, a hardcoded San Francisco Bay, which meant a boat in the
+// Chesapeake with no fix yet was shown Golden Gate tides under a heading that
+// read like its own — a wrong number presented as a right one. An empty panel
+// is worse to look at and better to trust.
 function resolveTidePosition(currentLat, currentLon) {
   if (hasValidCoordinates(currentLat, currentLon)) {
     return {
@@ -1037,24 +1333,17 @@ function resolveTidePosition(currentLat, currentLon) {
     };
   }
 
-  const fallbackFromVessel = vesselData?.default_location;
-  if (
-    fallbackFromVessel &&
-    hasValidCoordinates(fallbackFromVessel.lat, fallbackFromVessel.lon)
-  ) {
+  const home = vesselData?.default_location;
+  if (home && hasValidCoordinates(home.lat, home.lon)) {
     return {
-      lat: fallbackFromVessel.lat,
-      lon: fallbackFromVessel.lon,
+      lat: home.lat,
+      lon: home.lon,
       usingFallback: true,
-      label: fallbackFromVessel.label || 'default vessel location',
+      label: home.label || 'home waters',
     };
   }
 
-  return {
-    ...DEFAULT_TIDE_LOCATION,
-    usingFallback: true,
-    label: DEFAULT_TIDE_LOCATION.label,
-  };
+  return null;
 }
 
 // ── Voyage statistics ────────────────────────────────────────────────────────
@@ -1102,46 +1391,33 @@ async function loadVoyageStats() {
   }
 }
 
-// Load vessel information from YAML file
+// Site configuration: the handful of things signalk_latest.json cannot supply.
+//
+// This was info.yaml, parsed in the browser with a 30 KB js-yaml script from a
+// CDN, and it carried the boat as well — name, MMSI, callsign, registrations,
+// dimensions — every one of which is already in the snapshot this page loads
+// a moment later. The duplicate is gone: the boat comes from the snapshot
+// (see the merge in loadData), and this file is privacy zones, custom links,
+// the default position, the timezone, the link back to the boat's Signal K,
+// the two registration numbers the plugin derives, and the passage banner.
 async function loadVesselData() {
   try {
-    const response = await fetch('data/vessel/info.yaml');
+    const response = await fetch(C.SITE_CONFIG_URL);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const yamlText = await response.text();
+    const parsed = await response.json();
+    vesselData = parsed && typeof parsed === 'object' ? parsed : {};
 
-    // Parse YAML using js-yaml library
-    if (typeof jsyaml === 'undefined') {
-      throw new Error('js-yaml library not loaded');
-    }
-    vesselData = jsyaml.load(yamlText);
-
-    // Add default_location if not present
-    if (!vesselData.default_location) {
-      vesselData.default_location = {
-        lat:   C.DEFAULT_TIDE_LAT,
-        lon:   C.DEFAULT_TIDE_LON,
-        label: C.DEFAULT_TIDE_LABEL,
-      };
-    }
-
-    console.log('Vessel data loaded:', vesselData);
+    console.log('Site configuration loaded:', vesselData);
     updateVesselLinks();
   } catch (error) {
-    console.error('Error loading vessel data:', error);
-    // Set default values if loading fails
-    vesselData = {
-      name: "S.V.Mermug",
-      mmsi: "338543654",
-      uscg_number: "1024168",
-      hull_number: "BEY57004E494",
-      default_location: {
-        lat:   C.DEFAULT_TIDE_LAT,
-        lon:   C.DEFAULT_TIDE_LON,
-        label: C.DEFAULT_TIDE_LABEL,
-      },
-    };
+    // Empty, not invented. This used to fall back to one particular boat's
+    // name, MMSI, documentation number and home waters, so a site whose
+    // config had not published yet introduced itself as somebody else's
+    // vessel. Every consumer of vesselData already handles a missing key.
+    console.error('Error loading site configuration:', error);
+    vesselData = {};
     updateVesselLinks();
   }
 }
@@ -1156,13 +1432,12 @@ async function loadTideStations() {
     tideStations = await response.json();
     console.log('Tide stations data loaded:', tideStations);
   } catch (error) {
+    // No stand-in list. A single hardcoded San Francisco station used to sit
+    // here, which meant a boat anywhere else picked it as its "nearest" one
+    // and showed Golden Gate tides under its own heading. An empty list makes
+    // resolveTidePosition find nothing and the panel say so.
     console.error('Error loading tide stations data:', error);
-    // Set default values if loading fails
-    tideStations = {
-      stations: [
-        { id: "9414290", name: "San Francisco", lat: 37.806, lon: -122.465 }
-      ]
-    };
+    tideStations = { stations: [] };
   }
 }
 
@@ -1193,22 +1468,7 @@ function updateVesselLinks() {
 
   }
 
-  // Render passage banner if a current passage is configured
-  const passage = vesselData.passage;
-  const passageBanner = document.getElementById('passage-banner');
-  if (passageBanner) {
-    if (passage?.from && passage?.to) {
-      let text = `${passage.from} → ${passage.to}`;
-      if (passage.departed) {
-        const d = new Date(`${passage.departed}T12:00:00`);
-        text += ` · Departed ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
-      }
-      passageBanner.textContent = text;
-      passageBanner.style.display = 'block';
-    } else {
-      passageBanner.style.display = 'none';
-    }
-  }
+  renderPassageBanner(vesselData.passage);
 
   // Construct SignalK URLs from base configuration
   const signalk = vesselData.signalk;
@@ -1224,25 +1484,69 @@ function updateVesselLinks() {
     vesselData.signalk.websocket_url = `${wsUrl}/signalk/v1/stream`;
   }
 
-  // Construct external tracking links
-  vesselData.links = vesselData.links || {};
-  if (vesselData.marinetraffic_ship_id) {
-    vesselData.links.marinetraffic = `https://www.marinetraffic.com/en/ais/details/ships/shipid:${vesselData.marinetraffic_ship_id}`;
-  }
-  if (vesselData.postgsail_logs_url) {
-    vesselData.links.postgsail = vesselData.postgsail_logs_url;
+  // The link row is entirely the owner's: an AIS tracker, a ship's log, a
+  // Starlink status page. Add them as custom buttons on the plugin's config
+  // page — there are no built-in external links.
+  renderCustomLinks(vesselData.custom_links);
+}
+
+// The passage banner, from the plugin's reading of the Course API.
+//
+// It used to require both a from and a to, because both were typed into a
+// YAML block by hand. The Course API rarely has a "from": activate a waypoint
+// and previousPoint is the vessel's own position at that moment, which has no
+// name, and publishing its coordinates instead would put the slip the boat
+// left on a public page. So a destination alone is a banner.
+//
+// `departed` is a full ISO instant now, not a date. It used to be parsed as
+// `${departed}T12:00:00`, which against an instant produces Invalid Date.
+function renderPassageBanner(passage) {
+  const banner = document.getElementById('passage-banner');
+  if (!banner) return;
+
+  const to = typeof passage?.to === 'string' ? passage.to.trim() : '';
+  const from = typeof passage?.from === 'string' ? passage.from.trim() : '';
+  if (!to && !from) {
+    banner.style.display = 'none';
+    return;
   }
 
-  // Update the link cluster in the tab bar
-  const marinetrafficLink = document.getElementById('marinetraffic-link');
-  if (marinetrafficLink && vesselData.links?.marinetraffic) {
-    marinetrafficLink.href = vesselData.links.marinetraffic;
+  let text = from && to ? `${from} → ${to}` : to ? `Bound for ${to}` : `From ${from}`;
+  const departed = passage?.departed ? new Date(passage.departed) : null;
+  if (departed && !isNaN(departed.getTime())) {
+    const sameDay = departed.toDateString() === new Date().toDateString();
+    text += sameDay
+      ? ` · Departed ${departed.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+      : ` · Departed ${departed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   }
+  banner.textContent = text;
+  banner.style.display = 'block';
+}
 
-  const postgsailLink = document.getElementById('postgsail-link');
-  if (postgsailLink && vesselData.links?.postgsail) {
-    postgsailLink.href = vesselData.links.postgsail;
-    postgsailLink.style.display = '';
+// Buttons the owner configured: a ship's log, a Starlink status page, anything
+// with a URL. Built here rather than written into index.html so the set can
+// change without republishing the frontend.
+//
+// Rebuilt from scratch on each call so a second load does not double them up,
+// and the scheme is checked again on this side: site.json is a file in a
+// public repository, and `href = "javascript:..."` would run in every
+// visitor's browser. The plugin filters the same way on the way out.
+function renderCustomLinks(links) {
+  const host = document.getElementById('custom-links');
+  if (!host) return;
+  host.textContent = '';
+  if (!Array.isArray(links)) return;
+  for (const link of links) {
+    const label = typeof link?.label === 'string' ? link.label.trim() : '';
+    const url = typeof link?.url === 'string' ? link.url.trim() : '';
+    if (!label || !/^https?:\/\//i.test(url)) continue;
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener';
+    anchor.className = 'tab-link';
+    anchor.textContent = label;
+    host.appendChild(anchor);
   }
 }
 let themeChangeTimeout = null; // Timeout for theme change debouncing
@@ -1338,10 +1642,12 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
     return `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${params.toString()}`;
   };
 
-  let targetStation = nearest;
-  let url = buildUrl(targetStation.id);
-  const fallbackStation = { id: '9414290', name: 'San Francisco', lat: 37.806, lon: -122.465 };
-  let attemptedFallback = false;
+  // There is no fallback station. A failed fetch for the nearest station used
+  // to be retried against San Francisco "because it is known to work", which
+  // answered a question nobody asked: the panel then showed real tides for
+  // water 3000 miles away, labelled with this boat's heading.
+  const targetStation = nearest;
+  const url = buildUrl(targetStation.id);
   const tideCacheKey = `tide_${targetStation.id}_${begin}`;
 
   try {
@@ -1355,11 +1661,11 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
       lat: targetStation.lat, lon: targetStation.lon,
       url, begin_date: begin, end_date: end
     });
-    if (!json) try {
+    if (!json) {
       res = await fetch(url);
       if (res.ok) {
         json = await res.json();
-        // Check for NOAA API error in response (they sometimes return 200 with error object)
+        // NOAA sometimes returns 200 with an error object in the body.
         if (json.error) {
           throw new Error(json.error.message || JSON.stringify(json.error));
         }
@@ -1380,52 +1686,6 @@ async function drawTideGraph(lat, lon, tidePositionMeta = {}) {
           // Ignore errors parsing error response
         }
         throw new Error(`HTTP ${res.status}: ${errorDetails}`);
-      }
-    } catch (error) {
-      // If primary station fails, try fallback (San Francisco is known to work)
-      if (!attemptedFallback && targetStation.id !== fallbackStation.id) {
-        console.warn('Primary station failed, retrying with fallback 9414290 (San Francisco)', error);
-        attemptedFallback = true;
-        targetStation = fallbackStation;
-        url = buildUrl(fallbackStation.id);
-        console.debug('Tide fetch: attempting fallback station', {
-          id: targetStation.id,
-          name: targetStation.name,
-          url
-        });
-
-        try {
-          res = await fetch(url);
-          if (res.ok) {
-            json = await res.json();
-            // Check for NOAA API error in response
-            if (json.error) {
-              throw new Error(json.error.message || JSON.stringify(json.error));
-            }
-          } else {
-            // Try to get error details from response body
-            let errorDetails = res.statusText;
-            try {
-              const errorBody = await res.text();
-              if (errorBody) {
-                try {
-                  const errorJson = JSON.parse(errorBody);
-                  errorDetails = errorJson.error?.message || errorJson.message || errorBody;
-                } catch {
-                  errorDetails = errorBody;
-                }
-              }
-            } catch {
-              // Ignore errors parsing error response
-            }
-            throw new Error(`NOAA API ${res.status}: ${errorDetails}`);
-          }
-        } catch (retryError) {
-          throw new Error(`Failed to fetch tide data: ${retryError.message || 'Network error'}`);
-        }
-      } else {
-        // Already tried fallback or it was the fallback, re-throw
-        throw error;
       }
     }
     const rawData = Array.isArray(json?.predictions) ? json.predictions : [];
@@ -1652,9 +1912,13 @@ async function loadData() {
     seriesPromise = fetch(`${C.INSTRUMENT_LOG_URL}?ts=${Date.now()}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((payload) => {
+        // Every entry, not a trailing slice. The publisher already trims the
+        // file to the configured length, and the slice that used to be here
+        // was a second, shorter trim: a log configured to cover 24 hours was
+        // cut back to its last 60 buckets before anything could plot them,
+        // so the longer windows had nothing to show.
         const entries = Array.isArray(payload?.entries) ? payload.entries : [];
-        const recent = entries.slice(-SPARKLINE_POINTS);
-        seriesByPath = buildSeriesFromLog(recent);
+        seriesByPath = buildSeriesFromLog(entries);
         return seriesByPath;
       })
       .catch(() => {
@@ -1723,7 +1987,41 @@ async function loadData() {
     'environment.rpi.sd.utilisation':                    { transform: v => v * 100,                        unit: '%'     },
   };
 
-  const renderSparkline = (canvas, points, displayConfig = {}, colors = {}) => {
+  const SPARKLINE_FONT = '10px system-ui,-apple-system,sans-serif';
+  /** Displayed height, in CSS pixels. The bitmap is this times the DPR. */
+  const SPARKLINE_CSS_HEIGHT = 80;
+
+  /**
+   * Size the bitmap to the box the canvas actually occupies, at device
+   * resolution, and return the CSS-pixel size to draw in.
+   *
+   * The stylesheet sets `width: 100%`, so a bitmap sized to anything else is
+   * stretched to fit: the card's `clientWidth` includes its padding, which
+   * made every canvas a few pixels too wide and squeezed the axis text
+   * horizontally. On a 3x phone the same bitmap was then upscaled again. Both
+   * together are what turned 10px labels into smears.
+   *
+   * A hidden canvas has no layout box, so the card's content width stands in
+   * until the panel is opened; opening re-renders at the real width.
+   */
+  const sizeSparkline = (canvas, item) => {
+    let width = canvas.clientWidth;
+    if (!width && item) {
+      const style = getComputedStyle(item);
+      width =
+        item.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    }
+    width = Math.max(120, Math.round(width || 120));
+    // Past 3x there is nothing left to resolve and the bitmap is four times
+    // the memory for it.
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(SPARKLINE_CSS_HEIGHT * dpr);
+    canvas.style.height = `${SPARKLINE_CSS_HEIGHT}px`;
+    return { width, height: SPARKLINE_CSS_HEIGHT, dpr };
+  };
+
+  const renderSparkline = (canvas, points, displayConfig = {}, colors = {}, item = null) => {
     const { transform = v => v, unit = '' } = displayConfig;
     const {
       line: lineColor     = 'rgba(255, 255, 255, 0.85)',
@@ -1731,21 +2029,39 @@ async function loadData() {
       label: labelColor   = 'rgba(255, 255, 255, 0.6)',
       noData: noDataColor = 'rgba(255, 255, 255, 0.5)',
     } = colors;
+    const { width, height, dpr } = sizeSparkline(canvas, item);
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Everything below is in CSS pixels; the transform does the scaling.
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    ctx.font = SPARKLINE_FONT;
     if (!points || points.length < 2) {
       ctx.fillStyle = noDataColor;
-      ctx.font = '10px system-ui,-apple-system,sans-serif';
-      ctx.fillText('No data', 6, canvas.height / 2 + 4);
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('No data', 6, height / 2);
       return;
     }
-    const formatValue = (value) => {
+    const formatValue = (value, digits) => {
       if (!Number.isFinite(value)) return '';
-      const abs = Math.abs(value);
-      if (abs >= 1000) return `${(value / 1000).toFixed(1)}k`;
-      if (abs >= 100 || abs === 0) return value.toFixed(0);
-      if (abs >= 10) return value.toFixed(1);
-      return value.toFixed(2);
+      if (Math.abs(value) >= 1000) return `${(value / 1000).toFixed(1)}k`;
+      return value.toFixed(digits);
+    };
+    /**
+     * Labels for the two ends of the range, at the coarsest precision that
+     * still tells them apart.
+     *
+     * A fixed rule by magnitude printed a 696.28-to-696.34 nm log as "696nm"
+     * at both ends, which is an axis that says nothing. Equal ends are a flat
+     * line and correctly get the same label.
+     */
+    const formatRange = (lo, hi) => {
+      for (const digits of [0, 1, 2, 3]) {
+        const low = formatValue(lo, digits);
+        const high = formatValue(hi, digits);
+        if (low !== high || lo === hi) return [low, high];
+      }
+      return [lo.toPrecision(5), hi.toPrecision(5)];
     };
     const formatTime = (date) =>
       date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -1758,10 +2074,31 @@ async function loadData() {
     const rawMax = Math.max(...rawValues);
     const rawRange = rawMax - rawMin || 1;
 
-    const padding = { top: 8, right: 8, bottom: 20, left: 34 };
-    const w = canvas.width - padding.left - padding.right;
-    const h = canvas.height - padding.top - padding.bottom;
-    const axisX = canvas.height - padding.bottom;
+    const [minLabel, maxLabel] = formatRange(min, max);
+    const yLabels = [`${minLabel}${unit}`, `${maxLabel}${unit}`];
+
+    // The left gutter is measured, not assumed. It was a fixed 34px while the
+    // labels carry their unit, so "0.01nm" — 38px at this font — ran off the
+    // left edge of every canvas. Capped so a long label cannot eat the plot.
+    //
+    // The measured width is padded on both sides: LABEL_INSET of clear space
+    // before the canvas edge, and LABEL_GAP between the text and the axis.
+    // With only the 5px gap and nothing on the outside, a wide label like
+    // "12.3mph" ended flush against x=0 and the browser clipped its first
+    // glyph — the "1" of every speed axis was missing on a narrow card.
+    const LABEL_INSET = 5;
+    const LABEL_GAP = 4;
+    const labelWidth = Math.ceil(Math.max(...yLabels.map((text) => ctx.measureText(text).width)));
+    const gutter = labelWidth + LABEL_INSET + LABEL_GAP;
+    const padding = {
+      top: 8,
+      right: 6,
+      bottom: 20,
+      left: Math.min(gutter, Math.round(width * 0.45)),
+    };
+    const w = width - padding.left - padding.right;
+    const h = height - padding.top - padding.bottom;
+    const axisX = height - padding.bottom;
     const axisY = padding.left;
 
     // Axes
@@ -1770,29 +2107,39 @@ async function loadData() {
     ctx.beginPath();
     ctx.moveTo(axisY, padding.top);
     ctx.lineTo(axisY, axisX);
-    ctx.lineTo(canvas.width - padding.right, axisX);
+    ctx.lineTo(width - padding.right, axisX);
     ctx.stroke();
 
-    // Y-axis labels (right-aligned into left padding, no unit to save space)
+    // Y-axis labels, right-aligned into the gutter measured for them.
     ctx.fillStyle = labelColor;
-    ctx.font = '10px system-ui,-apple-system,sans-serif';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.fillText(`${formatValue(max)}${unit}`, axisY - 2, padding.top);
+    ctx.fillText(yLabels[1], axisY - LABEL_GAP, padding.top);
     ctx.textBaseline = 'bottom';
-    ctx.fillText(`${formatValue(min)}${unit}`, axisY - 2, axisX);
+    ctx.fillText(yLabels[0], axisY - LABEL_GAP, axisX);
 
-    // X-axis time ticks (4 labels: start, ⅓, ⅔, end)
+    // X-axis time ticks: the first, the middle and the last, and nothing else.
+    //
+    // It used to fit as many as it could, up to four. Four 30px "HH:MM"
+    // labels in the ~100px of plot a phone-width card leaves overprinted each
+    // other into an unreadable run of digits, and even three that fit read as
+    // clutter at this size. Three is the most a sparkline axis can carry:
+    // where the window starts, where it is halfway, where it ends.
+    //
+    // The middle one is dropped when the card is too narrow to hold all
+    // three clear of each other. The two ends are never dropped — an axis
+    // with one label does not say what it spans.
     const tFirst = points[0].t.getTime();
     const tLast  = points[points.length - 1].t.getTime();
-    const numTicks = 3;
-    ctx.font = '10px system-ui,-apple-system,sans-serif';
+    const tSpan  = tLast - tFirst;
+    const timeWidth = ctx.measureText(formatTime(points[points.length - 1].t)).width;
+    const ratios = w >= 3 * timeWidth + 20 ? [0, 0.5, 1] : [0, 1];
     ctx.textBaseline = 'top';
-    for (let i = 0; i <= numTicks; i++) {
-      const ratio = i / numTicks;
+    ratios.forEach((ratio) => {
       const x = padding.left + ratio * w;
-      const tickDate = new Date(tFirst + ratio * (tLast - tFirst));
-      ctx.textAlign = i === 0 ? 'left' : i === numTicks ? 'right' : 'center';
+      const tickDate = new Date(tFirst + ratio * tSpan);
+      ctx.textAlign = ratio === 0 ? 'left' : ratio === 1 ? 'right' : 'center';
+      ctx.fillStyle = labelColor;
       ctx.fillText(formatTime(tickDate), x, axisX + 3);
       // tick mark
       ctx.strokeStyle = axisColor;
@@ -1801,14 +2148,25 @@ async function loadData() {
       ctx.moveTo(x, axisX);
       ctx.lineTo(x, axisX + 3);
       ctx.stroke();
-    }
+    });
 
-    // Data line
+    // Data line, positioned by timestamp rather than by index.
+    //
+    // Index spacing assumed every reading was equally far from the next. A
+    // bucket where every instrument was silent is dropped by the publisher,
+    // so the log has gaps, and an evenly spaced line put readings under the
+    // wrong time labels — a two-hour hole drew as one sample's width. With a
+    // selectable window that reaches back a day, the holes are the interesting
+    // part. A span of zero (every point at one instant) falls back to index
+    // spacing, which is the only thing that is defined there.
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2;
     ctx.beginPath();
     points.forEach((point, index) => {
-      const x = padding.left + (index / (points.length - 1)) * w;
+      const ratio = tSpan > 0
+        ? (point.t.getTime() - tFirst) / tSpan
+        : index / (points.length - 1);
+      const x = padding.left + ratio * w;
       const y = padding.top + (1 - (point.v - rawMin) / rawRange) * h;
       if (index === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
@@ -1821,12 +2179,108 @@ async function loadData() {
    * Safe to call multiple times — re-renders existing canvases in place.
    * Also exposed as module-level refreshSparklines for the theme toggle.
    */
-  const SPARKLINE_HEIGHT = 80;
-
   // Parse a computed rgb()/rgba() color string and return [r, g, b].
   const parseRgb = (str) => {
     const m = str.match(/rgba?\(\s*(\d+),\s*(\d+),\s*(\d+)/);
     return m ? [+m[1], +m[2], +m[3]] : null;
+  };
+
+  /**
+   * Oldest and newest reading in the log, across every path.
+   *
+   * This is what the window dropdown is checked against. `instrument_log.json`
+   * covers `entries x resolution`, both set on the plugin config page, so a
+   * site publishing the default hour cannot answer a 24-hour question — and
+   * offering it anyway would draw the same chart under four different labels.
+   */
+  const seriesSpan = (seriesMap) => {
+    let oldest = Infinity;
+    let newest = -Infinity;
+    let longest = null;
+    for (const list of seriesMap.values()) {
+      if (!list.length) continue;
+      oldest = Math.min(oldest, list[0].t.getTime());
+      newest = Math.max(newest, list[list.length - 1].t.getTime());
+      if (!longest || list.length > longest.length) longest = list;
+    }
+    if (!Number.isFinite(oldest)) return null;
+    return { oldest, newest, bucket: medianGap(longest) };
+  };
+
+  /**
+   * The log's bucket width, measured rather than assumed.
+   *
+   * `resolutionSeconds` lives on the plugin config page and is not published
+   * anywhere the site can read, and it is needed for one thing: a log of N
+   * buckets spans N-1 gaps, so a file configured to cover exactly 24 hours
+   * reports 23.98 and would never satisfy a 24-hour window. Adding one bucket
+   * closes that, and the median is taken rather than the mean because the log
+   * has holes — a silent bucket is dropped by the publisher, and one two-hour
+   * gap would drag a mean far past the real spacing.
+   */
+  const medianGap = (list) => {
+    if (!list || list.length < 2) return 0;
+    const gaps = [];
+    for (let i = 1; i < list.length; i += 1) {
+      gaps.push(list[i].t.getTime() - list[i - 1].t.getTime());
+    }
+    gaps.sort((a, b) => a - b);
+    return gaps[Math.floor(gaps.length / 2)];
+  };
+
+  /**
+   * The tail of a series inside the selected window, thinned to what can be
+   * drawn.
+   *
+   * The cutoff is measured back from the newest reading in the log, not from
+   * the wall clock. A site is a published file: open it the morning after a
+   * passage and every wall-clock window is empty, while "the last hour of
+   * data" is exactly the hour you want to see.
+   */
+  const windowPoints = (list, cutoff) => {
+    let start = 0;
+    while (start < list.length && list[start].t.getTime() < cutoff) start += 1;
+    const inWindow = list.slice(start);
+    if (inWindow.length <= SPARKLINE_MAX_POINTS) return inWindow;
+    const stride = Math.ceil(inWindow.length / SPARKLINE_MAX_POINTS);
+    const thinned = inWindow.filter((_, index) => index % stride === 0);
+    const last = inWindow[inWindow.length - 1];
+    if (thinned[thinned.length - 1] !== last) thinned.push(last);
+    return thinned;
+  };
+
+  /** Windows the log actually reaches back far enough to draw. */
+  const coveredWindows = (span) => {
+    if (!span) return [];
+    const hours = (span.newest - span.oldest + span.bucket) / 3_600_000;
+    // The shortest window is always offered: a log shorter than an hour still
+    // draws, it just does not fill the axis.
+    return HISTORY_WINDOWS.filter((w, index) => index === 0 || w.hours <= hours);
+  };
+
+  /**
+   * The window dropdown in a panel header, created once and synced after.
+   *
+   * Synced on every render rather than only on creation because the setting is
+   * shared: changing it in the Power panel has to move the one in Navigation
+   * too, or the two headers disagree about what their charts are showing.
+   */
+  const syncWindowSelect = (select, covered) => {
+    const wanted = HISTORY_WINDOWS.map((w) => w.hours).join(',');
+    if (select.dataset.options !== wanted || select.dataset.covered !== String(covered.length)) {
+      select.textContent = '';
+      for (const window of HISTORY_WINDOWS) {
+        const option = document.createElement('option');
+        option.value = String(window.hours);
+        const isCovered = covered.some((c) => c.hours === window.hours);
+        option.textContent = isCovered ? window.label : `${window.label} (not logged)`;
+        option.disabled = !isCovered;
+        select.appendChild(option);
+      }
+      select.dataset.options = wanted;
+      select.dataset.covered = String(covered.length);
+    }
+    select.value = String(historyWindowHours);
   };
 
   const initInlineSparklines = async () => {
@@ -1842,6 +2296,16 @@ async function loadData() {
     const seriesMap = await loadSeries();
     if (!seriesMap || !seriesMap.size) return;
 
+    // Clamp a remembered window the current log cannot answer. A device that
+    // last saw a 24-hour log keeps that preference; the site it opens next
+    // may publish an hour.
+    const span = seriesSpan(seriesMap);
+    const covered = coveredWindows(span);
+    if (covered.length && !covered.some((w) => w.hours === historyWindowHours)) {
+      historyWindowHours = covered[covered.length - 1].hours;
+    }
+    const cutoff = span ? span.newest - historyWindowHours * 3_600_000 : 0;
+
     // Render a canvas per info-item.
     document.querySelectorAll('.info-item[data-path]').forEach((item) => {
       const path = item.dataset.path;
@@ -1852,12 +2316,9 @@ async function loadData() {
       if (!canvas) {
         canvas = document.createElement('canvas');
         canvas.className = 'sparkline-inline';
-        canvas.height = SPARKLINE_HEIGHT;
         canvas.style.display = 'none'; // hidden by default
         item.appendChild(canvas);
       }
-      canvas.width = item.clientWidth || 120;
-      canvas.height = SPARKLINE_HEIGHT;
 
       // Derive line color from the parent panel's left-border accent.
       let lineColor = fallbackLine;
@@ -1867,50 +2328,88 @@ async function loadData() {
         if (rgb) lineColor = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${isDark ? 0.95 : 0.85})`;
       }
 
-      const points = list.slice(-SPARKLINE_POINTS);
+      const points = windowPoints(list, cutoff);
       const grp = PATH_TO_UNIT_GROUP[path];
       const displayCfg = grp
         ? { transform: getUnitCfg(grp).transform, unit: getUnitCfg(grp).unit }
         : (PATH_DISPLAY_CONFIG[path] || {});
-      renderSparkline(canvas, points, displayCfg, { ...baseColors, line: lineColor });
+      renderSparkline(canvas, points, displayCfg, { ...baseColors, line: lineColor }, item);
     });
 
-    // Add a toggle button to each panel that has at least one sparkline canvas.
+    // Add a toggle button and a window dropdown to each panel that has at
+    // least one sparkline canvas.
     document.querySelectorAll('.info-panel').forEach((panel) => {
       const sparklines = panel.querySelectorAll('.sparkline-inline');
       if (!sparklines.length) return;
 
-      // Don't add a second button on re-render.
-      if (panel.querySelector('.sparkline-toggle-btn')) return;
+      let controls = panel.querySelector('.sparkline-controls');
 
-      // The header is always the first direct child div of the panel.
-      const header = panel.querySelector(':scope > div:first-child');
-      if (!header) return;
+      if (!controls) {
+        // The header is always the first direct child div of the panel.
+        const header = panel.querySelector(':scope > div:first-child');
+        if (!header) return;
 
-      const btn = document.createElement('button');
-      btn.className = 'sparkline-toggle-btn';
-      btn.textContent = 'Show History';
-      btn.dataset.open = 'false';
+        controls = document.createElement('div');
+        controls.className = 'sparkline-controls';
 
-      // Make the header a flex row so the button sits on the right.
-      header.style.display = 'flex';
-      header.style.justifyContent = 'space-between';
-      header.style.alignItems = 'center';
-      header.appendChild(btn);
+        const select = document.createElement('select');
+        select.className = 'sparkline-window-select';
+        select.setAttribute('aria-label', 'History window');
+        // Hidden with the charts: it is the axis of something not on screen
+        // until the panel is open.
+        select.style.display = 'none';
 
-      btn.addEventListener('click', () => {
-        const opening = btn.dataset.open === 'false';
-        panel.querySelectorAll('.sparkline-inline').forEach((c) => {
-          c.style.display = opening ? 'block' : 'none';
+        const btn = document.createElement('button');
+        btn.className = 'sparkline-toggle-btn';
+        btn.textContent = 'Show History';
+        btn.dataset.open = 'false';
+
+        controls.append(select, btn);
+
+        // Make the header a flex row so the controls sit on the right.
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.appendChild(controls);
+
+        select.addEventListener('change', () => {
+          const hours = Number(select.value);
+          if (!HISTORY_WINDOWS.some((w) => w.hours === hours)) return;
+          historyWindowHours = hours;
+          try { localStorage.setItem(C.HISTORY_WINDOW_KEY, String(hours)); } catch { /* private mode */ }
+          // Every panel redraws: the setting is the page's, not this panel's.
+          initInlineSparklines();
         });
-        btn.dataset.open = opening ? 'true' : 'false';
-        btn.textContent = opening ? 'Hide History' : 'Show History';
-      });
+
+        btn.addEventListener('click', () => {
+          const opening = btn.dataset.open === 'false';
+          panel.querySelectorAll('.sparkline-inline').forEach((c) => {
+            c.style.display = opening ? 'block' : 'none';
+          });
+          select.style.display = opening ? 'block' : 'none';
+          btn.dataset.open = opening ? 'true' : 'false';
+          btn.textContent = opening ? 'Hide History' : 'Show History';
+          // Now that the canvases have a layout box, redraw at their real
+          // width. The first render had to guess it from the card.
+          if (opening) initInlineSparklines();
+        });
+      }
+
+      syncWindowSelect(controls.querySelector('.sparkline-window-select'), covered);
     });
   };
 
   // Expose so theme toggle can re-render sparklines with updated colors.
   refreshSparklines = initInlineSparklines;
+
+  // A rotation changes every card's width, and the bitmaps do not follow on
+  // their own: the labels would be drawn for the old one and stretched to the
+  // new. Debounced because a rotation fires a burst of these.
+  let sparklineResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(sparklineResizeTimer);
+    sparklineResizeTimer = setTimeout(() => initInlineSparklines(), 150);
+  });
 
   try {
     console.log('Starting to load data...');
@@ -1934,41 +2433,15 @@ async function loadData() {
         throw new Error(`Local file not available: ${res.status} ${res.statusText}`);
       }
     } catch (fileError) {
-      console.log('Local file fetch error:', fileError);
-      console.log('Local file unavailable, creating dummy data...');
-
-      // Create dummy data as fallback
-      console.log('Creating dummy data as fallback...');
-      data = {
-        navigation: {
-          position: { value: { latitude: 37.806, longitude: -122.465 } },
-          courseOverGroundTrue: { value: 0 },
-          speedOverGround: { value: 0 },
-          speedThroughWater: { value: 0 }
-        },
-        environment: {
-          wind: {
-            speedTrue: { value: 10 },
-            angleTrue: { value: 0 }
-          },
-          water: { temperature: { value: 288.15 } }
-        },
-        electrical: {
-          batteries: {
-            house: {
-              voltage: { value: 12.5 },
-              current: { value: 0 },
-              power: { value: 0 },
-              capacity: {
-                stateOfCharge: { value: 0.8 },
-                timeRemaining: { value: 36000 }
-              }
-            }
-          }
-        }
-      };
-      dataSource = 'dummy';
-      console.log('Dummy data created successfully');
+      // Nothing stands in for the snapshot. This used to build one: a
+      // position in San Francisco Bay, 10 knots of true wind, a house bank
+      // at 12.5V and 80%. A boat whose publish had failed showed a plausible
+      // afternoon's sailing to whoever was following it, which is the worst
+      // thing this page can do. Every panel already renders a missing value
+      // as missing, so hand them nothing and let them say so.
+      console.log('signalk_latest.json unavailable:', fileError);
+      data = {};
+      dataSource = 'unavailable';
     }
 
     console.log('Fetch response status:', res?.status);
@@ -2024,9 +2497,9 @@ async function loadData() {
     let timestampStr = data.navigation?.position?.timestamp;
     let modifiedDate = timestampStr ? new Date(timestampStr) : findLatestTimestamp(data);
 
-    if (dataSource === 'dummy') {
+    if (dataSource === 'unavailable') {
       bannerState = 'error';
-      if (ageEl) ageEl.textContent = 'Demo data';
+      if (ageEl) ageEl.textContent = 'Telemetry unavailable';
       if (statusHero) statusHero.classList.add('stale');
     } else if (modifiedDate && !isNaN(modifiedDate.getTime())) {
       const diffMs    = Date.now() - modifiedDate;
@@ -2150,36 +2623,57 @@ async function loadData() {
     }
 
     const tidePosition = resolveTidePosition(lat, lon);
-    drawTideGraph(tidePosition.lat, tidePosition.lon, tidePosition);
+    if (tidePosition) {
+      drawTideGraph(tidePosition.lat, tidePosition.lon, tidePosition);
+    } else {
+      const tideHeader = document.getElementById('tideHeader');
+      if (tideHeader) {
+        tideHeader.textContent =
+          'Tides unavailable — waiting for a GPS fix, or set home waters on the plugin config page';
+      }
+    }
 
 
     // Update navigation data
     const currentTheme = document.documentElement.getAttribute('data-theme');
 
+    // Anchor distance is coloured by zones on navigation.anchor.currentRadius,
+    // in metres, like every other path. It used to be a ratio against
+    // maxRadius — 85% of the rode is "Safe", 105% is "Drifting" — which read
+    // well and was not something any anchor alarm on board agreed with. The
+    // alarm itself now reaches the page through notifications.navigation.anchor
+    // instead of being re-derived here from a number and a guess.
     const anchorRawSI = nav.anchor?.currentRadius?.value ?? null;
-    const anchorStatus = classifyAnchorStatus(anchorRawSI, nav.anchor?.maxRadius?.value);
-    const anchorValueHtml = colorValue(fmtUnit('length', anchorRawSI), anchorStatus);
+    const anchorValueHtml = colorValue(
+      fmtUnit('length', anchorRawSI),
+      classifyByZones(anchorRawSI, zonesOf(nav.anchor?.currentRadius)),
+    );
 
-    const socRaw = elec.batteries?.house?.capacity?.stateOfCharge?.value;
-    const socZones = elec.batteries?.house?.capacity?.stateOfCharge?.meta?.zones;
+    const socNode = elec.batteries?.house?.capacity?.stateOfCharge;
+    const socRaw = socNode?.value;
     const socPercent = socRaw != null ? socRaw * 100 : null;
     const socDisplay = socPercent != null ? `${socPercent.toFixed(0)}%` : 'N/A';
-    const socValueHtml = colorValue(socDisplay, classifyByZones(socRaw, socZones) || classifyBatteryStatus(socPercent));
+    const socValueHtml = colorValue(socDisplay, classifyByZones(socRaw, zonesOf(socNode)));
 
-    const timeRemainingRaw = elec.batteries?.house?.capacity?.timeRemaining?.value;
-    const timeRemainingZones = elec.batteries?.house?.capacity?.timeRemaining?.meta?.zones;
+    const timeRemainingNode = elec.batteries?.house?.capacity?.timeRemaining;
+    const timeRemainingRaw = timeRemainingNode?.value;
     const timeRemainingHours = timeRemainingRaw != null ? timeRemainingRaw / 3600 : null;
     const timeRemainingDisplay = timeRemainingHours != null ? `${timeRemainingHours.toFixed(1)} hrs` : 'N/A';
-    const timeRemainingHtml = colorValue(timeRemainingDisplay, classifyByZones(timeRemainingRaw, timeRemainingZones) || classifyBatteryTime(timeRemainingHours));
+    const timeRemainingHtml = colorValue(
+      timeRemainingDisplay,
+      classifyByZones(timeRemainingRaw, zonesOf(timeRemainingNode)),
+    );
 
     const packetLossValueRaw = internet.packetLoss?.value;
-    const packetLossZones = internet.packetLoss?.meta?.zones;
     const packetLossPercent = packetLossValueRaw != null ? (packetLossValueRaw <= 1 ? packetLossValueRaw * 100 : packetLossValueRaw) : null;
     const packetLossDisplay = packetLossPercent != null ? `${packetLossPercent.toFixed(1)}%` : 'N/A';
-    const packetLossHtml = colorValue(packetLossDisplay, classifyByZones(packetLossValueRaw, packetLossZones) || classifyPacketLoss(packetLossValueRaw));
+    const packetLossHtml = colorValue(
+      packetLossDisplay,
+      classifyByZones(packetLossValueRaw, zonesOf(internet.packetLoss)),
+    );
 
-    const tankValueWithBadge = (level, valueDisplay, waste = false, zones = null) =>
-      colorValue(valueDisplay, classifyByZones(level, zones) || (waste ? classifyWasteTank(level) : classifyTankLevel(level)));
+    const tankValueWithBadge = (level, valueDisplay, zones = null) =>
+      colorValue(valueDisplay, classifyByZones(level, zones));
 
     paintPanel('navigation-grid', () => `
       <div class="info-item" title="${withUpdated('Current vessel latitude position', nav.position)}"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
@@ -2298,14 +2792,14 @@ async function loadData() {
     const blackwaterBow = tanks.blackwater?.bow || {};
     const liveWell0 = tanks.liveWell?.['0'] || {};
     paintPanel('tanks-grid', () => `
-      <div class="info-item" data-path="tanks.fuel.0.currentLevel" data-label="Fuel (Main)" data-unit-group="volume" data-raw="${fuelMain.currentVolume?.value ?? ''}" data-level="${toPercent(fuelMain.currentLevel?.value)}" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div>${tankValueWithBadge(fuelMain.currentLevel?.value, formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value), false, fuelMain.currentLevel?.meta?.zones)}</div>
-      <div class="info-item" data-path="tanks.fuel.reserve.currentLevel" data-label="Fuel (Reserve)" data-unit-group="volume" data-raw="${fuelReserve.currentVolume?.value ?? ''}" data-level="${toPercent(fuelReserve.currentLevel?.value)}" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div>${tankValueWithBadge(fuelReserve.currentLevel?.value, formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value), false, fuelReserve.currentLevel?.meta?.zones)}</div>
-      <div class="info-item" data-path="tanks.freshWater.0.currentLevel" data-label="Fresh Water 1" data-unit-group="volume" data-raw="${freshWater0.currentVolume?.value ?? ''}" data-level="${toPercent(freshWater0.currentLevel?.value)}" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div>${tankValueWithBadge(freshWater0.currentLevel?.value, formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value), false, freshWater0.currentLevel?.meta?.zones)}</div>
-      <div class="info-item" data-path="tanks.freshWater.1.currentLevel" data-label="Fresh Water 2" data-unit-group="volume" data-raw="${freshWater1.currentVolume?.value ?? ''}" data-level="${toPercent(freshWater1.currentLevel?.value)}" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div>${tankValueWithBadge(freshWater1.currentLevel?.value, formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value), false, freshWater1.currentLevel?.meta?.zones)}</div>
-      <div class="info-item" data-path="tanks.propane.a.currentLevel" data-label="Propane A" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div>${tankValueWithBadge(propaneA.currentLevel?.value, formatTankDisplay(propaneA.currentLevel?.value, null), false, propaneA.currentLevel?.meta?.zones)}</div>
-      <div class="info-item" data-path="tanks.propane.b.currentLevel" data-label="Propane B" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div>${tankValueWithBadge(propaneB.currentLevel?.value, formatTankDisplay(propaneB.currentLevel?.value, null), false, propaneB.currentLevel?.meta?.zones)}</div>
-      <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div>${tankValueWithBadge(blackwaterBow.currentLevel?.value, formatTankDisplay(blackwaterBow.currentLevel?.value, null), true, blackwaterBow.currentLevel?.meta?.zones)}</div>
-      <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div>${tankValueWithBadge(liveWell0.currentLevel?.value, formatTankDisplay(liveWell0.currentLevel?.value, null), true, liveWell0.currentLevel?.meta?.zones)}</div>
+      <div class="info-item" data-path="tanks.fuel.0.currentLevel" data-label="Fuel (Main)" data-unit-group="volume" data-raw="${fuelMain.currentVolume?.value ?? ''}" data-level="${toPercent(fuelMain.currentLevel?.value)}" title="${withUpdatedNodes('Main fuel tank level, volume, and temperature (if available)', fuelMain.currentLevel, fuelMain.currentVolume, fuelMain.temperature)}"><div class="label">Fuel (Main)</div>${tankValueWithBadge(fuelMain.currentLevel?.value, formatTankDisplay(fuelMain.currentLevel?.value, fuelMain.currentVolume?.value), zonesOf(fuelMain.currentLevel))}</div>
+      <div class="info-item" data-path="tanks.fuel.reserve.currentLevel" data-label="Fuel (Reserve)" data-unit-group="volume" data-raw="${fuelReserve.currentVolume?.value ?? ''}" data-level="${toPercent(fuelReserve.currentLevel?.value)}" title="${withUpdatedNodes('Reserve fuel tank level, volume, and temperature (if available)', fuelReserve.currentLevel, fuelReserve.currentVolume, fuelReserve.temperature)}"><div class="label">Fuel (Reserve)</div>${tankValueWithBadge(fuelReserve.currentLevel?.value, formatTankDisplay(fuelReserve.currentLevel?.value, fuelReserve.currentVolume?.value), zonesOf(fuelReserve.currentLevel))}</div>
+      <div class="info-item" data-path="tanks.freshWater.0.currentLevel" data-label="Fresh Water 1" data-unit-group="volume" data-raw="${freshWater0.currentVolume?.value ?? ''}" data-level="${toPercent(freshWater0.currentLevel?.value)}" title="${withUpdatedNodes('Fresh water tank 1 level and volume', freshWater0.currentLevel, freshWater0.currentVolume)}"><div class="label">Fresh Water 1</div>${tankValueWithBadge(freshWater0.currentLevel?.value, formatTankDisplay(freshWater0.currentLevel?.value, freshWater0.currentVolume?.value), zonesOf(freshWater0.currentLevel))}</div>
+      <div class="info-item" data-path="tanks.freshWater.1.currentLevel" data-label="Fresh Water 2" data-unit-group="volume" data-raw="${freshWater1.currentVolume?.value ?? ''}" data-level="${toPercent(freshWater1.currentLevel?.value)}" title="${withUpdatedNodes('Fresh water tank 2 level and volume', freshWater1.currentLevel, freshWater1.currentVolume)}"><div class="label">Fresh Water 2</div>${tankValueWithBadge(freshWater1.currentLevel?.value, formatTankDisplay(freshWater1.currentLevel?.value, freshWater1.currentVolume?.value), zonesOf(freshWater1.currentLevel))}</div>
+      <div class="info-item" data-path="tanks.propane.a.currentLevel" data-label="Propane A" title="${withUpdatedNodes('Propane tank A level and temperature', propaneA.currentLevel, propaneA.temperature)}"><div class="label">Propane A</div>${tankValueWithBadge(propaneA.currentLevel?.value, formatTankDisplay(propaneA.currentLevel?.value, null), zonesOf(propaneA.currentLevel))}</div>
+      <div class="info-item" data-path="tanks.propane.b.currentLevel" data-label="Propane B" title="${withUpdatedNodes('Propane tank B level and temperature', propaneB.currentLevel, propaneB.temperature)}"><div class="label">Propane B</div>${tankValueWithBadge(propaneB.currentLevel?.value, formatTankDisplay(propaneB.currentLevel?.value, null), zonesOf(propaneB.currentLevel))}</div>
+      <div class="info-item" data-path="tanks.blackwater.bow.currentLevel" data-label="Blackwater" title="${withUpdatedNodes('Blackwater tank level and temperature', blackwaterBow.currentLevel, blackwaterBow.temperature)}"><div class="label">Blackwater</div>${tankValueWithBadge(blackwaterBow.currentLevel?.value, formatTankDisplay(blackwaterBow.currentLevel?.value, null), zonesOf(blackwaterBow.currentLevel))}</div>
+      <div class="info-item" data-path="tanks.liveWell.0.currentLevel" data-label="Bilge" title="${withUpdated('Bilge level', liveWell0.currentLevel)}"><div class="label">Bilge</div>${tankValueWithBadge(liveWell0.currentLevel?.value, formatTankDisplay(liveWell0.currentLevel?.value, null), zonesOf(liveWell0.currentLevel))}</div>
     `);
 
     // Render alert summary and inline sparklines now that all info-item cards
@@ -2665,8 +3159,11 @@ async function loadConditionsForecast() {
   const loading = document.getElementById('conditions-loading');
 
   const tidePos = resolveTidePosition(lat, lon);
-  if (!hasValidCoordinates(tidePos.lat, tidePos.lon)) {
-    if (loading) loading.textContent = 'Waiting for GPS position…';
+  if (!tidePos) {
+    if (loading) {
+      loading.textContent =
+        'Waiting for a GPS fix — or set home waters on the plugin config page.';
+    }
     return;
   }
 
@@ -3398,7 +3895,9 @@ function initDarkMode() {
   const html = document.documentElement;
 
   // Check for saved theme preference, then vessel config, then fall back to light
-  const savedTheme = localStorage.getItem('theme') || vesselData?.theme || 'marine';
+  // No vessel-config fallback: there is no theme setting and never was a
+  // `theme:` key to read. The button cycles THEMES and localStorage remembers.
+  const savedTheme = localStorage.getItem('theme') || 'marine';
   html.setAttribute('data-theme', savedTheme);
   updateDarkModeButton(savedTheme);
 
@@ -3554,6 +4053,7 @@ function updateChartsForTheme(theme) {
   loadPolarData();
   loadVoyageStats();
   loadData();
+  loadNotifications();
 
   // Real-time SignalK updates removed; using static data only
 
