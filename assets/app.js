@@ -958,36 +958,19 @@ function setRawDataPre(id, obj) {
   }
 }
 
-async function updateMapLocation(lat, lon) {
-  try {
-    // If inside a privacy zone, snap the geocoding lookup to the zone center
-    // so we get a proper landmark name rather than an open-water coordinate.
-    const zone = getPrivacyZoneCenter(lat, lon);
-    const lookupLat = zone ? zone.lat : lat;
-    const lookupLon = zone ? zone.lon : lon;
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lookupLat}&lon=${lookupLon}&format=json&zoom=10&addressdetails=1`);
-    const data = await response.json();
-
-    let locationName = "Unknown Location";
-
-    if (data.display_name) {
-      // Parse the display name to get a more concise location
-      const parts = data.display_name.split(', ');
-      if (parts.length >= 2) {
-        // Try to get city and state/country
-        const city = parts[0];
-        const state = parts[1];
-        locationName = `${city}, ${state}`;
-      } else {
-        locationName = data.display_name;
-      }
-    }
-
-    setStatusSentence(locationName);
-  } catch (error) {
-    console.error('Error fetching location:', error);
-    setStatusSentence('unknown location');
-  }
+// Where the boat is, in words, without asking anyone. This used to send the
+// position to Nominatim from every visitor's browser on every load: a
+// third-party lookup of the boat's position per page view, and a usage
+// pattern OpenStreetMap's policy forbids (no identifying User-Agent, no
+// caching, unbounded request rate), so a link shared in a forum was one busy
+// afternoon away from getting blocked. The published position is already
+// the zone center inside a zone, so the zone's name is the place.
+function describeLocation(lat, lon) {
+  const zone = getPrivacyZoneCenter(lat, lon);
+  if (zone?.name) return zone.name;
+  const ns = lat >= 0 ? 'N' : 'S';
+  const ew = lon >= 0 ? 'E' : 'W';
+  return `${Math.abs(lat).toFixed(2)}\u00b0${ns}, ${Math.abs(lon).toFixed(2)}\u00b0${ew}`;
 }
 
 function setStatusSentence(locationName) {
@@ -1468,6 +1451,73 @@ function renderVoyageList() {
     </div>`).join('');
 
   bindVoyageListOnce(container);
+  openVoyageFromHash();
+}
+
+// ── Voyage links ─────────────────────────────────────────────────────────
+// `#voyages/2026-08-14` opens the Voyages tab (tabs.js) with that day's card
+// expanded. A fragment rather than a query string: nothing reaches a server,
+// the service worker's cache key is the same page, and back and forward move
+// between voyages. Opening or closing a card rewrites the fragment, so the
+// address bar is always the link to what is on screen.
+const VOYAGE_HASH = /^#voyages\/(\d{4}-\d{2}-\d{2})$/;
+
+function voyageFromHash() {
+  const match = VOYAGE_HASH.exec(window.location.hash || '');
+  return match ? match[1] : null;
+}
+
+function setVoyageHash(date) {
+  const hash = date ? `#voyages/${date}` : '#voyages';
+  if (window.location.hash !== hash) history.replaceState(null, '', hash);
+}
+
+// Runs after every list render: the list is drawn once from the index and
+// again when the GPX files arrive, and the second pass is the one with a
+// track for the mini map.
+function openVoyageFromHash() {
+  const date = voyageFromHash();
+  const container = document.getElementById('voyage-list');
+  if (!container) return;
+  container.querySelector('.voyage-list-missing')?.remove();
+  if (!date) return;
+
+  const item = container.querySelector(`.voyage-item[data-date="${date}"]`);
+  if (!item) {
+    // Pruned, never recorded, or a mistyped link. Say so rather than showing
+    // the list as though the link had worked.
+    container.insertAdjacentHTML('afterbegin',
+      `<div class="voyage-list-empty voyage-list-missing">No voyage on ${fmtVoyageDate(date)} is published here.</div>`);
+    return;
+  }
+  if (!item.classList.contains('is-open')) toggleVoyageDetail(item);
+  item.scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
+window.addEventListener('hashchange', () => {
+  if (voyageFromHash()) openVoyageFromHash();
+});
+
+// The system share sheet where there is one (a phone), the clipboard
+// otherwise. The button says which happened.
+async function shareVoyage(button, date) {
+  const url = `${window.location.origin}${window.location.pathname}#voyages/${date}`;
+  const label = button.textContent;
+  const flash = (text) => {
+    button.textContent = text;
+    setTimeout(() => { button.textContent = label; }, 2000);
+  };
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: `${document.title}: ${fmtVoyageDate(date)}`, url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    flash('Link copied');
+  } catch (e) {
+    // A dismissed share sheet is not a failure worth a message.
+    if (e?.name !== 'AbortError') flash('Could not copy');
+  }
 }
 
 // One delegated listener on the list survives every renderVoyageList() rerender.
@@ -1479,6 +1529,11 @@ function bindVoyageListOnce(container) {
   container.addEventListener('click', (e) => {
     const item = e.target.closest('.voyage-item');
     if (!item) return;
+
+    if (e.target.closest('.voyage-share')) {
+      shareVoyage(e.target.closest('.voyage-share'), item.dataset.date);
+      return;
+    }
 
     if (e.target.closest('.voyage-show-on-map')) {
       const date = item.dataset.date;
@@ -1527,6 +1582,7 @@ function closeVoyageDetail(item) {
 function toggleVoyageDetail(item) {
   const wasOpen = item.classList.contains('is-open');
   item.parentElement.querySelectorAll('.voyage-item.is-open').forEach(closeVoyageDetail);
+  setVoyageHash(wasOpen ? null : item.dataset.date);
   if (wasOpen) return;
 
   const entry = tracksIndex.find((t) => t.date === item.dataset.date);
@@ -1575,6 +1631,7 @@ function voyageDetailHtml(entry) {
     </div>
     <div class="voyage-detail-actions">
       <button type="button" class="voyage-detail-btn voyage-show-on-map">Show on main map</button>
+      <button type="button" class="voyage-detail-btn voyage-detail-btn--ghost voyage-share">Share</button>
       ${gpx ? `<a class="voyage-detail-btn voyage-detail-btn--ghost" href="${gpx.url}" download="${gpx.filename}">Download GPX</a>` : ''}
     </div>`;
 }
@@ -2133,8 +2190,9 @@ function findStationById(stationId) {
 // Which NOAA station to query, and why: nearest-by-distance from a live GPS
 // fix, or the exact one the config page overrides to when there is none. The
 // override is never distance-ranked — it is a choice, not a guess — so an ID
-// outside the local lookup table (any valid NOAA station, not just the ~50
-// West Coast ones this table ships) still works, just without a name to show.
+// outside the local lookup table (which ships only NOAA's harmonic stations;
+// see scripts/update-tide-stations.mjs) still works, just without a name to
+// show.
 async function resolveTideStation(target) {
   if (target.mode === 'gps') {
     const station = await findNearestNOAAStation(target.lat, target.lon);
@@ -2182,20 +2240,85 @@ async function drawTideGraph(target) {
 
   // Build NOAA API URL according to official documentation
   // https://api.tidesandcurrents.noaa.gov/api/prod/
-  const buildUrl = (stationId) => {
+  const buildUrl = (stationId, interval = 'h', beginDate = begin, endDate = end) => {
     const params = new URLSearchParams({
       product: 'predictions',
       application: 'vessel-tracker',
-      begin_date: begin,
-      end_date: end,
+      begin_date: beginDate,
+      end_date: endDate,
       datum: 'MLLW',
       station: stationId,
       time_zone: 'gmt',
       units: 'english',
-      interval: 'h',
+      interval,
       format: 'json'
     });
     return `https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?${params.toString()}`;
+  };
+
+  // One predictions request. NOAA reports some errors as HTTP 400 and others
+  // as a 200 with an error object in the body; both throw here.
+  const fetchPredictions = async (requestUrl) => {
+    const res = await fetch(requestUrl);
+    if (res.ok) {
+      const body = await res.json();
+      if (body.error) throw new Error(body.error.message || JSON.stringify(body.error));
+      return body;
+    }
+    let errorDetails = res.statusText;
+    try {
+      const errorBody = await res.text();
+      if (errorBody) {
+        try {
+          const errorJson = JSON.parse(errorBody);
+          errorDetails = errorJson.error?.message || errorJson.message || errorBody;
+        } catch {
+          errorDetails = errorBody;
+        }
+      }
+    } catch {
+      // Ignore errors parsing error response
+    }
+    throw new Error(`HTTP ${res.status}: ${errorDetails}`);
+  };
+
+  // A subordinate station (NOAA type "S") is a set of time and height offsets
+  // from a harmonic one, and NOAA publishes only its highs and lows: the
+  // hourly request answers "No Predictions data was found". Such a station can
+  // only arrive through the tide override (the lookup table ships harmonic
+  // stations only), and it is a valid choice, so draw it from its highs and
+  // lows. Between two extremes the tide follows half a cosine, which is how
+  // NOAA's own subordinate-station curves are drawn. The request is widened by
+  // a day each side so the first and last hours in the window sit between two
+  // extremes rather than past the ends.
+  const fetchInterpolatedFromHiLo = async (stationId) => {
+    const day = 86_400_000;
+    const body = await fetchPredictions(buildUrl(
+      stationId, 'hilo',
+      fmtYYYYMMDD(new Date(startTime.getTime() - day)),
+      fmtYYYYMMDD(new Date(endTime.getTime() + day)),
+    ));
+    const extremes = (Array.isArray(body?.predictions) ? body.predictions : [])
+      .map(d => ({ t: parseNoaaTime(d.t), v: parseFloat(d.v) }))
+      .filter(d => d.t && Number.isFinite(d.v));
+    const hourly = [];
+    if (extremes.length < 2) return { predictions: hourly };
+    const hour = 3_600_000;
+    const pad = (n) => String(n).padStart(2, '0');
+    let i = 0;
+    for (let t = Math.ceil(extremes[0].t / hour) * hour; t <= extremes[extremes.length - 1].t; t += hour) {
+      while (i < extremes.length - 2 && extremes[i + 1].t < t) i += 1;
+      const a = extremes[i];
+      const b = extremes[i + 1];
+      const frac = (t - a.t) / (b.t - a.t);
+      const v = a.v + (b.v - a.v) * (1 - Math.cos(Math.PI * frac)) / 2;
+      const d = new Date(t);
+      hourly.push({
+        t: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:00`,
+        v: v.toFixed(3),
+      });
+    }
+    return { predictions: hourly };
   };
 
   // There is no fallback station. A failed fetch for the nearest station used
@@ -2206,7 +2329,6 @@ async function drawTideGraph(target) {
   const url = buildUrl(targetStation.id);  const tideCacheKey = `tide_${targetStation.id}_${begin}`;
 
   try {
-    let res;
     // Serve from cache if fresh — tide predictions don't change within a day
     let json = (() => { const c = getCached(tideCacheKey, C.TIDE_CACHE_TTL_MS); return c ? { predictions: c } : null; })();
 
@@ -2217,30 +2339,12 @@ async function drawTideGraph(target) {
       url, begin_date: begin, end_date: end
     });
     if (!json) {
-      res = await fetch(url);
-      if (res.ok) {
-        json = await res.json();
-        // NOAA sometimes returns 200 with an error object in the body.
-        if (json.error) {
-          throw new Error(json.error.message || JSON.stringify(json.error));
-        }
-      } else {
-        // Try to get error details from response body
-        let errorDetails = res.statusText;
-        try {
-          const errorBody = await res.text();
-          if (errorBody) {
-            try {
-              const errorJson = JSON.parse(errorBody);
-              errorDetails = errorJson.error?.message || errorJson.message || errorBody;
-            } catch {
-              errorDetails = errorBody;
-            }
-          }
-        } catch {
-          // Ignore errors parsing error response
-        }
-        throw new Error(`HTTP ${res.status}: ${errorDetails}`);
+      try {
+        json = await fetchPredictions(url);
+      } catch (err) {
+        if (!/No Predictions data/i.test(err.message)) throw err;
+        console.debug('Tide fetch: no hourly predictions, trying highs and lows', targetStation.id);
+        json = await fetchInterpolatedFromHiLo(targetStation.id);
       }
     }
     const rawData = Array.isArray(json?.predictions) ? json.predictions : [];
@@ -3110,8 +3214,8 @@ async function loadData() {
 
         // Load unified 48-hr conditions forecast
         loadConditionsForecast().catch(err => console.error('Conditions forecast error:', err));
-        // Update map location title
-        updateMapLocation(lat, lon).catch(err => console.error('Location fetch error:', err));
+        // The status line: where the boat is, in words
+        setStatusSentence(describeLocation(lat, lon));
         // Load track for last 24 hours
         loadTrack().catch(err => console.error('Track load error:', err));
         // Update polar performance
