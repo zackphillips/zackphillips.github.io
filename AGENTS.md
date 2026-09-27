@@ -1,275 +1,37 @@
-# AGENTS.md — Working on S.V. Mermug Vessel Tracker
-
-A guide for AI agents (and humans) contributing to this repo.
-
----
-
-## Architecture
-
-```
-SignalK (onboard) → scripts/update_signalk_data.py (Raspberry Pi)
-                  → git commit + push → GitHub Pages → mermug.com
-```
-
-- **No backend server.** The site is 100% static HTML/CSS/JS served by GitHub Pages.
-- The Raspberry Pi runs a systemd service that commits new data every 2 minutes
-  while away from the home port, dropping to hourly while docked at the home
-  port privacy zone (see `--auto-interval` in `update_signalk_data.py`).
-- The browser fetches committed JSON files directly from the repo.
-- The Pi auto-pushes; code changes go through normal PRs from a laptop/agent.
-
-**Planned replacement**: the Pi daemon and the static site are being moved
-into a published SignalK plugin,
-[signalk-github-pages](https://github.com/zackphillips/signalk-github-pages).
-Treat the frontend (`index.html`, `assets/`, `sw.js`) and backend (`scripts/`,
-`services/`, `Makefile`) as frozen unless a session is explicitly for site or
-plugin development. Vessel config sessions should never need to touch them; `CLAUDE.md` spells out the boundary.
-
----
-
-## Repo layout
-
-```
-.nojekyll                # Disables Jekyll on Pages
-index.html               # Single-page app entry point
-sw.js                    # Service worker (offline support)
-assets/
-  constants.js           # All magic numbers / thresholds — edit here, not in app.js
-  utils.js               # Shared helpers (UMD module — sets window.vesselUtils)
-  app.js                 # Main frontend logic — reads window.VESSEL_CONSTANTS
-  styles.css
-data/
-  vessel/
-    info.yaml            # Vessel config (name, MMSI, SignalK host, privacy zones)
-    logo.png
-    polars.csv           # ORC polar data — download from jieter.github.io/orc-data
-  telemetry/             # AUTO-GENERATED — do not hand-edit
-    signalk_latest.json  # Most recent SignalK state (Pi-managed)
-    positions_index.json # Rolling 24-hour position history for map track
-    instrument_log.json  # Rolling 120-entry sparkline data (~5 hours)
-    tracks/              # Per-day GPX files (written by the daemon)
-    tracks_index.json    # Metadata index for GPX tracks
-scripts/
-  update_signalk_data.py # Pi daemon: fetch SignalK → commit telemetry
-  utils.py               # Shared helpers: load/save_vessel_info, get_project_root,
-                         #   atomic_write_text (crash-safe writes)
-  vessel_config_wizard.py # Interactive setup wizard
-services/                # systemd service templates
-tests/                   # Python (pytest) + JavaScript (vitest) tests
-```
-
----
-
-## Development commands
-
-```bash
-make server    # Local dev server at http://localhost:8000
-make test      # Run Python + JavaScript tests
-make test-py   # Python only (pytest)
-make test-js   # JavaScript only (vitest) — requires npm
-make lint      # ruff check --fix
-make sync-dev  # uv sync --extra dev (refresh Python dev dependencies)
-```
-
-Dependencies are deliberately minimal: `requests` and `pyyaml` at runtime,
-`pytest`/`ruff`/`pre-commit` for development. Before adding one, check it is
-actually imported — the project previously carried numpy, scipy, PyJWT, geomag,
-websocket-client and aider with zero import sites between them.
-
-Always run `make test` before committing code changes. Pre-commit hooks run ruff
-automatically if installed (`make pre-commit-install`).
-
----
-
-## Frontend: critical loading order
-
-`index.html` loads scripts in this exact order:
-
-```html
-<script src="assets/utils.js"></script>
-<script src="assets/constants.js"></script>
-<script src="assets/app.js?v=N"></script>
-```
-
-### The `var` rule in `constants.js`
-
-`constants.js` **must** use `var`, not `const`:
-
-```javascript
-// CORRECT
-var VESSEL_CONSTANTS = Object.freeze({ ... });
-
-// WRONG — const at top level of a classic browser script does NOT become
-// window.VESSEL_CONSTANTS, so app.js guard throws and the whole page breaks.
-const VESSEL_CONSTANTS = Object.freeze({ ... });
-```
-
-`app.js` starts with:
-
-```javascript
-if (!window.VESSEL_CONSTANTS) throw new Error('constants.js must load before app.js');
-const C = window.VESSEL_CONSTANTS;
-```
-
-`utils.js` is safe because it uses an explicit UMD pattern (`root.vesselUtils = factory()`).
-
-### Adding or changing thresholds
-
-Put numeric thresholds in `assets/constants.js`. Reference them in `app.js` as `C.SOME_KEY`.
-Never hardcode magic numbers directly in `app.js`.
-
-### Bumping the app.js cache-bust version
-
-When deploying a breaking JS change, increment `?v=N` on the `app.js` script tag in
-`index.html`. The service worker uses `mermug-shell-v1` — bump `SHELL_CACHE` in `sw.js`
-only when you want to force all clients to re-fetch every shell asset.
-
----
-
-## Vessel configuration (`data/vessel/info.yaml`)
-
-This file drives both the frontend and the Pi backend:
-
-```yaml
-name: "S.V.Mermug"
-mmsi: "338543654"
-theme: "mermug"   # light | dark | mermug | deep-sea | …
-signalk:
-  host: "192.168.8.50"
-  port: "3000"
-
-privacy_zones:
-  - name: "South Beach Harbor, San Francisco"
-    lat: 37.7802069
-    lon: -122.3858040
-    radius_m: 200
-```
-
-- **Privacy zones** are read by both `update_signalk_data.py` (Python) and `app.js`
-  (JavaScript) to redact positions near home marina. Add more zones freely; both sides
-  use the same list from this single file.
-- The Pi reads this file on every run, so changes take effect within one update cycle
-  without restarting any service.
-
----
-
-## Backend scripts (run on the Raspberry Pi)
-
-### `scripts/update_signalk_data.py`
-
-The main Pi daemon. Run with `--auto-interval`, it paces itself off the vessel's
-position each cycle: every 2 minutes while away from the home port, dropping to
-every hour while parked inside the home port privacy zone (see
-`_get_privacy_zone_center` / `PRIVACY_EXCLUSION_ZONES`). A plain `--interval N`
-keeps the old fixed-cadence behavior instead. Each cycle:
-
-1. Fetches the full SignalK vessel tree via HTTP (with a mandatory timeout).
-2. Drops any positions inside privacy zones.
-3. Writes `data/telemetry/signalk_latest.json` (latest state).
-4. Appends one entry to `data/telemetry/instrument_log.json` (rolling 120-entry
-   sparkline log).
-5. Updates `data/telemetry/positions_index.json` with the new position; purges entries
-   older than `POSITION_RETENTION_HOURS = 24`.
-6. Regenerates today's GPX track from that index (past days are written once).
-   Days are grouped by `TRACK_TIMEZONE` (the vessel's home-port local time,
-   from `timezone` in `info.yaml`, default `America/Los_Angeles`), not by
-   the raw UTC date in each timestamp — grouping by UTC date would split a
-   voyage at UTC midnight, i.e. mid-afternoon on the US west coast.
-7. Commits and pushes all changed files.
-
-Every state file is written via `utils.atomic_write_text()` (temp file + fsync +
-rename), so a power cut mid-write cannot truncate an index and silently wipe a
-day of history.
-
-Key constants (top of file):
-
-| Constant | Default | Purpose |
-|---|---|---|
-| `UPDATE_INTERVAL_AWAY_SECONDS` | 120 | `--auto-interval` cadence while away from home port |
-| `UPDATE_INTERVAL_HOME_SECONDS` | 3600 | `--auto-interval` cadence while at home port |
-| `POSITION_RETENTION_HOURS` | 24 | How long raw positions are kept |
-| `INSTRUMENT_LOG_ENTRIES` | 120 | Max sparkline entries |
-| `INSTRUMENT_LOG_FILE` | `data/telemetry/instrument_log.json` | Sparkline data |
-
-## Data files — what to touch and what not to
-
-| File | Who writes it | Can you edit? |
-|---|---|---|
-| `data/vessel/info.yaml` | Human / wizard | Yes — this is config |
-| `data/vessel/polars.csv` | Human (download) | Yes |
-| `data/telemetry/signalk_latest.json` | Pi daemon | No — overwritten each cycle |
-| `data/telemetry/positions_index.json` | Pi daemon | No |
-| `data/telemetry/instrument_log.json` | Pi daemon | No |
-| `data/telemetry/tracks/*.gpx` | Pi daemon | No (generated) |
-| `data/telemetry/tracks_index.json` | Pi daemon | No (generated) |
-
-The Pi is always running and will overwrite any manual edits to telemetry files on its
-next push.
-
----
-
-## Deploying code changes
-
-1. Develop on a feature branch; the Pi pushes to `main` continuously.
-2. Open a PR; merge via GitHub (the Pi's next push will land on top cleanly).
-3. If you need to force-push `main` (rare):
-   ```bash
-   TOKEN=$(cat ~/.claude/remote/.session_ingress_token)
-   git -c "http.extraHeader=Authorization: Bearer $TOKEN" push origin main --force
-   ```
-   Then pull on any other machines (`git pull --rebase origin main`).
-   The Pi will self-recover — it rebases before pushing.
-
----
-
-## Known gotchas
-
-- **`const` vs `var` at global scope in classic browser scripts**: `const` does not
-  create a `window.*` property. Use `var` for any global the app accesses via
-  `window.SomeName`. This caught us once and blanked the entire site.
-
-- **Do not delete `.nojekyll`.** Without it GitHub Pages runs the tree through
-  Jekyll first, which slows every deploy and drops any file or directory whose
-  name starts with an underscore.
-
-- **Do not re-introduce per-cycle snapshot files.** The daemon used to write one
-  `*Z.json` SignalK delta per cycle plus a `snapshots_index.json`. Nothing on the
-  frontend ever fetched them — the map reads `positions_index.json` and `tracks/*.gpx`
-  — and an off-by-one in the prune let ~32k of them accumulate, which is what grew
-  `.git` to over a gigabyte and required a `git filter-repo` rewrite to undo. GPX
-  tracks are now built directly from `positions_index.json` in the same cycle.
-
-- **Every network call needs a timeout.** `requests.get` and the `git push`/`fetch`
-  subprocesses all take explicit timeouts (`FETCH_TIMEOUT`, `GIT_NETWORK_TIMEOUT`). A
-  call without one blocks forever on a half-open connection; the process stays alive,
-  so `Restart=always` never fires and the site silently freezes on stale data.
-
-- **Keep the retry handler inside the loop.** `main()` catches per-cycle so a
-  transient error skips one update instead of exiting and burning a `RestartSec=300`
-  window.
-
-- **Pi is always pushing**: if your `git push` is rejected with "fetch first", run
-  `git pull --rebase origin main` then push again.
-
-- **Service worker caching during development**: use the browser's "Bypass for network"
-  devtools option or bump `SHELL_CACHE` version to see frontend changes immediately.
-
-- **`instrument_log.json` vs snapshot files**: The frontend sparklines read
-  `instrument_log.json` (one fetch). Old code fetched ~60 individual snapshot files in
-  parallel. Do not re-introduce per-snapshot fetches — they balloon repo size.
-
-- **`INSTRUMENT_LOG_ENTRIES` must match**: the value in `constants.js` and in
-  `update_signalk_data.py` must be the same number, since the Python side controls how
-  many entries are retained and the JS side controls how many it reads.
-
----
-
-## External APIs used by the frontend
-
-| API | Used for | Key |
-|---|---|---|
-| NOAA Tides & Currents | Tide chart | None (public) |
-| Open-Meteo | Weather + swell forecast | None (public) |
-| OpenStreetMap Nominatim | Reverse geocoding (location name) | None (public) |
-
-All API calls are made client-side; no proxy needed.
+# AGENTS.md — S.V. Mermug site repository
+
+A guide for AI agents (and humans) working in this repo.
+
+## What this repo is
+
+The published output of the [signalk-github-pages](https://github.com/zackphillips/signalk-github-pages)
+Signal K plugin, served by GitHub Pages at mermug.com. The plugin, running on
+the boat's Raspberry Pi, commits telemetry straight to `main` through the
+GitHub API (`Telemetry <timestamp>Z (<nav state>)` commits) and rewrites the
+frontend on install and upgrade. There is no build step and no code to run here.
+
+## What you may edit
+
+`.tracker-manifest.json` lists every path the plugin owns. Do not edit those
+paths: the next publish or upgrade overwrites them, and a fix made here is lost.
+Frontend changes, telemetry format changes and config changes (privacy zones,
+custom links, timezone, logo, polar) belong in the plugin repo or its config page.
+
+| Path | Owner |
+|---|---|
+| `index.html`, `sw.js`, `manifest.json`, `.nojekyll`, `assets/**` | Plugin |
+| `data/telemetry/**`, `data/vessel/site.json`, `data/tide_stations.json` | Plugin |
+| `data/vessel/polars.csv`, `logo.png`, `icon.png` | Plugin |
+| `assets/custom.css` | You — loaded last by the page, never written by the plugin |
+| `README.md`, `LICENSE`, `AGENTS.md`, `CLAUDE.md`, `.gitignore` | You |
+
+If a request needs a change to a plugin-owned path, stop and say so rather than
+editing it here.
+
+## Working with `main`
+
+The plugin commits to `main` every 2 minutes underway and hourly when
+stationary. Make changes on a branch and merge through a PR. The plugin builds
+each commit against the live `HEAD`, so a merged PR and a telemetry commit
+interleave cleanly. Never force-push `main`: it would drop telemetry committed
+in the meantime.
