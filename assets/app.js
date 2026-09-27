@@ -1541,24 +1541,6 @@ function toggleVoyageDetail(item) {
   renderVoyageMiniMap(item, entry);
 }
 
-// Whether docs/index.json lists the captain's log, which is what decides
-// whether the Voyages tab offers to open it. It is one boat's filing habit,
-// not a feature of the tracker: a site without that document used to get a
-// button that opened GitHub's new-file editor for a path nobody had chosen.
-let hasCaptainsLog = false;
-
-async function loadCaptainsLogPresence() {
-  if (!C.CAPTAINS_LOG_PATH) return;
-  try {
-    const response = await fetch(C.DOCS_INDEX_URL);
-    if (!response.ok) return;
-    const index = await response.json();
-    hasCaptainsLog = (index?.docs ?? []).some((doc) => doc?.path === C.CAPTAINS_LOG_PATH);
-  } catch {
-    // No docs index, no button. A site with no docs at all is the common case.
-  }
-}
-
 function voyageDetailHtml(entry) {
   const fmtTime = (iso) => {
     if (!iso) return '—';
@@ -1594,9 +1576,6 @@ function voyageDetailHtml(entry) {
     <div class="voyage-detail-actions">
       <button type="button" class="voyage-detail-btn voyage-show-on-map">Show on main map</button>
       ${gpx ? `<a class="voyage-detail-btn voyage-detail-btn--ghost" href="${gpx.url}" download="${gpx.filename}">Download GPX</a>` : ''}
-      ${hasCaptainsLog ? `<a class="voyage-detail-btn voyage-detail-btn--ghost" target="_blank" rel="noopener noreferrer"
-         href="https://github.com/${C.GITHUB_REPO}/edit/${C.GITHUB_DEFAULT_BRANCH}/${C.CAPTAINS_LOG_PATH}"
-         title="Opens the Captain's Log in the GitHub editor — add crew, conditions and notes for this trip">Log this voyage</a>` : ''}
     </div>`;
 }
 
@@ -1701,8 +1680,7 @@ let historyWindowHours = (() => {
 let bannerState = 'ok'; // 'ok' | 'error' — persists across theme switches
 
 // ── Theme cycling ──────────────────────────────────────────────────────────
-// The lists live in constants.js so docs.html gets the same cycle without
-// pulling in this whole file.
+// The lists live in constants.js with the rest of the page's settings.
 const THEMES = C.THEMES;
 const DARK_THEMES = new Set(C.DARK_THEMES);
 function isDarkTheme(theme) { return DARK_THEMES.has(theme); }
@@ -4359,8 +4337,8 @@ function initDarkMode() {
   // No vessel-config fallback: there is no theme setting and never was a
   // `theme:` key to read. The button cycles THEMES and localStorage remembers.
   //
-  // A remembered theme only counts if this release still has it. docs.js has
-  // always checked; this side did not, so a theme renamed between releases
+  // A remembered theme only counts if this release still has it. This side
+  // once did not check, so a theme renamed between releases
   // left the page with a data-theme nothing in the stylesheet matched — every
   // token falling back to the light defaults under a "Dark Mode" button.
   let savedTheme = localStorage.getItem('theme') || 'marine';
@@ -4514,10 +4492,6 @@ function updateChartsForTheme(theme) {
 
   // Load tide stations data
   await loadTideStations();
-
-  // Before the voyage list renders: it decides whether a row offers the
-  // "Log this voyage" button.
-  await loadCaptainsLogPresence();
 
   initDarkMode();
   loadPolarData();
