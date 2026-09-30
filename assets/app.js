@@ -720,7 +720,7 @@ function pathCard(path, options = {}) {
   const title = escapeHtml(tooltipFor(described, node));
   if (raw === null && typeof value === 'string') {
     return `
-      <div class="info-item" title="${title}">
+      <div class="info-item${isFreshStamp(node?.timestamp) ? ' info-item--fresh' : ''}" title="${title}">
         <div class="label">${escapeHtml(label)}</div>
         <div class="value value-text">${escapeHtml(value)}</div>
       </div>`;
@@ -912,6 +912,7 @@ function paintPanel(containerId, buildHtml) {
   }
   try {
     container.innerHTML = typeof buildHtml === 'function' ? buildHtml() : buildHtml;
+    markFreshCards(container);
     paintedPanels.add(containerId);
     return true;
   } catch (err) {
@@ -966,6 +967,27 @@ function setStatusSentence(locationName) {
       ? `Last seen in ${locationName}`
       : `In ${locationName}`;
   }
+}
+
+/**
+ * Say so when the published position is a privacy zone's center, not the boat.
+ * The plugin swaps a position inside a zone for the zone center, so without a
+ * note the page shows a confident fix that is deliberately not the boat's.
+ * Pass null to clear it (no fix, or a fix outside every zone).
+ */
+function setPrivacyIndicator(zone) {
+  const el = document.getElementById('status-privacy');
+  if (!el) return;
+  if (!zone) {
+    el.hidden = true;
+    el.textContent = '';
+    el.title = '';
+    return;
+  }
+  const name = zone.name ? ` (${zone.name})` : '';
+  el.textContent = '\u{1F512} Inside privacy zone';
+  el.title = `Position withheld${name}: the map and coordinates show the zone center, not the boat.`;
+  el.hidden = false;
 }
 
 // 24 distinct colors for per-day track segments (cycles if more than 24 days).
@@ -1945,6 +1967,45 @@ function nodeAtPath(path) {
     node = node[segment];
   }
   return node && typeof node === 'object' ? node : null;
+}
+
+/**
+ * The newest timestamp on the snapshot, and how close to it a value has to be
+ * to count as updated in the last publish. Measured against the snapshot, not
+ * the clock, so a phone opening the cached page offline days later does not
+ * see everything as stale, and one opening it just after a publish does not
+ * see everything as new. Five minutes covers a slow N2K device and the jitter
+ * between sensors; a value that only ever gets set once (design, config) is
+ * hours or days behind.
+ */
+const FRESH_WINDOW_MS = 5 * 60 * 1000;
+let freshCutoff = null;
+
+/** The timestamp on a path's node, or the nearest ancestor that has one. */
+function timestampAtPath(path) {
+  if (!currentTree || typeof path !== 'string' || !path) return null;
+  let node = currentTree;
+  let stamp = null;
+  for (const segment of path.split('.')) {
+    if (!node || typeof node !== 'object') break;
+    node = node[segment];
+    if (node && typeof node.timestamp === 'string') stamp = node.timestamp;
+  }
+  return stamp;
+}
+
+function isFreshStamp(stamp) {
+  if (freshCutoff === null || !stamp) return false;
+  const t = new Date(stamp).getTime();
+  return Number.isFinite(t) && t >= freshCutoff;
+}
+
+/** Tint the cards under `root` whose value changed in the last publish. */
+function markFreshCards(root = document) {
+  root.querySelectorAll('.info-item[data-path], .info-item[data-fresh-path]').forEach((item) => {
+    const path = item.dataset.path || item.dataset.freshPath;
+    item.classList.toggle('info-item--fresh', isFreshStamp(timestampAtPath(path)));
+  });
 }
 
 /** A path's Signal K metadata, or an empty object. */
@@ -3176,6 +3237,8 @@ async function loadData() {
     // Store globally for polar performance calculations, and for the
     // metadata lookups that label and format paths nothing hardcodes.
     currentTree = data;
+    const newest = findLatestTimestamp(data);
+    freshCutoff = newest ? newest.getTime() - FRESH_WINDOW_MS : null;
     currentNav = nav;
     currentEnv = env;
 
@@ -3322,11 +3385,13 @@ async function loadData() {
         loadConditionsForecast().catch(err => console.error('Conditions forecast error:', err));
         // The status line: where the boat is, in words
         setStatusSentence(describeLocation(lat, lon));
+        setPrivacyIndicator(getPrivacyZoneCenter(lat, lon));
         // Load track for last 24 hours
         loadTrack().catch(err => console.error('Track load error:', err));
         // Update polar performance
         updatePolarPerformance();
       } else {
+        setPrivacyIndicator(null);
         const sentenceEl = document.getElementById('status-sentence');
         if (sentenceEl) sentenceEl.textContent = 'Waiting for GPS position...';
       }
@@ -3365,6 +3430,9 @@ async function loadData() {
     // well and was not something any anchor alarm on board agreed with. The
     // alarm itself now reaches the page through notifications.navigation.anchor
     // instead of being re-derived here from a number and a guess.
+    const inZone = hasGpsFix ? getPrivacyZoneCenter(lat, lon) : null;
+    const positionLock = inZone ? ' \u{1F512}' : '';
+    const positionNote = inZone ? '\nInside a privacy zone: this is the zone center, not the boat.' : '';
     const anchorRawSI = nav.anchor?.currentRadius?.value ?? null;
     const anchorValueHtml = colorValue(
       fmtUnit('length', anchorRawSI),
@@ -3372,8 +3440,8 @@ async function loadData() {
     );
 
     paintPanel('navigation-grid', () => `
-      <div class="info-item" title="${withUpdated('Current vessel latitude position', nav.position)}"><div class="label">Latitude</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
-      <div class="info-item" title="${withUpdated('Current vessel longitude position', nav.position)}"><div class="label">Longitude</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
+      <div class="info-item" data-fresh-path="navigation.position" title="${withUpdated('Current vessel latitude position', nav.position)}${positionNote}"><div class="label">Latitude${positionLock}</div><div class="value">${lat?.toFixed(6) ?? 'N/A'}</div></div>
+      <div class="info-item" data-fresh-path="navigation.position" title="${withUpdated('Current vessel longitude position', nav.position)}${positionNote}"><div class="label">Longitude${positionLock}</div><div class="value">${lon?.toFixed(6) ?? 'N/A'}</div></div>
       <div class="info-item" data-path="navigation.speedOverGround" data-label="SOG" data-unit-group="speed" data-raw="${nav.speedOverGround?.value ?? ''}" title="${withUpdated('Speed Over Ground - actual speed relative to the seabed', nav.speedOverGround)}"><div class="label">SOG</div><div class="value">${fmtUnit('speed', nav.speedOverGround?.value)}</div></div>
       <div class="info-item" data-path="navigation.speedThroughWater" data-label="STW" data-unit-group="speed" data-raw="${nav.speedThroughWater?.value ?? ''}" title="${withUpdated('Speed Through Water - speed relative to the water', nav.speedThroughWater)}"><div class="label">STW</div><div class="value">${fmtUnit('speed', nav.speedThroughWater?.value)}</div></div>
       <div class="info-item" data-path="navigation.trip.log" data-label="Trip" data-unit-group="distance" data-raw="${nav.trip?.log?.value ?? ''}" title="${withUpdated('Trip distance - distance traveled on current trip', nav.trip?.log)}"><div class="label">Trip</div><div class="value">${fmtUnit('distance', nav.trip?.log?.value)}</div></div>
@@ -3445,6 +3513,7 @@ async function loadData() {
     // are in the DOM. Neither is worth losing the other, or the panels above.
     try {
       renderAlertSummary();
+      markFreshCards(document.getElementById('alert-summary') ?? document);
     } catch (err) {
       console.error('Alert summary failed to render:', err);
     }

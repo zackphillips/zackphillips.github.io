@@ -176,6 +176,23 @@ body {
   letter-spacing: 0.01em;
 }
 
+.status-privacy {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(0, 0, 0, 0.18);
+  color: #ffffff;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.status-privacy[hidden] { display: none; }
+
 /* ─────────────────────────────────────────────────────────────────────────
    Map
    ───────────────────────────────────────────────────────────────────────── */
@@ -389,6 +406,26 @@ body.map-fills .footer {
   .info-item:hover {
     background-color: var(--accent-light);
   }
+}
+
+/* Updated in the last publish: a faint accent tint and a left bar, plus a dot
+   so it still reads in glare or without color. Stale and static cards stay
+   exactly as they were. */
+.info-item--fresh {
+  position: relative;
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-quaternary));
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.info-item--fresh::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 .info-item[data-unit-group] {
