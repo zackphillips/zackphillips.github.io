@@ -15,7 +15,7 @@
 // code, new data, and a dashboard reading "Data unavailable" against a
 // snapshot it had just downloaded successfully.
 
-const SITE_VERSION  = '1.0.3';
+const SITE_VERSION  = '1.1.0';
 const SHELL_CACHE   = `tracker-shell-${SITE_VERSION}`;
 const DATA_CACHE    = 'tracker-data-v1';
 
