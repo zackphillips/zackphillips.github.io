@@ -1,0 +1,120 @@
+/* Carried over from the original jemdoc stylesheet; layout rebuilt with flexbox. */
+
+:root {
+    --heading: #003366;
+    --text: black;
+    --rule: #bbbbbb;
+    --current: #023689;
+    --bg: white;
+}
+
+html {
+    background: var(--bg);
+}
+
+body {
+    font: 80% Verdana, Geneva, sans-serif;
+    line-height: 1.5em;
+    color: var(--text);
+    background: var(--bg);
+    margin: 1em 1em 2em 2em;
+}
+
+a {
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--rule);
+}
+
+h1, h2, h3 {
+    color: var(--heading);
+}
+
+h1 { font-size: 150%; margin-top: 0.6em; }
+h2 { font-size: 115%; margin-top: 1.5em; }
+h3 { font-size: 100%; margin-top: 1.5em; }
+
+p {
+    margin: 0 0 1.2em;
+}
+
+li {
+    margin-bottom: 0.8em;
+}
+
+/* Layout: right-aligned menu beside a 600px content column. */
+.layout {
+    display: flex;
+    align-items: flex-start;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 3em 20px 0;
+    white-space: nowrap;
+}
+
+.menu a {
+    border-bottom: 1px solid gray;
+}
+
+.menu a.current {
+    color: var(--current);
+}
+
+.content {
+    padding: 1em 0 0 25px;
+    width: 600px;
+    max-width: 100%;
+}
+
+.profile {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 1em;
+}
+
+.profile img {
+    flex: none;
+    margin: 2px;
+}
+
+.profile p {
+    margin-bottom: 1em;
+}
+
+/* Narrow screens: menu above content, photo above contact details. */
+@media (max-width: 700px) {
+    body {
+        margin: 1em 16px;
+    }
+
+    .layout {
+        display: block;
+    }
+
+    .menu {
+        flex-direction: row;
+        gap: 1em;
+        padding: 0.5em 0 0;
+    }
+
+    .content {
+        padding-left: 0;
+        width: auto;
+    }
+
+    .profile {
+        display: block;
+    }
+
+    .profile img {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 1em;
+    }
+}
