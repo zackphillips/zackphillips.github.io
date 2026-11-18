@@ -6,8 +6,15 @@
 <title>Zack Phillips, PhD</title>
 <meta name="description" content="Zack Phillips, PhD. Computational imaging engineer and Director of Imaging at insitro.">
 <link rel="stylesheet" href="style.css">
+<script>
+// Apply the saved theme before first paint to avoid a flash.
+try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 </head>
 <body>
+<div class="banner">
+  <button type="button" id="theme-toggle" aria-label="Toggle dark mode">dark mode</button>
+</div>
 <div class="layout">
 
 <nav class="menu">
@@ -53,6 +60,23 @@
 <h3>Open-Source</h3>
 <p>See my <a href="https://github.com/zackphillips" target="_blank" rel="noopener">GitHub page</a> for personal projects, as well as <a href="https://github.com/sci-microscopy" target="_blank" rel="noopener">SCI Microscopy’s GitHub</a> for academic and commercial tools. Some of my work is also featured on my lab’s <a href="http://www.laurawaller.com/opensource/" target="_blank" rel="noopener">open-source page</a>.</p>
 
+<p>Imaging and hardware:</p>
+<ul>
+  <li><a href="https://github.com/zackphillips/htdeblur" target="_blank" rel="noopener">htdeblur</a>: high-throughput quantitative imaging using motion deblurring</li>
+  <li><a href="https://github.com/zackphillips/comptic" target="_blank" rel="noopener">comptic</a>: computational optics tools</li>
+  <li><a href="https://github.com/zackphillips/TLC5955" target="_blank" rel="noopener">TLC5955</a>: Arduino library for the TI TLC5955 LED controller</li>
+  <li><a href="https://github.com/zackphillips/FourierFilterCam" target="_blank" rel="noopener">FourierFilterCam</a>: mobile app for Fourier-transform imaging and filtering</li>
+  <li><a href="https://github.com/zackphillips/sci-microscopy-engineering" target="_blank" rel="noopener">sci-microscopy-engineering</a>: PCB designs and CAD models for SCI Microscopy hardware</li>
+</ul>
+
+<p>I’m also interested in open-source sailing: open data, instrumentation, and documentation for cruising boats. Most of this runs on <a href="https://mermug.com" target="_blank" rel="noopener">Mermug</a>, my 1994 Beneteau First 42s7, built on <a href="https://signalk.org" target="_blank" rel="noopener">Signal K</a>.</p>
+<ul>
+  <li><a href="https://github.com/zackphillips/signalk-github-pages" target="_blank" rel="noopener">signalk-github-pages</a>: Signal K plugin that publishes a static status page to GitHub Pages</li>
+  <li><a href="https://github.com/zackphillips/signalk-tablet-camera-timelapse" target="_blank" rel="noopener">signalk-tablet-camera-timelapse</a>: Signal K plugin for onboard camera timelapses</li>
+  <li><a href="https://github.com/zackphillips/mermug-esp" target="_blank" rel="noopener">mermug-esp</a>: ESP32 sensor firmware for Mermug</li>
+  <li><a href="https://github.com/zackphillips/mermug-ships-docs" target="_blank" rel="noopener">mermug-ships-docs</a>: boat-specific ship’s documentation</li>
+</ul>
+
 <h3>Recent Publications</h3>
 <ol>
   <li><a href="https://doi.org/10.1038/s41467-025-66778-6" target="_blank" rel="noopener">A Pooled Cell Painting CRISPR Screening Platform Enables de novo Inference of Gene Function by Self-supervised Deep Learning</a></li>
@@ -69,5 +93,28 @@
 </main>
 
 </div>
+<script>
+(function () {
+  var root = document.documentElement;
+  var btn = document.getElementById('theme-toggle');
+  var mq = window.matchMedia('(prefers-color-scheme: dark)');
+  function isDark() {
+    return root.dataset.theme ? root.dataset.theme === 'dark' : mq.matches;
+  }
+  function render() {
+    var dark = isDark();
+    btn.textContent = dark ? 'light mode' : 'dark mode';
+    btn.setAttribute('aria-pressed', String(dark));
+  }
+  btn.addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try { localStorage.setItem('theme', next); } catch (e) {}
+    render();
+  });
+  mq.addEventListener('change', render);
+  render();
+})();
+</script>
 </body>
 </html>
