@@ -48,12 +48,15 @@ body {
     margin: 1em 1em 0 2em;
 }
 
+/* Theme toggle: pinned to the bottom-left corner, under the menu column. */
 .menu button {
-    margin-top: 1em;
+    position: fixed;
+    left: 1em;
+    bottom: 1em;
     font: inherit;
     font-size: 90%;
     color: var(--text);
-    background: none;
+    background: var(--bg);
     border: 1px solid var(--rule);
     border-radius: 3px;
     padding: 1px 8px;
@@ -141,8 +144,9 @@ li {
         padding: 0.5em 0 0;
     }
 
+    /* A fixed corner button would cover body text on a phone; keep it in the menu row. */
     .menu button {
-        margin-top: 0;
+        position: static;
     }
 
     .content {
